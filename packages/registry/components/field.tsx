@@ -232,7 +232,7 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
 
 // Right under a fieldset's legend, it reads with the legend, as shadcn's does.
 const DESCRIPTION_CLASS =
-    'm-0 text-left text-sm leading-normal font-normal text-dhis2-muted-foreground [[data-variant=legend]+&]:-mt-3'
+    'm-0 text-start text-sm leading-normal font-normal text-dhis2-muted-foreground [[data-variant=legend]+&]:-mt-3'
 
 function FieldDescription({
     className,
@@ -303,7 +303,7 @@ function FieldError({
         }
 
         return (
-            <ul className="ml-4 flex list-disc flex-col gap-1">
+            <ul className="ms-4 flex list-disc flex-col gap-1">
                 {uniqueErrors.map(
                     (error, index) =>
                         error?.message && <li key={index}>{error.message}</li>

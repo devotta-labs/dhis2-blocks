@@ -106,7 +106,7 @@ function DropdownMenuLabel({
             data-slot="dropdown-menu-label"
             data-inset={inset}
             className={cn(
-                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-muted-foreground data-inset:pl-9',
+                'px-3 pt-2 pb-1 text-[13px] leading-4 font-medium text-dhis2-muted-foreground data-inset:ps-9',
                 className
             )}
             {...props}
@@ -115,7 +115,7 @@ function DropdownMenuLabel({
 }
 
 const menuItemClasses =
-    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-dhis2-popover px-3 py-2 text-sm leading-4 text-dhis2-foreground outline-none select-none data-highlighted:bg-dhis2-accent active:bg-dhis2-accent-strong focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-inset:pl-9 data-disabled:cursor-not-allowed data-disabled:bg-dhis2-popover data-disabled:text-dhis2-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
+    "relative flex min-h-8 cursor-pointer items-center gap-2 bg-dhis2-popover px-3 py-2 text-sm leading-4 text-dhis2-foreground outline-none select-none data-highlighted:bg-dhis2-accent active:bg-dhis2-accent-strong focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-inset:ps-9 data-disabled:cursor-not-allowed data-disabled:bg-dhis2-popover data-disabled:text-dhis2-disabled-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4"
 
 const DropdownMenuItem = React.forwardRef<
     HTMLElement,
@@ -205,7 +205,7 @@ function DropdownMenuCheckboxItem({
         <MenuPrimitive.CheckboxItem
             data-slot="dropdown-menu-checkbox-item"
             data-inset={inset}
-            className={cn(menuItemClasses, 'pr-9', className)}
+            className={cn(menuItemClasses, 'pe-9', className)}
             checked={checked}
             {...props}
         >
@@ -243,7 +243,7 @@ function DropdownMenuRadioItem({
         <MenuPrimitive.RadioItem
             data-slot="dropdown-menu-radio-item"
             data-inset={inset}
-            className={cn(menuItemClasses, 'pr-9', className)}
+            className={cn(menuItemClasses, 'pe-9', className)}
             {...props}
         >
             <span

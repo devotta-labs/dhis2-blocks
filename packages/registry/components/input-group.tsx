@@ -13,7 +13,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
         <div
             data-slot="input-group"
             className={cn(
-                'group/input-group relative flex h-(--dhis2-control-height) w-full min-w-0 items-center rounded-dhis2-sm border border-dhis2-input bg-dhis2-background shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none has-[[data-slot=input-group-control]:focus-visible]:border-dhis2-ring has-[[data-slot=input-group-control]:focus-visible]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-[[data-slot][aria-invalid=true]]:border-dhis2-destructive-border has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pr-1.5 has-[>[data-align=inline-start]]:[&>input]:pl-1.5',
+                'group/input-group relative flex h-(--dhis2-control-height) w-full min-w-0 items-center rounded-dhis2-sm border border-dhis2-input bg-dhis2-background shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none has-[[data-slot=input-group-control]:focus-visible]:border-dhis2-ring has-[[data-slot=input-group-control]:focus-visible]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-[[data-slot][aria-invalid=true]]:border-dhis2-destructive-border has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>textarea]:h-auto has-[>[data-align=block-end]]:[&>input]:pt-3 has-[>[data-align=block-start]]:[&>input]:pb-3 has-[>[data-align=inline-end]]:[&>input]:pe-1.5 has-[>[data-align=inline-start]]:[&>input]:ps-1.5',
                 className
             )}
             {...props}
@@ -26,8 +26,8 @@ const inputGroupAddonVariants = cva(
     {
         variants: {
             align: {
-                'inline-start': 'order-first pl-2 has-[>button]:-ml-1',
-                'inline-end': 'order-last pr-2 has-[>button]:-mr-1',
+                'inline-start': 'order-first ps-2 has-[>button]:-ms-1',
+                'inline-end': 'order-last pe-2 has-[>button]:-me-1',
                 'block-start':
                     'order-first w-full justify-start px-3 pt-2 group-has-[>input]/input-group:pt-2 [.border-b]:pb-2',
                 'block-end':

@@ -29,7 +29,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
     return (
         <SelectPrimitive.Value
             data-slot="select-value"
-            className={cn('flex flex-1 text-left', className)}
+            className={cn('flex flex-1 text-start', className)}
             {...props}
         />
     )
@@ -37,7 +37,7 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 
 /** The @dhis2/ui select input box, shared with the Combobox trigger. */
 const selectTriggerVariants = cva(
-    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-left text-sm leading-4 whitespace-nowrap text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2 data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground aria-invalid:border-dhis2-destructive-border data-placeholder:text-dhis2-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
+    "flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-start text-sm leading-4 whitespace-nowrap text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2 data-popup-open:border-dhis2-ring data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] disabled:cursor-not-allowed disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground aria-invalid:border-dhis2-destructive-border data-placeholder:text-dhis2-subtle-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
     {
         variants: {
             size: {

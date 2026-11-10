@@ -115,6 +115,23 @@ Collapsing preserves the open groups and selected page.
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
 
+## Spreadsheet block
+
+`spreadsheet` enters DHIS2 data in a grid, typed in like a spreadsheet:
+DHIS2-typed cells, Excel-style keys, paste and undo, and the state of each cell,
+for any data your app saves. It knows nothing about events, people or rules.
+You give it a cell store, the tables to show and a store of what your logic
+says about each cell.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/spreadsheet
+```
+
+The install also pulls in `dhis2-value-types` (what each value type accepts)
+and `dhis2-value-display` (the calendar). Import from `@/components/spreadsheet`.
+See `/blocks/spreadsheet` for the keyboard, the cell store and replacing a
+control.
+
 ## Timeline block
 
 Show a person's history across programs: events, enrollment milestones and
@@ -337,7 +354,7 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
 `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `label`, `popover`, `portal-root`, `select`, `separator`,
+`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
 `spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
 `tooltip`. Items that import siblings (for example `combobox` imports `select`
 and `input-group`) install them too.

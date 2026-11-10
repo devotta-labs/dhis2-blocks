@@ -356,6 +356,21 @@
             ]
         },
         {
+            "name": "kbd",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/kbd.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/kbd.tsx"
+                }
+            ]
+        },
+        {
             "name": "label",
             "type": "registry:ui",
             "registryDependencies": [
@@ -1100,6 +1115,239 @@
                 }
             ],
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+        },
+        {
+            "name": "spreadsheet",
+            "type": "registry:block",
+            "title": "Spreadsheet",
+            "description": "DHIS2-typed grid entry: typed cells, Excel-style keys, paste and undo, and the state of each cell, for any data the app saves.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-virtual@^3.14.21",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/kbd",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/Cell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/Cell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/CellStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/CellStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/ChoiceCells.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/ChoiceCells.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/OptionCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/OptionCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/OptionList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/OptionList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/PopupCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/PopupCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/TextCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/TextCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/cellProps.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/AgeEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/AgeEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/CoordinateEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/CoordinateEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/EditorButtons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/EditorButtons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/FileEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/FileEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/LongTextEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/LongTextEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/MultiSelectEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/fileApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/fileApi.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/popupEditors.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/popupEditors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/serverSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/serverSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/useCellMode.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/useCellMode.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/AddRowButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/AddRowButton.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/BulkMenu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/BulkMenu.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/ColumnPopover.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/ColumnPopover.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/RowHeader.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/RowHeader.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/RowNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/RowNotes.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/SpreadsheetGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/SpreadsheetGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableBody.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableBody.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableRow.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableRow.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/bulk.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/bulk.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/fillDown.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/fillDown.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/headers.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/headers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/navGrid.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/navGrid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/navigation.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/navigation.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/paste.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/paste.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/useAddRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/useAddRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/model/annotations.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/model/annotations.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/provider/Spreadsheet.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/provider/Spreadsheet.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/store/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/store/store.ts"
+                }
+            ]
         },
         {
             "name": "timeline",

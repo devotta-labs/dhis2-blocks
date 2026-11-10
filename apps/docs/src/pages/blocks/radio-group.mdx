@@ -64,23 +64,29 @@ group.
 
 <ExampleCard slug="radio-group/description" />
 
-When an option needs a line of explanation, give each radio its own
-horizontal `Field`, with the label and description in a `FieldContent`. The
-label names the radio and the description is read with it; clicking the
-label picks the option.
+When an option needs a line of explanation, build the group from a
+[Field](/blocks/field): render the `RadioGroup` as a `FieldSet` named by its
+`FieldLegend`, and give each radio a `FieldItem` with its label and
+description in a `FieldContent`. The label names the radio and the
+description is read with it; clicking the label picks the option.
 
 <InstallCommand item="field" />
 
 ```tsx
-<RadioGroup aria-labelledby="referral" className="w-fit">
-    <Field orientation="horizontal">
-        <RadioGroupItem value="hospital" />
-        <FieldContent>
-            <FieldLabel>Hospital</FieldLabel>
-            <FieldDescription>For danger signs: send today.</FieldDescription>
-        </FieldContent>
-    </Field>
-</RadioGroup>
+<Field>
+    <FieldSet render={<RadioGroup />}>
+        <FieldLegend variant="label">Referral</FieldLegend>
+        <FieldItem>
+            <RadioGroupItem value="hospital" />
+            <FieldContent>
+                <FieldLabel>Hospital</FieldLabel>
+                <FieldDescription>
+                    For danger signs: send today.
+                </FieldDescription>
+            </FieldContent>
+        </FieldItem>
+    </FieldSet>
+</Field>
 ```
 
 ## API reference

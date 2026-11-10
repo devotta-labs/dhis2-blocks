@@ -425,7 +425,8 @@
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
-                "devotta-labs/dhis2-blocks/label"
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/separator"
             ],
             "files": [
                 {

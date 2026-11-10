@@ -107,6 +107,7 @@ const router = createBrowserRouter([
                         '/blocks/dropdown-menu',
                         './pages/blocks/dropdown-menu.mdx'
                     ),
+                    docRoute('/blocks/field', './pages/blocks/field.mdx'),
                     docRoute('/blocks/input', './pages/blocks/input.mdx'),
                     docRoute('/blocks/select', './pages/blocks/select.mdx'),
                     docRoute('/blocks/table', './pages/blocks/table.mdx'),

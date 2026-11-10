@@ -40,6 +40,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                     },
                     { title: 'Dialog', href: '/blocks/dialog' },
                     { title: 'Dropdown Menu', href: '/blocks/dropdown-menu' },
+                    { title: 'Field', href: '/blocks/field' },
                     { title: 'Input', href: '/blocks/input' },
                     { title: 'Input Group', href: '/blocks/input-group' },
                     { title: 'Popover', href: '/blocks/popover' },

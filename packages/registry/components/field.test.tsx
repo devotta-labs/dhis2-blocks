@@ -17,7 +17,10 @@ import {
     FieldControl,
     FieldDescription,
     FieldError,
+    FieldItem,
     FieldLabel,
+    FieldLegend,
+    FieldSet,
 } from './field'
 import { Input } from './input'
 import { InputGroup, InputGroupTextarea } from './input-group'
@@ -136,40 +139,85 @@ test('links a RadioGroup', async () => {
     await expectLinked(page.getByRole('radiogroup', { name: 'Name' }))
 })
 
-test('names and describes each radio in its own horizontal field', async () => {
+test('names a radio group by its legend and each radio by its own label', async () => {
     await render(
-        <RadioGroup aria-label="Spacing">
-            <Field orientation="horizontal">
-                <RadioGroupItem value="compact" />
-                <FieldContent>
-                    <FieldLabel>Compact</FieldLabel>
-                    <FieldDescription>Fits more on screen.</FieldDescription>
-                </FieldContent>
-            </Field>
-            <Field orientation="horizontal">
-                <RadioGroupItem value="comfortable" />
-                <FieldContent>
-                    <FieldLabel>Comfortable</FieldLabel>
-                    <FieldDescription>Room to read.</FieldDescription>
-                </FieldContent>
-            </Field>
-        </RadioGroup>
+        <Field invalid>
+            <FieldSet render={<RadioGroup />}>
+                <FieldLegend variant="label">Test result</FieldLegend>
+                <FieldItem>
+                    <RadioGroupItem value="POS" />
+                    <FieldLabel>Positive</FieldLabel>
+                </FieldItem>
+                <FieldItem>
+                    <RadioGroupItem value="INV" />
+                    <FieldContent>
+                        <FieldLabel>Invalid</FieldLabel>
+                        <FieldDescription>Repeat the test.</FieldDescription>
+                    </FieldContent>
+                </FieldItem>
+            </FieldSet>
+            <FieldDescription>Shown on the card</FieldDescription>
+            <FieldError>Enter a name</FieldError>
+        </Field>
     )
-    const compact = page.getByRole('radio', { name: 'Compact' })
+    await expectLinked(page.getByRole('radiogroup', { name: 'Test result' }))
+    const invalid = page.getByRole('radio', { name: 'Invalid' })
+    await expect.element(invalid).toHaveAttribute('aria-invalid', 'true')
     await expect
-        .element(compact)
-        .toHaveAccessibleDescription('Fits more on screen.')
+        .element(invalid)
+        .toHaveAccessibleDescription(/Repeat the test\./)
+    await userEvent.click(page.getByText('Repeat the test.'))
+    await expect.element(invalid).not.toBeChecked()
+    await userEvent.click(page.getByText('Positive'))
     await expect
-        .element(page.getByRole('radio', { name: 'Comfortable' }))
-        .toHaveAccessibleDescription('Room to read.')
-    await userEvent.click(page.getByText('Room to read.'))
-    await expect
-        .element(page.getByRole('radio', { name: 'Comfortable' }))
-        .not.toBeChecked()
-    await userEvent.click(page.getByText('Comfortable', { exact: true }))
-    await expect
-        .element(page.getByRole('radio', { name: 'Comfortable' }))
+        .element(page.getByRole('radio', { name: 'Positive' }))
         .toBeChecked()
+})
+
+test('names a checkbox list by its legend and keeps its field invalid', async () => {
+    await render(
+        <Field invalid>
+            <FieldSet>
+                <FieldLegend variant="label">Symptoms</FieldLegend>
+                <FieldItem>
+                    <Checkbox />
+                    <FieldLabel>Fever</FieldLabel>
+                </FieldItem>
+                <FieldItem>
+                    <Checkbox />
+                    <FieldLabel>Cough</FieldLabel>
+                </FieldItem>
+            </FieldSet>
+        </Field>
+    )
+    await expect
+        .element(page.getByRole('group', { name: 'Symptoms' }))
+        .toBeVisible()
+    const cough = page.getByRole('checkbox', { name: 'Cough' })
+    await expect.element(cough).toHaveAttribute('aria-invalid', 'true')
+    await userEvent.click(page.getByText('Cough'))
+    await expect.element(cough).toBeChecked()
+})
+
+test('names a fieldset of fields by its legend', async () => {
+    await render(
+        <FieldSet>
+            <FieldLegend>Home location</FieldLegend>
+            <Field>
+                <FieldLabel>Latitude</FieldLabel>
+                <Input />
+            </Field>
+            <Field>
+                <FieldLabel>Longitude</FieldLabel>
+                <Input />
+            </Field>
+        </FieldSet>
+    )
+    const group = page.getByRole('group', { name: 'Home location' })
+    await expect.element(group).toBeVisible()
+    await expect
+        .element(group.getByRole('textbox', { name: 'Longitude' }))
+        .toBeVisible()
 })
 
 test('links a Checkbox', async () => {

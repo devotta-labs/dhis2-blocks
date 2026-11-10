@@ -2,7 +2,10 @@ import {
     Field,
     FieldContent,
     FieldDescription,
+    FieldItem,
     FieldLabel,
+    FieldLegend,
+    FieldSet,
 } from '@/components/dhis2/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
 
@@ -26,13 +29,11 @@ const referrals = [
 
 /** Options that need a line of explanation: where to refer a patient. */
 const RadioGroupDescription = () => (
-    <div className="flex flex-col gap-3">
-        <p id="referral" className="m-0 text-sm font-medium">
-            Referral
-        </p>
-        <RadioGroup aria-labelledby="referral" className="w-fit">
+    <Field className="w-fit">
+        <FieldSet render={<RadioGroup />}>
+            <FieldLegend variant="label">Referral</FieldLegend>
             {referrals.map((referral) => (
-                <Field key={referral.value} orientation="horizontal">
+                <FieldItem key={referral.value}>
                     <RadioGroupItem value={referral.value} />
                     <FieldContent>
                         <FieldLabel>{referral.label}</FieldLabel>
@@ -40,10 +41,10 @@ const RadioGroupDescription = () => (
                             {referral.description}
                         </FieldDescription>
                     </FieldContent>
-                </Field>
+                </FieldItem>
             ))}
-        </RadioGroup>
-    </div>
+        </FieldSet>
+    </Field>
 )
 
 export default RadioGroupDescription

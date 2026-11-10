@@ -2,13 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { memo, useMemo, useState } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind, Field } from '@/components/dhis2-value-types'
-import type { CellAnnotations } from '../model/annotations'
-import type { CellState } from '../model/types'
-import {
-    useCellView,
-    useSpreadsheetContext,
-    useViewOf,
-} from '../provider/context'
+import { useCellView, useSpreadsheetContext } from '../provider/context'
 import type { CellView } from '../provider/context'
 import { cellDomId } from './cellProps'
 import type { CellComponent, CellOverrides, CellProps } from './cellProps'
@@ -141,18 +135,12 @@ export const Cell = memo(function Cell({
     )
 })
 
-/** `Cell` in a grid's row, which reads the states and effects of all its cells and hands each cell its own. */
+/** A grid cell, which subscribes to its own state and effects. */
 export const RowCell = memo(function RowCell({
     closedReason,
-    cell,
-    effects,
     ...props
-}: CellProps & {
-    closedReason?: string
-    cell: CellState
-    effects: CellAnnotations
-}) {
-    const view = useViewOf(props.cellKey, cell, effects)
+}: CellProps & { closedReason?: string }) {
+    const view = useCellView(props.cellKey)
     return closedReason === undefined ? (
         <OpenCell {...props} view={view} />
     ) : (

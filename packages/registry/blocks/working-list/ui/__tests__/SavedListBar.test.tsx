@@ -3,7 +3,6 @@ import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { SavedListBar } from '../SavedListBar'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const generatedList: WorkingListSavedView = {
     id: 'active',
@@ -49,15 +48,7 @@ const renderBar = async (options: RenderBarOptions = {}) => {
         onDelete: vi.fn(),
     }
     const screen = await render(
-        <WorkingListTextProvider
-            translate={(message, values) =>
-                Object.entries(values ?? {}).reduce(
-                    (translated, [key, value]) =>
-                        translated.replace(`{{${key}}}`, String(value)),
-                    message
-                )
-            }
-        >
+        <>
             <SavedListBar
                 lists={lists}
                 selectedId={options.selectedId}
@@ -66,7 +57,7 @@ const renderBar = async (options: RenderBarOptions = {}) => {
                 busy={options.busy ?? false}
                 {...callbacks}
             />
-        </WorkingListTextProvider>
+        </>
     )
 
     return { callbacks, screen }

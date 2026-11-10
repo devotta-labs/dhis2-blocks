@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useRef, useState } from 'react'
@@ -23,7 +24,6 @@ import {
     ToggleGroup,
     ToggleGroupItem,
 } from '@/components/dhis2/ui/toggle-group'
-import { useWorkingListText } from '../WorkingListText'
 
 interface SavedListBarProps {
     lists: readonly WorkingListSavedView[]
@@ -48,7 +48,6 @@ export const SavedListBar = ({
     onShare,
     onDelete,
 }: SavedListBarProps) => {
-    const i18n = { t: useWorkingListText() }
     // The actions menu lines up with the whole pill, not just its trigger.
     const pillElements = useRef(new Map<string, HTMLElement>())
     const [deleteList, setDeleteList] = useState<WorkingListSavedView>()
@@ -56,12 +55,16 @@ export const SavedListBar = ({
         if (!list.generated) {
             return list.name
         }
-        const names = new Map([
-            ['active', i18n.t('Active enrollments')],
-            ['completed', i18n.t('Completed enrollments')],
-            ['cancelled', i18n.t('Cancelled enrollments')],
-        ])
-        return names.get(list.id) ?? list.name
+        switch (list.id) {
+            case 'active':
+                return i18n.t('Active enrollments')
+            case 'completed':
+                return i18n.t('Completed enrollments')
+            case 'cancelled':
+                return i18n.t('Cancelled enrollments')
+            default:
+                return list.name
+        }
     }
     const savedListLocked = !online || busy
 

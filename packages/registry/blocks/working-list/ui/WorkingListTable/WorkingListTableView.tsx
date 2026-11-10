@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type {
     WorkingListDisplayRow,
@@ -13,7 +14,7 @@ import {
     TableRow,
 } from '@/components/dhis2/ui/table'
 import { SkeletonBlock } from '../Skeleton'
-import { useWorkingListText } from '../WorkingListText'
+
 import { WorkingListPagination } from './WorkingListPagination'
 
 // Reserve the native scrollbar gutter before the columns are known.
@@ -217,7 +218,6 @@ export const WorkingListTableView = ({
     onPageSizeChange,
     onRowOpen,
 }: WorkingListTableViewProps) => {
-    const i18n = { t: useWorkingListText() }
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const interactive = Boolean(onRowOpen)
     const openRow = (row: WorkingListDisplayRow) => onRowOpen?.(row)

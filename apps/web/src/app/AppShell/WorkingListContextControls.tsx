@@ -9,7 +9,7 @@ import {
 } from '@/components/context-selector'
 import type { ReactNode } from 'react'
 import React from 'react'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 
 interface WorkingListContextControlsProps {
     onClear: () => void

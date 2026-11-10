@@ -1982,16 +1982,6 @@
                     "target": "@components/working-list/ui/WorkingListTable/index.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/working-list/ui/WorkingListText/WorkingListText.tsx",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/WorkingListText/WorkingListText.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/working-list/ui/WorkingListText/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/working-list/ui/WorkingListText/index.ts"
-                },
-                {
                     "path": "packages/registry/blocks/working-list/ui/index.ts",
                     "type": "registry:file",
                     "target": "@components/working-list/ui/index.ts"

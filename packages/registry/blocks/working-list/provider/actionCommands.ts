@@ -17,7 +17,7 @@ import type {
     CellFormattingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+
 import {
     canCommitMutationBaseline,
     isCurrentSelection,
@@ -84,7 +84,7 @@ interface CreateWorkingListActionsOptions {
     ) => void
     stagePagination: (next: WorkingListPagination) => void
     store: WorkingListProviderStore
-    translate: WorkingListTranslate
+
     updateStore: (
         update: (
             current: WorkingListProviderStoreState
@@ -109,7 +109,6 @@ export const createWorkingListActions = ({
     setMutation,
     stagePagination,
     store,
-    translate,
     updateStore,
     validateAndCommit,
 }: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
@@ -516,7 +515,6 @@ export const createWorkingListActions = ({
                 columns: runtime.activeState.configuration.columns,
                 fields,
                 formattingContext: runtime.formattingContext,
-                translate,
                 fileName: `${runtime.program.displayName}-working-list.csv`,
             })
             return Result.ok()

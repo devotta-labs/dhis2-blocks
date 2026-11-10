@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
@@ -22,7 +23,6 @@ import {
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
-import { useWorkingListText } from '../WorkingListText'
 
 const visibleFiltersForConfiguration = (
     configuration: WorkingListConfiguration,
@@ -62,7 +62,6 @@ const withAppliedFilterIds = (
 }
 
 const FiltersControl = () => {
-    const translate = useWorkingListText()
     const configuration = useWorkingListState((state) => state.configuration)
     const actions = useWorkingListActions()
     const {
@@ -247,7 +246,7 @@ const FiltersControl = () => {
                                 key={field.id}
                                 client={client}
                                 field={field}
-                                prefix={`${currentStage?.displayName ?? ''} / ${fieldDisplayName(field, translate)}`}
+                                prefix={`${currentStage?.displayName ?? ''} / ${fieldDisplayName(field)}`}
                                 filter={resolvedFilter(field)}
                                 capabilities={capabilities}
                                 validationContext={serializationContext}
@@ -280,7 +279,6 @@ export const WorkingListFilterControls = ({
     className,
     ...props
 }: WorkingListFilterControlsProps) => {
-    const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )
@@ -301,7 +299,7 @@ export const WorkingListFilterControls = ({
                     disabled
                 >
                     <IconFilter16 />
-                    {translate('Filter')}
+                    {i18n.t('Filter')}
                 </Button>
             )}
         </div>

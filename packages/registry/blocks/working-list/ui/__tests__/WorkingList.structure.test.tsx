@@ -12,7 +12,7 @@ import { createWorkingListProviderStore } from '../../provider/store'
 import { WorkingListContainer } from '../Container'
 import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
-import { WorkingListTextProvider } from '../WorkingListText'
+
 import { WorkingListTableSkeleton } from '../WorkingListTable'
 
 vi.mock('../SavedViews', () => ({
@@ -57,9 +57,9 @@ const meta = (lifecycle: WorkingListMeta['lifecycle']): WorkingListMeta => ({
 describe('WorkingList structural components', () => {
     it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <WorkingListTableSkeleton pageSize={15} />
-            </WorkingListTextProvider>
+            </>
         )
 
         expect(
@@ -82,7 +82,7 @@ describe('WorkingList structural components', () => {
             meta({ status: 'pending' })
         )
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>
                     <WorkingListViewSwitcher
                         className="views-class"
@@ -99,7 +99,7 @@ describe('WorkingList structural components', () => {
                         data-consumer="table"
                     />
                 </WorkingListPublicContext.Provider>
-            </WorkingListTextProvider>
+            </>
         )
 
         await expect
@@ -146,13 +146,13 @@ describe('WorkingList structural components', () => {
             meta({ status: 'pending' })
         )
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>
                     <WorkingListContainer>
                         <span data-testid="composed-child">Child</span>
                     </WorkingListContainer>
                 </WorkingListPublicContext.Provider>
-            </WorkingListTextProvider>
+            </>
         )
 
         await expect

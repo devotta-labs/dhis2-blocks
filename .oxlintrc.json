@@ -16,12 +16,36 @@
         "apps/docs/src/components/ui/**",
         "apps/docs/src/hooks/use-highlighted-code.ts",
         "apps/docs/src/lib/highlighter.tsx",
-        "tools/oxlint/anti-slop/**"
+        "tools/oxlint/anti-slop/**",
+        "tools/oxlint/dhis2/**"
     ],
     "jsPlugins": [
         {
             "name": "anti-slop",
             "specifier": "./tools/oxlint/anti-slop/index.ts"
+        },
+        {
+            "name": "dhis2",
+            "specifier": "./tools/oxlint/dhis2/index.ts"
+        }
+    ],
+    "overrides": [
+        {
+            "files": [
+                "packages/registry/blocks/**/*.{ts,tsx}",
+                "packages/registry/components/**/*.{ts,tsx}",
+                "apps/web/src/**/*.{ts,tsx}"
+            ],
+            "rules": { "dhis2/inline-translations": "error" }
+        },
+        {
+            "files": [
+                "**/*.test.{ts,tsx}",
+                "**/*.spec.{ts,tsx}",
+                "**/__tests__/**",
+                "apps/web/src/locales/**"
+            ],
+            "rules": { "dhis2/inline-translations": "off" }
         }
     ],
     "rules": {

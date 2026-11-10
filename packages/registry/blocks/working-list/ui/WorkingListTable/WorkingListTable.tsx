@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { IconWarningFilled16 } from '@dhis2/ui-icons'
 import {
     columnOrderingFeature,
@@ -33,7 +34,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/dhis2/ui/tooltip'
-import { useWorkingListText } from '../WorkingListText'
+
 import {
     WorkingListTableView,
     type WorkingListTableViewModel,
@@ -78,7 +79,6 @@ const invalidCellText = (
 }
 
 const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
-    const t = useWorkingListText()
     return (
         <Tooltip>
             <TooltipTrigger
@@ -87,9 +87,12 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
                         className="inline-flex items-center text-[#b93d2e]"
                         role="img"
                         data-testid={`row-issues-${row.id}`}
-                        aria-label={t('Row has {{count}} data quality issues', {
-                            count: row.issues.length,
-                        })}
+                        aria-label={i18n.t(
+                            'Row has {{count}} data quality issues',
+                            {
+                                count: row.issues.length,
+                            }
+                        )}
                     />
                 }
             >
@@ -109,7 +112,6 @@ const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
 }
 
 const CellValue = ({ display }: { display: CellDisplayValue }) => {
-    const t = useWorkingListText()
     switch (display.kind) {
         case 'empty':
             return null
@@ -144,7 +146,7 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
                     target="_blank"
                 >
                     <img
-                        alt={display.alt || t('Image attachment')}
+                        alt={display.alt || i18n.t('Image attachment')}
                         className="block h-10 w-14 rounded-[3px] border border-[#d5dde5] bg-[#f3f5f7] object-cover"
                         loading="lazy"
                         src={display.previewHref}
@@ -154,10 +156,13 @@ const CellValue = ({ display }: { display: CellDisplayValue }) => {
         case 'coordinate':
             return (
                 <span
-                    title={t('Latitude {{latitude}}, longitude {{longitude}}', {
-                        latitude: display.latitude,
-                        longitude: display.longitude,
-                    })}
+                    title={i18n.t(
+                        'Latitude {{latitude}}, longitude {{longitude}}',
+                        {
+                            latitude: display.latitude,
+                            longitude: display.longitude,
+                        }
+                    )}
                 >
                     {display.text}
                 </span>
@@ -207,13 +212,12 @@ export const WorkingListDataTable = ({
     onRowOpen,
     onSortChange,
 }: WorkingListDataTableProps) => {
-    const translate = useWorkingListText()
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const columns = useMemo(() => {
         const fieldColumns = allFields.map((field) =>
             columnHelper.accessor((row) => row.values[field.id], {
                 id: field.id,
-                header: fieldDisplayName(field, translate),
+                header: fieldDisplayName(field),
                 enableSorting: true,
                 cell: (context) => {
                     const cellValue = context.row.original.values[field.id]
@@ -224,7 +228,7 @@ export const WorkingListDataTable = ({
                         <CellValue
                             display={getCellDisplayValue(
                                 cellValue?.value,
-                                localizedField(field, translate),
+                                localizedField(field),
                                 formattingContext
                             )}
                         />
@@ -240,7 +244,7 @@ export const WorkingListDataTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className="sr-only">{translate('Data quality')}</span>
+                    <span className="sr-only">{i18n.t('Data quality')}</span>
                 ),
                 enableSorting: false,
                 cell: (context) =>
@@ -249,7 +253,7 @@ export const WorkingListDataTable = ({
                     ) : null,
             }),
         ])
-    }, [allFields, formattingContext, showIssuesColumn, translate])
+    }, [allFields, formattingContext, showIssuesColumn])
 
     const columnOrder = useMemo(
         () =>

@@ -1,0 +1,47 @@
+diff --git a/src/index.d.ts b/src/index.d.ts
+index 3214ac93136677788e436bd5fe0ec4a84d7b13f0..70881b6a7f52c692af1d582b2d05d55c1b71b96b 100644
+--- a/src/index.d.ts
++++ b/src/index.d.ts
+@@ -9,6 +9,11 @@ import type { UserConfig } from 'vite'
+  * @see https://developers.dhis2.org/docs/app-platform/config/d2-config-js-reference
+  */
+ export type D2Config = Partial<{
++    /** Extra source directories to extract alongside src, relative to the app. */
++    i18n: {
++        additionalSourcePaths?: string[]
++    }
++
+     /**
+      * The ID of the app on the App Hub (https://apps.dhis2.org). Used when publishing the app to the App Hub with d2 app scripts publish. See this guide to learn how to set up continuous delivery.
+      *
+diff --git a/src/lib/i18n/extract.js b/src/lib/i18n/extract.js
+index 87c9c8917274e2d3d950f984bcf05367fd1d08c3..78accb13fcb25eb2ef429be57ae35c626674d8dc 100644
+--- a/src/lib/i18n/extract.js
++++ b/src/lib/i18n/extract.js
+@@ -17,7 +17,17 @@ const extract = async ({ input, output, paths, isApp }) => {
+ 
+     reporter.debug(`[i18n-extract] Reading ${chalk.bold(relativeInput)}...`)
+ 
+-    const files = walkDirectory(input)
++    const config = fs.existsSync(paths.config) ? parseConfig(paths) : undefined
++    const additionalSources = config?.i18n?.additionalSourcePaths || []
++    const sourcePaths = [input, ...additionalSources.map((source) =>
++        path.resolve(paths.base, source)
++    )]
++    if (sourcePaths.some((source) => !checkDirectoryExists(source))) {
++        reporter.error('An i18n source directory does not exist.')
++        return false
++    }
++    const files = [...new Set(sourcePaths.flatMap((source) => walkDirectory(source)))]
++        .filter((file) => !/[/\\]__tests__[/\\]|\.(test|spec)\.[jt]sx?$/.test(file))
+     if (files.length === 0) {
+         reporter.error(
+             `Directory ${chalk.bold(relativeInput)} has no files to translate.`
+@@ -29,6 +39,7 @@ const extract = async ({ input, output, paths, isApp }) => {
+     var parser = new scanner.Parser({
+         keepRemoved: false,
+         keySeparator: false,
++        nsSeparator: false,
+         sort: true,
+         defaultValue: (lng, ns, key, options) =>
+             options.defaultValue ? options.defaultValue : key,

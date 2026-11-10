@@ -11,7 +11,6 @@ import { WorkingListToolbarActions } from '../Actions'
 import { WorkingListColumnSelector } from '../Columns'
 import { WorkingListFilterControls } from '../Filters'
 import { WorkingListToolbar } from '../Toolbar'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const actions: WorkingListActionsContract = {
     setFilter: () => Result.ok(),
@@ -53,7 +52,7 @@ describe('working-list unavailable toolbar', () => {
     it('keeps familiar configuration controls visible and disabled', async () => {
         const store = createWorkingListProviderStore(unavailableMeta)
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <WorkingListPublicContext.Provider value={{ store, actions }}>
                     <WorkingListToolbar>
                         <WorkingListColumnSelector
@@ -70,7 +69,7 @@ describe('working-list unavailable toolbar', () => {
                         />
                     </WorkingListToolbar>
                 </WorkingListPublicContext.Provider>
-            </WorkingListTextProvider>
+            </>
         )
         const toolbar = screen.getByRole('toolbar', {
             name: 'Working list controls',

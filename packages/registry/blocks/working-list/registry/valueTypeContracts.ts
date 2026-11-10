@@ -151,26 +151,10 @@ export interface ValueTypeDefinition {
     ): FilterValue
 }
 
-const interpolateTemplate = (
-    template: string,
-    values?: Record<string, string | number>
-) =>
-    template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
-        values && key in values ? String(values[key]) : match
-    )
-
-/**
- * A server value failed its value-type contract. Carries the untranslated
- * message template and values so consumers can localize the message.
- */
+/** A server value failed its value-type contract. */
 export class ValueParseError extends Error {
-    readonly template: string
-    readonly values?: Record<string, string | number>
-
-    constructor(template: string, values?: Record<string, string | number>) {
-        super(interpolateTemplate(template, values))
+    constructor(message: string) {
+        super(message)
         this.name = 'ValueParseError'
-        this.template = template
-        this.values = values
     }
 }

@@ -38,25 +38,16 @@ describe('filter control policy', () => {
     })
 
     it('localizes generated system labels but preserves metadata display names', () => {
-        const translate = (message: string) => `translated:${message}`
-        const system = localizedField(optionField('system'), translate)
-        const metadata = localizedField(
-            optionField('trackedEntityAttribute'),
-            translate
-        )
-        const metadataSystem = localizedField(
-            {
-                ...optionField('system'),
-                displayName: 'TB visit date',
-                displayNameIsMetadata: true,
-            },
-            translate
-        )
+        const system = localizedField(optionField('system'))
+        const metadata = localizedField(optionField('trackedEntityAttribute'))
+        const metadataSystem = localizedField({
+            ...optionField('system'),
+            displayName: 'TB visit date',
+            displayNameIsMetadata: true,
+        })
 
-        expect(fieldDisplayName(system, translate)).toBe(
-            'translated:Event status'
-        )
-        expect(system.options?.[0]?.displayName).toBe('translated:Active')
+        expect(fieldDisplayName(system)).toBe('Event status')
+        expect(system.options?.[0]?.displayName).toBe('Active')
         expect(metadata.displayName).toBe('Gender')
         expect(metadata.options?.[0]?.displayName).toBe('Active')
         expect(metadataSystem.displayName).toBe('TB visit date')

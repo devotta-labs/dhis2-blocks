@@ -227,7 +227,6 @@ const renderInList = (
         },
         systemInfo,
         locale: 'en',
-        translate: (message: string) => message,
     }
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },

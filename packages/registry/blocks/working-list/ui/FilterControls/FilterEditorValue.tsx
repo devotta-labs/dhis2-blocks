@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -11,10 +12,7 @@ import {
 import type { FilterEditorKind } from '../../registry/valueTypes'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
+
 import { CalendarRangeFields } from './CalendarRangeFields'
 import {
     ComboboxField,
@@ -30,23 +28,30 @@ import {
     UserFilterSelect,
 } from './ReferenceFilterSelects'
 
-const relativePeriodOptions = (
-    translate: WorkingListTranslate
-): SelectFieldOption<RelativeDatePeriod>[] => {
-    const labels = {
-        TODAY: translate('Today'),
-        THIS_WEEK: translate('This week'),
-        LAST_WEEK: translate('Last week'),
-        THIS_MONTH: translate('This month'),
-        LAST_MONTH: translate('Last month'),
-        LAST_3_MONTHS: translate('Last three months'),
-        THIS_YEAR: translate('This year'),
-    } satisfies Record<RelativeDatePeriod, string>
-    return RELATIVE_DATE_PERIODS.map((value) => ({
-        value,
-        label: labels[value],
-    }))
+const relativePeriodLabel = (period: RelativeDatePeriod): string => {
+    switch (period) {
+        case 'TODAY':
+            return i18n.t('Today')
+        case 'THIS_WEEK':
+            return i18n.t('This week')
+        case 'LAST_WEEK':
+            return i18n.t('Last week')
+        case 'THIS_MONTH':
+            return i18n.t('This month')
+        case 'LAST_MONTH':
+            return i18n.t('Last month')
+        case 'LAST_3_MONTHS':
+            return i18n.t('Last three months')
+        case 'THIS_YEAR':
+            return i18n.t('This year')
+    }
 }
+
+const relativePeriodOptions = (): SelectFieldOption<RelativeDatePeriod>[] =>
+    RELATIVE_DATE_PERIODS.map((value) => ({
+        value,
+        label: relativePeriodLabel(value),
+    }))
 
 export const EditorValue = ({
     client,
@@ -65,8 +70,6 @@ export const EditorValue = ({
     calendarContext: FilterCalendarContext
     onChange: (value: FilterValue) => void
 }) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     if (field.id === 'assignedUser' || field.id === 'eventAssignedUser') {
         const assignee =
             value.kind === 'assignee'
@@ -106,7 +109,7 @@ export const EditorValue = ({
         const values = value.kind === 'options' ? value.values : []
         const optionItems = field.options.map((option) => ({
             value: option.code,
-            label: optionDisplayName(field, option, translate),
+            label: optionDisplayName(field, option),
         }))
         // Tracker supports multiple option-set values on capable servers, but
         // Capture's system status filters are intentionally single-valued.
@@ -261,7 +264,7 @@ export const EditorValue = ({
                                 dataTest={`relative-period-${field.id}`}
                                 label={i18n.t('Relative period')}
                                 value={date.period}
-                                options={relativePeriodOptions(translate)}
+                                options={relativePeriodOptions()}
                                 onChange={(period) =>
                                     onChange({
                                         kind: 'dateRange',

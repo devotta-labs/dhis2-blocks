@@ -28,7 +28,7 @@ import {
 } from '../organisationUnitScope'
 import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 import {
     AppRuntimeConfigSchema,
     CurrentUserSchema,

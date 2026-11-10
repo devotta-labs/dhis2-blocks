@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { Button } from '@/components/dhis2/ui/button'
 import { DropdownMenuTriggerArrow } from '@/components/dhis2/ui/dropdown-menu'
@@ -6,7 +7,6 @@ import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import type {
     CreateViewError,
-    DownloadVisibleRowsError,
     UpdateSelectedViewError,
 } from '../../provider/errors'
 import {
@@ -15,71 +15,39 @@ import {
 } from '../../provider/WorkingListContext'
 import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
 import { ConfigureMenu } from '../ConfigureMenu'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
 
 type SaveError = CreateViewError | UpdateSelectedViewError
 
-type ActionCopy = (translate: WorkingListTranslate) => string
-
-const actionCopy = {
-    controls: {
-        saveView: (translate) => translate('Save view'),
-        more: (translate) => translate('More'),
-    },
-    noticeTitles: {
-        save: (translate) => translate('Could not save the working list'),
-        download: (translate) => translate('Could not download data'),
-    },
-    saveErrors: {
-        OfflineMutationError: (translate) =>
-            translate('This action is unavailable while offline.'),
-        WorkingListNetworkError: (translate) =>
-            translate(
+const saveErrorCopy = (error: SaveError): string => {
+    switch (error._tag) {
+        case 'OfflineMutationError':
+            return i18n.t('This action is unavailable while offline.')
+        case 'WorkingListNetworkError':
+            return i18n.t(
                 'A network error stopped the request. Check the connection and try again.'
-            ),
-        WorkingListInvalidResponseError: (translate) =>
-            translate('The server returned an unexpected response.'),
-        SavedListPermissionError: (translate) =>
-            translate('You do not have permission to make this change.'),
-        SavedListNotFoundError: (translate) =>
-            translate(
+            )
+        case 'WorkingListInvalidResponseError':
+            return i18n.t('The server returned an unexpected response.')
+        case 'SavedListPermissionError':
+            return i18n.t('You do not have permission to make this change.')
+        case 'SavedListNotFoundError':
+            return i18n.t(
                 'The working list could not be found. It may have been deleted.'
-            ),
-        IncompatibleSavedListError: (translate) =>
-            translate('Repair this working list before saving changes to it.'),
-        NoSelectedSavedListError: (translate) =>
-            translate('Select a saved working list before updating it.'),
-        InvalidConfigurationError: (translate) =>
-            translate(
+            )
+        case 'IncompatibleSavedListError':
+            return i18n.t(
+                'Repair this working list before saving changes to it.'
+            )
+        case 'NoSelectedSavedListError':
+            return i18n.t('Select a saved working list before updating it.')
+        case 'InvalidConfigurationError':
+            return i18n.t(
                 'The current working list configuration cannot be saved.'
-            ),
-    },
-    downloadErrors: {
-        DownloadVisibleRowsError: (translate) =>
-            translate(
-                'The results are still loading. Try the download again once they have loaded.'
-            ),
-    },
-} satisfies {
-    controls: Record<'saveView' | 'more', ActionCopy>
-    noticeTitles: Record<'save' | 'download', ActionCopy>
-    saveErrors: Record<SaveError['_tag'], ActionCopy>
-    downloadErrors: Record<DownloadVisibleRowsError['_tag'], ActionCopy>
+            )
+    }
 }
 
-const saveErrorCopy = (error: SaveError, translate: WorkingListTranslate) =>
-    actionCopy.saveErrors[error._tag](translate)
-
-const downloadErrorCopy = (
-    error: DownloadVisibleRowsError,
-    translate: WorkingListTranslate
-) => actionCopy.downloadErrors[error._tag](translate)
-
 const ActionsControl = () => {
-    const translate = useWorkingListText()
     const online = useWorkingListMeta((meta) => meta.online)
     const dirty = useWorkingListMeta((meta) => meta.dirty)
     const selection = useWorkingListMeta((meta) => meta.selection)
@@ -99,22 +67,24 @@ const ActionsControl = () => {
     const saveAs = async (name: string) => {
         setSaveError(undefined)
         const result = await actions.createView(name)
-        return Result.isError(result)
-            ? saveErrorCopy(result.error, translate)
-            : undefined
+        return Result.isError(result) ? saveErrorCopy(result.error) : undefined
     }
     const update = async () => {
         setSaveError(undefined)
         const result = await actions.updateSelectedView()
         if (Result.isError(result)) {
-            setSaveError(saveErrorCopy(result.error, translate))
+            setSaveError(saveErrorCopy(result.error))
         }
     }
     const download = () => {
         setDownloadError(undefined)
         const result = actions.downloadVisibleRows()
         if (Result.isError(result)) {
-            setDownloadError(downloadErrorCopy(result.error, translate))
+            setDownloadError(
+                i18n.t(
+                    'The results are still loading. Try the download again once they have loaded.'
+                )
+            )
         }
     }
 
@@ -132,16 +102,16 @@ const ActionsControl = () => {
             />
             {saveError && (
                 <div data-testid="working-list-save-error">
-                    <ErrorAlert title={actionCopy.noticeTitles.save(translate)}>
+                    <ErrorAlert
+                        title={i18n.t('Could not save the working list')}
+                    >
                         {saveError}
                     </ErrorAlert>
                 </div>
             )}
             {downloadError && (
                 <div data-testid="working-list-download-error">
-                    <ErrorAlert
-                        title={actionCopy.noticeTitles.download(translate)}
-                    >
+                    <ErrorAlert title={i18n.t('Could not download data')}>
                         {downloadError}
                     </ErrorAlert>
                 </div>
@@ -159,7 +129,6 @@ export const WorkingListToolbarActions = ({
     className,
     ...props
 }: WorkingListToolbarActionsProps) => {
-    const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )
@@ -183,7 +152,7 @@ export const WorkingListToolbarActions = ({
                         data-test="save-working-list"
                         disabled
                     >
-                        {actionCopy.controls.saveView(translate)}
+                        {i18n.t('Save view')}
                     </Button>
                     <Button
                         variant="secondary"
@@ -192,7 +161,7 @@ export const WorkingListToolbarActions = ({
                         disabled
                     >
                         <IconMore16 />
-                        {actionCopy.controls.more(translate)}
+                        {i18n.t('More')}
                         <DropdownMenuTriggerArrow />
                     </Button>
                 </div>

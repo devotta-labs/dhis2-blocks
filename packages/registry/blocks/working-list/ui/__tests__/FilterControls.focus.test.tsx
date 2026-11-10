@@ -10,7 +10,6 @@ import {
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const field: WorkingListField = {
     id: 'followUp',
@@ -117,9 +116,9 @@ describe('MoreFilters keyboard focus', () => {
         }
 
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <StageFilterHarness />
-            </WorkingListTextProvider>
+            </>
         )
         const menuItem = (dataTest: string) =>
             page.elementLocator(
@@ -218,7 +217,7 @@ describe('MoreFilters keyboard focus', () => {
 
         const clearStage = screen
             .getByTestId('filter-programStage')
-            .getByRole('button', { name: 'Clear {{filter}} filter' })
+            .getByRole('button', { name: 'Clear Program stage filter' })
         await expect
             .element(clearStage)
             .toHaveAttribute('data-test', 'filter-programStage-select-clear')
@@ -252,7 +251,7 @@ describe('MoreFilters keyboard focus', () => {
             ],
         }
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <MoreFilters
                     fields={[field, second]}
                     visibleFilterIds={[]}
@@ -260,7 +259,7 @@ describe('MoreFilters keyboard focus', () => {
                     program={program}
                     onAdd={vi.fn()}
                 />
-            </WorkingListTextProvider>
+            </>
         )
 
         screen.getByRole('button', { name: 'Filter' }).element().focus()

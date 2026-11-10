@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { Transfer } from '@dhis2/ui'
 import React, { useMemo, useState } from 'react'
@@ -10,7 +11,6 @@ import {
     DialogTitle,
 } from '@/components/dhis2/ui/dialog'
 import { fieldDisplayName } from '../FilterControls'
-import { useWorkingListText } from '../WorkingListText'
 
 interface ColumnSettingsDialogProps {
     fields: WorkingListField[]
@@ -27,7 +27,6 @@ export const ColumnSettingsDialog = ({
     onChange,
     onClose,
 }: ColumnSettingsDialogProps) => {
-    const translate = useWorkingListText()
     const fieldIds = useMemo(
         () => new Set(fields.map((field) => field.id)),
         [fields]
@@ -40,9 +39,9 @@ export const ColumnSettingsDialog = ({
         () =>
             fields.map((field) => ({
                 value: field.id,
-                label: fieldDisplayName(field, translate),
+                label: fieldDisplayName(field),
             })),
-        [fields, translate]
+        [fields]
     )
 
     const handleChange = ({
@@ -78,11 +77,11 @@ export const ColumnSettingsDialog = ({
             <DialogContent
                 size="fluid"
                 position="middle"
-                closeLabel={translate('Close')}
+                closeLabel={i18n.t('Close')}
             >
                 <DialogHeader>
                     <DialogTitle>
-                        {translate('Configure table columns')}
+                        {i18n.t('Configure table columns')}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="min-h-0 flex-1 overflow-y-auto">
@@ -99,15 +98,15 @@ export const ColumnSettingsDialog = ({
                             selectedWidth="440px"
                             leftHeader={
                                 <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
-                                    {translate('Available columns')}
+                                    {i18n.t('Available columns')}
                                 </h4>
                             }
                             rightHeader={
                                 <h4 className="m-0 px-0 py-2.5 text-sm font-medium leading-5 text-[#405261]">
-                                    {translate('Selected columns')}
+                                    {i18n.t('Selected columns')}
                                 </h4>
                             }
-                            filterPlaceholder={translate('Filter')}
+                            filterPlaceholder={i18n.t('Filter')}
                             onChange={handleChange}
                         />
                         {showValidationError && (
@@ -115,9 +114,7 @@ export const ColumnSettingsDialog = ({
                                 className="text-sm leading-5 text-[var(--colors-red600)] [margin:12px_0_0]"
                                 role="alert"
                             >
-                                {translate(
-                                    'Select at least one visible column'
-                                )}
+                                {i18n.t('Select at least one visible column')}
                             </p>
                         )}
                     </div>
@@ -128,14 +125,14 @@ export const ColumnSettingsDialog = ({
                         data-test="column-settings-cancel"
                         onClick={onClose}
                     >
-                        {translate('Cancel')}
+                        {i18n.t('Cancel')}
                     </Button>
                     <Button
                         data-test="column-settings-done"
                         disabled={disabled}
                         onClick={save}
                     >
-                        {translate('Save column configuration')}
+                        {i18n.t('Save column configuration')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

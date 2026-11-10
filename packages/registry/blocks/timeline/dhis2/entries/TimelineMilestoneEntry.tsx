@@ -38,11 +38,11 @@ export const TimelineMilestoneEntry = ({
                 className
             )}
         >
-            <span className="font-medium text-dhis2-grey-900">
+            <span className="font-medium text-dhis2-foreground">
                 {label(entry.data.milestone, entry.data.program)}
             </span>
             {spansPrograms ? (
-                <span className="text-dhis2-grey-700">
+                <span className="text-dhis2-muted-foreground">
                     {entry.data.program?.name ?? entry.data.enrollment.program}
                 </span>
             ) : null}

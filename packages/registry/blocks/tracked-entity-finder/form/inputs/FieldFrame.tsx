@@ -23,10 +23,7 @@ export const FieldFrame = ({
     className?: string
     children: ReactNode
 }) => (
-    <Field
-        data-invalid={error ? true : undefined}
-        className={cn('gap-1', className)}
-    >
+    <Field invalid={error !== undefined} className={cn('gap-1', className)}>
         <FieldLabel htmlFor={controlId}>{label}</FieldLabel>
         {children}
         {description && <FieldDescription>{description}</FieldDescription>}

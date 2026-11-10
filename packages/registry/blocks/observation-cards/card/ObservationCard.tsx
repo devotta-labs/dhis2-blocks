@@ -80,8 +80,8 @@ function Frame({
             aria-busy={busy || undefined}
             data-tone={stale ? 'stale' : 'default'}
             className={cn(
-                'min-w-0 gap-2 border border-dhis2-grey-400 p-4 shadow-none',
-                stale && 'text-dhis2-grey-600',
+                'min-w-0 gap-2 border border-dhis2-border-strong p-4 shadow-none',
+                stale && 'text-dhis2-subtle-foreground',
                 className
             )}
         >
@@ -138,7 +138,7 @@ function LoadingContent({
 }
 
 const Notice = ({ children }: { children: ReactNode }) => (
-    <p className="text-sm text-dhis2-grey-700">{children}</p>
+    <p className="text-sm text-dhis2-muted-foreground">{children}</p>
 )
 
 /** No children: numeric readings get the trend, everything else the last recorded value. */
@@ -247,7 +247,7 @@ export function ObservationCard({
                     <p
                         role="alert"
                         data-slot="observation-config-error"
-                        className="m-0 rounded-dhis2-sm border border-dhis2-red-500 bg-dhis2-red-050 px-3 py-2 text-sm break-words text-dhis2-red-900"
+                        className="m-0 rounded-dhis2-sm border border-dhis2-destructive-border bg-dhis2-destructive-subtle px-3 py-2 text-sm break-words text-dhis2-destructive-strong"
                     >
                         {isProduction()
                             ? i18n.t("This card isn't set up correctly")

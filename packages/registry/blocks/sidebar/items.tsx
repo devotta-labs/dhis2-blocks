@@ -6,7 +6,7 @@ import React, { forwardRef, type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 
 const itemClassName =
-    'relative flex min-h-10 w-full items-center gap-2 border-0 bg-transparent py-2 pe-2 ps-3 text-start text-base leading-6 text-inherit no-underline hover:bg-dhis2-grey-800 hover:underline focus-visible:bg-dhis2-grey-800 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-grey-050 disabled:cursor-not-allowed disabled:text-dhis2-grey-500 disabled:hover:bg-transparent disabled:hover:no-underline [&_svg]:shrink-0'
+    'relative flex min-h-10 w-full items-center gap-2 border-0 bg-transparent py-2 pe-2 ps-3 text-start text-base leading-6 text-inherit no-underline hover:bg-dhis2-sidebar-accent hover:underline focus-visible:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:no-underline [&_svg]:shrink-0'
 
 export function SidebarItems({
     className,
@@ -33,7 +33,9 @@ export const SidebarLink = forwardRef<
             {
                 className: cn(
                     itemClassName,
-                    'aria-[current=page]:bg-dhis2-grey-800 aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-0 aria-[current=page]:before:start-0 aria-[current=page]:before:w-1.5 aria-[current=page]:before:bg-dhis2-teal-400',
+                    'aria-[current=page]:bg-dhis2-sidebar-accent aria-[current=page]:before:absolute aria-[current=page]:before:inset-y-0 aria-[current=page]:before:start-0 aria-[current=page]:before:w-1.5 aria-[current=page]:before:bg-dhis2-sidebar-primary',
+                    // Forced colours would flatten the bar into the background.
+                    'forced-colors:aria-[current=page]:before:bg-[LinkText] forced-colors:aria-[current=page]:before:[forced-color-adjust:none]',
                     className
                 ),
             },
@@ -94,7 +96,7 @@ export function SidebarGroupContent({
             render={<ul />}
             {...props}
             className={cn(
-                'm-0 ms-3 list-none border-s border-dhis2-grey-700 p-0',
+                'm-0 ms-3 list-none border-s border-dhis2-sidebar-border p-0',
                 className
             )}
         />

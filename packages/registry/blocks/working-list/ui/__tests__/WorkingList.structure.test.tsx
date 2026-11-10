@@ -72,7 +72,7 @@ describe('WorkingList structural components', () => {
         ).toHaveLength(4)
         expect(
             screen.container.querySelectorAll(
-                '[data-test="working-list-pagination"] button:not(:disabled)'
+                '[data-test="working-list-pagination"] button:not([data-disabled])'
             )
         ).toHaveLength(0)
     })

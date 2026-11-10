@@ -1,0 +1,1831 @@
+{
+    "programType": "WITH_REGISTRATION",
+    "categoryCombo": { "id": "bjDvmb4bfuf", "isDefault": true },
+    "expiryDays": 0,
+    "completeEventsExpiryDays": 0,
+    "displayName": "WHO RMNCH Tracker",
+    "id": "WSGAb5XwJ3Y",
+    "programStages": [
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Live born",
+                                    "displayName": "Live born"
+                                },
+                                {
+                                    "code": "Antepartum stillbirth",
+                                    "displayName": "Antepartum stillbirth"
+                                },
+                                {
+                                    "code": "Intrapartum stillbirth",
+                                    "displayName": "Intrapartum stillbirth"
+                                },
+                                {
+                                    "code": "Stillbirth of unknown timing",
+                                    "displayName": "Stillbirth of unknown timing"
+                                },
+                                {
+                                    "code": "Neonatal death",
+                                    "displayName": "Neonatal death"
+                                },
+                                {
+                                    "code": "Miscarriage",
+                                    "displayName": "Miscarriage"
+                                },
+                                {
+                                    "code": "Termination of pregnancy",
+                                    "displayName": "Termination of pregnancy"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Outcome",
+                        "id": "mrVkW9h2Rdp"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Spontaneous vaginal",
+                                    "displayName": "Spontaneous vaginal"
+                                },
+                                {
+                                    "code": "Assisted vaginal",
+                                    "displayName": "Assisted vaginal"
+                                },
+                                {
+                                    "code": "Caesarian section",
+                                    "displayName": "Caesarian section"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Mode of delivery",
+                        "id": "W4zW3aPyS0G"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "Birthweight",
+                        "id": "iwNXUX6KYX0"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "Gest. age at birth",
+                        "id": "wqpUVEeJR3D"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "None", "displayName": "None" },
+                                {
+                                    "code": "Preeclampsia",
+                                    "displayName": "Preeclampsia"
+                                },
+                                {
+                                    "code": "Preeclampsia_eclampsia",
+                                    "displayName": "Preeclampsia and eclampsia"
+                                },
+                                {
+                                    "code": "Eclampsia",
+                                    "displayName": "Eclampsia"
+                                }
+                            ]
+                        },
+                        "displayFormName": "Conditions",
+                        "id": "suhLG4CrzUw"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": false,
+            "displayName": "Previous deliveries",
+            "access": { "data": { "write": true } },
+            "id": "PUZaKR0Jh2k",
+            "repeatable": false,
+            "programStageSections": []
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Penicillin given",
+                        "id": "OhcR0fpFcWa"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Antihypertensive drug given according to national guidelines",
+                        "id": "cKBSkBB3Mt4"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "None",
+                                    "displayName": "No ARV medication plan"
+                                },
+                                {
+                                    "code": "Ongoing",
+                                    "displayName": "Ongoing ARV treatment"
+                                },
+                                {
+                                    "code": "Initiated",
+                                    "displayName": "ARV medication initiated"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Ongoing or initiated ARV regimen",
+                        "id": "nhW3SZX9JaN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Calcium supplements given ",
+                        "id": "PKZPVfAJfHD"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "HIV test result",
+                        "id": "Itl05OEupgQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Malaria prophylaxis given in second trimester",
+                        "id": "MHW5v2Iljtw"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Date of last TT dose",
+                        "id": "r3BqzOPxAjp"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Diastolic blood pressure",
+                        "id": "dyYdfamSY2Z"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Eclamptic convulsions",
+                        "id": "w7enwqzx90I"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Erythromycin given for 10 days attributable to pPROM",
+                        "id": "rHgrmXfa57b"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Clinical signs of extreme pallor",
+                        "id": "EyfTU3ibMmJ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Cephalic",
+                                    "displayName": "Cephalic"
+                                },
+                                { "code": "Breech", "displayName": "Breech" },
+                                {
+                                    "code": "Trasverse",
+                                    "displayName": "Trasverse"
+                                },
+                                { "code": "Unknown", "displayName": "Unknown" },
+                                {
+                                    "code": "Notchecked",
+                                    "displayName": "Not checked"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Fetal presentation",
+                        "id": "vPdXnmGWzfy"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "PERCENTAGE",
+                        "displayFormName": "WHOMCH Haematocrit value",
+                        "id": "X8HbdaoS9LN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Hemoglobin value",
+                        "id": "vANAXwtLwcT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of first day of LMP",
+                        "id": "w4ky6EkVahL"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Low-dose acetylsalicylic acid given as first option method of preventative therapy",
+                        "id": "OSuxnldV4Ug"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "Not assessed" },
+                                { "code": "1", "displayName": "Singleton" },
+                                { "code": "2", "displayName": "Twins" },
+                                { "code": "3", "displayName": "Triplets" },
+                                { "code": "4", "displayName": "Quadruplets" },
+                                { "code": "5", "displayName": "Five fetuses" },
+                                { "code": "6", "displayName": "Six fetuses" }
+                            ]
+                        },
+                        "displayFormName": "Assess for plurality",
+                        "id": "PN6HcGjTraL"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_ZERO_OR_POSITIVE",
+                        "displayFormName": "WHOMCH Proteinuria (concentration mg/dL)",
+                        "id": "dpiyZz8bkVE"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Proteinuria (urinstix)",
+                        "id": "a7XjFEuZuKE"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Recurrent eclamptic seizures",
+                        "id": "vTEkiy8F3yj"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH RPR test",
+                        "id": "AAaJGnWR5js"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Slept under ITN (insecticide treated bednet)",
+                        "id": "ytV9rX4ADnn"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking cessation counselling provided ",
+                        "id": "Ok9OQpitjQr"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking",
+                        "id": "sWoqcoByYmD"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Systolic blood pressure",
+                        "id": "M4HEOoEFTAT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH MgSO4 injection given",
+                        "id": "lcaG1Pnh27I"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Ultrasound estimate of due date",
+                        "id": "DecmCMPDPdS"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for moderate anemia",
+                        "id": "RxVNLSeTjto"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for severe anemia",
+                        "id": "nB4Ui3ckmUi"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid supplements given",
+                        "id": "Kb6kZzUCJi1"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "HIV counselling provided  to the HIV-negative woman",
+                        "id": "jRo4KlnCKeX"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "Erythromycin given",
+                        "id": "Js57E09s9fh"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "true", "displayName": "Yes" },
+                                { "code": "false", "displayName": "None known" }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Allergies (drugs and/or severe food allergies)",
+                        "id": "QFX1FLWBwtq"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "true", "displayName": "Yes" },
+                                { "code": "false", "displayName": "None known" }
+                            ]
+                        },
+                        "displayFormName": "A: Penicillin allergy",
+                        "id": "E6QaDtrQP5e"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "true", "displayName": "Yes" },
+                                { "code": "false", "displayName": "None known" }
+                            ]
+                        },
+                        "displayFormName": "A: Other medicine allergy",
+                        "id": "dpOtt7HUQXa"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "A: Other medicine allergy specified",
+                        "id": "VSmOcdK3v7y"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "true", "displayName": "Yes" },
+                                { "code": "false", "displayName": "None known" }
+                            ]
+                        },
+                        "displayFormName": "A: Other severe allergy",
+                        "id": "ZbDPeYzWsh2"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "A: Other severe allergy specified",
+                        "id": "zk4Eui7Jhtr"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Chronic conditions",
+                        "id": "de0FEHSIoxh"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Chronic hypertension",
+                        "id": "UQ2Zo8CruPB"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Autoimmune disease",
+                        "id": "zzGNbeMnTd6"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Diabetes",
+                        "id": "Q1x1HIhuwFN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: HIV Positive",
+                        "id": "VFffa31SKjH"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Renal disease",
+                        "id": "sdchiIXIcCf"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "CC: Other chronic condition",
+                        "id": "xPTngRLQTnu"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "CC: Other chronic condition specified",
+                        "id": "Mh7nK8UKoZP"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Medication",
+                        "id": "fNnOPQj83jz"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Use of insecticide treate bednet(ITN) is promoted",
+                        "id": "NPZPVg2rVh4"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER",
+                        "displayFormName": "Gestational age at visit",
+                        "id": "roKuXYfw1BW"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": true,
+            "displayName": "First antenatal care visit",
+            "access": { "data": { "write": true } },
+            "id": "WZbXY0S00lP",
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "de0FEHSIoxh" },
+                        { "id": "Q1x1HIhuwFN" },
+                        { "id": "UQ2Zo8CruPB" },
+                        { "id": "zzGNbeMnTd6" },
+                        { "id": "VFffa31SKjH" },
+                        { "id": "sdchiIXIcCf" },
+                        { "id": "xPTngRLQTnu" },
+                        { "id": "Mh7nK8UKoZP" },
+                        { "id": "QFX1FLWBwtq" },
+                        { "id": "E6QaDtrQP5e" },
+                        { "id": "dpOtt7HUQXa" },
+                        { "id": "VSmOcdK3v7y" },
+                        { "id": "ZbDPeYzWsh2" },
+                        { "id": "zk4Eui7Jhtr" },
+                        { "id": "fNnOPQj83jz" }
+                    ],
+                    "id": "EzhVeTS7vx4"
+                },
+                {
+                    "dataElements": [
+                        { "id": "w4ky6EkVahL" },
+                        { "id": "roKuXYfw1BW" },
+                        { "id": "DecmCMPDPdS" },
+                        { "id": "r3BqzOPxAjp" },
+                        { "id": "sWoqcoByYmD" },
+                        { "id": "ytV9rX4ADnn" },
+                        { "id": "M4HEOoEFTAT" },
+                        { "id": "dyYdfamSY2Z" },
+                        { "id": "PN6HcGjTraL" },
+                        { "id": "vPdXnmGWzfy" },
+                        { "id": "EyfTU3ibMmJ" }
+                    ],
+                    "id": "SyzhZewrUHP"
+                },
+                {
+                    "dataElements": [
+                        { "id": "dpiyZz8bkVE" },
+                        { "id": "a7XjFEuZuKE" },
+                        { "id": "X8HbdaoS9LN" },
+                        { "id": "vANAXwtLwcT" },
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "AAaJGnWR5js" }
+                    ],
+                    "id": "AyWdV7K24Ih"
+                },
+                {
+                    "dataElements": [
+                        { "id": "w7enwqzx90I" },
+                        { "id": "lcaG1Pnh27I" },
+                        { "id": "vTEkiy8F3yj" },
+                        { "id": "OhcR0fpFcWa" },
+                        { "id": "cKBSkBB3Mt4" },
+                        { "id": "nhW3SZX9JaN" },
+                        { "id": "MHW5v2Iljtw" },
+                        { "id": "OSuxnldV4Ug" },
+                        { "id": "Ok9OQpitjQr" },
+                        { "id": "RxVNLSeTjto" },
+                        { "id": "nB4Ui3ckmUi" },
+                        { "id": "Kb6kZzUCJi1" },
+                        { "id": "jRo4KlnCKeX" },
+                        { "id": "Js57E09s9fh" },
+                        { "id": "rHgrmXfa57b" },
+                        { "id": "PKZPVfAJfHD" },
+                        { "id": "NPZPVg2rVh4" }
+                    ],
+                    "id": "tR4D0m1d5A5"
+                }
+            ]
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER",
+                        "displayFormName": "Gestational age at visit",
+                        "id": "roKuXYfw1BW"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Antihypertensive drug given according to national guidelines",
+                        "id": "cKBSkBB3Mt4"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "None",
+                                    "displayName": "No ARV medication plan"
+                                },
+                                {
+                                    "code": "Ongoing",
+                                    "displayName": "Ongoing ARV treatment"
+                                },
+                                {
+                                    "code": "Initiated",
+                                    "displayName": "ARV medication initiated"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Ongoing or initiated ARV regimen",
+                        "id": "nhW3SZX9JaN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Diastolic blood pressure",
+                        "id": "dyYdfamSY2Z"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Eclamptic convulsions",
+                        "id": "w7enwqzx90I"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "accepted",
+                                    "displayName": "Offered and accepted"
+                                },
+                                {
+                                    "code": "declined",
+                                    "displayName": "Offered and declined"
+                                },
+                                {
+                                    "code": "nooffer",
+                                    "displayName": "Not offered"
+                                }
+                            ]
+                        },
+                        "displayFormName": "ECV offered by skilled birth attendant ≥ 37 weeks of gestation",
+                        "id": "QM5d0hfSbKk"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "ECV performed by skilled birth attendant ≥ 37 weeks of gestation",
+                        "id": "DCUDZxqOxUo"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Erythromycin given for 10 days attributable to pPROM",
+                        "id": "rHgrmXfa57b"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Cephalic",
+                                    "displayName": "Cephalic"
+                                },
+                                { "code": "Breech", "displayName": "Breech" },
+                                {
+                                    "code": "Trasverse",
+                                    "displayName": "Trasverse"
+                                },
+                                { "code": "Unknown", "displayName": "Unknown" },
+                                {
+                                    "code": "Notchecked",
+                                    "displayName": "Not checked"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Fetal presentation",
+                        "id": "vPdXnmGWzfy"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "PERCENTAGE",
+                        "displayFormName": "WHOMCH Haematocrit value",
+                        "id": "X8HbdaoS9LN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Hemoglobin value",
+                        "id": "vANAXwtLwcT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Low-dose acetylsalicylic acid given as first option method of preventative therapy",
+                        "id": "OSuxnldV4Ug"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Not offered a choice of management",
+                                    "displayName": "Not offered a choice of management"
+                                },
+                                {
+                                    "code": "Offered a choice of management a chooses induction with vaginal PGE2",
+                                    "displayName": "Offered a choice of management a chooses induction with vaginal PGE2"
+                                },
+                                {
+                                    "code": "Offered a choice of management and chooses expectant management",
+                                    "displayName": "Offered a choice of management and chooses expectant management"
+                                }
+                            ]
+                        },
+                        "displayFormName": "PROM Management",
+                        "id": "SeXllT5ypsh"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "Not assessed" },
+                                { "code": "1", "displayName": "Singleton" },
+                                { "code": "2", "displayName": "Twins" },
+                                { "code": "3", "displayName": "Triplets" },
+                                { "code": "4", "displayName": "Quadruplets" },
+                                { "code": "5", "displayName": "Five fetuses" },
+                                { "code": "6", "displayName": "Six fetuses" }
+                            ]
+                        },
+                        "displayFormName": "Assess for plurality",
+                        "id": "PN6HcGjTraL"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_ZERO_OR_POSITIVE",
+                        "displayFormName": "WHOMCH Proteinuria (concentration mg/dL)",
+                        "id": "dpiyZz8bkVE"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Proteinuria (urinstix)",
+                        "id": "a7XjFEuZuKE"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Recurrent eclamptic seizures",
+                        "id": "vTEkiy8F3yj"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH MgSO4 injection given",
+                        "id": "lcaG1Pnh27I"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Ultrasound estimate of due date",
+                        "id": "DecmCMPDPdS"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Slept under ITN (insecticide treated bednet)",
+                        "id": "ytV9rX4ADnn"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Clinical signs of extreme pallor",
+                        "id": "EyfTU3ibMmJ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "notchecked",
+                                    "displayName": "Not checked"
+                                },
+                                {
+                                    "code": "remaining",
+                                    "displayName": "Remaining"
+                                },
+                                {
+                                    "code": "notremaining",
+                                    "displayName": "Not remaining"
+                                }
+                            ]
+                        },
+                        "displayFormName": "ECV conversion remaining 1 week after ECV was performed",
+                        "id": "yTDoF5b1OhI"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Systolic blood pressure",
+                        "id": "M4HEOoEFTAT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of first day of LMP",
+                        "id": "w4ky6EkVahL"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Use of insecticide treate bednet(ITN) is promoted",
+                        "id": "NPZPVg2rVh4"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "HIV test result",
+                        "id": "Itl05OEupgQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH RPR test",
+                        "id": "AAaJGnWR5js"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking",
+                        "id": "sWoqcoByYmD"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking cessation counselling provided ",
+                        "id": "Ok9OQpitjQr"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Penicillin given",
+                        "id": "OhcR0fpFcWa"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": true,
+            "displayName": "Second antenatal care visit",
+            "access": { "data": { "write": true } },
+            "id": "edqlbukwRfQ",
+            "repeatable": true,
+            "programStageSections": []
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Penicillin given",
+                        "id": "OhcR0fpFcWa"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Blood transfusion",
+                        "id": "ez86AhQ5cqp"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH Body temperature",
+                        "id": "L6Toy2TrHHq"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "HIV test result",
+                        "id": "Itl05OEupgQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Maternal near-miss by other reason",
+                        "id": "SojR4V7A8u2"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Clinical impression of eclampsia",
+                        "id": "ALfOm7aaH6b"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "None" },
+                                { "code": "1", "displayName": "Pre-eclampsia" },
+                                {
+                                    "code": "2",
+                                    "displayName": "Severe pre-eclampsia"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Clinical impression of pre-eclampsia",
+                        "id": "Mfq2Y9N21KZ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Commencement of labour",
+                        "id": "mGHBXrtqSut"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "No" },
+                                { "code": "1", "displayName": "Suspected" },
+                                { "code": "2", "displayName": "Yes(confirmed)" }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Confirmed or suspected infection",
+                        "id": "klEz81wXFoU"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Did the patient have continuous supportive presence during labour and birth",
+                        "id": "z8m3llJYuh9"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Date of induction of labor",
+                        "id": "MH33VLmOOqm"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Spontaneous vaginal",
+                                    "displayName": "Spontaneous vaginal"
+                                },
+                                {
+                                    "code": "Assisted vaginal",
+                                    "displayName": "Assisted vaginal"
+                                },
+                                {
+                                    "code": "Caesarian section",
+                                    "displayName": "Caesarian section"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Delivery method",
+                        "id": "spkG704sTh6"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Clinical signs of extreme pallor",
+                        "id": "EyfTU3ibMmJ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH Fetal heart rate on admission",
+                        "id": "u7aAPS8OgLw"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Cephalic",
+                                    "displayName": "Cephalic"
+                                },
+                                { "code": "Breech", "displayName": "Breech" },
+                                {
+                                    "code": "Trasverse",
+                                    "displayName": "Trasverse"
+                                },
+                                { "code": "Unknown", "displayName": "Unknown" },
+                                {
+                                    "code": "Notchecked",
+                                    "displayName": "Not checked"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Fetal presentation",
+                        "id": "vPdXnmGWzfy"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "PERCENTAGE",
+                        "displayFormName": "WHOMCH Haematocrit value",
+                        "id": "X8HbdaoS9LN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Hemoglobin value",
+                        "id": "vANAXwtLwcT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH Heart rate",
+                        "id": "pwfdgeE21Os"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH HIV test results provided to patient",
+                        "id": "yq1qT0NdjYQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "0",
+                                    "displayName": "Prolonged pregnancy"
+                                },
+                                { "code": "1", "displayName": "PROM" },
+                                { "code": "2", "displayName": "Pre-eclampsia" },
+                                { "code": "3", "displayName": "Eclampsia" },
+                                { "code": "4", "displayName": "SGA" },
+                                { "code": "5", "displayName": "Macrosomi" },
+                                { "code": "6", "displayName": "Other" }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Indication for induction of labour",
+                        "id": "D1EHM01p454"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Induction of labour for prolonged pregnancy",
+                        "id": "MVIV2RGWhUq"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Induction of labour with vaginal prostaglandin performed at term",
+                        "id": "oQgcj7kV1c3"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Maternal near-miss",
+                        "id": "FIHEeJwfhZH"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Maternal near-miss by coagulation/haematological dysfunction",
+                        "id": "i9mEM7ZW7yV"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Maternal near-miss by uterine dysfunction",
+                        "id": "PQlndpI05Bb"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Meconium stained liquor",
+                        "id": "YsVHgzQCwmr"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Moderate aneamia",
+                        "id": "FYLMjPQ0wmo"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Oxytocin given immediately after birth for the prevention of PPH",
+                        "id": "BmaBjPQX8ME"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "None" },
+                                { "code": "1", "displayName": "Morphine" },
+                                {
+                                    "code": "2",
+                                    "displayName": "Pudendal block"
+                                },
+                                { "code": "3", "displayName": "Epidural" },
+                                { "code": "4", "displayName": "Spinal" }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Pain medication given",
+                        "id": "HUfKCOou7de"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Partograph used",
+                        "id": "VXdfPQRXKiA"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "1", "displayName": "Live birth" },
+                                { "code": "0", "displayName": "Stillbirth" },
+                                {
+                                    "code": "2",
+                                    "displayName": "Termination of pregnancy"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Pregnancy outcome",
+                        "id": "V5PR8Kw8ZnC"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_NEGATIVE",
+                        "displayFormName": "WHOMCH Respiratory rate",
+                        "id": "Spl22QJsWeu"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Retained placenta",
+                        "id": "PCiOYWXZq2E"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Severe anaemia",
+                        "id": "AXuzjgLsBy3"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Smoking",
+                        "id": "sWoqcoByYmD"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Unknown status or unimmunized",
+                                    "displayName": "Unknown status or unimmunized"
+                                },
+                                {
+                                    "code": "Sufficiently immunized",
+                                    "displayName": "Sufficiently immunized"
+                                },
+                                {
+                                    "code": ">=28 days since TT1",
+                                    "displayName": ">=28 days since TT1"
+                                },
+                                {
+                                    "code": ">=180 days since TT2",
+                                    "displayName": ">=180 days since TT2"
+                                },
+                                {
+                                    "code": ">1 year since TT3",
+                                    "displayName": ">1 year since TT3"
+                                },
+                                {
+                                    "code": ">1 year since TT4",
+                                    "displayName": ">1 year since TT4"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Tetanus vaccination status",
+                        "id": "sUX4i7QqbXF"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Therapeutic uterotonics given for management of postpartum haemorrhage",
+                        "id": "m3XQrgadVK9"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Third or fourth degree perineal tear",
+                        "id": "cz5DN6BVVeW"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH White blood cell count",
+                        "id": "csl3yq5UC46"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_ZERO_OR_POSITIVE",
+                        "displayFormName": "WHOMCH Estimated blood loss (ml)",
+                        "id": "hib4oz2sOLw"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "ORGANISATION_UNIT",
+                        "displayFormName": "WHOMCH Hospital / Birth clinic",
+                        "id": "n1rtSHYf6O6"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": false,
+            "displayName": "Care at birth",
+            "access": { "data": { "write": true } },
+            "id": "PFDfvmGpsR3",
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "Mfq2Y9N21KZ" },
+                        { "id": "mGHBXrtqSut" },
+                        { "id": "klEz81wXFoU" },
+                        { "id": "z8m3llJYuh9" },
+                        { "id": "MH33VLmOOqm" },
+                        { "id": "spkG704sTh6" },
+                        { "id": "EyfTU3ibMmJ" },
+                        { "id": "u7aAPS8OgLw" },
+                        { "id": "vPdXnmGWzfy" },
+                        { "id": "yq1qT0NdjYQ" },
+                        { "id": "YsVHgzQCwmr" },
+                        { "id": "BmaBjPQX8ME" },
+                        { "id": "HUfKCOou7de" },
+                        { "id": "VXdfPQRXKiA" },
+                        { "id": "V5PR8Kw8ZnC" },
+                        { "id": "PCiOYWXZq2E" },
+                        { "id": "sWoqcoByYmD" },
+                        { "id": "sUX4i7QqbXF" },
+                        { "id": "cz5DN6BVVeW" },
+                        { "id": "SojR4V7A8u2" },
+                        { "id": "hib4oz2sOLw" },
+                        { "id": "n1rtSHYf6O6" }
+                    ],
+                    "id": "bbjzL5gp0NZ"
+                }
+            ]
+        },
+        {
+            "programStageDataElements": [
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "displayFormName": "WHOMCH Penicillin given",
+                        "id": "OhcR0fpFcWa"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "None",
+                                    "displayName": "No ARV medication plan"
+                                },
+                                {
+                                    "code": "Ongoing",
+                                    "displayName": "Ongoing ARV treatment"
+                                },
+                                {
+                                    "code": "Initiated",
+                                    "displayName": "ARV medication initiated"
+                                }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Ongoing or initiated ARV regimen",
+                        "id": "nhW3SZX9JaN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Blood transfusion",
+                        "id": "ez86AhQ5cqp"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH Body temperature",
+                        "id": "L6Toy2TrHHq"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH CD4 count",
+                        "id": "B3bDhNpCcEM"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                {
+                                    "code": "Negative",
+                                    "displayName": "Negative"
+                                },
+                                {
+                                    "code": "Positive",
+                                    "displayName": "Positive"
+                                },
+                                {
+                                    "code": "Not performed",
+                                    "displayName": "Not performed"
+                                }
+                            ]
+                        },
+                        "displayFormName": "HIV test result",
+                        "id": "Itl05OEupgQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "TEXT",
+                        "optionSet": {
+                            "options": [
+                                { "code": "0", "displayName": "No" },
+                                { "code": "1", "displayName": "Suspected" },
+                                { "code": "2", "displayName": "Yes(confirmed)" }
+                            ]
+                        },
+                        "displayFormName": "WHOMCH Confirmed or suspected infection",
+                        "id": "klEz81wXFoU"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "WHOMCH Date of birth of most recent newborn",
+                        "id": "cwgQnkamM2j"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Clinical signs of extreme pallor",
+                        "id": "EyfTU3ibMmJ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "PERCENTAGE",
+                        "displayFormName": "WHOMCH Haematocrit value",
+                        "id": "X8HbdaoS9LN"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH Hemoglobin value",
+                        "id": "vANAXwtLwcT"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_POSITIVE",
+                        "displayFormName": "WHOMCH Heart rate",
+                        "id": "pwfdgeE21Os"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH HIV test results provided to patient",
+                        "id": "yq1qT0NdjYQ"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Moderate aneamia",
+                        "id": "FYLMjPQ0wmo"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "DATE",
+                        "displayFormName": "Date of birth",
+                        "id": "u3TE34T4KH0"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Contraceptive counselling provided",
+                        "id": "QWVRukwa83h"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "INTEGER_NEGATIVE",
+                        "displayFormName": "WHOMCH Respiratory rate",
+                        "id": "Spl22QJsWeu"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "WHOMCH Severe anaemia",
+                        "id": "AXuzjgLsBy3"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "NUMBER",
+                        "displayFormName": "WHOMCH White blood cell count",
+                        "id": "csl3yq5UC46"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid supplements given",
+                        "id": "Kb6kZzUCJi1"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for moderate anemia",
+                        "id": "RxVNLSeTjto"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Daily iron and folic acid treatment for severe anemia",
+                        "id": "nB4Ui3ckmUi"
+                    },
+                    "compulsory": false
+                },
+                {
+                    "dataElement": {
+                        "valueType": "BOOLEAN",
+                        "displayFormName": "Slept under ITN (insecticide treated bednet)",
+                        "id": "ytV9rX4ADnn"
+                    },
+                    "compulsory": false
+                }
+            ],
+            "validationStrategy": "ON_COMPLETE",
+            "blockEntryForm": false,
+            "displayName": "Postpartum care visit",
+            "access": { "data": { "write": true } },
+            "id": "bbKtnxRZKEP",
+            "repeatable": false,
+            "programStageSections": [
+                {
+                    "dataElements": [
+                        { "id": "Itl05OEupgQ" },
+                        { "id": "klEz81wXFoU" },
+                        { "id": "cwgQnkamM2j" },
+                        { "id": "EyfTU3ibMmJ" },
+                        { "id": "yq1qT0NdjYQ" },
+                        { "id": "u3TE34T4KH0" },
+                        { "id": "QWVRukwa83h" },
+                        { "id": "ytV9rX4ADnn" }
+                    ],
+                    "id": "ehgw1raICOm"
+                },
+                {
+                    "dataElements": [
+                        { "id": "B3bDhNpCcEM" },
+                        { "id": "X8HbdaoS9LN" },
+                        { "id": "vANAXwtLwcT" }
+                    ],
+                    "id": "zp6Z3kiwzeP"
+                }
+            ]
+        }
+    ]
+}

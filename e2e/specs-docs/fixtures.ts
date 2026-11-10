@@ -43,7 +43,14 @@ const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
     diagnostic.method === 'GET' &&
     bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
 
-const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
+// The data entry specs run program rules, and so does the accessibility scan of
+// the data entry examples; no other spec does.
+const DATA_ENTRY_SPEC = /(?:tracker-data-entry-[^/]*|accessibility)\.spec\.ts$/
+
+const isKnownBenignDiagnostic = (
+    diagnostic: BrowserDiagnostic,
+    specFile: string
+) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
 
     if (
@@ -103,6 +110,20 @@ const isKnownBenignDiagnostic = (diagnostic: BrowserDiagnostic) => {
     if (isAbortedBootstrapRead(diagnostic)) {
         // Navigating between examples aborts the adapter's bootstrap reads,
         // and React StrictMode remounts do the same under the dev server.
+        return true
+    }
+
+    if (
+        DATA_ENTRY_SPEC.test(specFile) &&
+        diagnostic.kind === 'console' &&
+        /rule-engine[^/]*\.m?js$/.test(path ?? '') &&
+        /^Rule .+ raised an error: (?:Failed to coerce value 'null'|Unknown variable: 'event_date')/.test(
+            diagnostic.message
+        )
+    ) {
+        // The DHIS2 rule engine logs, and skips, a rule that reads a value the
+        // person lacks, such as an attribute of a person DHIS2 left out, or the
+        // event date in a rule a register runs for the enrolment.
         return true
     }
 
@@ -228,7 +249,7 @@ export const test = base.extend<DocsFixtures>({
                 return false
             }
 
-            return !isKnownBenignDiagnostic(diagnostic)
+            return !isKnownBenignDiagnostic(diagnostic, testInfo.file)
         })
 
         if (unexpectedDiagnostics.length > 0) {

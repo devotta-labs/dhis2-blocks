@@ -1,7 +1,13 @@
 import i18n from '@dhis2/d2-i18n'
 import { CalendarInput } from '@dhis2/ui'
-import React, { createContext, memo, useContext, useId } from 'react'
-import { Field, FieldLabel } from '@/components/dhis2/ui/field'
+import React, {
+    createContext,
+    memo,
+    useContext,
+    useId,
+    useLayoutEffect,
+} from 'react'
+import { Field, FieldControl, FieldLabel } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import type { FinderSystemInfo } from '../api/systemInfo'
 import {
@@ -91,6 +97,34 @@ export interface CalendarDateInputProps {
 }
 
 /**
+ * Puts the field's description and validity on CalendarInput's own input, which takes neither as a prop. The field
+ * hands them over through `FieldControl`.
+ */
+const FieldLink = ({
+    inputId,
+    describedBy,
+    invalid,
+}: {
+    inputId: string
+    describedBy: string | undefined
+    invalid: boolean
+}) => {
+    useLayoutEffect(() => {
+        const input = document.getElementById(inputId)
+        if (input === null) {
+            return
+        }
+        if (describedBy === undefined) {
+            input.removeAttribute('aria-describedby')
+        } else {
+            input.setAttribute('aria-describedby', describedBy)
+        }
+        input.setAttribute('aria-invalid', String(invalid))
+    }, [inputId, describedBy, invalid])
+    return null
+}
+
+/**
  * A date typed or picked on the server's calendar, in its date format. The
  * value is kept as ISO. If @dhis2/ui's CalendarInput cannot render the
  * calendar, a plain text input in the same format takes its place.
@@ -109,7 +143,7 @@ export const CalendarDateInput = memo(function CalendarDateInput({
         onChange(toFieldValue(text ?? '', info))
 
     const fallback = (
-        <Field>
+        <Field invalid={invalid}>
             <FieldLabel htmlFor={id}>{label}</FieldLabel>
             <Input
                 id={id}
@@ -117,7 +151,6 @@ export const CalendarDateInput = memo(function CalendarDateInput({
                 type="text"
                 autoComplete="off"
                 placeholder={info.dateFormat}
-                aria-invalid={invalid || undefined}
                 value={shown}
                 onChange={(event) => report(event.target.value)}
             />
@@ -150,6 +183,15 @@ export const CalendarDateInput = memo(function CalendarDateInput({
                     onDateSelect={(selection) =>
                         report(selection?.calendarDateString)
                     }
+                />
+                <FieldControl
+                    render={(props) => (
+                        <FieldLink
+                            inputId={id}
+                            describedBy={props['aria-describedby']}
+                            invalid={invalid}
+                        />
+                    )}
                 />
             </div>
         </CalendarErrorBoundary>

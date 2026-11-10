@@ -1,9 +1,10 @@
 import React from 'react'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListPageSize } from '../../provider/contracts'
 import { WorkingListPagination } from '../WorkingListTable/WorkingListPagination'
 import { WorkingListTextProvider } from '../WorkingListText'
+import { roleColour } from '../../../../test/roleColour'
 
 const renderPagination = async (props: {
     page: number
@@ -27,6 +28,35 @@ const renderPagination = async (props: {
 }
 
 describe('WorkingListPagination', () => {
+    it('keeps focus on Next when the last page is reached', async () => {
+        const at = (page: number, hasNextPage: boolean) => (
+            <WorkingListTextProvider translate={(message) => message}>
+                <WorkingListPagination
+                    pageSize={15}
+                    page={page}
+                    hasNextPage={hasNextPage}
+                    onPageChange={() => undefined}
+                    onPageSizeChange={() => undefined}
+                />
+            </WorkingListTextProvider>
+        )
+        const screen = await render(at(1, true))
+        const next = screen.getByRole('button', { name: 'Next' })
+        next.element().focus()
+        await userEvent.keyboard('{Enter}')
+        await screen.rerender(at(2, false))
+
+        await expect.element(next).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(next.element())
+        expect(getComputedStyle(next.element()).color).toBe(
+            roleColour('disabled-foreground')
+        )
+        await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+        await expect
+            .element(screen.getByRole('button', { name: 'Previous' }))
+            .toHaveFocus()
+    })
+
     it('only offers the pages that exist', async () => {
         const { screen, onPageChange } = await renderPagination({
             page: 1,

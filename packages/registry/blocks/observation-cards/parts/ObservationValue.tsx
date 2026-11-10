@@ -60,7 +60,7 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
                         ? 'line-clamp-3 min-w-0 text-base [overflow-wrap:anywhere]'
                         : 'min-w-0 text-3xl leading-none font-semibold tabular-nums [overflow-wrap:anywhere]',
                     // Greyed, so an empty box never reads as a finding.
-                    isUnticked(series, latest) && 'text-dhis2-grey-600'
+                    isUnticked(series, latest) && 'text-dhis2-subtle-foreground'
                 )}
             >
                 {text}
@@ -68,7 +68,7 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
             {shownUnit ? (
                 <span
                     data-slot="value-unit"
-                    className="text-sm text-dhis2-grey-700"
+                    className="text-sm text-dhis2-muted-foreground"
                 >
                     {shownUnit}
                 </span>

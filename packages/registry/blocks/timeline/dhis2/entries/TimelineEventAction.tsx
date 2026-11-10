@@ -47,6 +47,7 @@ export const TimelineEventAction = (
               }
     if (props.href !== undefined) {
         return (
+            // oxlint-disable-next-line jsx-a11y/anchor-has-content -- the content arrives through props.children
             <a
                 {...props}
                 {...named}

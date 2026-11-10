@@ -1,5 +1,6 @@
 'use client'
 
+import { Field as FieldPrimitive } from '@base-ui/react/field'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { useMemo } from 'react'
@@ -21,7 +22,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 const fieldVariants = cva(
-    'group/field flex w-full gap-2 data-[invalid=true]:text-dhis2-red-700',
+    'group/field flex w-full gap-2 data-invalid:text-dhis2-destructive',
     {
         variants: {
             orientation: {
@@ -36,14 +37,14 @@ const fieldVariants = cva(
     }
 )
 
+/** Links its label, description and error to the control inside it, and marks the control invalid with `invalid`. */
 function Field({
     className,
     orientation = 'vertical',
     ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof fieldVariants>) {
+}: FieldPrimitive.Root.Props & VariantProps<typeof fieldVariants>) {
     return (
-        <div
-            role="group"
+        <FieldPrimitive.Root
             data-slot="field"
             data-orientation={orientation}
             className={cn(fieldVariants({ orientation }), className)}
@@ -65,15 +66,13 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-function FieldLabel({
-    className,
-    ...props
-}: React.ComponentProps<typeof Label>) {
+function FieldLabel({ className, ...props }: FieldPrimitive.Label.Props) {
     return (
-        <Label
+        <FieldPrimitive.Label
             data-slot="field-label"
+            render={<Label />}
             className={cn(
-                'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:text-dhis2-grey-600',
+                'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-disabled/field:text-dhis2-disabled-foreground',
                 className
             )}
             {...props}
@@ -81,12 +80,15 @@ function FieldLabel({
     )
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<'p'>) {
+function FieldDescription({
+    className,
+    ...props
+}: FieldPrimitive.Description.Props) {
     return (
-        <p
+        <FieldPrimitive.Description
             data-slot="field-description"
             className={cn(
-                'm-0 text-left text-sm leading-normal font-normal text-dhis2-grey-700',
+                'm-0 text-left text-sm leading-normal font-normal text-dhis2-muted-foreground',
                 className
             )}
             {...props}
@@ -99,7 +101,7 @@ function FieldError({
     children,
     errors,
     ...props
-}: React.ComponentProps<'div'> & {
+}: FieldPrimitive.Error.Props & {
     errors?: Array<{ message?: string } | undefined>
 }) {
     const content = useMemo(() => {
@@ -134,19 +136,28 @@ function FieldError({
     }
 
     return (
-        <div
+        // Shown whenever it has content, not only when the browser finds the control invalid.
+        <FieldPrimitive.Error
+            match
             role="alert"
             data-slot="field-error"
-            className={cn('text-sm font-normal text-dhis2-red-700', className)}
+            className={cn(
+                'text-sm font-normal text-dhis2-destructive',
+                className
+            )}
             {...props}
         >
             {content}
-        </div>
+        </FieldPrimitive.Error>
     )
 }
 
+/** For a control that isn't a Base UI part: its render props carry the field's ids and validity. */
+const FieldControl = FieldPrimitive.Control
+
 export {
     Field,
+    FieldControl,
     FieldLabel,
     FieldDescription,
     FieldError,

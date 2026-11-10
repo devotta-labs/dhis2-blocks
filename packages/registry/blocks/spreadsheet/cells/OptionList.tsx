@@ -1,0 +1,81 @@
+import { useLayoutEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
+import { cn } from '@/components/dhis2/ui/cn'
+import { POPOVER_CLASS } from './CellStatus'
+
+interface OptionListProps {
+    id: string
+    /** Ids of the header cells that name the cell, and so its list. */
+    labelledBy: string
+    /** The matches drawn, best first. */
+    codes: ReadonlyArray<string>
+    names: ReadonlyMap<string, ReactNode>
+    /** The highlighted match, which Enter picks; -1 for none. */
+    active: number
+    /** "Showing … of … matches", when more match than are drawn, or why a search found none; the cell announces it. */
+    count: string
+    optionId(code: string): string
+    onPick(code: string): void
+}
+
+/**
+ * The open list of an option cell, below it (above when there is no room): the matches, the highlighted one kept in
+ * view, and the count when more match than are drawn. Focus stays in the cell, which points at the highlighted match
+ * and announces the count. A search of the server lists its results in it too.
+ */
+export const OptionList = ({
+    id,
+    labelledBy,
+    codes,
+    names,
+    active,
+    count,
+    optionId,
+    onPick,
+}: OptionListProps) => {
+    const list = useRef<HTMLDivElement>(null)
+    useLayoutEffect(() => {
+        list.current?.children[active]?.scrollIntoView({ block: 'nearest' })
+    }, [active])
+    return (
+        // Focus stays in the cell, which saves the pick, whatever part of the list is pressed.
+        // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- keeps focus in the cell when the list is pressed
+        <div
+            onMouseDown={(event) => event.preventDefault()}
+            className={cn(
+                POPOVER_CLASS,
+                'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover supports-[anchor-name:--a]:min-w-[anchor-size(width)]'
+            )}
+        >
+            {/* With no matches, only the note shows: why a search found nothing. */}
+            {codes.length === 0 ? null : (
+                <div
+                    ref={list}
+                    id={id}
+                    role="listbox"
+                    aria-labelledby={labelledBy}
+                    className="max-h-64 overflow-y-auto overscroll-contain"
+                >
+                    {codes.map((code, index) => (
+                        // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus -- focus stays in the cell, which moves the active option with aria-activedescendant and picks with Enter
+                        <div
+                            key={code}
+                            id={optionId(code)}
+                            role="option"
+                            aria-selected={index === active}
+                            onClick={() => onPick(code)}
+                            className="cursor-pointer px-3 py-2 text-sm text-dhis2-foreground hover:bg-dhis2-muted aria-selected:bg-dhis2-accent forced-colors:aria-selected:outline-2 forced-colors:aria-selected:-outline-offset-2 forced-colors:aria-selected:outline-solid"
+                        >
+                            {names.get(code)}
+                        </div>
+                    ))}
+                </div>
+            )}
+            {count === '' ? null : (
+                <p className="border-t border-dhis2-border px-3 py-1.5 text-xs text-dhis2-muted-foreground">
+                    {count}
+                </p>
+            )}
+        </div>
+    )
+}

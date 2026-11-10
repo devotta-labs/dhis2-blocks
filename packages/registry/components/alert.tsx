@@ -5,18 +5,18 @@ import { cn } from './cn'
 
 /** shadcn Alert restyled to match @dhis2/ui NoticeBox. */
 const alertVariants = cva(
-    'group/alert relative grid w-full gap-0.5 rounded-dhis2-sm border px-4 py-3 text-left text-sm leading-[19px] text-dhis2-grey-900 has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:fill-current *:[svg:not([class*=size-])]:size-6',
+    'group/alert relative grid w-full gap-0.5 rounded-dhis2-sm border px-4 py-3 text-left text-sm leading-[19px] text-dhis2-foreground has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:fill-current *:[svg:not([class*=size-])]:size-6',
     {
         variants: {
             variant: {
                 default:
-                    'border-dhis2-blue-200 bg-dhis2-blue-050 *:[svg]:text-dhis2-blue-900',
+                    'border-dhis2-info-border bg-dhis2-info-subtle *:[svg]:text-dhis2-info',
                 warning:
-                    'border-dhis2-yellow-200 bg-dhis2-yellow-050 *:[svg]:text-dhis2-yellow-700',
+                    'border-dhis2-warning-border bg-dhis2-warning-subtle *:[svg]:text-dhis2-warning',
                 destructive:
-                    'border-2 border-dhis2-red-500 bg-dhis2-red-050 *:[svg]:text-dhis2-red-700',
+                    'border-2 border-dhis2-destructive-border bg-dhis2-destructive-subtle *:[svg]:text-dhis2-destructive',
                 success:
-                    'border-dhis2-green-200 bg-dhis2-green-050 *:[svg]:text-dhis2-green-700',
+                    'border-dhis2-success-border bg-dhis2-success-subtle *:[svg]:text-dhis2-success',
             },
         },
         defaultVariants: {
@@ -33,7 +33,8 @@ function Alert({
     return (
         <div
             data-slot="alert"
-            role="alert"
+            // Only an error interrupts; other alerts wait their turn.
+            role={variant === 'destructive' ? 'alert' : 'status'}
             className={cn(alertVariants({ variant }), className)}
             {...props}
         />
@@ -61,7 +62,7 @@ function AlertDescription({
         <div
             data-slot="alert-description"
             className={cn(
-                'flex flex-col items-start gap-2 pt-1.5 text-sm text-dhis2-grey-900 group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_p]:m-0',
+                'flex flex-col items-start gap-2 pt-1.5 text-sm text-dhis2-foreground group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_p]:m-0',
                 className
             )}
             {...props}

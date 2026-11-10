@@ -1,5 +1,5 @@
 import React from 'react'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
 import { createFakeServer, renderWithQueries } from './finderTestSupport'
@@ -16,6 +16,37 @@ import {
 } from './resultsTestSupport'
 
 describe('FinderResults paging and requests', () => {
+    it('keeps focus on Next while the page refreshes and on the last page', async () => {
+        const { server } = await renderFinder({
+            options: {
+                program: { ...hivProgram, maxTeiCountToReturn: 0 },
+                deferSearches: true,
+            },
+        })
+        await searchFor('A1')
+        server.pendingSearches[0].respond(
+            answer(
+                Array.from({ length: 10 }, (_, index) =>
+                    entity(`p1-${index}`, { firstName: `First${index}` })
+                ),
+                12
+            )
+        )
+        const next = page.getByRole('button', { name: 'Next' })
+        await expect.element(next).toBeEnabled()
+        next.element().focus()
+        await userEvent.keyboard('{Enter}')
+        // Refreshing: Next can't be pressed, but keeps focus.
+        await expect.element(next).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(next.element())
+        server.pendingSearches[1].respond(
+            answer([entity('p2-0', { firstName: 'Zainab' })], 12, 2)
+        )
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        await expect.element(next).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(next.element())
+    })
+
     it('pages with previous and next', async () => {
         const { server } = await renderFinder({
             options: {

@@ -82,6 +82,7 @@ export const FilterChip = ({
             >
                 {/* A combobox doesn't take its name from its contents. */}
                 <PopoverTrigger
+                    // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props -- PopoverTrigger sets aria-expanded and aria-controls at runtime
                     role="combobox"
                     aria-label={`${prefix} ${value}`}
                     data-size="sm"
@@ -91,13 +92,13 @@ export const FilterChip = ({
                         'w-auto max-w-full gap-0'
                     )}
                 >
-                    <span className="shrink-0 pe-3 text-dhis2-grey-600">
+                    <span className="shrink-0 pe-3 text-dhis2-subtle-foreground">
                         {prefix}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{value}</span>
                     {/* Room for the clear button laid over the trigger. */}
                     <span aria-hidden="true" className="w-7 shrink-0" />
-                    <span className="ms-0.5 flex text-dhis2-grey-900">
+                    <span className="ms-0.5 flex text-dhis2-foreground">
                         <IconChevronDown16 />
                     </span>
                 </PopoverTrigger>
@@ -106,7 +107,7 @@ export const FilterChip = ({
                     aria-label={clearLabel}
                     data-test={`${dataTest}-select-clear`}
                     disabled={disabled}
-                    className="absolute end-[22px] top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-dhis2-sm border-0 bg-transparent p-0 text-dhis2-grey-500 hover:bg-dhis2-grey-200 hover:text-dhis2-grey-800 focus-visible:outline-2 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:hover:bg-transparent [&_svg]:fill-current"
+                    className="absolute end-[22px] top-1/2 flex size-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-dhis2-sm border-0 bg-transparent p-0 text-dhis2-subtle-foreground hover:bg-dhis2-accent hover:text-dhis2-foreground focus-visible:outline-2 focus-visible:outline-dhis2-ring disabled:cursor-not-allowed disabled:hover:bg-transparent [&_svg]:fill-current"
                     onClick={onClear}
                 >
                     <SelectClearIcon />

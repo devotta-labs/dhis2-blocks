@@ -5,19 +5,19 @@ import { useCalendar, type CalendarDay, type CalendarRecord } from './context'
 import type { CalendarStatus, CalendarTone } from './types'
 
 export const TONE_DOT = {
-    neutral: 'bg-dhis2-grey-600',
-    info: 'bg-dhis2-blue-600',
-    positive: 'bg-dhis2-green-600',
-    warning: 'bg-dhis2-yellow-600',
-    critical: 'bg-dhis2-red-600',
+    neutral: 'bg-dhis2-neutral-indicator',
+    info: 'bg-dhis2-info-indicator',
+    positive: 'bg-dhis2-success-indicator',
+    warning: 'bg-dhis2-warning-indicator',
+    critical: 'bg-dhis2-destructive-indicator',
 } satisfies Record<CalendarTone, string>
 
-const TONE_CHIP = {
-    neutral: 'bg-dhis2-grey-200 text-dhis2-grey-900',
-    info: 'bg-dhis2-blue-100 text-dhis2-blue-900',
-    positive: 'bg-dhis2-green-100 text-dhis2-green-900',
-    warning: 'bg-dhis2-yellow-100 text-dhis2-yellow-900',
-    critical: 'bg-dhis2-red-100 text-dhis2-red-900',
+export const TONE_CHIP = {
+    neutral: 'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
+    info: 'bg-dhis2-info-fill text-dhis2-info-strong',
+    positive: 'bg-dhis2-success-fill text-dhis2-success-strong',
+    warning: 'bg-dhis2-warning-fill text-dhis2-warning-strong',
+    critical: 'bg-dhis2-destructive-fill text-dhis2-destructive-strong',
 } satisfies Record<CalendarTone, string>
 
 interface DayContextValue {
@@ -60,19 +60,19 @@ const groupByStatus = (records: readonly CalendarRecord[]) => {
 }
 
 const TONE_EDGE = {
-    neutral: 'border-dhis2-grey-600',
-    info: 'border-dhis2-blue-600',
-    positive: 'border-dhis2-green-600',
-    warning: 'border-dhis2-yellow-600',
-    critical: 'border-dhis2-red-600',
+    neutral: 'border-dhis2-neutral-indicator',
+    info: 'border-dhis2-info-indicator',
+    positive: 'border-dhis2-success-indicator',
+    warning: 'border-dhis2-warning-indicator',
+    critical: 'border-dhis2-destructive-indicator',
 } satisfies Record<CalendarTone, string>
 
 const TONE_TINT = {
-    neutral: 'bg-dhis2-grey-100',
-    info: 'bg-dhis2-blue-050',
-    positive: 'bg-dhis2-green-050',
-    warning: 'bg-dhis2-yellow-050',
-    critical: 'bg-dhis2-red-050',
+    neutral: 'bg-dhis2-neutral-subtle',
+    info: 'bg-dhis2-info-subtle',
+    positive: 'bg-dhis2-success-subtle',
+    warning: 'bg-dhis2-warning-subtle',
+    critical: 'bg-dhis2-destructive-subtle',
 } satisfies Record<CalendarTone, string>
 
 /** Labels a count of records that have no status: "1 record", "7 records". */
@@ -82,7 +82,7 @@ const recordsWord = (count: number) =>
 /** The records a day has beyond what it shows, on a row of their own. */
 const MoreRow = ({ count }: { count: number }) =>
     count > 0 ? (
-        <span className="px-1 pt-0.5 text-[13px] leading-5 text-dhis2-grey-700">
+        <span className="px-1 pt-0.5 text-[13px] leading-5 text-dhis2-muted-foreground">
             {i18n.t('+{{count}} more', { count })}
         </span>
     ) : null
@@ -107,7 +107,7 @@ const Counts = ({
                 <span
                     key={status.id}
                     className={cn(
-                        'flex min-w-0 items-baseline gap-1.5 rounded-e-sm border-s-2 px-1 text-[13px] leading-5 text-dhis2-grey-900',
+                        'flex min-w-0 items-baseline gap-1.5 rounded-e-sm border-s-2 px-1 text-[13px] leading-5 text-dhis2-foreground',
                         TONE_TINT[status.tone],
                         TONE_EDGE[status.tone]
                     )}
@@ -116,7 +116,7 @@ const Counts = ({
                         {count}
                     </span>
                     {!compact && (
-                        <span className="min-w-0 flex-1 truncate text-dhis2-grey-700">
+                        <span className="min-w-0 flex-1 truncate text-dhis2-muted-foreground">
                             {status.label || recordsWord(count)}
                         </span>
                     )}

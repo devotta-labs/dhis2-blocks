@@ -126,7 +126,7 @@ export const MenuSelector = ({
                             <>
                                 <Input
                                     dense
-                                    className="sticky! top-0 z-[1] bg-white px-[8px] pt-[8px] pb-[4px]"
+                                    className="sticky! top-0 z-[1] bg-dhis2-background px-[8px] pt-[8px] pb-[4px]"
                                     dataTest={`${conciseDataTest}-filterinput`}
                                     value={filter}
                                     onChange={({ value: nextFilter }) =>
@@ -156,7 +156,7 @@ export const MenuSelector = ({
                                         />
                                     ))
                                 ) : (
-                                    <div className="flex justify-center px-[8px] py-[16px] text-[14px] text-[#4a5768]">
+                                    <div className="flex justify-center px-[8px] py-[16px] text-[14px] text-dhis2-muted-foreground">
                                         <span>
                                             {i18n.t('No results found for ')}
                                             {filter}

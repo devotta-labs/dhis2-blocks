@@ -353,5 +353,6 @@ export const readableTextColor = (color: string): string | undefined => {
         linearChannel(parseInt(full.slice(start, start + 2), 16))
     )
     const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+    // colour-literal: legend text on a metadata colour, picked from that colour's luminance
     return luminance > DARK_TEXT_LUMINANCE ? '#000000' : '#ffffff'
 }

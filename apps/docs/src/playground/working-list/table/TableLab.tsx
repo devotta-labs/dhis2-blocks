@@ -182,7 +182,7 @@ export const TableLab = () => {
                 </>
             }
         >
-            <div className={`w-full ${widthClass} bg-white`}>
+            <div className={`w-full ${widthClass} bg-dhis2-background`}>
                 <CanvasBoundary key={run}>
                     {mode === 'lab' ? (
                         <LabServerScope

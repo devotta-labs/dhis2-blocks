@@ -41,7 +41,7 @@ export const trackedEntityFinderTranslationCatalog = () => [
         "`{{attribute}}` ({{label}}) has value type {{valueType}}, which can't be searched in {{program}}."
     ),
     i18n.t(
-        "`{{attribute}}` ({{label}}) holds several options (MULTI_TEXT), which DHIS2 searches only from version 2.43, so it can't be searched in {{program}} on this server."
+        "`{{attribute}}` ({{label}}) holds several options ({{valueType}}), which DHIS2 searches only from version 2.43, so it can't be searched in {{program}} on this server."
     ),
     i18n.t(
         "`{{attribute}}` ({{label}}) can't be searched this way in {{program}} because the search operators it needs are blocked."

@@ -127,12 +127,12 @@ describe('useRelationships', () => {
         expect(server.countOf('trackedEntityAttributes')).toBe(0)
     })
 
-    it('keeps the groups when a refetch fails', async () => {
+    const refetchFailing = async (status: 403 | 404) => {
         const server = await setup()
         await expect.element(part()).toHaveTextContent(/^ready /)
         const before = server.countOf('tracker/relationships')
-        // A 403 is not retried, so its answer lands at once.
-        server.failRelationshipsWith(403)
+        // A client error is not retried, so its answer lands at once.
+        server.failRelationshipsWith(status)
         // A return to the window refetches the stale relationships.
         focusManager.setFocused(false)
         focusManager.setFocused(true)
@@ -141,7 +141,16 @@ describe('useRelationships', () => {
             .toBeGreaterThan(before)
         // The failed answer lands a moment after the request.
         await new Promise((resolve) => setTimeout(resolve, 100))
-        expect(part().element()).toHaveTextContent(/^ready /)
         focusManager.setFocused(undefined)
+    }
+
+    it('keeps the groups when a refetch fails', async () => {
+        await refetchFailing(404)
+        expect(part().element()).toHaveTextContent(/^ready /)
+    })
+
+    it('drops the groups when a refetch is refused, so revoked access shows no names', async () => {
+        await refetchFailing(403)
+        await expect.element(part()).toHaveTextContent('unavailable')
     })
 })

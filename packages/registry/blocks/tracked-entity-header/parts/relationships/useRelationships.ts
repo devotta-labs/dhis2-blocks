@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useMemo } from 'react'
-import { shouldRetryTrackedEntityHeaderRequest } from '../../api/client'
+import {
+    isForbidden,
+    shouldRetryTrackedEntityHeaderRequest,
+} from '../../api/client'
 import {
     fetchRelationships,
     fetchRelationshipTypes,
@@ -126,9 +129,10 @@ export const useRelationships = (
     if (id === undefined) {
         return { kind: 'hidden' }
     }
-    // A failed refresh keeps what is already shown: only a query with no data has failed.
-    const failed = (query: { isError: boolean; data: unknown }) =>
-        query.isError && query.data === undefined
+    // A failed refresh keeps what is already shown, unless the server now refuses: revoked access shows nothing.
+    const failed = (query: { error: Error | null; data: unknown }) =>
+        query.error !== null &&
+        (query.data === undefined || isForbidden(query.error))
     if (failed(relationships) || failed(types) || failed(attributes)) {
         return { kind: 'unavailable' }
     }

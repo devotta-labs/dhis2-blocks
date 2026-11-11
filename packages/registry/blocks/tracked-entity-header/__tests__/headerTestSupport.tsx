@@ -38,7 +38,7 @@ interface FakeServerOptions {
     /** The links the record has: the case fixture's, the focus fixture's, or none. */
     links?: 'case' | 'focus' | 'none'
     /** Answers the relationships request alone with this status. */
-    relationshipsFail?: 403 | 500
+    relationshipsFail?: 403 | 404 | 500
     /** Answers the relationships request with this body, in place of `links`. */
     relationshipsBody?: { relationships: DataEngineValue[] }
     /** Holds the relationships request open until `release` is called. */
@@ -155,7 +155,7 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
             failing = undefined
         },
         /** From now on the server answers the relationships request with this status. */
-        failRelationshipsWith: (status: 403 | 500) => {
+        failRelationshipsWith: (status: 403 | 404 | 500) => {
             relationshipsFail = status
         },
         /** From now on the server answers person requests with this status. */

@@ -148,6 +148,37 @@ describe('TrackedEntityAttribute', () => {
         await expect.element(page.getByText('Not recorded')).toBeVisible()
     })
 
+    it('keeps a value without letters, such as a phone number, left to right in a right-to-left page', async () => {
+        const phone = '+249 91 234 5678'
+        await renderParts(
+            <div dir="rtl">
+                <TrackedEntityAttribute attribute={CITY} />
+            </div>,
+            {
+                person: (raw) => ({
+                    ...raw,
+                    attributes: [
+                        ...raw.attributes,
+                        { attribute: CITY, value: phone },
+                    ],
+                }),
+            }
+        )
+        const value = page.getByText(phone)
+        await expect.element(value).toBeVisible()
+
+        const text = value.element().firstChild
+        if (!text) throw new Error('No text')
+        const at = (offset: number) => {
+            const range = document.createRange()
+            range.setStart(text, offset)
+            range.setEnd(text, offset + 1)
+            return range.getBoundingClientRect().left
+        }
+        // The plus sign reads first, at the left.
+        expect(at(0)).toBeLessThan(at(phone.length - 1))
+    })
+
     it('uses the label it is given', async () => {
         await renderParts(
             <TrackedEntityAttribute attribute={FIRST} label="Given name" />

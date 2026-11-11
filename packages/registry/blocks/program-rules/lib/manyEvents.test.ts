@@ -3,7 +3,12 @@ import {
     RuleEnrollmentResponseSchema,
     toRuleEnrollmentData,
 } from '../hooks/enrollment'
-import { eventInput, programMetadata, rule } from '../__tests__/metadata'
+import {
+    currentEventVariable,
+    eventInput,
+    programMetadata,
+    rule,
+} from '../__tests__/metadata'
 import {
     RMNCH,
     rmnchEnrollmentResponse,
@@ -12,6 +17,7 @@ import {
 import { buildRuleContext } from './buildContext'
 import {
     crossEventFields,
+    createEventsRuleEvaluator,
     evaluateEventsRules,
     rowsAffectedBy,
     type EventsRuleInput,
@@ -133,6 +139,19 @@ describe('rowsAffectedBy', () => {
         ).toEqual([FIRST_VISIT])
     })
 })
+
+// Values a person could enter in a field of each value type.
+const VALUES = new Map([
+    ['BOOLEAN', ['true', 'false']],
+    ['TRUE_ONLY', ['true']],
+    ['NUMBER', ['0', '1', '7.5', '42', '180']],
+    ['INTEGER', ['0', '1', '12', '45', '300']],
+    ['INTEGER_POSITIVE', ['1', '3', '28', '120']],
+    ['INTEGER_ZERO_OR_POSITIVE', ['0', '2', '9', '40']],
+    ['PERCENTAGE', ['0', '50', '100']],
+    ['DATE', ['2020-01-01', '2023-06-15', '2024-02-29', '2025-12-31']],
+    ['AGE', ['1990-05-05', '2010-10-10', '2024-01-01']],
+])
 
 describe('evaluateEventsRules', () => {
     // The rule hides the follow-ups unless chronic conditions is true, so an empty value also hides them: only a
@@ -356,5 +375,226 @@ describe('evaluateEventsRules', () => {
         )
         expect(effects.size).toBe(0)
         expect(failures.size).toBe(0)
+    })
+
+    it('re-evaluates changed-field readers and preserves unaffected effects', () => {
+        const context = buildRuleContext(
+            engine,
+            programMetadata({
+                variables: [
+                    currentEventVariable('base', 'base'),
+                    currentEventVariable('trigger', 'trigger'),
+                    currentEventVariable('other', 'other'),
+                    {
+                        id: 'calculated',
+                        name: 'calculated',
+                        sourceType: 'CALCULATED_VALUE',
+                        useCodeForOptionSet: false,
+                        valueType: 'TEXT',
+                    },
+                ],
+                rules: [
+                    rule(
+                        'fallback',
+                        "#{other} == 'yes'",
+                        [
+                            {
+                                id: 'fallback_assign',
+                                type: 'ASSIGN',
+                                dataElementId: 'assigned',
+                                data: "'fallback'",
+                            },
+                        ],
+                        { priority: 1 }
+                    ),
+                    rule(
+                        'producer',
+                        "#{base} == 'yes'",
+                        [
+                            {
+                                id: 'producer_assign',
+                                type: 'ASSIGN',
+                                content: '#{calculated}',
+                                data: "'ready'",
+                            },
+                        ],
+                        { priority: 2 }
+                    ),
+                    rule(
+                        'consumer',
+                        "#{trigger} == 'on' && #{calculated} == 'ready'",
+                        [
+                            {
+                                id: 'consumer_hide',
+                                type: 'HIDEFIELD',
+                                dataElementId: 'derived_effect',
+                            },
+                        ],
+                        { priority: 3 }
+                    ),
+                    rule(
+                        'changedAssignment',
+                        "#{trigger} == 'on'",
+                        [
+                            {
+                                id: 'changed_assign',
+                                type: 'ASSIGN',
+                                dataElementId: 'assigned',
+                                data: "'changed'",
+                            },
+                        ],
+                        { priority: 4 }
+                    ),
+                ],
+            })
+        )
+        const event = {
+            ...eventInput().event,
+            id: 'incremental',
+            dataValues: { base: 'yes', trigger: 'on', other: 'yes' },
+        }
+        const inputFor = (nextEvent: typeof event): EventsRuleInput => ({
+            rows: [{ event: nextEvent }],
+            persons: new Map(),
+            tracker: false,
+            personsLoaded: false,
+        })
+        const contexts = new Map([['stage', context]])
+        const evaluator = createEventsRuleEvaluator(engine, contexts)
+        const run = vi.spyOn(context.engine, 'evaluateEvent')
+
+        evaluator(inputFor(event), [event.id])
+        const changed = {
+            ...event,
+            dataValues: { ...event.dataValues, trigger: 'off' },
+        }
+        const incremental = evaluator(
+            inputFor(changed),
+            [event.id],
+            ['trigger']
+        )
+        const full = evaluateEventsRules(engine, contexts, inputFor(changed), [
+            event.id,
+        ])
+
+        expect(incremental).toEqual(full)
+        expect(
+            incremental.effects
+                .get(event.id)
+                ?.hiddenFields.has('derived_effect')
+        ).toBe(false)
+        expect(
+            incremental.effects.get(event.id)?.assignedValues.get('assigned')
+                ?.value
+        ).toBe('fallback')
+        expect(run.mock.calls).toHaveLength(3)
+        expect(run.mock.calls.at(1)?.[3].rules).toHaveLength(3)
+    })
+
+    it('says what a full run says after each of a long run of changes to a real program', () => {
+        const metadata = rmnchMetadata()
+        const options = new Map(
+            metadata.optionSets.map(({ id, options: all }) => [
+                id,
+                all.map(({ code }) => code),
+            ])
+        )
+        // Every data element a rule variable reads, with values a person could enter there.
+        const fields = [
+            ...new Map(
+                metadata.variables.flatMap((variable) =>
+                    variable.dataElementId === undefined
+                        ? []
+                        : [[variable.dataElementId, variable] as const]
+                )
+            ),
+        ].map(([id, variable]) => ({
+            id,
+            values: [
+                undefined,
+                ...((variable.optionSetId &&
+                    options.get(variable.optionSetId)) ||
+                    VALUES.get(variable.fieldValueType ?? '') || ['a', 'b']),
+            ],
+        }))
+        // A small seeded generator: the same changes on every run.
+        let seed = 20240607
+        const below = (limit: number) => {
+            seed = (seed * 1664525 + 1013904223) % 2 ** 32
+            return Math.floor((seed / 2 ** 32) * limit)
+        }
+        const visits = [FIRST_VISIT, LATER_VISIT]
+        const live = new Map(
+            visits.map((id) => [id, fixtureRow(id).event.dataValues])
+        )
+        const rowsNow = () =>
+            visits.map((id) => {
+                const visit = fixtureRow(id)
+                return {
+                    ...visit,
+                    event: { ...visit.event, dataValues: live.get(id) ?? {} },
+                }
+            })
+        const evaluator = createEventsRuleEvaluator(engine, contexts)
+        evaluator(input(rowsNow()), visits)
+        const ran = vi.spyOn(engine.RuleEngineJs.prototype, 'evaluateEvent')
+        let fewer = 0
+        for (let step = 0; step < 100; step += 1) {
+            // One field of one visit mostly, several at times, as a paste changes them.
+            const visit = visits[below(visits.length)] ?? FIRST_VISIT
+            const changed = Array.from(
+                { length: 1 + below(3) },
+                () => fields[below(fields.length)]
+            ).flatMap((field) => field ?? [])
+            const values = { ...live.get(visit) }
+            for (const { id, values: all } of changed) {
+                const value = all[below(all.length)]
+                if (value === undefined) {
+                    delete values[id]
+                } else {
+                    values[id] = value
+                }
+            }
+            live.set(visit, values)
+            const rows = rowsNow()
+            // The piping's part: each row the change reaches, with the fields that reach it.
+            const reached = new Map<string, string[]>()
+            for (const { id } of changed) {
+                for (const rowId of rowsAffectedBy(
+                    rows,
+                    crossFields,
+                    visit,
+                    id
+                )) {
+                    reached.set(rowId, [...(reached.get(rowId) ?? []), id])
+                }
+            }
+            for (const [rowId, changedFields] of reached) {
+                ran.mockClear()
+                const incremental = evaluator(
+                    input(rows),
+                    [rowId],
+                    changedFields
+                )
+                const all =
+                    contexts.get(
+                        rows.find((r) => r.event.id === rowId)?.event
+                            .programStageId ?? ''
+                    )?.rules.length ?? 0
+                if ((ran.mock.calls[0]?.[3].rules.length ?? all) < all) {
+                    fewer += 1
+                }
+                expect(incremental.failures.size).toBe(0)
+                expect(incremental, `change ${step}, ${rowId}`).toEqual(
+                    evaluateEventsRules(engine, contexts, input(rows), [rowId])
+                )
+            }
+        }
+        // A row no change reached still says what a full run says.
+        expect(evaluator(input(rowsNow()), visits, [])).toEqual(
+            evaluateEventsRules(engine, contexts, input(rowsNow()), visits)
+        )
+        ran.mockRestore()
+        expect(fewer).toBeGreaterThan(80)
     })
 })

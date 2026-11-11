@@ -1,6 +1,6 @@
 import type { CellKey } from '@/components/spreadsheet'
 import type { TrackerMessage } from '../logic/effects'
-import { sameMessages, saysNothing } from '../logic/effects'
+import { effectsWriter, sameMessages } from '../logic/effects'
 import { slotOrderWarnings } from '../logic/slotOrder'
 import type { SlotDef } from '../register/compileLayout'
 import type { OpenForm } from './openForm'
@@ -26,7 +26,7 @@ export const watchSlotOrder = (
             slots
         )
         const state = effects.getState().cells
-        let cells = state
+        const writer = effectsWriter(effects.getState())
         for (const key of new Set([...written.keys(), ...wanted.keys()])) {
             const now = state[key] ?? { required: false, messages: [] }
             const own = [written.get(key), wanted.get(key)]
@@ -51,17 +51,12 @@ export const watchSlotOrder = (
             if (sameMessages(messages, now.messages)) {
                 continue
             }
-            cells = cells === state ? { ...state } : cells
-            const next = { ...now, messages }
-            if (saysNothing(next)) {
-                delete cells[key]
-            } else {
-                cells[key] = next
-            }
+            writer.setCell(key, { ...now, messages })
         }
         written = wanted
+        const { cells, written: writes } = writer.state()
         if (cells !== state) {
-            effects.setState({ cells })
+            effects.setState({ cells, written: writes })
         }
     }
     update()

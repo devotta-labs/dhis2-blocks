@@ -36,6 +36,11 @@ type Source = CellState['source']
 export interface CellStoreState {
     /** Only cells that were loaded or touched have an entry; read the rest as `EMPTY_CELL`. */
     cells: Partial<Record<CellKey, CellState>>
+    /**
+     * Cell keys written by the most recent store update, each once, in the order it first wrote them: the order
+     * `cells` holds the new ones in, after those it held before.
+     */
+    changedCellKeys: ReadonlyArray<CellKey>
     /** The id of the cell's field, as `fieldIdOf` names it: cell overrides by field id are looked up by it. */
     fieldIdOf(key: CellKey): string
     /** What the cell's value is checked against; nothing for a key whose field the form does not hold. */
@@ -182,6 +187,8 @@ export const createCellStore = ({
         ): T => {
             let cells = get().cells
             let copied = false
+            const changedCellKeys: CellKey[] = []
+            const changed = new Set<CellKey>()
             const queued: Array<[CellKey, string | null, string | null]> = []
             const read = (key: CellKey) => cells[key]
             const write = (key: CellKey, cell: CellState) => {
@@ -190,6 +197,10 @@ export const createCellStore = ({
                     copied = true
                 }
                 cells[key] = cell
+                if (!changed.has(key)) {
+                    changed.add(key)
+                    changedCellKeys.push(key)
+                }
             }
             const queue = (
                 key: CellKey,
@@ -211,7 +222,7 @@ export const createCellStore = ({
             }
             const result = run({ read, write, queue })
             if (copied) {
-                set({ cells })
+                set({ cells, changedCellKeys })
             }
             for (const [key, value, base] of queued) {
                 enqueue(key, value, base)
@@ -306,6 +317,7 @@ export const createCellStore = ({
 
         return {
             cells: loaded,
+            changedCellKeys: [],
             fieldIdOf,
             fieldOf,
             commit: (key, text, source) =>

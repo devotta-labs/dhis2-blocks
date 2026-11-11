@@ -110,13 +110,19 @@ export const opensMenu = (event: KeyboardEvent) =>
 /** A row's last cell, sticky at the row's end, holding its actions button. */
 export const RowActions = ({
     rowHeader,
+    colIndex,
     onOpen,
 }: {
     /** The DOM id of the row's header. */
     rowHeader: string
+    /** The cell's place among the table's columns, from 1, for screen readers. */
+    colIndex: number
     onOpen(anchor: HTMLElement): void
 }) => (
-    <td className={cn(BORDER_CLASS, ACTIONS_CLASS, 'bg-dhis2-background')}>
+    <td
+        aria-colindex={colIndex}
+        className={cn(BORDER_CLASS, ACTIONS_CLASS, 'bg-dhis2-background')}
+    >
         <ActionsButton
             id={`${rowHeader}-actions`}
             label={i18n.t('Row actions')}

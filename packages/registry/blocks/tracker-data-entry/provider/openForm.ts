@@ -33,7 +33,7 @@ import { completionChecks, refusalOf, showStatus } from './completion'
 import type { TrackerEffectsState } from '../logic/effects'
 import { discardFailed } from './discardFailed'
 import { formKeys } from './formKeys'
-import { formEffects, summaryOf, withRows } from './formRows'
+import { followSummary, formEffects, withRows } from './formRows'
 import type { TrackerDataEntryView } from './hooks'
 import { signedInAsOther, userCheck } from './signedIn'
 import { watchSlotOrder } from './slotOrderEffects'
@@ -348,14 +348,7 @@ const connect = (
         if (closed) {
             return
         }
-        const summary = summaryOf({ store, effects, tables }, form)
-        view.setState({
-            summary: {
-                ...summary,
-                unsent: summary.unsent + there.unsent,
-                failed: summary.failed + there.failed,
-            },
-        })
+        view.setState({ summary: summaries.read(form, there) })
     }
     // The stores' changes until the next paint are summed up once, after it; what reads the summary first sums up what
     // waits.
@@ -411,11 +404,10 @@ const connect = (
         summed
     )
 
+    const summaries = followSummary({ store, effects, tables }, summarizeLater)
     summarize()
     const unsubscribes = [
-        store.subscribe(summarizeLater),
-        effects.subscribe(summarizeLater),
-        tables.subscribe(summarizeLater),
+        summaries.stop,
         watchSlotOrder({ store, effects, tables }, form.slots ?? []),
     ]
 

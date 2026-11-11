@@ -6,7 +6,6 @@ import {
     crossEventFields,
     emptyEffects,
     evaluateEnrollmentRules,
-    evaluateEventsRules,
     metadataForEnrollment,
     metadataForStage,
     rowsAffectedBy,
@@ -22,7 +21,11 @@ import {
     type RuleEventInput,
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
-import { indexRows, withLiveEvents } from '../lib/manyEvents'
+import {
+    createEventsRuleEvaluator,
+    indexRows,
+    withLiveEvents,
+} from '../lib/manyEvents'
 import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
@@ -56,10 +59,15 @@ export interface EventsRules {
      * events: the server's, each replaced by its live row, plus the live rows the server lacks; a row whose person the
      * server did not return is in `failures`. A row that is not in `rows`, whose stage was not asked for, or whose
      * person was added to `enrollmentIds` and has not loaded yet, is in neither map: it was not evaluated.
+     *
+     * With `changedFields`, the data values changed since these rows were last evaluated here, only the rules those
+     * fields reach run and the others keep their effects. Pass it only when nothing else of the rows changed since
+     * (an event date, a person's other events, a row added or removed): leave it out and every rule runs.
      */
     evaluate(
         rows: ReadonlyArray<EventsRuleRow>,
-        rowIds: ReadonlyArray<string>
+        rowIds: ReadonlyArray<string>,
+        changedFields?: ReadonlyArray<string>
     ): EventsRulesEvaluation
     /**
      * The rows to run again after `fieldId` changed in `rowId`: the row itself, and for a field other events read, the
@@ -435,12 +443,11 @@ export const useEventsRules = ({
         const enrollmentContext = enrollments
             ? contexts.get(metadata.programId)
             : undefined
+        const evaluateRows = createEventsRuleEvaluator(engine, contexts)
         return {
             // A row whose person is still loading waits; one whose person the server did not return fails.
-            evaluate: (rows, rowIds) =>
-                evaluateEventsRules(
-                    engine,
-                    contexts,
+            evaluate: (rows, rowIds, changedFields) =>
+                evaluateRows(
                     {
                         rows,
                         persons: persons.persons,
@@ -449,7 +456,8 @@ export const useEventsRules = ({
                     },
                     needsPersons
                         ? withLoadedPerson(rows, persons.answered, rowIds)
-                        : rowIds
+                        : rowIds,
+                    changedFields
                 ),
             evaluateEnrollments:
                 enrollmentContext &&

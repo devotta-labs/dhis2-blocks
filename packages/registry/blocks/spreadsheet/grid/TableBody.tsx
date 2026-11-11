@@ -1,9 +1,12 @@
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Range } from '@tanstack/react-virtual'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect } from 'react'
 import type { RefObject, SyntheticEvent } from 'react'
 import type { GridTable } from '../model/types'
+import { useSpreadsheetContext } from '../provider/context'
 import type { BulkTarget } from './BulkMenu'
+import { cellCount } from './columnWindow'
+import type { ColumnWindow } from './columnWindow'
 import type { NavKey } from './navigation'
 import type { NotesTarget } from './RowNotes'
 import { TableRow } from './TableRow'
@@ -17,6 +20,8 @@ interface TableBodyProps {
     idScope: string
     table: GridTable
     labels: ReadonlyArray<string>
+    /** The columns drawn in each row. */
+    columns: ColumnWindow
     move(key: NavKey): void
     openMenu(target: BulkTarget): void
     openNotes(target: NotesTarget): void
@@ -24,6 +29,10 @@ interface TableBodyProps {
     region: RefObject<HTMLDivElement>
     /** The sticky header's height, above the first row. */
     headerHeight: number
+    /** The row the person was last in, by its place among the rows; -1 when none. */
+    at: number
+    /** Notes the row and column that hold focus, or were last pressed. */
+    note(event: SyntheticEvent): void
     /** A row to draw wherever the region has scrolled, for a cell about to get focus. */
     reveal?: number
 }
@@ -44,21 +53,18 @@ export const TableBody = ({
     idScope,
     table,
     labels,
+    columns,
     move,
     openMenu,
     openNotes,
     region,
     headerHeight,
+    at,
+    note,
     reveal,
 }: TableBodyProps) => {
     const { rows } = table
     const count = rows.length
-    // By id, so rows added above it never move it.
-    const [current, setCurrent] = useState<string>()
-    const at = useMemo(
-        () => rows.findIndex(({ id }) => id === current),
-        [rows, current]
-    )
     const rangeExtractor = useCallback(
         (range: Range) =>
             [
@@ -87,18 +93,34 @@ export const TableBody = ({
         getItemKey: (index) => rows[index]?.id ?? index,
         rangeExtractor,
     })
-    const note = (event: SyntheticEvent) => {
-        const row =
-            event.target instanceof Element
-                ? rows[Number(event.target.closest('tr')?.dataset.index)]
-                : undefined
-        if (row !== undefined) {
-            setCurrent(row.id)
+    const items = virtualizer.getVirtualItems()
+    const { drawnRows } = useSpreadsheetContext()
+    const tableId = table.id
+    // After every render, as scrolling changes the rows drawn without changing a prop.
+    useLayoutEffect(() => {
+        const ids = items.flatMap(({ index }) => rows[index]?.id ?? [])
+        const said = drawnRows?.getState().rows.get(tableId)
+        if (
+            said?.length !== ids.length ||
+            ids.some((id, at) => id !== said[at])
+        ) {
+            drawnRows?.setState((state) => ({
+                rows: new Map(state.rows).set(tableId, ids),
+            }))
         }
-    }
-    const span = table.columns.length + 2
+    })
+    useLayoutEffect(
+        () => () =>
+            drawnRows?.setState((state) => {
+                const left = new Map(state.rows)
+                left.delete(tableId)
+                return { rows: left }
+            }),
+        [drawnRows, tableId]
+    )
+    const span = cellCount(columns) + 2
     let end = headerHeight
-    const drawn = virtualizer.getVirtualItems().flatMap((item) => {
+    const drawn = items.flatMap((item) => {
         const row = rows[item.index]
         const gap = item.start - end
         end = item.end
@@ -117,6 +139,7 @@ export const TableBody = ({
                       rowIndex={table.headerRows.length + item.index + 1}
                       measure={virtualizer.measureElement}
                       labels={labels}
+                      columns={columns}
                       move={move}
                       openMenu={openMenu}
                       openNotes={openNotes}

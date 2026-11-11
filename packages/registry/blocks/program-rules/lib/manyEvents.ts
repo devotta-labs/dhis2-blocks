@@ -1,6 +1,11 @@
+import type * as Engine from '@dhis2/rule-engine'
 import i18n from '@dhis2/d2-i18n'
 import { Result } from 'better-result'
-import { evaluateEventRules } from './evaluate'
+import {
+    evaluateEventRuleEffects,
+    evaluateEventRules,
+    sortEventRuleEffects,
+} from './evaluate'
 import type {
     EventRuleInput,
     ProgramRulesMetadata,
@@ -44,6 +49,17 @@ export interface EventsRulesEvaluation {
     /** rowId → why the engine could not run the row's rules */
     failures: Map<string, Error>
 }
+
+interface CachedRowEffects {
+    context: RuleContext
+    byRule: Map<string, Engine.RuleEffectJs[]>
+}
+
+type RowRuleEvaluator = (
+    rowId: string,
+    context: RuleContext,
+    input: EventRuleInput
+) => RuleEffects
 
 /** The variable source types that read a value from another event. */
 const CROSS_EVENT_SOURCES = new Set([
@@ -145,11 +161,12 @@ export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
  * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
  * in neither map. `input.rows` is indexed once per array: pass a new array when the rows change.
  */
-export const evaluateEventsRules = (
+const evaluateEventsRulesWith = (
     engine: RuleEngineModule,
     contexts: ReadonlyMap<string, RuleContext>,
     input: EventsRuleInput,
-    rowIds: ReadonlyArray<string>
+    rowIds: ReadonlyArray<string>,
+    evaluate: RowRuleEvaluator
 ): EventsRulesEvaluation => {
     const { byId: rows, byPerson: rowsOfPerson } = indexRows(input.rows)
     const effects = new Map<string, RuleEffects>()
@@ -196,7 +213,7 @@ export const evaluateEventsRules = (
               }
             : { event: row.event, otherEvents: [] }
         const evaluation = Result.try({
-            try: () => evaluateEventRules(engine, context, ruleInput),
+            try: () => evaluate(rowId, context, ruleInput),
             catch: (cause) =>
                 cause instanceof Error ? cause : new Error(String(cause)),
         })
@@ -207,4 +224,133 @@ export const evaluateEventsRules = (
         }
     }
     return { effects, failures }
+}
+
+export const evaluateEventsRules = (
+    engine: RuleEngineModule,
+    contexts: ReadonlyMap<string, RuleContext>,
+    input: EventsRuleInput,
+    rowIds: ReadonlyArray<string>
+): EventsRulesEvaluation =>
+    evaluateEventsRulesWith(
+        engine,
+        contexts,
+        input,
+        rowIds,
+        (_rowId, context, ruleInput) =>
+            evaluateEventRules(engine, context, ruleInput)
+    )
+
+/**
+ * The rules to run again after `fields` changed: those that read one of them, straight or through a variable an earlier
+ * rule assigns, those whose reads the graph cannot place, and the earlier rules that assign the variables any of these
+ * read, so each finds its variables as a full run leaves them.
+ */
+const rulesForFields = (
+    context: RuleContext,
+    fields: ReadonlyArray<string>
+): Set<string> => {
+    const { graph } = context
+    const backwards = [...graph.rules.keys()].reverse()
+    const selected = new Set(graph.alwaysRun)
+    for (const field of fields) {
+        graph.fieldReaders.get(field)?.forEach((id) => selected.add(id))
+    }
+    // Backwards: a rule taken for a variable it assigns brings the variables it reads itself.
+    const needed = new Set<string>()
+    for (const id of backwards) {
+        const rule = graph.rules.get(id)
+        if (rule === undefined) {
+            continue
+        }
+        if (
+            !selected.has(id) &&
+            rule.writesVariables.some((name) => needed.has(name))
+        ) {
+            selected.add(id)
+        }
+        if (selected.has(id)) {
+            rule.readsVariables.forEach((name) => needed.add(name))
+        }
+    }
+    return selected
+}
+
+const selections = new WeakMap<RuleContext, Map<string, Set<string>>>()
+
+const selectedRules = (
+    context: RuleContext,
+    fields: ReadonlyArray<string>
+): Set<string> => {
+    const key = [...fields].sort().join('\u0000')
+    const known = selections.get(context) ?? new Map<string, Set<string>>()
+    selections.set(context, known)
+    const selected = known.get(key) ?? rulesForFields(context, fields)
+    known.set(key, selected)
+    return selected
+}
+
+/**
+ * `evaluateEventsRules` that remembers what each rule said of each row, so a row can run only the rules its changed
+ * fields reach and keep the others' effects. Pass `changedFields` only for a row this evaluator ran last with every
+ * other input as it is now (its other values, its dates, its person's other events): a row it has not run, or runs
+ * without `changedFields`, runs every rule.
+ */
+export const createEventsRuleEvaluator = (
+    engine: RuleEngineModule,
+    contexts: ReadonlyMap<string, RuleContext>
+) => {
+    const previous = new Map<string, CachedRowEffects>()
+    return (
+        input: EventsRuleInput,
+        rowIds: ReadonlyArray<string>,
+        changedFields?: ReadonlyArray<string>
+    ): EventsRulesEvaluation => {
+        // Rows that left the grid are forgotten once they outnumber those in it.
+        if (previous.size > 2 * input.rows.length + 100) {
+            const { byId } = indexRows(input.rows)
+            for (const rowId of previous.keys()) {
+                if (!byId.has(rowId)) {
+                    previous.delete(rowId)
+                }
+            }
+        }
+        return evaluateEventsRulesWith(
+            engine,
+            contexts,
+            input,
+            rowIds,
+            (rowId, context, ruleInput) => {
+                const cached = previous.get(rowId)
+                const all = [...context.graph.rules.keys()]
+                const incremental =
+                    changedFields !== undefined && cached?.context === context
+                const selected = incremental
+                    ? selectedRules(context, changedFields)
+                    : new Set(all)
+                const byRule = new Map(incremental ? cached.byRule : [])
+                // A failed run leaves nothing to build on.
+                previous.delete(rowId)
+                const raw = evaluateEventRuleEffects(
+                    engine,
+                    context,
+                    ruleInput,
+                    selected
+                )
+                for (const id of selected) {
+                    byRule.delete(id)
+                }
+                for (const effect of raw) {
+                    const id =
+                        effect.ruleAction.values.get('ruleId') ?? effect.ruleId
+                    byRule.set(id, [...(byRule.get(id) ?? []), effect])
+                }
+                previous.set(rowId, { context, byRule })
+                return sortEventRuleEffects(
+                    context,
+                    all.flatMap((id) => byRule.get(id) ?? [])
+                )
+            }
+        )
+    }
 }

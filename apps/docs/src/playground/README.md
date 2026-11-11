@@ -37,7 +37,8 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    the block asks for, and `answer` with the server.
 4. Give it presets, shown as Examples: named settings for the handful of
    cases worth showing, grouped. Keep the sidebar small: the examples, a few
-   plain options, the network and the canvas.
+   plain options, the network and the canvas. Mark the cases kept for
+   checking the block, rather than for showing it, `folded`.
    `usePresetParam` keeps the chosen one in the URL (`?preset=`), so a link
    opens the same case.
 5. Keep the lab's state in its own reducer, `labState.ts`, tested in
@@ -65,7 +66,7 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
 | `LogPanel`                   | The bottom panel: the block's callbacks when it has any, then each request and their `RequestWaterfall`. Feed it the log that `LabServerScope` writes.                                              |
 | `usePresetParam`             | The lab's preset in the URL: read once to open on it, written whenever the preset changes.                                                                                                          |
 | `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                               |
-| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples.                                                                           |
+| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples, with any marked `folded` under a closed Edge cases group.                 |
 | `lab.css`                    | The lab's own look (`--lab-*` tokens), dark with the docs' theme. `LabLayout` loads it; it never styles the block under test.                                                                       |
 
 ## Writing the server

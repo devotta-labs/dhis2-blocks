@@ -1,7 +1,21 @@
 import { Check, SegmentedRow, Section, SelectRow } from '../controls'
 import type { LabSettings } from './labData'
 
-/** The few settings worth changing by hand; the examples cover the rest. */
+type Flags = 'none' | 'inactive' | 'duplicate' | 'both'
+type Access = 'allowed' | 'restricted' | 'missing'
+
+const flagsOf = ({ inactive, potentialDuplicate }: LabSettings): Flags => {
+    if (inactive && potentialDuplicate) return 'both'
+    if (inactive) return 'inactive'
+    return potentialDuplicate ? 'duplicate' : 'none'
+}
+
+const accessOf = ({ restricted, missing }: LabSettings): Access => {
+    if (restricted) return 'restricted'
+    return missing ? 'missing' : 'allowed'
+}
+
+/** Four settings that make sense on any example; the examples cover the rest. */
 export const OptionsControls = ({
     settings,
     onChange,
@@ -10,79 +24,6 @@ export const OptionsControls = ({
     onChange: (changes: Partial<LabSettings>) => void
 }) => (
     <Section title="Options">
-        <SelectRow
-            label="Record"
-            value={settings.record}
-            options={[
-                ['pregnancy', 'Pregnancy'],
-                ['child', 'Child'],
-                ['adult', 'Adult'],
-                ['long', 'Long values'],
-                ['empty', 'Nothing recorded'],
-                ['broken', 'Broken metadata'],
-                ['amharic', 'Amharic'],
-                ['arabic', 'Arabic'],
-                ['detailed', 'Many attributes'],
-                ['shipment', 'Vaccine shipment'],
-            ]}
-            onChange={(record) => onChange({ record })}
-        />
-        <Check
-            checked={settings.inactive}
-            onChange={(inactive) => onChange({ inactive })}
-        >
-            Inactive
-        </Check>
-        <Check
-            checked={settings.potentialDuplicate}
-            onChange={(potentialDuplicate) => onChange({ potentialDuplicate })}
-        >
-            Possible duplicate
-        </Check>
-        <Check
-            checked={settings.restricted}
-            onChange={(restricted) => onChange({ restricted })}
-        >
-            No access (403)
-        </Check>
-        <Check
-            checked={settings.missing}
-            onChange={(missing) => onChange({ missing })}
-        >
-            Doesn't exist (404)
-        </Check>
-        <SelectRow
-            label="Enrollment"
-            value={settings.enrollment}
-            options={[
-                ['enrolled', 'Enrolled'],
-                ['again', 'Enrolled again'],
-                ['none', 'Not enrolled'],
-            ]}
-            onChange={(enrollment) => onChange({ enrollment })}
-        />
-        <SelectRow
-            label="Calendar"
-            value={settings.calendar}
-            options={[
-                ['gregorian', 'Gregorian'],
-                ['ethiopian', 'Ethiopian'],
-                ['nepali', 'Nepali'],
-                ['islamic', 'Islamic'],
-                ['persian', 'Persian'],
-                ['thai', 'Thai'],
-            ]}
-            onChange={(calendar) => onChange({ calendar })}
-        />
-        <SegmentedRow
-            label="Banner"
-            value={settings.arrangement}
-            options={[
-                ['composed', 'Composed'],
-                ['default', 'Default'],
-            ]}
-            onChange={(arrangement) => onChange({ arrangement })}
-        />
         <SegmentedRow
             label="Width"
             value={settings.width}
@@ -92,32 +33,37 @@ export const OptionsControls = ({
             ]}
             onChange={(width) => onChange({ width })}
         />
-        <SegmentedRow
-            label="Frame"
-            value={settings.frame}
+        <SelectRow
+            label="Flags"
+            value={flagsOf(settings)}
             options={[
-                ['card', 'Card'],
-                ['page', 'Top of page'],
+                ['none', 'None'],
+                ['inactive', 'Inactive'],
+                ['duplicate', 'Possible duplicate'],
+                ['both', 'Both'],
             ]}
-            onChange={(frame) => onChange({ frame })}
+            onChange={(flags) =>
+                onChange({
+                    inactive: flags === 'inactive' || flags === 'both',
+                    potentialDuplicate:
+                        flags === 'duplicate' || flags === 'both',
+                })
+            }
         />
-        <SegmentedRow
-            label="Actions"
-            value={settings.actions}
+        <SelectRow
+            label="Access"
+            value={accessOf(settings)}
             options={[
-                ['one', 'One'],
-                ['several', 'Several'],
+                ['allowed', 'Allowed'],
+                ['restricted', 'No access (403)'],
+                ['missing', "Doesn't exist (404)"],
             ]}
-            onChange={(actions) => onChange({ actions })}
-        />
-        <SegmentedRow
-            label="Line one"
-            value={settings.lineOne}
-            options={[
-                ['usual', 'Usual'],
-                ['more', 'More values'],
-            ]}
-            onChange={(lineOne) => onChange({ lineOne })}
+            onChange={(access) =>
+                onChange({
+                    restricted: access === 'restricted',
+                    missing: access === 'missing',
+                })
+            }
         />
         <Check checked={settings.rtl} onChange={(rtl) => onChange({ rtl })}>
             Right to left

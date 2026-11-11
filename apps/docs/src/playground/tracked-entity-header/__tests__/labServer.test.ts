@@ -53,7 +53,7 @@ const statusOf = (run: () => object): number | undefined => {
 
 describe('the tracked entity header lab server', () => {
     it('answers the person, program, type and org unit in the shapes the block parses', () => {
-        const settings = settingsOf('Pregnancy')
+        const settings = settingsOf('Patient banner')
         const { program, type } = SUBJECTS[settings.record]
         const respond = serverFor(settings)
         expect(recordOf(settings).attributes.length).toBeGreaterThan(0)
@@ -75,8 +75,8 @@ describe('the tracked entity header lab server', () => {
     })
 
     it('answers the person type’s attributes alone without a program', () => {
-        const withProgram = recordOf(settingsOf('Pregnancy'))
-        const without = recordOf(settingsOf('Pregnancy'), false)
+        const withProgram = recordOf(settingsOf('Patient banner'))
+        const without = recordOf(settingsOf('Patient banner'), false)
         expect(without.attributes.length).toBeLessThan(
             withProgram.attributes.length
         )
@@ -97,7 +97,7 @@ describe('the tracked entity header lab server', () => {
     })
 
     it('answers a completed enrollment and leaves values out for the adult', () => {
-        const settings = settingsOf('Adult, completed')
+        const settings = settingsOf('Completed')
         const person = recordOf(settings)
         expect(person.enrollments[0]?.status).toBe('COMPLETED')
         const metadata = ProgramAttributesResponseSchema.parse(
@@ -115,35 +115,32 @@ describe('the tracked entity header lab server', () => {
     })
 
     it('carries the person-level flags', () => {
-        expect(recordOf(settingsOf('Inactive')).inactive).toBe(true)
+        expect(recordOf({ ...DEFAULT_SETTINGS, inactive: true }).inactive).toBe(
+            true
+        )
         expect(
-            recordOf(settingsOf('Possible duplicate')).potentialDuplicate
+            recordOf({ ...DEFAULT_SETTINGS, potentialDuplicate: true })
+                .potentialDuplicate
         ).toBe(true)
         expect(recordOf().inactive).toBe(false)
     })
 
-    it('refuses the person with a 403 for Restricted, and only then', () => {
+    it('refuses the person with a 403 when access is refused, and only then', () => {
         const request = {
             resource: 'tracker/trackedEntities',
             id: LAB_PERSON,
             params: { program: SUBJECTS.pregnancy.program },
         }
         expect(
-            statusOf(() => serverFor(settingsOf('Restricted'))(request))
+            statusOf(() =>
+                serverFor({ ...DEFAULT_SETTINGS, restricted: true })(request)
+            )
         ).toBe(403)
         expect(statusOf(() => serverFor()(request))).toBeUndefined()
     })
 
-    it('has a Failed preset whose person request fails with a 500, and a Slow one', () => {
-        expect(
-            settingsOf('Failed').network.endpoints['tracker/trackedEntities']
-                ?.behaviour
-        ).toBe('fails')
-        expect(settingsOf('Slow').network.delay).toBeGreaterThanOrEqual(2000)
-    })
-
     it('answers the observation resources for the pregnancy person', () => {
-        const respond = serverFor(settingsOf('Pregnancy'))
+        const respond = serverFor(settingsOf('Patient banner'))
         const events = respond({
             resource: 'tracker/events',
             params: {
@@ -269,8 +266,8 @@ describe('the tracked entity header lab server', () => {
         })
     })
 
-    it('answers 404 with and without the program for Not found', () => {
-        const settings = settingsOf('Not found')
+    it('answers 404 with and without the program for a record that does not exist', () => {
+        const settings = { ...DEFAULT_SETTINGS, missing: true }
         expect(statusOf(() => recordOf(settings))).toBe(404)
         expect(statusOf(() => recordOf(settings, false))).toBe(404)
     })
@@ -311,7 +308,7 @@ describe('the tracked entity header lab server', () => {
             }
         })
 
-        it('leaves many attributes for the details, and none for No details', () => {
+        it('leaves many attributes for the details, and none for the child', () => {
             const unplaced = (name: string) => {
                 const settings = settingsOf(name)
                 const placed = placedBy(settings)
@@ -320,7 +317,7 @@ describe('the tracked entity header lab server', () => {
                 )
             }
             expect(unplaced('Many details').length).toBeGreaterThan(10)
-            expect(unplaced('No details')).toEqual([])
+            expect(unplaced('Child')).toEqual([])
         })
 
         it('serves a vaccine shipment with its own type, date label and buttons', () => {
@@ -361,7 +358,7 @@ describe('the tracked entity header lab server', () => {
         }
 
         it('leaves the other presets without relationship parts', () => {
-            expect(partsFor(settingsOf('Pregnancy')).relationships).toBe(
+            expect(partsFor(settingsOf('Patient banner')).relationships).toBe(
                 undefined
             )
         })
@@ -391,18 +388,18 @@ describe('the tracked entity header lab server', () => {
         })
 
         it('has 300 links of one type and a moreHref', () => {
-            const { links } = relationshipsOf('Focus with 300 cases')
+            const { links } = relationshipsOf('300 linked cases')
             expect(links).toHaveLength(300)
             expect(new Set(links.map((l) => l.relationshipType)).size).toBe(1)
         })
 
         it('has a linked record the block cannot read', () => {
-            const { links } = relationshipsOf('Linked record without access')
+            const { links } = relationshipsOf('Without access')
             expect(links.map((l) => l.to.linked.kind)).toEqual(['unreadable'])
         })
 
         it('has two linked events', () => {
-            const { links } = relationshipsOf('Linked events only')
+            const { links } = relationshipsOf('Events only')
             expect(links.map((l) => l.to.linked.kind)).toEqual([
                 'event',
                 'event',

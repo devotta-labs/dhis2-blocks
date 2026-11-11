@@ -93,46 +93,6 @@ export const TrackedEntityHeaderLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    <Section title="Canvas">
-                        <Segmented
-                            value={canvas === 'banner' ? 'banner' : 'custom'}
-                            options={[
-                                ['banner', 'Banner'],
-                                ['custom', 'Custom'],
-                            ]}
-                            onChange={(next) =>
-                                dispatch({
-                                    type: 'switchCanvas',
-                                    canvas:
-                                        next === 'banner'
-                                            ? 'banner'
-                                            : 'quick-look',
-                                })
-                            }
-                        />
-                        {canvas === 'banner' ? null : (
-                            <>
-                                <p className="m-0 text-xs text-dhis2-muted-foreground">
-                                    Your own layout from the parts. These are
-                                    examples, not layouts the block ships.
-                                </p>
-                                <SegmentedRow
-                                    label="Example"
-                                    value={canvas}
-                                    options={[
-                                        ['quick-look', 'Quick look'],
-                                        ['sidebar', 'Sidebar'],
-                                    ]}
-                                    onChange={(next) =>
-                                        dispatch({
-                                            type: 'switchCanvas',
-                                            canvas: next,
-                                        })
-                                    }
-                                />
-                            </>
-                        )}
-                    </Section>
                     {mode === 'lab' ? (
                         <>
                             <PresetControls
@@ -142,6 +102,12 @@ export const TrackedEntityHeaderLab = () => {
                                     dispatch({ type: 'pickPreset', preset })
                                 }
                             />
+                            {canvas === 'banner' ? null : (
+                                <p className="m-0 text-xs text-dhis2-muted-foreground">
+                                    Your own layout from the parts. This is an
+                                    example, not a layout the block ships.
+                                </p>
+                            )}
                             <OptionsControls
                                 settings={settings}
                                 onChange={change}
@@ -154,6 +120,21 @@ export const TrackedEntityHeaderLab = () => {
                         </>
                     ) : (
                         <Section title="Live DHIS2">
+                            <SegmentedRow
+                                label="Canvas"
+                                value={canvas}
+                                options={[
+                                    ['banner', 'Banner'],
+                                    ['quick-look', 'Quick look'],
+                                    ['sidebar', 'Sidebar'],
+                                ]}
+                                onChange={(next) =>
+                                    dispatch({
+                                        type: 'switchCanvas',
+                                        canvas: next,
+                                    })
+                                }
+                            />
                             {(
                                 [
                                     ['programId', 'Program'],

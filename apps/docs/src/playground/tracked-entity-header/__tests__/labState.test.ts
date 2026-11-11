@@ -33,8 +33,8 @@ describe('the tracked entity header lab state', () => {
     })
 
     it('opens on the linked preset, or the first for a name it does not know', () => {
-        expect(initialLabState('Restricted').settings).toEqual(
-            presetNamed('Restricted').settings
+        expect(initialLabState('Long values').settings).toEqual(
+            presetNamed('Long values').settings
         )
         expect(initialLabState('Nothing like this').preset).toBe(
             PRESETS[0]?.name
@@ -44,12 +44,34 @@ describe('the tracked entity header lab state', () => {
     it('restarts on a preset, with its settings and no old requests', () => {
         const state = labReducer(withRequest, {
             type: 'pickPreset',
-            preset: presetNamed('Inactive'),
+            preset: presetNamed('Child'),
         })
-        expect(state.preset).toBe('Inactive')
-        expect(state.settings.inactive).toBe(true)
+        expect(state.preset).toBe('Child')
+        expect(state.settings.record).toBe('child')
         expect(state.run).toBe(1)
         expect(state.requests).toEqual([])
+    })
+
+    it('shows the canvas the example is about, and the banner for the rest', () => {
+        const sidebar = labReducer(withRequest, {
+            type: 'pickPreset',
+            preset: presetNamed('Sidebar'),
+        })
+        expect(sidebar.canvas).toBe('sidebar')
+        expect(initialLabState('Quick look').canvas).toBe('quick-look')
+        expect(
+            labReducer(sidebar, {
+                type: 'pickPreset',
+                preset: presetNamed('Child'),
+            }).canvas
+        ).toBe('banner')
+    })
+
+    it('keeps the first look short: nine examples, the rest folded', () => {
+        expect(PRESETS.filter((each) => !each.folded)).toHaveLength(9)
+        expect(new Set(PRESETS.map(({ name }) => name)).size).toBe(
+            PRESETS.length
+        )
     })
 
     it('switches canvas without restarting or losing the preset', () => {

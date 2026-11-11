@@ -18,104 +18,92 @@ export const DEFAULT_SETTINGS: LabSettings = {
     network: { delay: 50, endpoints: {} },
 }
 
+/** Where the parts are shown: the banner, or one of two layouts of the host's own. */
+export type Canvas = 'banner' | 'quick-look' | 'sidebar'
+
 export interface Preset {
     group: string
     name: string
     settings: LabSettings
+    canvas: Canvas
+    /** Kept under Edge cases, closed to start, so the first look stays short. */
+    folded: boolean
 }
 
 const preset = (
     group: string,
     name: string,
-    changes: Partial<LabSettings> = {}
+    changes: Partial<LabSettings> = {},
+    {
+        canvas = 'banner',
+        folded = false,
+    }: Partial<Pick<Preset, 'canvas' | 'folded'>> = {}
 ): Preset => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },
+    canvas,
+    folded,
 })
 
+const edge = (
+    group: string,
+    name: string,
+    changes: Partial<LabSettings> = {}
+): Preset => preset(group, name, changes, { folded: true })
+
+/**
+ * A few examples of what the block is for, then the edge cases, folded.
+ * Width, flags, access, right to left and the network are options, so no
+ * example repeats one of them.
+ */
 export const PRESETS: readonly Preset[] = [
-    preset('People', 'Pregnancy'),
-    preset('People', 'Child', { record: 'child' }),
-    preset('People', 'Adult, completed', { record: 'adult' }),
-    preset('Flags', 'Inactive', { inactive: true }),
-    preset('Flags', 'Possible duplicate', { potentialDuplicate: true }),
-    preset('Flags', 'Every flag', {
-        inactive: true,
-        potentialDuplicate: true,
-    }),
-    preset('Values', 'Long values', { record: 'long' }),
-    preset('Values', 'Long values, narrow', {
-        record: 'long',
-        width: 'narrow',
-    }),
-    preset('Values', 'Nothing recorded', { record: 'empty' }),
-    preset('Values', 'Broken metadata', { record: 'broken' }),
-    preset('Enrollment', 'Not enrolled', {
-        record: 'adult',
-        enrollment: 'none',
-    }),
-    preset('Enrollment', 'Enrolled again', {
-        record: 'adult',
-        enrollment: 'again',
-    }),
-    preset('Languages', 'Amharic, Ethiopian calendar', {
-        record: 'amharic',
-        calendar: 'ethiopian',
-    }),
-    preset('Languages', 'Arabic, right to left', {
-        record: 'arabic',
-        rtl: true,
-    }),
-    preset('Languages', 'Arabic, right to left, narrow', {
-        record: 'arabic',
-        rtl: true,
-        width: 'narrow',
-    }),
-    preset('Layout', 'Top of page', { frame: 'page' }),
-    preset('Layout', 'Top of page, narrow', { frame: 'page', width: 'narrow' }),
-    preset('Layout', 'Several actions', { actions: 'several' }),
-    preset('Layout', 'Several actions, narrow', {
-        actions: 'several',
-        width: 'narrow',
-    }),
-    preset('Layout', 'Many values on line one', {
-        record: 'detailed',
-        lineOne: 'more',
-    }),
-    preset('Layout', 'Many details', { record: 'detailed' }),
-    preset('Layout', 'No details', { record: 'child' }),
-    preset('Not a person', 'Vaccine shipment', {
+    preset('Start here', 'Patient banner'),
+    preset('Start here', 'Child', { record: 'child' }),
+    preset('Start here', 'Vaccine shipment', {
         record: 'shipment',
         actions: 'several',
     }),
+    preset('Ways to compose', 'Default banner', { arrangement: 'default' }),
+    preset('Ways to compose', 'Top of page', { frame: 'page' }),
+    preset('Ways to compose', 'Sidebar', {}, { canvas: 'sidebar' }),
+    preset('Ways to compose', 'Quick look', {}, { canvas: 'quick-look' }),
     preset('Relationships', 'Mother and baby', { relationships: 'mother' }),
-    preset('Relationships', 'Focus with 300 cases', {
+    preset('Relationships', '300 linked cases', {
         record: 'adult',
         relationships: 'focus',
     }),
-    preset('Relationships', 'Linked record without access', {
-        relationships: 'unreadable',
+    edge('Values', 'Long values', { record: 'long' }),
+    edge('Values', 'Nothing recorded', { record: 'empty' }),
+    edge('Values', 'Broken metadata', { record: 'broken' }),
+    edge('Values', 'Many details', { record: 'detailed' }),
+    edge('Values', 'Many values on line one', {
+        record: 'detailed',
+        lineOne: 'more',
     }),
-    preset('Relationships', 'Linked events only', { relationships: 'events' }),
-    preset('Relationships', 'Raw type names', { relationships: 'raw' }),
-    preset('Relationships', 'Raw type names, relabelled', {
+    edge('Enrollment', 'Completed', { record: 'adult' }),
+    edge('Enrollment', 'Not enrolled', { record: 'adult', enrollment: 'none' }),
+    edge('Enrollment', 'Enrolled again', {
+        record: 'adult',
+        enrollment: 'again',
+    }),
+    edge('Languages', 'Amharic, Ethiopian calendar', {
+        record: 'amharic',
+        calendar: 'ethiopian',
+    }),
+    edge('Languages', 'Arabic, right to left', { record: 'arabic', rtl: true }),
+    edge('Linked records', 'Without access', { relationships: 'unreadable' }),
+    edge('Linked records', 'Events only', { relationships: 'events' }),
+    edge('Linked records', 'Raw type names', { relationships: 'raw' }),
+    edge('Linked records', 'Raw type names, relabelled', {
         relationships: 'rawRelabelled',
     }),
-    preset('States', 'Restricted', { restricted: true }),
-    preset('States', 'Not found', { missing: true }),
-    preset('States', 'Failed', {
-        network: {
-            delay: 50,
-            endpoints: { 'tracker/trackedEntities': { behaviour: 'fails' } },
-        },
-    }),
-    preset('States', 'Owner fails', {
+    edge('Other', 'Several actions', { actions: 'several' }),
+    edge('Other', 'Owner fails', {
         record: 'adult',
         network: {
             delay: 50,
             endpoints: { organisationUnits: { behaviour: 'fails' } },
         },
     }),
-    preset('States', 'Slow', { network: { delay: 2000, endpoints: {} } }),
 ]

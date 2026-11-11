@@ -1,13 +1,11 @@
 import type { RequestLogEntry } from '../network'
 import type { LabSettings } from './labData'
-import { DEFAULT_SETTINGS, PRESETS, type Preset } from './presets'
+import { DEFAULT_SETTINGS, PRESETS, type Canvas, type Preset } from './presets'
 
 interface Live {
     programId: string
     trackedEntityId: string
 }
-
-type Canvas = 'banner' | 'quick-look' | 'sidebar'
 
 export interface LabState {
     mode: 'lab' | 'live'
@@ -23,6 +21,7 @@ export interface LabState {
 
 export type LabAction =
     | { type: 'switchMode'; mode: LabState['mode'] }
+    /** Live DHIS2 has no examples, so its canvas is chosen directly. */
     | { type: 'switchCanvas'; canvas: Canvas }
     | { type: 'pickPreset'; preset: Preset }
     | { type: 'changeSettings'; changes: Partial<LabSettings> }
@@ -55,7 +54,7 @@ export const initialLabState = (linkedPreset?: string): LabState => {
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
         mode: 'lab',
-        canvas: 'banner',
+        canvas: preset?.canvas ?? 'banner',
         preset: preset?.name,
         settings: preset?.settings ?? DEFAULT_SETTINGS,
         live: LIVE,
@@ -74,6 +73,7 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             return restarted({
                 ...state,
                 preset: action.preset.name,
+                canvas: action.preset.canvas,
                 settings: action.preset.settings,
             })
         case 'changeSettings': {

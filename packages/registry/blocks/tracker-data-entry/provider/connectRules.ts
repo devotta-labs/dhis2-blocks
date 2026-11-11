@@ -10,13 +10,7 @@ import { typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cellDomId, typingIn, cellKey } from '@/components/spreadsheet'
 import type { Announcer, CellKey, CellState } from '@/components/spreadsheet'
-import {
-    sameEffects,
-    sameMessages,
-    sameNotes,
-    saysNothing,
-    withRow,
-} from '../logic/effects'
+import { effectsWriter, sameNotes, withRow } from '../logic/effects'
 import type { TrackerEffects } from '../logic/effects'
 import {
     enrollmentUnitOf,
@@ -249,8 +243,7 @@ export const connectRules = ({
 
         const after = store.getState().cells
         const state = effects.getState()
-        let cells = state.cells
-        let rowMessages = state.rowMessages
+        const writer = effectsWriter(state)
         let rowNotes = state.rowNotes
         for (const { recordId, outcome } of results) {
             const record = records.get(recordId)
@@ -303,25 +296,15 @@ export const connectRules = ({
                     } else if (note !== undefined) {
                         cleared.delete(key)
                     }
-                    const kept = saysNothing(next) ? undefined : next
-                    if (!sameEffects(kept, cells[key])) {
-                        cells = cells === state.cells ? { ...cells } : cells
-                        if (kept === undefined) {
-                            delete cells[key]
-                        } else {
-                            cells[key] = kept
-                        }
-                    }
+                    writer.setCell(key, next)
                 }
             }
             const failed = outcome instanceof Error
-            rowMessages = withRow(
-                rowMessages,
+            writer.setRowMessages(
                 recordId,
                 failed
                     ? [{ tone: 'error', text: outcome.message, source: 'rule' }]
-                    : outcome.rowMessages,
-                sameMessages
+                    : outcome.rowMessages
             )
             // The source's notes on the record (a register's on the events it leaves out) come first and stay.
             const written = rowNotes.get(recordId) ?? NO_NOTES
@@ -341,12 +324,13 @@ export const connectRules = ({
                 sameNotes
             )
         }
+        const wrote = writer.state()
         if (
-            cells !== state.cells ||
-            rowMessages !== state.rowMessages ||
+            wrote.cells !== state.cells ||
+            wrote.rowMessages !== state.rowMessages ||
             rowNotes !== state.rowNotes
         ) {
-            effects.setState({ cells, rowMessages, rowNotes })
+            effects.setState({ ...wrote, rowNotes })
         }
         return changed
     }

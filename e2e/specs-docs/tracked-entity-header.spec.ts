@@ -14,7 +14,7 @@ const composedBanner = (page: Page) =>
     page.getByRole('region', { name: 'Irene Jacobs' })
 
 test.describe('live Tracked Entity Header preview', () => {
-    test('names the banner after the person and shows their birth date', async ({
+    test('names the banner after the person and shows when they were born', async ({
         page,
     }) => {
         await page.goto(`/preview/${SLUG}`)
@@ -22,13 +22,13 @@ test.describe('live Tracked Entity Header preview', () => {
         const banner = composedBanner(page)
 
         await expect(banner).toBeVisible({ timeout: 30_000 })
-        await expect(banner).toContainText('Birth date', { timeout: 30_000 })
+        await expect(banner).toContainText('Born', { timeout: 30_000 })
         await expect(banner).toContainText('Not recorded')
     })
 
     test('has no serious accessibility violations', async ({ page }) => {
         await page.goto(`/preview/${SLUG}`)
-        await expect(composedBanner(page)).toContainText('Birth date', {
+        await expect(composedBanner(page)).toContainText('Born', {
             timeout: 30_000,
         })
 

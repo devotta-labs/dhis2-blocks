@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { resourceClientOf, type TrackedEntityFinderClient } from '../api/client'
-import { programMetadataQueryOptions } from '../api/queries'
+import { programMetadataQueryOptions, searchQueryOptions } from '../api/queries'
 import type { FinderPerson } from '../api/search'
 import { systemInfoQueryOptions } from '../api/systemInfo'
 import { buildProgramModel } from '../rules/programModel'
@@ -20,7 +20,6 @@ const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
 export interface FinderControllerOptions {
     program: string
     onSelect: (person: FinderPerson) => void
-    client: TrackedEntityFinderClient
 }
 
 /**
@@ -31,13 +30,14 @@ export interface FinderControllerOptions {
 export const useFinderController = ({
     program,
     onSelect,
-    client,
 }: FinderControllerOptions): FinderContextValue => {
-    const resourceClient = useMemo(() => resourceClientOf(client), [client])
+    const engine = useDataEngine()
+    const { baseUrl } = useConfig()
+    const queryClient = useQueryClient()
     const metadata = useQuery(
-        programMetadataQueryOptions(resourceClient, program)
+        programMetadataQueryOptions(engine, baseUrl, program)
     )
-    const systemInfo = useQuery(systemInfoQueryOptions(resourceClient))
+    const systemInfo = useQuery(systemInfoQueryOptions(engine, baseUrl))
     // Built before system info arrives, so fields show their labels; until
     // then MULTI_TEXT counts as searchable, so an older server's error shows
     // only once it is known. Nothing searches before system info anyway.
@@ -59,7 +59,6 @@ export const useFinderController = ({
     const [page, setPage] = useState(1)
 
     const results = useSearchResults({
-        client: resourceClient,
         program,
         model,
         status,
@@ -73,13 +72,19 @@ export const useFinderController = ({
 
     const submit = useCallback<FinderContextValue['actions']['submit']>(
         (search) => {
+            if (model && status === 'ready') {
+                // A repeated key does not remount its observer. Fetch only if stale.
+                void queryClient.prefetchQuery(
+                    searchQueryOptions(engine, baseUrl, model, search, 1)
+                )
+            }
             setSubmission((current) => ({
                 search,
                 id: (current?.id ?? 0) + 1,
             }))
             setPage(1)
         },
-        []
+        [model, status, queryClient, engine, baseUrl]
     )
 
     const select = useCallback(
@@ -109,7 +114,7 @@ export const useFinderController = ({
                 results,
             },
             actions,
-            meta: { program, client: resourceClient, info: systemInfo.data },
+            meta: { program, info: systemInfo.data },
         }),
         [
             status,
@@ -119,7 +124,6 @@ export const useFinderController = ({
             results,
             actions,
             program,
-            resourceClient,
             systemInfo.data,
         ]
     )

@@ -3,7 +3,7 @@ import { page, userEvent } from 'vitest/browser'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { FinderProvider } from '../provider/FinderProvider'
+import { FinderTestProvider as FinderProvider } from './finderTestSupport'
 import {
     createFakeServer,
     renderWithQueries,
@@ -13,11 +13,7 @@ import {
 const renderFinder = (children: ReactNode, version?: string) => {
     const server = createFakeServer({ version })
     return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={vi.fn()}
-        >
+        <FinderProvider program="hivProgram" server={server} onSelect={vi.fn()}>
             {children}
             <SubmissionProbe />
         </FinderProvider>

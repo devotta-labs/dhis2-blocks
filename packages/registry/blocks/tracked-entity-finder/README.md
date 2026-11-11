@@ -48,8 +48,15 @@ form; `useFinderField` returns the attribute's TanStack `field`, its `error`
 and any `metadataError`, so a custom input counts toward the search like
 the built-in ones.
 
-`createTrackedEntityFinderClient` wraps a custom data engine; by default the
-block uses the DHIS2 app-runtime.
+The block reads DHIS2 app-runtime's `useDataEngine` and runs every request in
+a TanStack Query `queryFn`. Tests can use app-runtime's `CustomDataProvider`.
+
+Program metadata and system info stay fresh for 3 hours. Search results stay
+fresh for 5 minutes, keyed by server URL, program, filters and page, including
+across repeated submissions and finder remounts within the same QueryClient.
+Different server URLs never share cached metadata or results. The host app must
+discard/reset its QueryClient on logout/login; that lifecycle isolates users,
+so the finder does not add a user ID to its query keys.
 
 To list a program's searchable attributes and their uids:
 

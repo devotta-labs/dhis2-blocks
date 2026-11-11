@@ -1,14 +1,10 @@
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { hashKey, skipToken, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef } from 'react'
 import { announce } from '@/components/dhis2/ui/announcer'
-import {
-    shouldRetryFinderRequest,
-    type FinderResourceClient,
-} from '../api/client'
-import { finderKeys } from '../api/queries'
-import { runSearch, type FinderPerson } from '../api/search'
-import { serializeFilter } from '../rules/searchParams'
+import { finderKeys, searchQueryOptions } from '../api/queries'
+import type { FinderPerson } from '../api/search'
 import type { ProgramModel } from '../rules/types'
 import type {
     FinderResultsStatus,
@@ -18,7 +14,6 @@ import type {
 } from './context'
 
 export interface SearchResultsOptions {
-    client: FinderResourceClient
     program: string
     model?: ProgramModel
     status: FinderStatus
@@ -28,52 +23,49 @@ export interface SearchResultsOptions {
 
 const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
 
-/** Counts finder mounts, so each mount keys its searches apart. */
-let mounts = 0
-
 /**
  * Runs the submitted search for the current page. The provider calls it
  * once; parts read the answer from context.
  */
 export const useSearchResults = ({
-    client,
     program,
     model,
     status: finderStatus,
     submission,
     page,
 }: SearchResultsOptions): FinderResultsView => {
-    // Submission ids restart with each mount. A new mount must ask the server
-    // again: the same search may find someone registered in the meantime.
-    const [instance] = useState(() => ++mounts)
+    const engine = useDataEngine()
+    const { baseUrl } = useConfig()
     const submissionId = submission?.id ?? 0
+    const options =
+        model && submission
+            ? searchQueryOptions(
+                  engine,
+                  baseUrl,
+                  model,
+                  submission.search,
+                  page
+              )
+            : ({
+                  queryKey: finderKeys.search(
+                      baseUrl,
+                      program,
+                      undefined,
+                      page
+                  ),
+                  queryFn: skipToken,
+              } as const)
     const query = useQuery({
-        queryKey: finderKeys.search(
-            program,
-            {
-                instance,
-                submission: submissionId,
-                filter: submission?.search.filters.map(serializeFilter) ?? [],
-            },
-            page
-        ),
-        queryFn: ({ signal }) => {
-            if (!model || !submission) {
-                throw new Error('A finder search ran without a submission')
-            }
-            return runSearch(client, model, submission.search, page, signal)
-        },
+        ...options,
         enabled:
             finderStatus === 'ready' &&
             model !== undefined &&
             submission !== undefined,
-        // A sealed submission never changes; Search again makes a new one.
-        staleTime: Number.POSITIVE_INFINITY,
-        retry: shouldRetryFinderRequest,
         // Only a page change of the same search keeps the old page on screen.
         placeholderData: (previous, previousQuery) =>
-            previousQuery?.queryKey[3]?.instance === instance &&
-            previousQuery.queryKey[3].submission === submissionId
+            previousQuery &&
+            hashKey(previousQuery.queryKey.slice(0, -1)) ===
+                hashKey(options.queryKey.slice(0, -1))
                 ? previous
                 : undefined,
     })
@@ -84,6 +76,7 @@ export const useSearchResults = ({
         if (
             !submissionId ||
             query.isPending ||
+            query.isFetching ||
             query.isPlaceholderData ||
             completed.current === submissionId
         ) {
@@ -113,6 +106,7 @@ export const useSearchResults = ({
         page,
         outcome,
         query.isPending,
+        query.isFetching,
         query.isPlaceholderData,
         query.isSuccess,
     ])

@@ -1,4 +1,3 @@
-import type { DataEngineQueryParameters } from '../api/client'
 import type { ProgramModel, SearchFilter, ValidatedSearch } from './types'
 
 export const PAGE_SIZE = 10
@@ -27,7 +26,7 @@ export const toSearchParams = (
     model: ProgramModel,
     search: ValidatedSearch,
     page: number
-): DataEngineQueryParameters => ({
+) => ({
     program: model.program,
     filter: search.filters.map(serializeFilter),
     orgUnitMode: 'ACCESSIBLE',

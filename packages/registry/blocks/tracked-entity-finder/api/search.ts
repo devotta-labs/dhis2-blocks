@@ -1,9 +1,10 @@
-import { PAGE_SIZE, toSearchParams } from '../rules/searchParams'
-import type { ProgramModel, ValidatedSearch } from '../rules/types'
-import { FinderRequestError, type FinderResourceClient } from './client'
+import type { z } from 'zod'
+import { PAGE_SIZE } from '../rules/searchParams'
+import type { ProgramModel } from '../rules/types'
+import { FinderRequestError } from './requestErrors'
 import {
     normaliseTrackedEntities,
-    TrackedEntitiesResponseSchema,
+    type TrackedEntitiesResponseSchema,
     type RawTrackedEntity,
 } from './schemas'
 
@@ -28,7 +29,7 @@ export type SearchOutcome =
 
 const TOO_MANY_MARKER = 'maxteicountreached'
 
-const isTooManyConflict = (cause: unknown) =>
+export const isTooManyConflict = (cause: unknown) =>
     cause instanceof FinderRequestError &&
     cause.status === 409 &&
     [cause.serverMessage, cause.message].some((text) =>
@@ -53,30 +54,12 @@ const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
     return person
 }
 
-/** A failed request throws; going over the result cap is an answer. */
-export const runSearch = async (
-    client: FinderResourceClient,
+/** Going over the result cap is an answer, with no people exposed. */
+export const toSearchOutcome = (
+    response: z.infer<typeof TrackedEntitiesResponseSchema>,
     model: ProgramModel,
-    search: ValidatedSearch,
-    page: number,
-    signal?: AbortSignal
-): Promise<SearchOutcome> => {
-    let response
-    try {
-        response = await client.query(
-            {
-                resource: 'tracker/trackedEntities',
-                params: toSearchParams(model, search, page),
-            },
-            TrackedEntitiesResponseSchema,
-            signal
-        )
-    } catch (error) {
-        if (isTooManyConflict(error) && !signal?.aborted) {
-            return { kind: 'too-many' }
-        }
-        throw error
-    }
+    page: number
+): SearchOutcome => {
     const { rows, total } = normaliseTrackedEntities(response)
     // Without a total, only a short first page proves the search is below
     // the cap. Never expose rows when the total could exceed it.

@@ -5,7 +5,7 @@ import { FinderForm } from '../form/FinderForm'
 import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { FinderProvider } from '../provider/FinderProvider'
+import { FinderTestProvider as FinderProvider } from './finderTestSupport'
 import { describeMetadataError } from '../rules/describeMetadataError'
 import { buildProgramModel } from '../rules/programModel'
 import { hivProgram } from './fixtures/program'
@@ -131,7 +131,7 @@ describe('metadata errors', () => {
                 <Catch>
                     <FinderProvider
                         program="hivProgram"
-                        client={server.client}
+                        server={server}
                         onSelect={vi.fn()}
                     >
                         <FinderField attribute="firstName" />
@@ -140,7 +140,7 @@ describe('metadata errors', () => {
                 <Catch>
                     <FinderProvider
                         program="hivProgram"
-                        client={server.client}
+                        server={server}
                         onSelect={vi.fn()}
                     >
                         <FinderHint />
@@ -149,7 +149,7 @@ describe('metadata errors', () => {
                 <Catch>
                     <FinderProvider
                         program="hivProgram"
-                        client={server.client}
+                        server={server}
                         onSelect={vi.fn()}
                     >
                         <FinderSubmit />

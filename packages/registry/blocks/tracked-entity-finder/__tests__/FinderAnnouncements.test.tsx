@@ -153,18 +153,12 @@ test('counts new searches once, not paging, cached pages or background refreshes
     expect(said).toEqual(['Searching…', '12 people found'])
 
     await searchFor('A1')
-    await expect.poll(() => said.at(-1)).toBe('Searching…')
-    server.pendingSearches[3].respond(answer([amina]))
     await expect
         .poll(() => said)
-        .toEqual([
-            'Searching…',
-            '12 people found',
-            'Searching…',
-            '1 person found',
-        ])
+        .toEqual(['Searching…', '12 people found', '1 person found'])
     await settle()
-    expect(said).toHaveLength(4)
+    expect(said).toHaveLength(3)
+    expect(server.pendingSearches).toHaveLength(3)
 })
 
 test.each([

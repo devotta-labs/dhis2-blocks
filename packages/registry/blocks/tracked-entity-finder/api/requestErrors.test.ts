@@ -1,25 +1,13 @@
-import { z, ZodError } from 'zod'
+import { ZodError } from 'zod'
 import {
-    createFinderResourceClient,
-    createTrackedEntityFinderClient,
     FinderRequestError,
-    resourceClientOf,
     shouldRetryFinderRequest,
-} from './client'
+    toRequestError,
+} from './requestErrors'
 
-const capture = async (error: Error) => {
-    const client = createFinderResourceClient({
-        query: () => Promise.reject(error),
-    })
-    try {
-        await client.query({ resource: 'x' }, z.unknown())
-    } catch (caught) {
-        return caught
-    }
-    throw new Error('expected rejection')
-}
+const capture = toRequestError
 
-describe('finder client', () => {
+describe('finder request errors', () => {
     it('maps a 409 under error.details to status 409', async () => {
         const caught = await capture(
             Object.assign(new Error('x'), {
@@ -71,21 +59,10 @@ describe('finder client', () => {
         expect(shouldRetryFinderRequest(2, server)).toBe(false)
     })
 
-    it('rejects a client it did not create', () => {
-        expect(() =>
-            // SAFETY: the test passes a foreign object to prove it is refused.
-            resourceClientOf(
-                {} as ReturnType<typeof createTrackedEntityFinderClient>
-            )
-        ).toThrow(/createTrackedEntityFinderClient/)
-    })
-
-    it('hands out an opaque frozen client', () => {
-        const client = createTrackedEntityFinderClient({
-            query: async () => ({}),
-        })
-        expect(Object.isFrozen(client)).toBe(true)
-        expect(Object.keys(client)).toEqual([])
-        expect(resourceClientOf(client)).toBeDefined()
+    it('preserves aborts and schema errors', () => {
+        const abort = new DOMException('Aborted', 'AbortError')
+        const schema = new ZodError([])
+        expect(toRequestError(abort)).toBe(abort)
+        expect(toRequestError(schema)).toBe(schema)
     })
 })

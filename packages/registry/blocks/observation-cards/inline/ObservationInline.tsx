@@ -98,9 +98,12 @@ export function ObservationInline({
     if (series && !isSupportedValueType(series)) {
         // As the card: a type it can't format is never shown as a stored string.
         body = (
-            <span className="text-dhis2-muted-foreground">
-                {i18n.t("This value type can't be shown here")}
-            </span>
+            <>
+                <span className="text-dhis2-muted-foreground">
+                    {i18n.t("This value type can't be shown here")}
+                </span>
+                {series.partial ? <PartialNote className="ms-0" /> : null}
+            </>
         )
     } else if (series && latest) {
         const shownUnit = latest.numericValue === undefined ? undefined : unit

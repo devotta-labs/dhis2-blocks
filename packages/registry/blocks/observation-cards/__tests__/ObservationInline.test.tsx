@@ -147,6 +147,19 @@ describe('ObservationInline', () => {
         expect(inlineOf(container)?.textContent).not.toContain('[1,2]')
     })
 
+    it('an unsupported type with hidden visits keeps the access note, as the card does', async () => {
+        const { container } = await renderWith(
+            <ObservationInline dataElement={DE} />,
+            { label: 'Location', valueType: 'COORDINATE', partial: true }
+        )
+        expect(inlineOf(container)?.textContent).toContain(
+            "This value type can't be shown here"
+        )
+        expect(inlineOf(container)?.textContent).toContain(
+            'Some visits are hidden by your access'
+        )
+    })
+
     it('a data element the program lacks shows the full setup message in development', async () => {
         const { container } = await renderWith(
             <ObservationInline dataElement={DE} />,

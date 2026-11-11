@@ -186,6 +186,58 @@ importers:
         specifier: 2.2.0
         version: 2.2.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@4.1.11)
 
+  apps/perf:
+    dependencies:
+      '@dhis2-blocks/registry':
+        specifier: workspace:*
+        version: link:../../packages/registry
+      '@dhis2/app-runtime':
+        specifier: ^3.15.1
+        version: 3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@dhis2/d2-i18n':
+        specifier: 1.2.0
+        version: 1.2.0
+      '@dhis2/ui':
+        specifier: ^10.17.0
+        version: 10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1))
+      '@tanstack/react-query':
+        specifier: ^5.101.4
+        version: 5.101.4(react@18.3.1)
+      react:
+        specifier: 18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: 18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@dhis2/cli-app-scripts':
+        specifier: 12.10.3
+        version: 12.10.3(@types/babel__core@7.20.5)(@types/node@22.20.1)(lightningcss@1.32.0)(react@18.3.1)(terser@5.44.1)(type-fest@4.41.0)(typescript@5.9.3)
+      '@tailwindcss/vite':
+        specifier: ^4.3.3
+        version: 4.3.3(vite@7.3.0(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.9.0))
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^18.3.31
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.7
+        version: 18.3.7(@types/react@18.3.31)
+      playwright:
+        specifier: 1.62.1
+        version: 1.62.1
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.3.0
+        version: 7.3.0(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.9.0)
+
   apps/web:
     dependencies:
       '@dhis2-blocks/registry':
@@ -10943,19 +10995,6 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       styled-jsx: 4.0.1(@babel/core@7.29.7)(react@18.3.1)
 
-  '@dhis2/app-adapter@12.10.3(patch_hash=ec2dac3f78d908e73c06503ca07cb2700326445f9b3983ee67fbb70e65af0cfb)(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(@dhis2/ui@10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1)))(classnames@2.5.1)(moment@2.30.1)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1))':
-    dependencies:
-      '@dhis2/app-runtime': 3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@dhis2/d2-i18n': 1.2.0
-      '@dhis2/pwa': 12.10.3
-      '@dhis2/ui': 10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1))
-      classnames: 2.5.1
-      moment: 2.30.1
-      prop-types: 15.8.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 4.0.1(@babel/core@7.28.5)(react@18.3.1)
-
   '@dhis2/app-adapter@12.10.3(patch_hash=ec2dac3f78d908e73c06503ca07cb2700326445f9b3983ee67fbb70e65af0cfb)(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(@dhis2/ui@10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1)))(classnames@2.5.1)(moment@2.30.1)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1))':
     dependencies:
       '@dhis2/app-runtime': 3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -11030,11 +11069,11 @@ snapshots:
 
   '@dhis2/app-shell@12.10.3(@babel/core@7.28.5)':
     dependencies:
-      '@dhis2/app-adapter': 12.10.3(patch_hash=ec2dac3f78d908e73c06503ca07cb2700326445f9b3983ee67fbb70e65af0cfb)(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(@dhis2/ui@10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1)))(classnames@2.5.1)(moment@2.30.1)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1))
+      '@dhis2/app-adapter': 12.10.3(patch_hash=ec2dac3f78d908e73c06503ca07cb2700326445f9b3983ee67fbb70e65af0cfb)(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(@dhis2/ui@10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1)))(classnames@2.5.1)(moment@2.30.1)(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1))
       '@dhis2/app-runtime': 3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@dhis2/d2-i18n': 1.2.0
       '@dhis2/pwa': 12.10.3
-      '@dhis2/ui': 10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.28.5)(react@18.3.1))
+      '@dhis2/ui': 10.17.0(@dhis2/app-runtime@3.15.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@dhis2/d2-i18n@1.2.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styled-jsx@4.0.1(@babel/core@7.29.7)(react@18.3.1))
       classnames: 2.5.1
       moment: 2.30.1
       post-robot: 10.0.46
@@ -11046,6 +11085,92 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - react-native
+
+  '@dhis2/cli-app-scripts@12.10.3(@types/babel__core@7.20.5)(@types/node@22.20.1)(lightningcss@1.32.0)(react@18.3.1)(terser@5.44.1)(type-fest@4.41.0)(typescript@5.9.3)':
+    dependencies:
+      '@babel/core': 7.28.5
+      '@babel/plugin-syntax-dynamic-import': 7.8.3(@babel/core@7.28.5)
+      '@babel/plugin-syntax-flow': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-class-properties': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-nullish-coalescing-operator': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-optional-chaining': 7.28.5(@babel/core@7.28.5)
+      '@babel/plugin-transform-private-methods': 7.27.1(@babel/core@7.28.5)
+      '@babel/plugin-transform-private-property-in-object': 7.27.1(@babel/core@7.28.5)
+      '@babel/preset-env': 7.28.5(@babel/core@7.28.5)
+      '@babel/preset-react': 7.28.5(@babel/core@7.28.5)
+      '@babel/preset-typescript': 7.28.5(@babel/core@7.28.5)
+      '@dhis2/app-shell': 12.10.3(@babel/core@7.28.5)
+      '@dhis2/cli-helpers-engine': 3.2.2
+      '@jest/core': 27.5.1
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.17(react-refresh@0.11.0)(type-fest@4.41.0)(webpack@5.104.1)
+      '@vitejs/plugin-react': 4.7.0(vite@5.4.21(@types/node@22.20.1)(lightningcss@1.32.0)(terser@5.44.1))
+      '@yarnpkg/lockfile': 1.1.0
+      archiver: 7.0.1
+      axios: 0.25.0
+      babel-jest: 27.5.1(@babel/core@7.28.5)
+      babel-loader: 8.4.1(@babel/core@7.28.5)(webpack@5.104.1)
+      babel-plugin-react-require: 3.1.3
+      chokidar: 3.6.0
+      css-loader: 6.11.0(webpack@5.104.1)
+      detect-port: 1.6.1
+      dotenv: 8.6.0
+      dotenv-expand: 5.1.0
+      fast-glob: 3.3.3
+      file-loader: 6.2.0(webpack@5.104.1)
+      form-data: 3.0.4
+      fs-extra: 8.1.0
+      handlebars: 4.7.8
+      html-webpack-plugin: 5.6.5(webpack@5.104.1)
+      http-proxy: 1.18.1
+      i18next-conv: 9.2.1
+      i18next-scanner: 3.3.0(typescript@5.9.3)
+      inquirer: 7.3.3
+      lodash: 4.17.21
+      mini-css-extract-plugin: 2.9.4(webpack@5.104.1)
+      node-http-proxy-json: 0.1.9
+      parse-author: 2.0.0
+      parse-gitignore: 1.0.1
+      react-refresh: 0.11.0
+      style-loader: 3.3.4(webpack@5.104.1)
+      styled-jsx: 4.0.1(@babel/core@7.28.5)(react@18.3.1)
+      terser-webpack-plugin: 5.3.16(webpack@5.104.1)
+      vite: 5.4.21(@types/node@22.20.1)(lightningcss@1.32.0)(terser@5.44.1)
+      vite-plugin-dynamic-import: 1.6.0
+      webpack: 5.104.1
+      workbox-build: 7.4.0(@types/babel__core@7.20.5)
+    transitivePeerDependencies:
+      - '@rspack/core'
+      - '@swc/core'
+      - '@types/babel__core'
+      - '@types/node'
+      - '@types/webpack'
+      - bare-abort-controller
+      - bufferutil
+      - canvas
+      - debug
+      - esbuild
+      - less
+      - lightningcss
+      - node-notifier
+      - react
+      - react-native
+      - react-native-b4a
+      - sass
+      - sass-embedded
+      - sockjs-client
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - ts-node
+      - type-fest
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+      - webpack-dev-server
+      - webpack-hot-middleware
+      - webpack-plugin-serve
 
   '@dhis2/cli-app-scripts@12.10.3(@types/babel__core@7.20.5)(@types/node@24.19.1)(lightningcss@1.32.0)(react@18.3.1)(terser@5.44.1)(type-fest@4.41.0)(typescript@5.9.3)':
     dependencies:
@@ -12751,6 +12876,18 @@ snapshots:
       '@types/yargs-parser': 21.0.3
 
   '@ungap/structured-clone@1.4.0': {}
+
+  '@vitejs/plugin-react@4.7.0(vite@5.4.21(@types/node@22.20.1)(lightningcss@1.32.0)(terser@5.44.1))':
+    dependencies:
+      '@babel/core': 7.29.7
+      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.29.7)
+      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.29.7)
+      '@rolldown/pluginutils': 1.0.0-beta.27
+      '@types/babel__core': 7.20.5
+      react-refresh: 0.17.0
+      vite: 5.4.21(@types/node@22.20.1)(lightningcss@1.32.0)(terser@5.44.1)
+    transitivePeerDependencies:
+      - supports-color
 
   '@vitejs/plugin-react@4.7.0(vite@5.4.21(@types/node@24.19.1)(lightningcss@1.32.0)(terser@5.44.1))':
     dependencies:
@@ -18383,6 +18520,17 @@ snapshots:
       fast-glob: 3.3.3
       magic-string: 0.30.21
 
+  vite@5.4.21(@types/node@22.20.1)(lightningcss@1.32.0)(terser@5.44.1):
+    dependencies:
+      esbuild: 0.21.5
+      postcss: 8.5.23
+      rollup: 4.54.0
+    optionalDependencies:
+      '@types/node': 22.20.1
+      fsevents: 2.3.3
+      lightningcss: 1.32.0
+      terser: 5.44.1
+
   vite@5.4.21(@types/node@24.19.1)(lightningcss@1.32.0)(terser@5.44.1):
     dependencies:
       esbuild: 0.21.5
@@ -18430,7 +18578,7 @@ snapshots:
     dependencies:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      vitest: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(jsdom@16.7.0)(vite@7.3.0(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.9.0))
+      vitest: 4.1.11(@types/node@24.19.1)(@vitest/browser-playwright@4.1.11)(jsdom@16.7.0)(vite@7.3.0(@types/node@24.19.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.44.1)(yaml@2.9.0))
     optionalDependencies:
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)

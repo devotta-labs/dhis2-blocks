@@ -40,10 +40,10 @@ export const useSearchResults = ({
     const options =
         model && submission
             ? searchQueryOptions(client, model, submission.search, page)
-            : {
+            : ({
                   queryKey: finderKeys.search(program, undefined, page),
                   queryFn: skipToken,
-              }
+              } as const)
     const query = useQuery({
         ...options,
         enabled:

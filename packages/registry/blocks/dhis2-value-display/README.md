@@ -82,4 +82,5 @@ parseDhis2Calendar(value): Dhis2Calendar // systemInfo.calendar; unknown is greg
 - The day is read from the stored text, never through the viewer's time zone, and converted into the calendar you pass.
 - Gregorian and ISO 8601 dates read as "Oct 14, 2026" in the locale. Every other calendar (Ethiopian, Coptic, Nepali, Islamic, Persian, Thai) reads as `YYYY-MM-DD` in that calendar, with no month names: Ethiopian `2019-02-04` is 14 October 2026. Dates are converted by `@dhis2/multi-calendar-dates`; it cannot convert Coptic yet, so a Coptic day reads as the ISO `YYYY-MM-DD`.
 - `parseDhis2Calendar` reads `systemInfo.calendar`; an unknown or missing calendar is Gregorian.
+- A file or image reads as "File" or "Image": the stored value is a file resource id, and the file's name needs a request.
 - It only formats; it does not fetch option sets, org unit names or metadata.

@@ -60,7 +60,7 @@ const sameCodes = (a?: ReadonlySet<string>, b?: ReadonlySet<string>) =>
         [...a].every((code) => b.has(code)))
 
 /** Whether two cells' effects say the same; `undefined` says nothing. */
-export const sameEffects = (a?: TrackerEffects, b?: TrackerEffects) =>
+const sameEffects = (a?: TrackerEffects, b?: TrackerEffects) =>
     a === b ||
     (a !== undefined &&
         b !== undefined &&
@@ -71,7 +71,7 @@ export const sameEffects = (a?: TrackerEffects, b?: TrackerEffects) =>
         sameCodes(a.hiddenOptions, b.hiddenOptions))
 
 /** Whether the effects say nothing a cell with none would not. */
-export const saysNothing = (effects: TrackerEffects) =>
+const saysNothing = (effects: TrackerEffects) =>
     !effects.required &&
     effects.messages.length === 0 &&
     effects.readOnly === undefined &&

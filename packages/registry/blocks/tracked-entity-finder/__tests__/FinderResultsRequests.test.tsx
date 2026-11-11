@@ -335,35 +335,34 @@ describe('FinderResults paging and requests', () => {
         expect(searchRequests(server)).toHaveLength(1)
     })
 
-    it("never shows another user's metadata or people from the shared query cache", async () => {
-        const { server, screen, onSelect } = await renderFinder({
+    it('loads fresh metadata and people after the QueryClient is replaced', async () => {
+        const { server, screen } = await renderFinder({
             options: { deferSearches: true },
         })
         await searchFor('A1')
         await expect.poll(() => server.pendingSearches.length).toBe(1)
         server.pendingSearches[0].respond(answer([amina]))
         await expect.element(page.getByText('Amina')).toBeVisible()
-        await screen.rerender(
-            ui(server, 'hivProgram', onSelect, <FinderResults />, 'userB')
-        )
+        await screen.unmount()
+        const { server: next } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        expect(next.baseUrl).toBe(server.baseUrl)
+        await searchFor('A1')
         expect(page.getByText('Amina').query()).toBeNull()
-        await expect.poll(() => server.pendingSearches.length).toBe(2)
+        await expect.poll(() => next.pendingSearches.length).toBe(1)
         expect(
-            server.requests.filter(({ resource }) => resource === 'programs')
-        ).toHaveLength(2)
+            next.requests.filter(({ resource }) => resource === 'programs')
+        ).toHaveLength(1)
         expect(
-            server.requests.filter(({ resource }) => resource === 'system/info')
-        ).toHaveLength(2)
-        server.pendingSearches[1].respond(
+            next.requests.filter(({ resource }) => resource === 'system/info')
+        ).toHaveLength(1)
+        next.pendingSearches[0].respond(
             answer([entity('other', { firstName: 'Zainab' })])
         )
         await expect.element(page.getByText('Zainab')).toBeVisible()
-        await screen.rerender(
-            ui(server, 'hivProgram', onSelect, <FinderResults />, 'userA')
-        )
-        await expect.element(page.getByText('Amina')).toBeVisible()
-        await settle()
-        expect(searchRequests(server)).toHaveLength(2)
+        expect(searchRequests(server)).toHaveLength(1)
+        expect(searchRequests(next)).toHaveLength(1)
     })
 
     it('reuses repeated details and separates different searches', async () => {

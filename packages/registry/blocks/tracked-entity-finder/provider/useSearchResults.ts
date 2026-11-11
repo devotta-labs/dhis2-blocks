@@ -1,8 +1,4 @@
-import {
-    useConfig,
-    useCurrentUserInfo,
-    useDataEngine,
-} from '@dhis2/app-runtime'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { hashKey, skipToken, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef } from 'react'
@@ -40,21 +36,19 @@ export const useSearchResults = ({
 }: SearchResultsOptions): FinderResultsView => {
     const engine = useDataEngine()
     const { baseUrl } = useConfig()
-    const user = useCurrentUserInfo()
-    const userId = user?.id
     const submissionId = submission?.id ?? 0
     const options =
         model && submission
             ? searchQueryOptions(
                   engine,
-                  { server: baseUrl, userId },
+                  baseUrl,
                   model,
                   submission.search,
                   page
               )
             : ({
                   queryKey: finderKeys.search(
-                      { server: baseUrl, userId },
+                      baseUrl,
                       program,
                       undefined,
                       page

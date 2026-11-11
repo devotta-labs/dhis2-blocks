@@ -15,28 +15,18 @@ import {
 } from './search'
 
 export type FinderEngine = Pick<ReturnType<typeof useDataEngine>, 'query'>
-export interface FinderScope {
-    server: string
-    userId: string | undefined
-}
 
 export const METADATA_CACHE_TIME = 3 * 60 * 60_000
 const SEARCH_CACHE_TIME = 5 * 60_000
 
 export const finderKeys = {
     all: ['tracked-entity-finder'] as const,
-    systemInfo: (scope: FinderScope) =>
-        [...finderKeys.all, 'system-info', scope.server, scope.userId] as const,
-    program: (scope: FinderScope, program: string) =>
-        [
-            ...finderKeys.all,
-            'program',
-            scope.server,
-            scope.userId,
-            program,
-        ] as const,
+    systemInfo: (server: string) =>
+        [...finderKeys.all, 'system-info', server] as const,
+    program: (server: string, program: string) =>
+        [...finderKeys.all, 'program', server, program] as const,
     search: (
-        scope: FinderScope,
+        server: string,
         program: string,
         search: ValidatedSearch | undefined,
         page: number
@@ -44,8 +34,7 @@ export const finderKeys = {
         [
             ...finderKeys.all,
             'search',
-            scope.server,
-            scope.userId,
+            server,
             program,
             search?.filters.map(serializeFilter).sort() ?? [],
             page,
@@ -54,13 +43,13 @@ export const finderKeys = {
 
 export const searchQueryOptions = (
     engine: FinderEngine,
-    scope: FinderScope,
+    server: string,
     model: ProgramModel,
     search: ValidatedSearch,
     page: number
 ) =>
     queryOptions({
-        queryKey: finderKeys.search(scope, model.program, search, page),
+        queryKey: finderKeys.search(server, model.program, search, page),
         queryFn: async ({ signal }): Promise<SearchOutcome> => {
             try {
                 const response = await engine.query(
@@ -99,11 +88,11 @@ const PROGRAM_FIELDS = `displayName,minAttributesRequiredToSearch,maxTeiCountToR
 
 export const programMetadataQueryOptions = (
     engine: FinderEngine,
-    scope: FinderScope,
+    server: string,
     program: string
 ) =>
     queryOptions({
-        queryKey: finderKeys.program(scope, program),
+        queryKey: finderKeys.program(server, program),
         queryFn: async ({ signal }) => {
             try {
                 const response = await engine.query(

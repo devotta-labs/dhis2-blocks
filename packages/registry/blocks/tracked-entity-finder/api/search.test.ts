@@ -39,7 +39,7 @@ const runSearch = (
 ) => {
     const options = searchQueryOptions(
         engine,
-        { server: 'https://dhis2.test', userId: 'userA' },
+        'https://dhis2.test',
         model,
         search,
         page

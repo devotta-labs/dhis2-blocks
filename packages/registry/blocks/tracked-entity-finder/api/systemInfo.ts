@@ -1,12 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { shouldRetryFinderRequest, toRequestError } from './requestErrors'
-import {
-    finderKeys,
-    METADATA_CACHE_TIME,
-    type FinderEngine,
-    type FinderScope,
-} from './queries'
+import { finderKeys, METADATA_CACHE_TIME, type FinderEngine } from './queries'
 
 const FINDER_CALENDARS = [
     'coptic',
@@ -73,12 +68,9 @@ const FinderSystemInfoSchema = z
 
 const SYSTEM_INFO_FIELDS = 'calendar,dateFormat,version'
 
-export const systemInfoQueryOptions = (
-    engine: FinderEngine,
-    scope: FinderScope
-) =>
+export const systemInfoQueryOptions = (engine: FinderEngine, server: string) =>
     queryOptions({
-        queryKey: finderKeys.systemInfo(scope),
+        queryKey: finderKeys.systemInfo(server),
         queryFn: async ({ signal }) => {
             try {
                 const response = await engine.query(

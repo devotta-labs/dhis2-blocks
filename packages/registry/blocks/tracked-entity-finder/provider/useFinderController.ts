@@ -1,8 +1,4 @@
-import {
-    useConfig,
-    useCurrentUserInfo,
-    useDataEngine,
-} from '@dhis2/app-runtime'
+import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { programMetadataQueryOptions, searchQueryOptions } from '../api/queries'
@@ -37,19 +33,11 @@ export const useFinderController = ({
 }: FinderControllerOptions): FinderContextValue => {
     const engine = useDataEngine()
     const { baseUrl } = useConfig()
-    const user = useCurrentUserInfo()
-    const userId = user?.id
     const queryClient = useQueryClient()
     const metadata = useQuery(
-        programMetadataQueryOptions(
-            engine,
-            { server: baseUrl, userId },
-            program
-        )
+        programMetadataQueryOptions(engine, baseUrl, program)
     )
-    const systemInfo = useQuery(
-        systemInfoQueryOptions(engine, { server: baseUrl, userId })
-    )
+    const systemInfo = useQuery(systemInfoQueryOptions(engine, baseUrl))
     // Built before system info arrives, so fields show their labels; until
     // then MULTI_TEXT counts as searchable, so an older server's error shows
     // only once it is known. Nothing searches before system info anyway.
@@ -87,13 +75,7 @@ export const useFinderController = ({
             if (model && status === 'ready') {
                 // A repeated key does not remount its observer. Fetch only if stale.
                 void queryClient.prefetchQuery(
-                    searchQueryOptions(
-                        engine,
-                        { server: baseUrl, userId },
-                        model,
-                        search,
-                        1
-                    )
+                    searchQueryOptions(engine, baseUrl, model, search, 1)
                 )
             }
             setSubmission((current) => ({
@@ -102,7 +84,7 @@ export const useFinderController = ({
             }))
             setPage(1)
         },
-        [model, status, queryClient, engine, baseUrl, userId]
+        [model, status, queryClient, engine, baseUrl]
     )
 
     const select = useCallback(

@@ -97,11 +97,11 @@ export function TrackedEntityRelationships({
     }
     if (state.kind === 'unavailable') {
         return (
-            <div
-                data-slot={slot}
-                className={cn(inFrame && 'contents', className)}
-            >
-                <FactPair label={i18n.t('Related')}>
+            <div data-slot={slot} className={inFrame ? 'contents' : className}>
+                <FactPair
+                    label={i18n.t('Related')}
+                    className={inFrame ? className : undefined}
+                >
                     <Muted>{i18n.t('Unavailable')}</Muted>
                 </FactPair>
             </div>
@@ -154,7 +154,8 @@ export function TrackedEntityRelationships({
         </div>
     )
     return (
-        <div data-slot={slot} className={cn(inFrame && 'contents', className)}>
+        // In a banner the wrapper has no box, so the host's classes go to the toggle.
+        <div data-slot={slot} className={inFrame ? 'contents' : className}>
             {inFrame && (
                 <DisclosureToggle
                     label={i18n.t('Related')}
@@ -162,6 +163,7 @@ export function TrackedEntityRelationships({
                     open={open}
                     controls={listId}
                     onToggle={() => setOpen((value) => !value)}
+                    className={className}
                 />
             )}
             {list}

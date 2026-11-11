@@ -5,6 +5,7 @@ import {
     TrackedEntityActions,
     TrackedEntityAttribute,
     TrackedEntityBanner,
+    TrackedEntityDetails,
     TrackedEntityFacts,
     TrackedEntityName,
 } from '..'
@@ -224,5 +225,36 @@ describe('TrackedEntityBanner layout', () => {
         expect(list.getBoundingClientRect().top).toBeGreaterThan(
             facts?.getBoundingClientRect().bottom ?? Infinity
         )
+    })
+
+    it('starts the toggles on a line of their own, even without facts', async () => {
+        await renderParts(
+            <TrackedEntityBanner>
+                <TrackedEntityName attributes={[FIRST, LAST]} />
+                <TrackedEntityDetails />
+            </TrackedEntityBanner>
+        )
+        const toggle = page.getByRole('button', { name: /^Details/ })
+        await expect.element(toggle).toBeVisible()
+
+        const name = page.getByRole('heading', { level: 2 }).element()
+        expect(
+            toggle.element().getBoundingClientRect().top
+        ).toBeGreaterThanOrEqual(name.getBoundingClientRect().bottom)
+    })
+
+    it("gives a disclosure's classes to its toggle, since its wrapper has no box", async () => {
+        await renderParts(
+            <TrackedEntityBanner>
+                <TrackedEntityName attributes={[FIRST, LAST]} />
+                <TrackedEntityDetails className="ms-auto" />
+            </TrackedEntityBanner>
+        )
+        const toggle = page.getByRole('button', { name: /^Details/ })
+        await expect.element(toggle).toHaveClass('ms-auto')
+        const wrapper = banner().querySelector(
+            '[data-slot="tracked-entity-details"]'
+        )
+        expect(wrapper?.className).toBe('contents')
     })
 })

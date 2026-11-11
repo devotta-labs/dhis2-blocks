@@ -21,7 +21,7 @@ export interface TrackedEntityBannerProps {
 /**
  * Line one is everything up to the facts, and the facts take line two. The
  * disclosures' toggles share the line after those, and their panels open
- * below it, whatever order the parts are placed in.
+ * below it. Placed last, as the docs ask, the reading order matches.
  */
 const PLACEMENT = cn(
     'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-facts]]:basis-full',

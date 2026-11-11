@@ -79,8 +79,11 @@ As a card:
 
 Place parts inside `TrackedEntityBanner` to choose what it shows. Line one is
 everything up to the facts, and the facts take line two. The toggles for
-**Details** and **Related**, each with a count, share the line below, and each
-opens its list under them. `TrackedEntityActions` sits in a column of its own on the right, wherever
+**Details** and **Related** share the line below, each with how many rows it
+holds, and each opens its list under them. Place `TrackedEntityDetails` and then
+`TrackedEntityRelationships` last, after the other parts, so the order a
+keyboard or screen reader follows matches the screen. Inside a banner their
+`className` goes to the toggle. `TrackedEntityActions` sits in a column of its own on the right, wherever
 you place it, so a long line one wraps beside it. In a narrow banner the actions
 move below everything.
 
@@ -139,7 +142,8 @@ a date `attribute`, or `enrollmentDate="occurredAt"` or `"enrolledAt"` for a
 date kept on the enrollment, labelled as the program labels it: a birth date
 in a child programme, or "Dispatched" for a shipment. With `age`, the part
 also shows the age in the system's calendar: days under one month,
-months under two years, years after.
+months under two years, years after. A Coptic system shows no age, since the
+calendar library can't convert Coptic dates.
 
 The block can't tell what a date means, so `age` counts from whichever date
 you give it to today. Give it a date where that count means something: a date

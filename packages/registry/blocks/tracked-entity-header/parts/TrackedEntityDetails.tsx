@@ -1,4 +1,3 @@
-import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React, {
     useContext,
@@ -58,7 +57,8 @@ export function TrackedEntityDetails({
     return (
         <div
             data-slot="tracked-entity-details"
-            className={cn(inFrame && 'contents', className)}
+            // In a banner the wrapper has no box, so the host's classes go to the toggle.
+            className={inFrame ? 'contents' : className}
         >
             <DisclosureToggle
                 label={i18n.t('Details')}
@@ -66,6 +66,7 @@ export function TrackedEntityDetails({
                 open={open}
                 controls={listId}
                 onToggle={() => setOpen((value) => !value)}
+                className={inFrame ? className : undefined}
             />
             <div
                 id={listId}

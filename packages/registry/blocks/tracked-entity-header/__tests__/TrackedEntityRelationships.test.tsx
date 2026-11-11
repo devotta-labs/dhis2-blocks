@@ -195,7 +195,7 @@ describe('TrackedEntityRelationships', () => {
             )
         })
 
-        it('lines its toggle up with Details below the facts, wherever both are placed', async () => {
+        it('lines its toggle up with Details below the facts', async () => {
             const server = createFakeServer({ links: 'focus' })
             const Wrapper = createWrapper()
             await render(
@@ -206,12 +206,12 @@ describe('TrackedEntityRelationships', () => {
                         client={server.client}
                     >
                         <TrackedEntityBanner>
-                            <TrackedEntityRelationships />
                             <TrackedEntityName attributes={[FIRST, LAST]} />
-                            <TrackedEntityDetails />
                             <TrackedEntityFacts>
                                 <span>Fact</span>
                             </TrackedEntityFacts>
+                            <TrackedEntityDetails />
+                            <TrackedEntityRelationships />
                         </TrackedEntityBanner>
                     </TrackedEntityHeaderProvider>
                 </Wrapper>

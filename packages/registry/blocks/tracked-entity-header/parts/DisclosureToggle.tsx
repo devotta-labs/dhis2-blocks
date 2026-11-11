@@ -1,3 +1,4 @@
+import { cn } from '@/components/dhis2/ui/cn'
 import { IconChevronRight16 } from '@dhis2/ui-icons'
 import React from 'react'
 
@@ -11,12 +12,14 @@ export const DisclosureToggle = ({
     open,
     controls,
     onToggle,
+    className,
 }: {
     label: string
     count?: number
     open: boolean
     controls: string
     onToggle: () => void
+    className?: string
 }) => (
     <button
         type="button"
@@ -24,7 +27,11 @@ export const DisclosureToggle = ({
         aria-expanded={open}
         aria-controls={controls}
         onClick={onToggle}
-        className="group inline-flex cursor-pointer items-center gap-1 self-center -mx-1.5 rounded-md border-0 bg-transparent px-1.5 py-0.5 text-sm text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid"
+        className={cn(
+            // The ring sits inside: the toggle reaches the row's clipped edge.
+            'group inline-flex cursor-pointer items-center gap-1 self-center -mx-1.5 rounded-md border-0 bg-transparent px-1.5 py-0.5 text-sm text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
+            className
+        )}
     >
         <span
             aria-hidden="true"

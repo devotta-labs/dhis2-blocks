@@ -172,10 +172,10 @@ describe('TrackedEntityBanner layout', () => {
         if (!row) throw new Error('No banner content')
         const edge = row.getBoundingClientRect().left
         const parts = [...row.children]
-            .filter((child) => !child.classList.contains('sr-only'))
+            .filter((child) => !child.matches('.sr-only, .contents'))
             .map((part) => part.getBoundingClientRect())
         const dividers = [...row.children]
-            .filter((child) => !child.classList.contains('sr-only'))
+            .filter((child) => !child.matches('.sr-only, .contents'))
             .map((part) => getComputedStyle(part, '::before'))
         expect(getComputedStyle(row).overflowX).toBe('clip')
         let between = 0

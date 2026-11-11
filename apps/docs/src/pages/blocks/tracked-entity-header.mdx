@@ -78,8 +78,9 @@ As a card:
 ## Composing a banner
 
 Place parts inside `TrackedEntityBanner` to choose what it shows. Line one is
-everything up to the facts, the facts take line two, and the details open below
-both. `TrackedEntityActions` sits in a column of its own on the right, wherever
+everything up to the facts, and the facts take line two. The toggles for
+**Details** and **Related**, each with a count, share the line below, and each
+opens its list under them. `TrackedEntityActions` sits in a column of its own on the right, wherever
 you place it, so a long line one wraps beside it. In a narrow banner the actions
 move below everything.
 
@@ -203,8 +204,8 @@ type uid. A linked record the user can't read says "You don't have access to
 this record", with no name and no link. A link whose other end is an event or an
 enrollment is counted, not named, such as "2 events".
 
-Inside a banner, `TrackedEntityRelationships` is a **Related · N** disclosure
-below both lines. It shows nothing while loading or when there are no links,
+Inside a banner, `TrackedEntityRelationships` is a **Related** toggle with the
+number of links, beside **Details**. It shows nothing while loading or when there are no links,
 and "Unavailable" if the request fails. Outside a banner it is the list itself,
 or "No related records". Both parts share one request for the record's links,
 made only when one of them is placed, so a banner with no children makes none.

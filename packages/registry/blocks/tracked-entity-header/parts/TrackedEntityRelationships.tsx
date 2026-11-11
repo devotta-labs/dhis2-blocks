@@ -1,9 +1,9 @@
-import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
 import React, { useId, useState } from 'react'
 import { InFrameContext } from '../provider/frame'
+import { DisclosureToggle } from './DisclosureToggle'
 import { FactPair, Muted } from './FactPair'
 import { isPlainClick, LINK_CLASS } from './relationships/LinkedName'
 import { Names } from './relationships/Names'
@@ -97,7 +97,10 @@ export function TrackedEntityRelationships({
     }
     if (state.kind === 'unavailable') {
         return (
-            <div data-slot={slot} className={className}>
+            <div
+                data-slot={slot}
+                className={cn(inFrame && 'contents', className)}
+            >
                 <FactPair label={i18n.t('Related')}>
                     <Muted>{i18n.t('Unavailable')}</Muted>
                 </FactPair>
@@ -116,9 +119,11 @@ export function TrackedEntityRelationships({
     const list = (
         <div
             id={inFrame ? listId : undefined}
+            data-slot={inFrame ? 'tracked-entity-panel' : undefined}
             hidden={inFrame && !open}
             className={cn(
                 'flex gap-x-5 gap-y-1',
+                inFrame && 'pt-1.5',
                 inFrame ? 'flex-col' : 'flex-wrap'
             )}
         >
@@ -149,20 +154,15 @@ export function TrackedEntityRelationships({
         </div>
     )
     return (
-        <div data-slot={slot} className={className}>
+        <div data-slot={slot} className={cn(inFrame && 'contents', className)}>
             {inFrame && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-expanded={open}
-                    aria-controls={listId}
-                    onClick={() => setOpen((value) => !value)}
-                >
-                    {i18n.t('Related')} ·{' '}
-                    <span data-slot="tracked-entity-relationships-count">
-                        {total}
-                    </span>
-                </Button>
+                <DisclosureToggle
+                    label={i18n.t('Related')}
+                    count={total}
+                    open={open}
+                    controls={listId}
+                    onToggle={() => setOpen((value) => !value)}
+                />
             )}
             {list}
         </div>

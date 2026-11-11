@@ -19,12 +19,18 @@ export interface TrackedEntityBannerProps {
 }
 
 /**
- * Line one is everything up to the facts; the facts take line two and the
- * details open below both.
+ * Line one is everything up to the facts, and the facts take line two. The
+ * disclosures' toggles share the line after those, and their panels open
+ * below it, whatever order the parts are placed in.
  */
 const PLACEMENT = cn(
-    'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-details]]:basis-full [&>[data-slot=tracked-entity-facts]]:basis-full [&>[data-slot=tracked-entity-relationships]]:basis-full',
-    DIVIDED
+    'flex min-w-0 flex-1 flex-wrap items-baseline gap-y-1.5 [&>[data-slot=tracked-entity-facts]]:basis-full',
+    DIVIDED,
+    // Each disclosure, laid out as contents, lends its toggle to the shared line and its panel to the space below.
+    '[&>*>[data-slot=tracked-entity-toggle]]:order-2 [&>[data-slot=tracked-entity-relationships]>[data-slot=tracked-entity-fact]]:order-2',
+    '[&>*>[data-slot=tracked-entity-panel]]:order-3 [&>*>[data-slot=tracked-entity-panel]]:basis-full',
+    // A full-width break, so the toggles start their own line even without facts.
+    'has-[>*>[data-slot=tracked-entity-toggle],>[data-slot=tracked-entity-relationships]>[data-slot=tracked-entity-fact]]:after:order-1 has-[>*>[data-slot=tracked-entity-toggle],>[data-slot=tracked-entity-relationships]>[data-slot=tracked-entity-fact]]:after:basis-full'
 )
 
 /** The actions' own column, beside both lines; under everything when the banner is narrow. */

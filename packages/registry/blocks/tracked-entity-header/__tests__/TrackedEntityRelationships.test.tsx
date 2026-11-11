@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-react'
 import type { DataEngineValue } from '../api/client'
 import {
     TrackedEntityBanner,
+    TrackedEntityDetails,
     TrackedEntityFacts,
     TrackedEntityHeaderProvider,
     TrackedEntityName,
@@ -173,7 +174,7 @@ describe('TrackedEntityRelationships', () => {
 
         it('starts closed and opens the list below the facts', async () => {
             await setup({}, { links: 'focus' }, true)
-            const button = page.getByRole('button', { name: 'Related · 5' })
+            const button = page.getByRole('button', { name: 'Related 5' })
             await expect
                 .element(button)
                 .toHaveAttribute('aria-expanded', 'false')
@@ -191,6 +192,48 @@ describe('TrackedEntityRelationships', () => {
             )
             expect(term.element().getBoundingClientRect().top).toBeGreaterThan(
                 facts?.getBoundingClientRect().bottom ?? Infinity
+            )
+        })
+
+        it('lines its toggle up with Details below the facts, wherever both are placed', async () => {
+            const server = createFakeServer({ links: 'focus' })
+            const Wrapper = createWrapper()
+            await render(
+                <Wrapper>
+                    <TrackedEntityHeaderProvider
+                        trackedEntity={FOCUS_RECORD}
+                        program={RMNCH}
+                        client={server.client}
+                    >
+                        <TrackedEntityBanner>
+                            <TrackedEntityRelationships />
+                            <TrackedEntityName attributes={[FIRST, LAST]} />
+                            <TrackedEntityDetails />
+                            <TrackedEntityFacts>
+                                <span>Fact</span>
+                            </TrackedEntityFacts>
+                        </TrackedEntityBanner>
+                    </TrackedEntityHeaderProvider>
+                </Wrapper>
+            )
+            const related = page.getByRole('button', { name: 'Related 5' })
+            await expect.element(related).toBeVisible()
+            const details = page.getByRole('button', { name: /^Details \d+$/ })
+            const factsBottom =
+                document
+                    .querySelector('[data-slot="tracked-entity-facts"]')
+                    ?.getBoundingClientRect().bottom ?? Infinity
+            const relatedBox = related.element().getBoundingClientRect()
+            const detailsBox = details.element().getBoundingClientRect()
+            expect(relatedBox.top).toBeGreaterThan(factsBottom)
+            expect(Math.abs(detailsBox.top - relatedBox.top)).toBeLessThan(1)
+
+            await userEvent.click(related)
+
+            const term = page.getByRole('term')
+            await expect.element(term).toHaveTextContent('Focus to Case')
+            expect(term.element().getBoundingClientRect().top).toBeGreaterThan(
+                relatedBox.bottom
             )
         })
 

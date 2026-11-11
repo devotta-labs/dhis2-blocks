@@ -1,7 +1,15 @@
-import { Button } from '@/components/dhis2/ui/button'
+import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
-import React, { useId, useLayoutEffect, useState, type ReactNode } from 'react'
+import React, {
+    useContext,
+    useId,
+    useLayoutEffect,
+    useState,
+    type ReactNode,
+} from 'react'
 import { useHeaderContext } from '../provider/context'
+import { InFrameContext } from '../provider/frame'
+import { DisclosureToggle } from './DisclosureToggle'
 import { AttributeFact } from './FactPair'
 import { resolveAttribute } from './useAttributeValue'
 
@@ -17,6 +25,8 @@ export function TrackedEntityDetails({
     className,
 }: TrackedEntityDetailsProps) {
     const context = useHeaderContext()
+    // In a banner the toggle and panel join the banner's own rows.
+    const inFrame = useContext(InFrameContext)
     const [open, setOpen] = useState(false)
     const listId = useId()
     // Parts place their attributes in layout effects; the list waits for that pass.
@@ -46,17 +56,23 @@ export function TrackedEntityDetails({
         return null
     }
     return (
-        <div data-slot="tracked-entity-details" className={className}>
-            <Button
-                variant="ghost"
-                size="sm"
-                aria-expanded={open}
-                aria-controls={listId}
-                onClick={() => setOpen((value) => !value)}
+        <div
+            data-slot="tracked-entity-details"
+            className={cn(inFrame && 'contents', className)}
+        >
+            <DisclosureToggle
+                label={i18n.t('Details')}
+                count={custom ? undefined : left.length}
+                open={open}
+                controls={listId}
+                onToggle={() => setOpen((value) => !value)}
+            />
+            <div
+                id={listId}
+                data-slot="tracked-entity-panel"
+                hidden={!open}
+                className="pt-1.5"
             >
-                {i18n.t('Details')}
-            </Button>
-            <div id={listId} hidden={!open}>
                 {custom ? (
                     children
                 ) : (

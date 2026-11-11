@@ -4,6 +4,8 @@ import {
     cellCount,
     drawnHeadings,
     headingsOver,
+    NONE_DRAWN,
+    stretchNear,
     tabStops,
 } from './columnWindow'
 
@@ -109,4 +111,63 @@ test('Tab stops: the next and previous control, in the row or the one beside it,
     expect(tabStops(closed, keyOf, 1, 2)).toEqual([1, 4, 5, 1])
     // No cell noted: only the ends of the table.
     expect(tabStops(table(), keyOf, undefined, -1)).toEqual([0, 5])
+})
+
+describe('stretchNear', () => {
+    const view = (startIndex: number, endIndex: number, count = 40) => ({
+        startIndex,
+        endIndex,
+        overscan: 3,
+        count,
+    })
+
+    it('draws the view and a few columns beyond each end, within the table', () => {
+        expect(stretchNear(NONE_DRAWN, view(0, 9))).toEqual({
+            startIndex: 0,
+            endIndex: 12,
+        })
+        expect(stretchNear(NONE_DRAWN, view(30, 39))).toEqual({
+            startIndex: 27,
+            endIndex: 39,
+        })
+    })
+
+    it('keeps the columns drawn while the view is within them', () => {
+        const drawn = stretchNear(NONE_DRAWN, view(10, 19))
+
+        expect(stretchNear(drawn, view(7, 16))).toBe(drawn)
+        expect(stretchNear(drawn, view(13, 22))).toBe(drawn)
+    })
+
+    it('draws anew around a view that passed the columns drawn, either way', () => {
+        const drawn = stretchNear(NONE_DRAWN, view(10, 19))
+
+        expect(stretchNear(drawn, view(14, 23))).toEqual({
+            startIndex: 11,
+            endIndex: 26,
+        })
+        expect(stretchNear(drawn, view(6, 15))).toEqual({
+            startIndex: 3,
+            endIndex: 18,
+        })
+    })
+
+    it('draws anew when the view narrowed to far fewer columns than are drawn', () => {
+        const drawn = stretchNear(NONE_DRAWN, view(10, 29))
+
+        expect(stretchNear(drawn, view(12, 25))).toBe(drawn)
+        expect(stretchNear(drawn, view(12, 24))).toEqual({
+            startIndex: 9,
+            endIndex: 27,
+        })
+    })
+
+    it('draws anew when the table lost the last columns drawn', () => {
+        const drawn = stretchNear(NONE_DRAWN, view(30, 39))
+
+        expect(stretchNear(drawn, view(28, 34, 35))).toEqual({
+            startIndex: 25,
+            endIndex: 34,
+        })
+    })
 })

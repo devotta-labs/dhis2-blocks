@@ -4,13 +4,14 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject, SyntheticEvent } from 'react'
 import type { GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
-import { tabStops } from './columnWindow'
+import { NONE_DRAWN, stretchNear, tabStops } from './columnWindow'
 import type { ColumnWindow } from './columnWindow'
 
 // A column's least width: its cells' `min-w-28`. Its heading can make it wider, which is measured once it is drawn.
 const COLUMN_WIDTH = 112
-// Columns drawn beyond each edge of the view, so a short scroll shows columns at once.
-const OVERSCAN = 2
+// Columns drawn beyond each edge of the view. They are drawn several at once and then kept until the view passes
+// them: every change lays the table out again, so a scroll sideways changes the columns once in a few, not at each.
+const OVERSCAN = 3
 
 type Columns = Virtualizer<HTMLDivElement, Element>
 
@@ -71,17 +72,25 @@ export const useColumnWindow = (
             ...tabStops(table, keyOf, row === -1 ? undefined : row, column),
         ]
     }, [table, keyOf, columns, row, current.column])
+    // The columns near the view that are drawn now.
+    const near = useRef(NONE_DRAWN)
     const rangeExtractor = useCallback(
-        (range: Range) =>
-            [
+        (range: Range) => {
+            near.current = stretchNear(near.current, range)
+            return [
                 ...new Set([
                     ...kept,
                     reveal ?? -1,
-                    ...defaultRangeExtractor(range),
+                    ...defaultRangeExtractor({
+                        ...range,
+                        ...near.current,
+                        overscan: 0,
+                    }),
                 ]),
             ]
                 .filter((index) => index >= 0 && index < count)
-                .sort((a, b) => a - b),
+                .sort((a, b) => a - b)
+        },
         [kept, reveal, count]
     )
 

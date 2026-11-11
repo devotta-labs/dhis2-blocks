@@ -13,6 +13,38 @@ export const cellCount = ({ drawn, after }: ColumnWindow) =>
     drawn.reduce((count, { gap }) => count + (gap > 0 ? 2 : 1), 0) +
     (after > 0 ? 1 : 0)
 
+/** A run of columns, from one index to another, both counted. */
+interface Stretch {
+    startIndex: number
+    endIndex: number
+}
+
+export const NONE_DRAWN: Stretch = { startIndex: 0, endIndex: -1 }
+
+/**
+ * The columns to draw near the view: those drawn before for as long as the view is within them, else the view's own
+ * and `overscan` more beyond each of its ends. Drawing a few at once and keeping them until the view passes them
+ * changes the table once in `overscan` columns scrolled, not at each: every change renders the rows drawn and lays
+ * the table out again. A view that narrowed starts over once twice as many columns are drawn beyond it as it would
+ * start with; one that shows a column more or less as it scrolls does not.
+ */
+export const stretchNear = (
+    was: Stretch,
+    view: Stretch & { overscan: number; count: number }
+): Stretch => {
+    const { startIndex, endIndex, overscan, count } = view
+    const spare = was.endIndex - was.startIndex - (endIndex - startIndex)
+    return startIndex >= was.startIndex &&
+        endIndex <= was.endIndex &&
+        was.endIndex < count &&
+        spare <= 4 * overscan
+        ? was
+        : {
+              startIndex: Math.max(startIndex - overscan, 0),
+              endIndex: Math.min(endIndex + overscan, count - 1),
+          }
+}
+
 type KeyOf = (
     row: GridTable['rows'][number],
     column: GridTable['columns'][number]

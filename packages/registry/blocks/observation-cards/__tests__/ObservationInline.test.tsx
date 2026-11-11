@@ -126,6 +126,25 @@ describe('ObservationInline', () => {
         )
         expect(inlineOf(container)?.textContent).toContain('14')
         expect(inlineOf(container)?.textContent).not.toContain('Unavailable')
+        // Newer visits may be hidden, so the reading says so, as the card does.
+        expect(inlineOf(container)?.textContent).toContain(
+            'Some visits are hidden by your access'
+        )
+    })
+
+    it("an unsupported type says it can't be shown, never the stored value", async () => {
+        const { container } = await renderWith(
+            <ObservationInline dataElement={DE} />,
+            {
+                label: 'Location',
+                valueType: 'COORDINATE',
+                readings: [{ value: '[1,2]', day: '2026-03-12' }],
+            }
+        )
+        expect(inlineOf(container)?.textContent).toContain(
+            "This value type can't be shown here"
+        )
+        expect(inlineOf(container)?.textContent).not.toContain('[1,2]')
     })
 
     it('a data element the program lacks shows the full setup message in development', async () => {

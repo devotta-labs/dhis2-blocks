@@ -127,9 +127,9 @@ export function RecordedNote({
 /**
  * The note shown when the user can't read some stages that capture the value:
  * "Restricted access", with the full reason on click, focus or hover. A screen reader
- * hears the full reason instead.
+ * hears the full reason instead. Internal: the card's footer and the inline reading use it.
  */
-function PartialNote() {
+export function PartialNote({ className }: { className?: string }) {
     const reason = i18n.t('Some visits are hidden by your access')
     const tooltip = useClickableTooltip()
     return (
@@ -141,7 +141,10 @@ function PartialNote() {
                         // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a tooltip trigger: focus shows the detail to keyboard users
                         tabIndex={0}
                         data-slot="partial-note"
-                        className="ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring"
+                        className={cn(
+                            'ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring',
+                            className
+                        )}
                     />
                 }
             >

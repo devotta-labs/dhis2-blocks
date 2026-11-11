@@ -3,11 +3,16 @@ import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import { CardNote } from '../card/frame'
-import { formatPointValue, isStale, legendFor } from '../format/display'
+import {
+    formatPointValue,
+    isStale,
+    isSupportedValueType,
+    legendFor,
+} from '../format/display'
 import { useDisplayOptions } from '../format/useDisplayOptions'
 import { useObservation } from '../hooks'
 import { MetadataBadge } from '../parts/ObservationLegend'
-import { RecordedNote } from '../parts/ObservationRecorded'
+import { PartialNote, RecordedNote } from '../parts/ObservationRecorded'
 import { useObservationsContext } from '../provider/context'
 import { isProduction } from '../provider/env'
 
@@ -90,7 +95,14 @@ export function ObservationInline({
             : undefined
 
     let body
-    if (series && latest) {
+    if (series && !isSupportedValueType(series)) {
+        // As the card: a type it can't format is never shown as a stored string.
+        body = (
+            <span className="text-dhis2-muted-foreground">
+                {i18n.t("This value type can't be shown here")}
+            </span>
+        )
+    } else if (series && latest) {
         const shownUnit = latest.numericValue === undefined ? undefined : unit
         const text = formatPointValue(series, latest, display)
         body = (
@@ -113,6 +125,8 @@ export function ObservationInline({
                         display={display}
                     />
                 </span>
+                {/* Newer visits may be ones this user can't read. */}
+                {series.partial ? <PartialNote className="ms-0" /> : null}
             </>
         )
     } else if (series && !series.partial) {

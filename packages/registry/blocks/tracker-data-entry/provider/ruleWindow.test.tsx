@@ -44,11 +44,14 @@ const connect = (
     {
         before,
         slow = false,
+        assigns = false,
     }: {
         /** Runs on the store before the rules connect, as changes restored from the outbox do. */
         before?(store: StoreApi<CellStoreState>): void
         /** Each row's rules take 60 ms. */
         slow?: boolean
+        /** The rules give `c1` the value 7 too. */
+        assigns?: boolean
     } = {}
 ) => {
     const form = visitForm({ rows: FIVE_ROWS })
@@ -85,16 +88,22 @@ const connect = (
         rows: new Map([[tableId, drawnRows]]),
     }))
     const ran: string[] = []
+    // The changed fields each run was given.
+    const asked: Array<ReadonlyArray<string> | undefined> = []
     const rules: EventsRules = {
-        evaluate(_rows, rowIds) {
+        evaluate(_rows, rowIds, changedFields) {
             const all = new Map(
                 rowIds.map((rowId) => {
                     ran.push(rowId)
+                    asked.push(changedFields)
                     if (slow) {
                         busy(60)
                     }
                     const hidden = emptyEffects()
                     hidden.hiddenFields.set('c2', [by])
+                    if (assigns) {
+                        hidden.assignedValues.set('c1', { value: '7', by })
+                    }
                     return [rowId, hidden]
                 })
             )
@@ -126,6 +135,7 @@ const connect = (
     return {
         ...open,
         ran,
+        asked,
         stop,
         reconnect,
         /** The grid draws these rows from now on. */
@@ -248,4 +258,18 @@ test('while no grid draws the form, every row runs', () => {
     idle.run()
     expect(ran).toEqual(['r1', 'r2', 'r3', 'r4', 'r5', 'r1'])
     again()
+})
+
+test('a value the rules saved in a row is a change to the row’s next run: the rules that read it run then', async () => {
+    holdIdle()
+    const { asked, store, stop } = connect(['r1'], { assigns: true })
+    store.getState().commit(cellKey('r1', 'c3'), 'first')
+    await expect
+        .poll(() => store.getState().cells[cellKey('r1', 'c1')]?.value)
+        .toBe('7')
+    // The rules did not run again for their own value: a rule reading c1 last ran before it was 7.
+    expect(asked).toEqual([undefined, ['c3']])
+    store.getState().commit(cellKey('r1', 'c3'), 'second')
+    await expect.poll(() => asked).toEqual([undefined, ['c3'], ['c3', 'c1']])
+    stop()
 })

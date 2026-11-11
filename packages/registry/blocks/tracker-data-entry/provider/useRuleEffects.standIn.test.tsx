@@ -254,33 +254,6 @@ test('a value a rule assigns to a field with no column is saved with the row', a
     stop()
 })
 
-test('a value the rules saved in a row is a change to the row’s next run: the rules that read it run then', async () => {
-    const assigning = standIn(() => {
-        const effects = emptyEffects()
-        effects.assignedValues.set('c1', { value: '7', by })
-        return effects
-    })
-    const asked: Array<ReadonlyArray<string> | undefined> = []
-    const { store, stop } = connect({
-        ...assigning,
-        evaluate(rows, rowIds, changedFields) {
-            if (rowIds.includes('r1')) {
-                asked.push(changedFields)
-            }
-            return assigning.evaluate(rows, rowIds, changedFields)
-        },
-    })
-    store.getState().commit(cellKey('r1', 'c2'), 'A')
-    await expect
-        .poll(() => store.getState().cells[cellKey('r1', 'c1')]?.value)
-        .toBe('7')
-    // The rules did not run again for their own value: a rule reading c1 last ran before it was 7.
-    expect(asked).toEqual([undefined, ['c2']])
-    store.getState().commit(cellKey('r1', 'c2'), 'B')
-    await expect.poll(() => asked).toEqual([undefined, ['c2'], ['c2', 'c1']])
-    stop()
-})
-
 test('no rule value is committed in a read-only record, shown or not', async () => {
     const assigning = () => {
         const effects = emptyEffects()

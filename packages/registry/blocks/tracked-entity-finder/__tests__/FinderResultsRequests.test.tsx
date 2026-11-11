@@ -292,6 +292,46 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('Amina')).toBeVisible()
     })
 
+    it('never reuses metadata or people from another client sharing the query cache', async () => {
+        const { server, screen, onSelect } = await renderFinder({
+            options: { searchResponse: answer([amina]) },
+        })
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        const other = createFakeServer({ deferSearches: true })
+        await screen.rerender(
+            ui(
+                other,
+                'hivProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
+        )
+        await expect.poll(() => other.pendingSearches.length).toBe(1)
+        expect(page.getByText('Amina').query()).toBeNull()
+        expect(
+            other.requests.filter(({ resource }) => resource === 'programs')
+        ).toHaveLength(1)
+        expect(
+            other.requests.filter(({ resource }) => resource === 'system/info')
+        ).toHaveLength(1)
+        other.pendingSearches[0].respond(
+            answer([entity('other', { firstName: 'Zainab' })])
+        )
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        await screen.rerender(
+            ui(
+                server,
+                'hivProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
+        )
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+    })
+
     it('reuses repeated details and separates different searches', async () => {
         const { server } = await renderFinder({
             options: {

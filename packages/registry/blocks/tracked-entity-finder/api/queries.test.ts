@@ -33,7 +33,7 @@ describe('program metadata query', () => {
             'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
-        expect(options.queryKey).toEqual(finderKeys.program('prog'))
+        expect(options.queryKey).toEqual(finderKeys.program(client, 'prog'))
         expect(options.gcTime).toBe(3 * 60 * 60_000)
     })
 
@@ -86,6 +86,7 @@ describe('program metadata query', () => {
 })
 
 describe('search query', () => {
+    const client = createFinderResourceClient({ query: vi.fn() })
     const filters = [
         { attribute: 'artNumber', conditions: [{ op: 'eq', value: 'A1' }] },
         {
@@ -96,20 +97,31 @@ describe('search query', () => {
     const search = seal(filters)
 
     it('keys searches only by program, canonical filters and page', () => {
-        const key = finderKeys.search('p', search, 2)
+        const key = finderKeys.search(client, 'p', search, 2)
         expect(key).toEqual([
             'tracked-entity-finder',
             'search',
+            expect.any(Number),
             'p',
             ['artNumber:eq:A1', 'firstName:like:Amina'],
             2,
         ])
-        expect(finderKeys.search('p', seal([...filters].reverse()), 2)).toEqual(
-            key
+        expect(
+            finderKeys.search(client, 'p', seal([...filters].reverse()), 2)
+        ).toEqual(key)
+        expect(finderKeys.search(client, 'other', search, 2)).not.toEqual(key)
+        expect(finderKeys.search(client, 'p', search, 1)).not.toEqual(key)
+        expect(
+            finderKeys.search(client, 'p', seal([filters[0]]), 2)
+        ).not.toEqual(key)
+        const other = createFinderResourceClient({ query: vi.fn() })
+        expect(finderKeys.search(other, 'p', search, 2)).not.toEqual(key)
+        expect(finderKeys.program(other, 'p')).not.toEqual(
+            finderKeys.program(client, 'p')
         )
-        expect(finderKeys.search('other', search, 2)).not.toEqual(key)
-        expect(finderKeys.search('p', search, 1)).not.toEqual(key)
-        expect(finderKeys.search('p', seal([filters[0]]), 2)).not.toEqual(key)
+        expect(finderKeys.systemInfo(other)).not.toEqual(
+            finderKeys.systemInfo(client)
+        )
     })
 
     it('reuses results for five minutes, then reloads them', async () => {

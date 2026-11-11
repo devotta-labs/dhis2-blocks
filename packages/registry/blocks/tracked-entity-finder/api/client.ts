@@ -63,6 +63,18 @@ const resourceClients = new WeakMap<
     FinderResourceClient
 >()
 
+const cacheIds = new WeakMap<FinderResourceClient, number>()
+let lastCacheId = 0
+
+/** Stable across mounts, but never shared by different clients. */
+export const cacheIdOf = (client: FinderResourceClient): number => {
+    const existing = cacheIds.get(client)
+    if (existing !== undefined) return existing
+    const id = ++lastCacheId
+    cacheIds.set(client, id)
+    return id
+}
+
 /** A failed DHIS2 request, with the HTTP status and server message kept. */
 export class FinderRequestError extends Error {
     readonly status?: number

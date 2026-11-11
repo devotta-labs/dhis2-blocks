@@ -70,7 +70,7 @@ const SYSTEM_INFO_FIELDS = 'calendar,dateFormat,version'
 
 export const systemInfoQueryOptions = (client: FinderResourceClient) =>
     queryOptions({
-        queryKey: finderKeys.systemInfo(),
+        queryKey: finderKeys.systemInfo(client),
         queryFn: ({ signal }) =>
             client.query(
                 {

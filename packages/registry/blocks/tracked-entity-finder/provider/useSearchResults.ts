@@ -41,7 +41,7 @@ export const useSearchResults = ({
         model && submission
             ? searchQueryOptions(client, model, submission.search, page)
             : ({
-                  queryKey: finderKeys.search(program, undefined, page),
+                  queryKey: finderKeys.search(client, program, undefined, page),
                   queryFn: skipToken,
               } as const)
     const query = useQuery({
@@ -52,8 +52,9 @@ export const useSearchResults = ({
             submission !== undefined,
         // Only a page change of the same search keeps the old page on screen.
         placeholderData: (previous, previousQuery) =>
-            previousQuery?.queryKey[2] === program &&
-            hashKey(previousQuery.queryKey[3]) === hashKey(options.queryKey[3])
+            previousQuery &&
+            hashKey(previousQuery.queryKey.slice(0, -1)) ===
+                hashKey(options.queryKey.slice(0, -1))
                 ? previous
                 : undefined,
     })

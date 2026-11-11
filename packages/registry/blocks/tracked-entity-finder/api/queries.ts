@@ -1,7 +1,11 @@
 import { queryOptions } from '@tanstack/react-query'
 import { serializeFilter } from '../rules/searchParams'
 import type { ProgramModel, ValidatedSearch } from '../rules/types'
-import { shouldRetryFinderRequest, type FinderResourceClient } from './client'
+import {
+    cacheIdOf,
+    shouldRetryFinderRequest,
+    type FinderResourceClient,
+} from './client'
 import { normaliseProgram, ProgramResponseSchema } from './schemas'
 import { runSearch } from './search'
 
@@ -10,10 +14,12 @@ const SEARCH_CACHE_TIME = 5 * 60_000
 
 export const finderKeys = {
     all: ['tracked-entity-finder'] as const,
-    systemInfo: () => [...finderKeys.all, 'system-info'] as const,
-    program: (program: string) =>
-        [...finderKeys.all, 'program', program] as const,
+    systemInfo: (client: FinderResourceClient) =>
+        [...finderKeys.all, 'system-info', cacheIdOf(client)] as const,
+    program: (client: FinderResourceClient, program: string) =>
+        [...finderKeys.all, 'program', cacheIdOf(client), program] as const,
     search: (
+        client: FinderResourceClient,
         program: string,
         search: ValidatedSearch | undefined,
         page: number
@@ -21,6 +27,7 @@ export const finderKeys = {
         [
             ...finderKeys.all,
             'search',
+            cacheIdOf(client),
             program,
             search?.filters.map(serializeFilter).sort() ?? [],
             page,
@@ -34,7 +41,7 @@ export const searchQueryOptions = (
     page: number
 ) =>
     queryOptions({
-        queryKey: finderKeys.search(model.program, search, page),
+        queryKey: finderKeys.search(client, model.program, search, page),
         queryFn: ({ signal }) => runSearch(client, model, search, page, signal),
         staleTime: SEARCH_CACHE_TIME,
         gcTime: SEARCH_CACHE_TIME,
@@ -51,7 +58,7 @@ export const programMetadataQueryOptions = (
     program: string
 ) =>
     queryOptions({
-        queryKey: finderKeys.program(program),
+        queryKey: finderKeys.program(client, program),
         queryFn: ({ signal }) =>
             client
                 .query(

@@ -52,8 +52,9 @@ the built-in ones.
 block uses the DHIS2 app-runtime.
 
 Program metadata and system info stay fresh for 3 hours. Search results stay
-fresh for 5 minutes, keyed by program, filters and page, including across
-repeated submissions and finder remounts within the same QueryClient.
+fresh for 5 minutes, keyed by client, program, filters and page, including
+across repeated submissions and finder remounts within the same QueryClient.
+Different clients never share cached metadata or results.
 
 To list a program's searchable attributes and their uids:
 

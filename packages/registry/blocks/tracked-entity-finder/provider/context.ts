@@ -1,5 +1,4 @@
 import { createContext, useContext } from 'react'
-import type { FinderResourceClient } from '../api/client'
 import type { FinderPerson } from '../api/search'
 import type { FinderSystemInfo } from '../api/systemInfo'
 import type { FinderFormApi } from '../form/finderFormApi'
@@ -54,7 +53,6 @@ interface FinderActions {
 
 interface FinderMeta {
     program: string
-    client: FinderResourceClient
     info?: FinderSystemInfo
 }
 

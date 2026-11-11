@@ -1,25 +1,28 @@
-import { CustomDataProvider } from '@dhis2/app-runtime'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { page } from 'vitest/browser'
-import { render } from 'vitest-browser-react'
-import { useTrackedEntityFinderClient } from '../api/runtimeClient'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
-import { FinderProvider } from '../provider/FinderProvider'
-import { createFakeServer, renderWithQueries } from './finderTestSupport'
+import { FinderSubmit } from '../form/FinderSubmit'
+import { FinderResults } from '../results/FinderResults'
+import {
+    createFakeServer,
+    FinderTestProvider,
+    renderWithQueries,
+} from './finderTestSupport'
+import { searchFor, settle } from './resultsTestSupport'
 
-it('loads metadata with a supplied client without a DHIS2 runtime provider', async () => {
+it('loads metadata through app-runtime and TanStack Query', async () => {
     const server = createFakeServer()
     await renderWithQueries(
-        <FinderProvider
+        <FinderTestProvider
             program="hivProgram"
-            client={server.client}
+            server={server}
             onSelect={vi.fn()}
         >
             <FinderForm>
                 <FinderField attribute="artNumber" />
             </FinderForm>
-        </FinderProvider>
+        </FinderTestProvider>
     )
     await expect
         .element(page.getByRole('textbox', { name: 'ART number' }))
@@ -32,34 +35,37 @@ it('loads metadata with a supplied client without a DHIS2 runtime provider', asy
     )
 })
 
-it('keeps the runtime client stable across finder remounts', async () => {
-    const observed = vi.fn()
-    const Probe = () => {
-        const client = useTrackedEntityFinderClient()
-        useEffect(() => {
-            observed(client)
-        }, [client])
-        return null
-    }
-    const Toggle = () => {
-        const [mounted, setMounted] = useState(true)
+it('keeps cached data when request logging rerenders the runtime provider', async () => {
+    const LoggedFinder = () => {
+        const [logs, setLogs] = useState(0)
+        const [server] = useState(() =>
+            createFakeServer({
+                onRequest: () => setLogs((count) => count + 1),
+            })
+        )
         return (
-            <>
-                <button type="button" onClick={() => setMounted(!mounted)}>
-                    Toggle finder
-                </button>
-                {mounted && <Probe />}
-            </>
+            <FinderTestProvider
+                program="hivProgram"
+                server={server}
+                onSelect={vi.fn()}
+            >
+                <FinderForm>
+                    <FinderField attribute="artNumber" />
+                    <FinderSubmit />
+                </FinderForm>
+                <FinderResults />
+                <output data-testid="requests">{logs}</output>
+            </FinderTestProvider>
         )
     }
-    await render(
-        <CustomDataProvider data={{}}>
-            <Toggle />
-        </CustomDataProvider>
-    )
-    await expect.poll(() => observed.mock.calls.length).toBe(1)
-    await page.getByRole('button', { name: 'Toggle finder' }).click()
-    await page.getByRole('button', { name: 'Toggle finder' }).click()
-    await expect.poll(() => observed.mock.calls.length).toBe(2)
-    expect(observed.mock.calls[1][0]).toBe(observed.mock.calls[0][0])
+    await renderWithQueries(<LoggedFinder />)
+    await expect
+        .element(page.getByRole('textbox', { name: 'ART number' }))
+        .toBeEnabled()
+    await expect.element(page.getByTestId('requests')).toHaveTextContent('2')
+    await searchFor('A1')
+    await expect.element(page.getByText('No one found')).toBeVisible()
+    await searchFor('A1')
+    await settle()
+    await expect.element(page.getByTestId('requests')).toHaveTextContent('3')
 })

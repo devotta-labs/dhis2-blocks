@@ -1,14 +1,18 @@
 import { QueryClient } from '@tanstack/react-query'
+import { z } from 'zod'
 import { hivProgram } from '../__tests__/fixtures/program'
 import { buildProgramModel } from '../rules/programModel'
 import { seal } from '../rules/seal'
-import { createFinderResourceClient, type DataEngineQuery } from './client'
 import {
     finderKeys,
+    type FinderEngine,
     programMetadataQueryOptions,
     searchQueryOptions,
 } from './queries'
 import { systemInfoQueryOptions } from './systemInfo'
+
+const server = 'https://dhis2.test'
+type DataEngineQuery = Parameters<FinderEngine['query']>[0]
 
 describe('program metadata query', () => {
     it('requests the program fields the rules need', async () => {
@@ -19,21 +23,23 @@ describe('program metadata query', () => {
                 programTrackedEntityAttributes: [],
             },
         }))
-        const client = createFinderResourceClient({ query })
-        const options = programMetadataQueryOptions(client, 'prog')
+        const client = { query }
+        const options = programMetadataQueryOptions(client, server, 'prog')
         await new QueryClient().fetchQuery(options)
 
         const sent = query.mock.calls[0]?.[0]
         const request = sent?.trackedEntityFinderResource
         expect(request).toMatchObject({ resource: 'programs', id: 'prog' })
-        const { fields } = request?.params ?? { fields: '' }
+        const { fields } = z
+            .object({ fields: z.string() })
+            .parse(request?.params)
         expect(fields).toContain('minAttributesRequiredToSearch')
         expect(fields).toContain('maxTeiCountToReturn')
         expect(fields).toContain(
             'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
-        expect(options.queryKey).toEqual(finderKeys.program(client, 'prog'))
+        expect(options.queryKey).toEqual(finderKeys.program(server, 'prog'))
         expect(options.gcTime).toBe(3 * 60 * 60_000)
     })
 
@@ -46,8 +52,8 @@ describe('program metadata query', () => {
                 programTrackedEntityAttributes: [],
             },
         }))
-        const client = createFinderResourceClient({ query })
-        const options = programMetadataQueryOptions(client, 'prog')
+        const client = { query }
+        const options = programMetadataQueryOptions(client, server, 'prog')
         const queryClient = new QueryClient()
         const now = Date.now()
         const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
@@ -86,7 +92,6 @@ describe('program metadata query', () => {
 })
 
 describe('search query', () => {
-    const client = createFinderResourceClient({ query: vi.fn() })
     const filters = [
         { attribute: 'artNumber', conditions: [{ op: 'eq', value: 'A1' }] },
         {
@@ -97,30 +102,31 @@ describe('search query', () => {
     const search = seal(filters)
 
     it('keys searches only by program, canonical filters and page', () => {
-        const key = finderKeys.search(client, 'p', search, 2)
+        const key = finderKeys.search(server, 'p', search, 2)
         expect(key).toEqual([
             'tracked-entity-finder',
             'search',
-            expect.any(Number),
+            server,
             'p',
             ['artNumber:eq:A1', 'firstName:like:Amina'],
             2,
         ])
         expect(
-            finderKeys.search(client, 'p', seal([...filters].reverse()), 2)
+            finderKeys.search(server, 'p', seal([...filters].reverse()), 2)
         ).toEqual(key)
-        expect(finderKeys.search(client, 'other', search, 2)).not.toEqual(key)
-        expect(finderKeys.search(client, 'p', search, 1)).not.toEqual(key)
+        expect(finderKeys.search(server, 'other', search, 2)).not.toEqual(key)
+        expect(finderKeys.search(server, 'p', search, 1)).not.toEqual(key)
         expect(
-            finderKeys.search(client, 'p', seal([filters[0]]), 2)
+            finderKeys.search(server, 'p', seal([filters[0]]), 2)
         ).not.toEqual(key)
-        const other = createFinderResourceClient({ query: vi.fn() })
-        expect(finderKeys.search(other, 'p', search, 2)).not.toEqual(key)
-        expect(finderKeys.program(other, 'p')).not.toEqual(
-            finderKeys.program(client, 'p')
+        expect(
+            finderKeys.search('https://other.dhis2.test', 'p', search, 2)
+        ).not.toEqual(key)
+        expect(finderKeys.program('https://other.dhis2.test', 'p')).not.toEqual(
+            finderKeys.program(server, 'p')
         )
-        expect(finderKeys.systemInfo(other)).not.toEqual(
-            finderKeys.systemInfo(client)
+        expect(finderKeys.systemInfo('https://other.dhis2.test')).not.toEqual(
+            finderKeys.systemInfo(server)
         )
     })
 
@@ -131,9 +137,10 @@ describe('search query', () => {
                 pager: { total: 0 },
             },
         }))
-        const client = createFinderResourceClient({ query })
+        const client = { query }
         const options = searchQueryOptions(
             client,
+            server,
             buildProgramModel(hivProgram),
             search,
             1
@@ -167,8 +174,8 @@ describe('system info metadata query', () => {
                 version: '2.43.0',
             },
         }))
-        const client = createFinderResourceClient({ query })
-        const options = systemInfoQueryOptions(client)
+        const client = { query }
+        const options = systemInfoQueryOptions(client, server)
         const queryClient = new QueryClient()
         const now = Date.now()
         const clock = vi.spyOn(Date, 'now').mockReturnValue(now)

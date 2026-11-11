@@ -292,13 +292,16 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('Amina')).toBeVisible()
     })
 
-    it('never reuses metadata or people from another client sharing the query cache', async () => {
+    it('never reuses metadata or people from another server sharing the query cache', async () => {
         const { server, screen, onSelect } = await renderFinder({
             options: { searchResponse: answer([amina]) },
         })
         await searchFor('A1')
         await expect.element(page.getByText('Amina')).toBeVisible()
-        const other = createFakeServer({ deferSearches: true })
+        const other = createFakeServer({
+            baseUrl: 'https://other.dhis2.test',
+            deferSearches: true,
+        })
         await screen.rerender(
             ui(
                 other,

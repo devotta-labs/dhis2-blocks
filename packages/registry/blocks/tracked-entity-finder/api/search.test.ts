@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { hivProgram } from '../__tests__/fixtures/program'
 import { buildProgramModel } from '../rules/programModel'
 import { seal } from '../rules/seal'
-import { createFinderResourceClient, type DataEngineLike } from './client'
-import { runSearch } from './search'
+import { QueryClient } from '@tanstack/react-query'
+import { searchQueryOptions, type FinderEngine } from './queries'
+import type { ProgramModel, ValidatedSearch } from '../rules/types'
 
 const search = seal([
     { attribute: 'artNumber', conditions: [{ op: 'eq', value: 'A1' }] },
@@ -22,13 +23,34 @@ const entity = (id: string) => ({
     attributes: [{ attribute: 'artNumber', value: 'A1' }],
 })
 
-type Engine = DataEngineLike['query']
+type Engine = FinderEngine['query']
 type Answer = Awaited<ReturnType<Engine>>[string]
 
-const clientOf = (respond: () => Answer) =>
-    createFinderResourceClient({
-        query: async () => ({ trackedEntityFinderResource: respond() }),
+const clientOf = (respond: () => Answer) => ({
+    query: async () => ({ trackedEntityFinderResource: respond() }),
+})
+
+const runSearch = (
+    engine: FinderEngine,
+    model: ProgramModel,
+    search: ValidatedSearch,
+    page: number,
+    signal?: AbortSignal
+) => {
+    const options = searchQueryOptions(
+        engine,
+        'https://dhis2.test',
+        model,
+        search,
+        page
+    )
+    return new QueryClient().fetchQuery({
+        ...options,
+        queryFn: (context) =>
+            options.queryFn!({ ...context, signal: signal ?? context.signal }),
+        retry: false,
     })
+}
 
 const ids = (count: number) =>
     Array.from({ length: count }, (_, index) => entity(`te${index}`))

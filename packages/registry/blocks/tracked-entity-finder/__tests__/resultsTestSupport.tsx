@@ -4,7 +4,7 @@ import type { FinderPerson } from '../api/search'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { FinderProvider } from '../provider/FinderProvider'
+import { FinderTestProvider as FinderProvider } from './finderTestSupport'
 import { FinderResults } from '../results/FinderResults'
 import {
     createFakeServer,
@@ -41,7 +41,7 @@ export const answer = (
     total = people.length,
     current = 1
 ) => ({
-    trackedEntities: people,
+    trackedEntities: [...people],
     pager: { page: current, pageSize: 10, total },
 })
 
@@ -65,11 +65,7 @@ export const ui = (
     onSelect: (person: FinderPerson) => void,
     results: ReactNode
 ) => (
-    <FinderProvider
-        program={program}
-        client={server.client}
-        onSelect={onSelect}
-    >
+    <FinderProvider program={program} server={server} onSelect={onSelect}>
         <SearchForm />
         {results}
     </FinderProvider>

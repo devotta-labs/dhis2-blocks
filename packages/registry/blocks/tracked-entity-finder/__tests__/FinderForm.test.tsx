@@ -10,7 +10,7 @@ import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
 import { useFinderField, useFinderRangeField } from '../hooks'
-import { FinderProvider } from '../provider/FinderProvider'
+import { FinderTestProvider as FinderProvider } from './finderTestSupport'
 import {
     createFakeServer,
     renderWithQueries,
@@ -20,11 +20,7 @@ import {
 const renderFinder = (children: ReactNode) => {
     const server = createFakeServer()
     return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={vi.fn()}
-        >
+        <FinderProvider program="hivProgram" server={server} onSelect={vi.fn()}>
             {children}
             <SubmissionProbe />
         </FinderProvider>
@@ -383,7 +379,7 @@ describe('FinderForm', () => {
         await renderWithQueries(
             <FinderProvider
                 program="hivProgram"
-                client={server.client}
+                server={server}
                 onSelect={vi.fn()}
             >
                 <FinderForm>
@@ -405,7 +401,7 @@ describe('FinderForm', () => {
         await renderWithQueries(
             <FinderProvider
                 program="hivProgram"
-                client={server.client}
+                server={server}
                 onSelect={vi.fn()}
             >
                 <FinderForm>
@@ -431,7 +427,7 @@ describe('FinderForm', () => {
         await renderWithQueries(
             <FinderProvider
                 program="hivProgram"
-                client={server.client}
+                server={server}
                 onSelect={vi.fn()}
             >
                 <FinderForm>
@@ -459,7 +455,7 @@ describe('FinderForm', () => {
         await renderWithQueries(
             <FinderProvider
                 program="hivProgram"
-                client={server.client}
+                server={server}
                 onSelect={vi.fn()}
             >
                 <FinderForm>

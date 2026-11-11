@@ -219,8 +219,10 @@ set up correctly" and the full message is logged to the console.
   person the user picks.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses
   the hooks. The provider renders only its children.
-- `client?: TrackedEntityFinderClient` — a custom data engine, from
-  `createTrackedEntityFinderClient`. Defaults to the DHIS2 app runtime.
+
+The finder uses `useDataEngine` from the DHIS2 app-runtime provider, with
+TanStack Query managing requests and caching. Use app-runtime's
+`CustomDataProvider` for fake data in tests.
 
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and

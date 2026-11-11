@@ -316,10 +316,10 @@ describe('repairing an incompatible saved list', () => {
                 data: expect.objectContaining({
                     name: 'Visits',
                     programStage: { id: 'ProgStage01' },
+                    // The removed column goes; the one that was fine is
+                    // kept once, not written again in its place.
                     programStageQueryCriteria: expect.objectContaining({
-                        displayColumnOrder: expect.not.arrayContaining([
-                            'RemovedDE01',
-                        ]),
+                        displayColumnOrder: ['Attribute01'],
                     }),
                 }),
             }),

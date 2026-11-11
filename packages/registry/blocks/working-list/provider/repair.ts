@@ -7,7 +7,11 @@ import {
     repairSavedWorkingList,
     type NormalizedSavedWorkingList,
 } from '../api/savedLists'
-import { ProgramStageWorkingListSchema } from '../api/schemas'
+import { findField } from '../api/savedListNormalization'
+import {
+    ProgramStageWorkingListSchema,
+    TrackedEntityInstanceFilterSchema,
+} from '../api/schemas'
 import type { StaleReferenceRepairDecision } from '../domain/staleReferences'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 import type {
@@ -23,11 +27,24 @@ export interface SavedListRepairPlan {
     replacedSort: boolean
 }
 
+type IncompatibleSavedList = Extract<
+    NormalizedSavedWorkingList,
+    { compatibility: 'incompatible' }
+>
+
+/** The columns as saved, for a list too stale to read as a configuration. */
+const savedColumns = (list: IncompatibleSavedList): string[] => {
+    const criteria =
+        list.resource === 'programStageWorkingLists'
+            ? ProgramStageWorkingListSchema.parse(list.raw)
+                  .programStageQueryCriteria
+            : TrackedEntityInstanceFilterSchema.parse(list.raw)
+                  .entityQueryCriteria
+    return criteria?.displayColumnOrder ?? []
+}
+
 const createSavedListRepairPlan = (
-    list: Extract<
-        NormalizedSavedWorkingList,
-        { compatibility: 'incompatible' }
-    >,
+    list: IncompatibleSavedList,
     metadata: ProgramFieldCatalog
 ): SavedListRepairPlan => {
     const candidate = list.candidateConfiguration
@@ -41,11 +58,6 @@ const createSavedListRepairPlan = (
             )
             .map((issue) => issue.path)
     )
-    const validColumnCount = candidate
-        ? candidate.columns.filter(
-              (_column, index) => !invalidColumnPaths.has(`columns.${index}`)
-          ).length
-        : 0
     const rawProgramStageId =
         list.resource === 'programStageWorkingLists'
             ? ProgramStageWorkingListSchema.parse(list.raw).programStage.id
@@ -61,6 +73,14 @@ const createSavedListRepairPlan = (
         ? fieldsForConfiguration(metadata, candidate)
         : fieldsForProgramStage(metadata, rawProgramStageId)
     const fallbackColumn = defaults.find((id) => fields.has(id))
+    // A stale column is replaced only when no other column would be left: a
+    // list that keeps a column loses the stale one instead, so the default
+    // column is never written beside itself.
+    const validColumnCount = candidate
+        ? candidate.columns.filter(
+              (_column, index) => !invalidColumnPaths.has(`columns.${index}`)
+          ).length
+        : savedColumns(list).filter((id) => findField(fields, id)).length
     let replacementColumnUsed = false
     const decisions: StaleReferenceRepairDecision[] = []
 
@@ -157,7 +177,7 @@ export const planSavedListRepair = ({
     parsingContext,
     serializationContext,
 }: {
-    list: Extract<NormalizedSavedWorkingList, { compatibility: 'incompatible' }>
+    list: IncompatibleSavedList
     metadata: ProgramFieldCatalog
     programId: string
     parsingContext?: FilterParsingContext

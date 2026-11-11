@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { WorkingListClient } from '../api/client'
@@ -15,7 +16,6 @@ import {
     organisationUnitLabelsQueryOptions,
 } from '../query/referenceLabels'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
 
 interface UseReferenceFormattingOptions {
     client: WorkingListClient
@@ -23,7 +23,6 @@ interface UseReferenceFormattingOptions {
     fields?: FieldCatalog
     systemInfo?: WorkingListSystemInfo
     locale: string
-    translate: WorkingListTranslate
 }
 
 const referencedIds = (
@@ -45,7 +44,6 @@ export const useReferenceFormatting = ({
     fields,
     systemInfo,
     locale,
-    translate,
 }: UseReferenceFormattingOptions) => {
     const organisationUnitIds = useMemo(
         () => referencedIds(pages, fields, collectOrganisationUnitIds),
@@ -69,8 +67,8 @@ export const useReferenceFormatting = ({
                 ? createWorkingListValueTransformers({
                       systemInfo,
                       locale,
-                      trueLabel: translate('Yes'),
-                      falseLabel: translate('No'),
+                      trueLabel: i18n.t('Yes'),
+                      falseLabel: i18n.t('No'),
                       resolveDisplayName: createOrganisationUnitLabelResolver(
                           organisationUnitLabelsQuery.data ?? new Map()
                       ),
@@ -84,7 +82,6 @@ export const useReferenceFormatting = ({
             locale,
             organisationUnitLabelsQuery.data,
             systemInfo,
-            translate,
         ]
     )
 

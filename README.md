@@ -504,6 +504,25 @@ tasks to retain dependency-aware caching without serializing package checks.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
+Registry blocks, components and the web app use `dhis2/inline-translations`: import the
+default `i18n` from `@dhis2/d2-i18n` and call `i18n.t('Message')` at runtime
+where the text is used. Keep messages, options and plural `defaultValue`
+strings inline; use `{{name}}` interpolation rather than dynamic keys.
+Translation hooks, translator aliases/injection and stored string catalogues
+are not supported. Domain formatters may choose literal messages, and
+metadata labels must remain verbatim. Tests, docs examples and generated locale
+files are outside this rule.
+
+The web app extracts translations directly from the registry sources through
+`i18n.additionalSourcePaths` in `apps/web/d2.config.js`. A pnpm patch to
+`@dhis2/cli-app-scripts` adds this monorepo source support and excludes test
+fixtures. Do not duplicate messages in extraction-marker catalogues.
+The scanner's i18next dependency is pinned to the DHIS2 runtime's version so
+plural calls are extracted rather than silently discarded.
+Registry items ship source only, never `.pot`/`.po` files or generated locale
+catalogues. Consuming DHIS2 apps extract the installed inline messages into
+their own app-level translations.
+
 `anti-slop/require-standalone-hook-calls` keeps hook calls out of conditions,
 JSX, arguments and other composed expressions, and bans reading a property or
 calling a method directly on a hook's result. Store or destructure the result

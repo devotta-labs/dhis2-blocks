@@ -21,6 +21,17 @@ const DATE: Field = { valueType: 'DATE' }
 const WHOLE = /^\s*\d{0,3}\s*$/
 const AGE_PARTS = ['years', 'months', 'days'] as const
 
+const partLabel = (part: keyof Age) => {
+    switch (part) {
+        case 'years':
+            return i18n.t('Years')
+        case 'months':
+            return i18n.t('Months')
+        case 'days':
+            return i18n.t('Days')
+    }
+}
+
 type Part = 'birth' | keyof Age
 interface Texts {
     years: string
@@ -210,12 +221,6 @@ export const AgeEditor = ({
         document.getElementById(`${id}-${reading.problem.part}`)?.focus()
     }
 
-    const labels = {
-        birth: i18n.t('Date of birth'),
-        years: i18n.t('Years'),
-        months: i18n.t('Months'),
-        days: i18n.t('Days'),
-    }
     const fieldProps = (part: Part) => ({
         id: `${id}-${part}`,
         autoComplete: 'off',
@@ -240,7 +245,7 @@ export const AgeEditor = ({
     return (
         <>
             <div className="flex flex-col gap-1">
-                <Label htmlFor={`${id}-birth`}>{labels.birth}</Label>
+                <Label htmlFor={`${id}-birth`}>{i18n.t('Date of birth')}</Label>
                 <Input
                     {...fieldProps('birth')}
                     value={birth}
@@ -252,7 +257,9 @@ export const AgeEditor = ({
             <div className="grid grid-cols-3 gap-2">
                 {AGE_PARTS.map((part) => (
                     <div key={part} className="flex flex-col gap-1">
-                        <Label htmlFor={`${id}-${part}`}>{labels[part]}</Label>
+                        <Label htmlFor={`${id}-${part}`}>
+                            {partLabel(part)}
+                        </Label>
                         <Input
                             {...fieldProps(part)}
                             value={age[part]}

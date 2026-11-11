@@ -5,7 +5,6 @@ import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
 import type { WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
 import { roleColour } from '../../../../test/roleColour'
 
 const unusedClient: WorkingListClient = {
@@ -25,23 +24,21 @@ const field = (overrides: Partial<WorkingListField>): WorkingListField => ({
 
 const openEditor = async (filterField: WorkingListField) => {
     await render(
-        <WorkingListTextProvider translate={(message) => message}>
-            <FilterButton
-                client={unusedClient}
-                field={filterField}
-                capabilities={resolveWorkingListCapabilities({
-                    apiVersion: 43,
-                })}
-                calendarContext={{
-                    calendar: 'gregorian',
-                    dateFormat: 'YYYY-MM-DD',
-                    locale: 'en',
-                    timeZone: 'Etc/UTC',
-                }}
-                onApply={() => undefined}
-                onReset={() => undefined}
-            />
-        </WorkingListTextProvider>
+        <FilterButton
+            client={unusedClient}
+            field={filterField}
+            capabilities={resolveWorkingListCapabilities({
+                apiVersion: 43,
+            })}
+            calendarContext={{
+                calendar: 'gregorian',
+                dateFormat: 'YYYY-MM-DD',
+                locale: 'en',
+                timeZone: 'Etc/UTC',
+            }}
+            onApply={() => undefined}
+            onReset={() => undefined}
+        />
     )
     await page
         .getByTestId(`filter-${filterField.id}`)

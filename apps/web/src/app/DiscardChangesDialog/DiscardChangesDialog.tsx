@@ -9,7 +9,7 @@ import {
 } from '@/components/dhis2/ui/alert-dialog'
 import { Button } from '@/components/dhis2/ui/button'
 import React from 'react'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 
 type DiscardChangesDialogProps = {
     open: boolean

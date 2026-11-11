@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import type { Dhis2ValueType, FilterValue } from '../domain/model'
 import { FilterValueSchema } from '../domain/schemas'
@@ -119,33 +120,37 @@ const validateNumberForValueType = (
         'INTEGER_ZERO_OR_POSITIVE',
     ])
     if (integerTypes.has(valueType) && !Number.isInteger(value)) {
-        throw new ValueParseError('{{valueType}} requires an integer', {
-            valueType,
-        })
+        throw new ValueParseError(
+            i18n.t('{{valueType}} requires an integer', {
+                valueType,
+            })
+        )
     }
     if (valueType === 'INTEGER_POSITIVE' && value <= 0) {
         throw new ValueParseError(
-            'INTEGER_POSITIVE requires a value greater than zero'
+            i18n.t('INTEGER_POSITIVE requires a value greater than zero')
         )
     }
     if (valueType === 'INTEGER_NEGATIVE' && value >= 0) {
         throw new ValueParseError(
-            'INTEGER_NEGATIVE requires a value less than zero'
+            i18n.t('INTEGER_NEGATIVE requires a value less than zero')
         )
     }
     if (valueType === 'INTEGER_ZERO_OR_POSITIVE' && value < 0) {
         throw new ValueParseError(
-            'INTEGER_ZERO_OR_POSITIVE requires a value of zero or greater'
+            i18n.t(
+                'INTEGER_ZERO_OR_POSITIVE requires a value of zero or greater'
+            )
         )
     }
     if (valueType === 'UNIT_INTERVAL' && (value < 0 || value > 1)) {
         throw new ValueParseError(
-            'UNIT_INTERVAL requires a value from zero to one'
+            i18n.t('UNIT_INTERVAL requires a value from zero to one')
         )
     }
     if (valueType === 'PERCENTAGE' && (value < 0 || value > 100)) {
         throw new ValueParseError(
-            'PERCENTAGE requires a value from zero to 100'
+            i18n.t('PERCENTAGE requires a value from zero to 100')
         )
     }
 }
@@ -156,16 +161,20 @@ const parseNumberServerValue = (
 ) => {
     const stringValue = z.string().safeParse(value)
     if (stringValue.success && stringValue.data.trim() === '') {
-        throw new ValueParseError('Expected a finite {{valueType}} value', {
-            valueType,
-        })
+        throw new ValueParseError(
+            i18n.t('Expected a finite {{valueType}} value', {
+                valueType,
+            })
+        )
     }
     const numberValue = z.number().safeParse(value)
     const parsed = numberValue.success ? numberValue.data : Number(value)
     if (!Number.isFinite(parsed)) {
-        throw new ValueParseError('Expected a finite {{valueType}} value', {
-            valueType,
-        })
+        throw new ValueParseError(
+            i18n.t('Expected a finite {{valueType}} value', {
+                valueType,
+            })
+        )
     }
     validateNumberForValueType(parsed, valueType)
     return parsed

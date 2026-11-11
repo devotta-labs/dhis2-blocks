@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type {
     WorkingListDisplayRow,
@@ -13,7 +14,7 @@ import {
     TableRow,
 } from '@/components/dhis2/ui/table'
 import { SkeletonBlock } from '../Skeleton'
-import { useWorkingListText } from '../WorkingListText'
+
 import { WorkingListPagination } from './WorkingListPagination'
 
 /** The column header's sort button. */
@@ -221,8 +222,6 @@ export const WorkingListTableView = ({
     onPageSizeChange,
     onRowOpen,
 }: WorkingListTableViewProps) => {
-    const t = useWorkingListText()
-    const i18n = { t }
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const interactive = Boolean(onRowOpen)
     const openRow = (row: WorkingListDisplayRow) => onRowOpen?.(row)

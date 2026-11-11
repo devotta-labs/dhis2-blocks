@@ -393,13 +393,6 @@ const BOOLEAN_WORDS = new Map([
     ['0', 'false'],
 ])
 
-// Read when shown, so the labels are in the language set then.
-const yesNo = () =>
-    new Map([
-        ['true', i18n.t('Yes')],
-        ['false', i18n.t('No')],
-    ])
-
 /** The language set as tags `Intl` reads (DHIS2 writes `pt_BR`); none when it reads none, for the default casing. */
 const languageTags = () => {
     try {
@@ -416,10 +409,13 @@ const languageTags = () => {
 const booleanOf = (text: string): string | undefined => {
     const tags = languageTags()
     const word = text.toLocaleLowerCase(tags)
-    const labelled = [...yesNo()].find(
-        ([, label]) => label.toLocaleLowerCase(tags) === word
-    )
-    return labelled?.[0] ?? BOOLEAN_WORDS.get(text.toLowerCase())
+    if (i18n.t('Yes').toLocaleLowerCase(tags) === word) {
+        return 'true'
+    }
+    if (i18n.t('No').toLocaleLowerCase(tags) === word) {
+        return 'false'
+    }
+    return BOOLEAN_WORDS.get(text.toLowerCase())
 }
 
 const DATE_TIME_TEXT = /^(?<day>\S+?)(?:\s+|T)(?<time>\d{1,2}:\d{2})$/
@@ -551,7 +547,13 @@ export const typedText = (
         }
         case 'boolean':
         case 'trueOnly':
-            return yesNo().get(value) ?? value
+            if (value === 'true') {
+                return i18n.t('Yes')
+            }
+            if (value === 'false') {
+                return i18n.t('No')
+            }
+            return value
         case 'option':
             return (
                 (field.options && lookupOf(field.options).texts.get(value)) ??

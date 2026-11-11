@@ -45,14 +45,6 @@ export const CoordinateEditor = ({
     cancel,
 }: PopupEditorProps) => {
     const id = useId()
-    const messages = {
-        latitude: i18n.t('Enter a latitude between -90 and 90'),
-        longitude: i18n.t('Enter a longitude between -180 and 180'),
-    }
-    const labels = {
-        latitude: i18n.t('Latitude'),
-        longitude: i18n.t('Longitude'),
-    }
     // The stored value is [lng,lat]; one that is not shows empty fields.
     const [texts, setTexts] = useState<Texts>(() => {
         const read = value === undefined ? undefined : parseCoordinate(value)
@@ -74,7 +66,12 @@ export const CoordinateEditor = ({
             wrong.length === 0
                 ? undefined
                 : {
-                      message: messages[wrong[0]],
+                      message:
+                          wrong[0] === 'latitude'
+                              ? i18n.t('Enter a latitude between -90 and 90')
+                              : i18n.t(
+                                    'Enter a longitude between -180 and 180'
+                                ),
                       // As a coordinate is typed in a cell or pasted.
                       text: `${next.latitude.trim()}, ${next.longitude.trim()}`,
                   }
@@ -94,7 +91,11 @@ export const CoordinateEditor = ({
         <>
             {AXES.map((axis) => (
                 <div key={axis} className="flex flex-col gap-1">
-                    <Label htmlFor={`${id}-${axis}`}>{labels[axis]}</Label>
+                    <Label htmlFor={`${id}-${axis}`}>
+                        {axis === 'latitude'
+                            ? i18n.t('Latitude')
+                            : i18n.t('Longitude')}
+                    </Label>
                     <Input
                         id={`${id}-${axis}`}
                         value={texts[axis]}
@@ -116,7 +117,11 @@ export const CoordinateEditor = ({
                             role="alert"
                             className="text-xs text-dhis2-destructive"
                         >
-                            {messages[axis]}
+                            {axis === 'latitude'
+                                ? i18n.t('Enter a latitude between -90 and 90')
+                                : i18n.t(
+                                      'Enter a longitude between -180 and 180'
+                                  )}
                         </p>
                     ) : null}
                 </div>

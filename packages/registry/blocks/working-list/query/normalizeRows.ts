@@ -46,14 +46,6 @@ export interface WorkingListRowIssue {
     raw?: unknown
 }
 
-export type RowIssueTranslate = (
-    message: string,
-    values?: Record<string, string | number | boolean | undefined>
-) => string
-
-const defaultTranslate: RowIssueTranslate = (message, values) =>
-    i18n.t(message, values)
-
 export interface NormalizedTrackedEntity {
     trackedEntity: TrackedEntity
     values: WorkingListRowValues
@@ -77,12 +69,10 @@ const parseSystemValue = (
           )
         : ParsedTrackerScalarSchema.parse(value)
 
-const missingRequiredCell = (
-    translate: RowIssueTranslate
-): WorkingListCellValue => ({
+const missingRequiredCell = (): WorkingListCellValue => ({
     valid: false,
     raw: undefined,
-    message: translate('A required value is missing'),
+    message: i18n.t('A required value is missing'),
 })
 
 const dataValueCell = (
@@ -90,13 +80,12 @@ const dataValueCell = (
     context: {
         field?: WorkingListField
         required: boolean
-        translate: RowIssueTranslate
     }
 ): WorkingListCellValue => {
-    const { field, required, translate } = context
+    const { field, required } = context
     if (raw === undefined || raw === '') {
         return required
-            ? missingRequiredCell(translate)
+            ? missingRequiredCell()
             : { valid: true, value: undefined }
     }
     if (!field) {
@@ -106,7 +95,7 @@ const dataValueCell = (
             : {
                   valid: false,
                   raw,
-                  message: translate('The value has an unsupported type'),
+                  message: i18n.t('The value has an unsupported type'),
               }
     }
     try {
@@ -126,7 +115,7 @@ const dataValueCell = (
                 return {
                     valid: false,
                     raw,
-                    message: translate('{{value}} is not a known option', {
+                    message: i18n.t('{{value}} is not a known option', {
                         value: unknown,
                     }),
                 }
@@ -139,8 +128,8 @@ const dataValueCell = (
             raw,
             message:
                 error instanceof ValueParseError
-                    ? translate(error.template, error.values)
-                    : translate('The value has an unsupported type'),
+                    ? error.message
+                    : i18n.t('The value has an unsupported type'),
         }
     }
 }
@@ -227,7 +216,6 @@ export interface NormalizeTrackedEntityOptions {
     programId?: string
     /** Whether an enrollment satisfies the request's enrollment filters. */
     matchesEnrollment?: (enrollment: TrackedEntityEnrollment) => boolean
-    translate?: RowIssueTranslate
 }
 
 // A program can enroll a tracked entity more than once. The row describes the
@@ -258,7 +246,6 @@ export const normalizeTrackedEntityValues = (
     fields: FieldCatalog,
     options: NormalizeTrackedEntityOptions = {}
 ): NormalizedTrackedEntity => {
-    const translate = options.translate ?? defaultTranslate
     const values: Record<string, WorkingListCellValue> = {}
     const recordContext: FileUrlRecordContext = {
         type: 'trackedEntity',
@@ -272,7 +259,6 @@ export const normalizeTrackedEntityValues = (
             dataValueCell(attribute.value, {
                 field,
                 required: field?.required === true,
-                translate,
             }),
             field,
             recordContext
@@ -284,7 +270,7 @@ export const normalizeTrackedEntityValues = (
             !(field.id in values)
         ) {
             values[field.id] = field.required
-                ? missingRequiredCell(translate)
+                ? missingRequiredCell()
                 : { valid: true, value: undefined }
         }
     }
@@ -347,7 +333,6 @@ export const normalizeTrackedEntityValues = (
 
 export interface NormalizeEventOptions {
     programStageId?: string
-    translate?: RowIssueTranslate
 }
 
 /**
@@ -359,7 +344,6 @@ export const normalizeEventValues = (
     fields: FieldCatalog,
     options: NormalizeEventOptions = {}
 ): NormalizedEvent => {
-    const translate = options.translate ?? defaultTranslate
     const stageId = event.programStage ?? options.programStageId
     const values: Record<string, WorkingListCellValue> = {}
 
@@ -376,7 +360,6 @@ export const normalizeEventValues = (
             dataValueCell(dataValue.value, {
                 field,
                 required: field !== undefined && requiredInStage(field),
-                translate,
             }),
             field,
             recordContext
@@ -390,7 +373,7 @@ export const normalizeEventValues = (
             !(field.id in values)
         ) {
             values[field.id] = requiredInStage(field)
-                ? missingRequiredCell(translate)
+                ? missingRequiredCell()
                 : { valid: true, value: undefined }
         }
     }

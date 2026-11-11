@@ -8,7 +8,7 @@ import {
 } from '@/components/dhis2/ui/dialog'
 import type { WorkingListResultTarget } from '@/components/working-list'
 import React from 'react'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 
 export const RecordDetailsModal = ({
     record,

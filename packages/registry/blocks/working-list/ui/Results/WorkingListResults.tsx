@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
@@ -24,23 +25,18 @@ import {
     WorkingListDataTable,
     WorkingListTableSkeleton,
 } from '../WorkingListTable'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
 
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
 const getResultsAnnouncement = (
-    results: WorkingListMeta['results'],
-    translate: WorkingListTranslate
+    results: WorkingListMeta['results']
 ): string => {
     if (results.status === 'pending') {
-        return translate('Loading working list results…')
+        return i18n.t('Loading working list results…')
     }
     if (results.status === 'ready' && results.isUpdating) {
-        return translate('Updating working list results…')
+        return i18n.t('Updating working list results…')
     }
     return ''
 }
@@ -99,7 +95,6 @@ const tableFieldsFor = (
 }
 
 const SelectionLoading = () => {
-    const translate = useWorkingListText()
     const pageSize = useWorkingListMeta((meta) => meta.pagination.pageSize)
 
     // While the list initializes, the container already announces loading.
@@ -115,7 +110,7 @@ const SelectionLoading = () => {
                     role="status"
                     aria-live="polite"
                 >
-                    {translate('Loading the selected working list…')}
+                    {i18n.t('Loading the selected working list…')}
                 </span>
             )}
             <WorkingListTableSkeleton pageSize={pageSize} />
@@ -128,7 +123,6 @@ const ReadyResults = ({
     dataQualityMode,
 }: Required<Pick<WorkingListTableProps, 'dataQualityMode'>> &
     Pick<WorkingListTableProps, 'onRowClick'>) => {
-    const translate = useWorkingListText()
     const results = useWorkingListMeta((meta) => meta.results)
     const pagination = useWorkingListMeta((meta) => meta.pagination)
     const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
@@ -172,9 +166,9 @@ const ReadyResults = ({
     if (results.status === 'error') {
         return (
             <div className="p-4" data-testid="results-error">
-                <ErrorAlert title={translate('Could not load results')}>
+                <ErrorAlert title={i18n.t('Could not load results')}>
                     <p>
-                        {translate(
+                        {i18n.t(
                             'The working list results could not be loaded. Check the connection and try again.'
                         )}
                     </p>
@@ -182,7 +176,7 @@ const ReadyResults = ({
                         variant="outline"
                         onClick={() => void privateActions.retryResults()}
                     >
-                        {translate('Try again')}
+                        {i18n.t('Try again')}
                     </Button>
                 </ErrorAlert>
             </div>
@@ -197,7 +191,7 @@ const ReadyResults = ({
                 aria-live="polite"
                 data-testid="working-list-results-announcement"
             >
-                {getResultsAnnouncement(results, translate)}
+                {getResultsAnnouncement(results)}
             </div>
             <WorkingListDataTable
                 allFields={tableFields}
@@ -235,7 +229,6 @@ const ReadyResults = ({
 }
 
 const IncompatibleSelection = () => {
-    const translate = useWorkingListText()
     const { selectedList, repair, privateActions } = useWorkingListPrivateUi()
     const [dialogOpen, setDialogOpen] = useState(false)
     const [repairError, setRepairError] = useState<string>()
@@ -251,16 +244,14 @@ const IncompatibleSelection = () => {
         <>
             <div className="p-4" data-testid="stale-list-panel">
                 <ErrorAlert
-                    title={translate(
-                        'This saved list has unavailable settings'
-                    )}
+                    title={i18n.t('This saved list has unavailable settings')}
                 >
                     <p>
                         {repairable
-                            ? translate(
+                            ? i18n.t(
                                   'Some filters, columns, or sorting options are no longer available. Repair lets you review the proposed changes before updating the list.'
                               )
-                            : translate(
+                            : i18n.t(
                                   'Some parts of this list are no longer available. Ask someone who can edit the list to repair it, or select another list.'
                               )}
                     </p>
@@ -280,8 +271,8 @@ const IncompatibleSelection = () => {
                                     />
                                 )}
                                 {repairPending
-                                    ? translate('Repairing…')
-                                    : translate('Repair')}
+                                    ? i18n.t('Repairing…')
+                                    : i18n.t('Repair')}
                             </Button>
                             {repairPending && (
                                 <span
@@ -289,7 +280,7 @@ const IncompatibleSelection = () => {
                                     role="status"
                                     aria-live="polite"
                                 >
-                                    {translate('Repairing this saved list…')}
+                                    {i18n.t('Repairing this saved list…')}
                                 </span>
                             )}
                         </div>
@@ -312,7 +303,7 @@ const IncompatibleSelection = () => {
                         .then((result) => {
                             if (Result.isError(result)) {
                                 setRepairError(
-                                    translate(
+                                    i18n.t(
                                         'The saved working list could not be repaired.'
                                     )
                                 )
@@ -330,7 +321,6 @@ const IncompatibleSelection = () => {
  * selection works, so any layout can show it in place of its results.
  */
 export const WorkingListSelectionError = () => {
-    const translate = useWorkingListText()
     const selection = useWorkingListMeta((meta) => meta.selection)
     const actions = useWorkingListActions()
 
@@ -340,9 +330,9 @@ export const WorkingListSelectionError = () => {
     }
     return (
         <div className="p-4" data-testid="unavailable-working-list-error">
-            <ErrorAlert title={translate('This working list is unavailable')}>
+            <ErrorAlert title={i18n.t('This working list is unavailable')}>
                 <p>
-                    {translate(
+                    {i18n.t(
                         'The selected working list may no longer exist, or you may no longer have access. No records will be queried while it is selected.'
                     )}
                 </p>
@@ -356,7 +346,7 @@ export const WorkingListSelectionError = () => {
                         }
                     }}
                 >
-                    {translate('Use the default working list')}
+                    {i18n.t('Use the default working list')}
                 </Button>
             </ErrorAlert>
         </div>
@@ -396,12 +386,10 @@ export const WorkingListTable = ({
     'aria-label': ariaLabel,
     ...props
 }: WorkingListTableProps) => {
-    const translate = useWorkingListText()
-
     return (
         <section
             {...props}
-            aria-label={ariaLabel ?? translate('Working list results')}
+            aria-label={ariaLabel ?? i18n.t('Working list results')}
             className={className}
             data-testid="working-list-table-section"
         >

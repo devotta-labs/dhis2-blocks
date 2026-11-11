@@ -3,7 +3,6 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const ownedList: WorkingListSavedView = {
     id: 'OwnedList01',
@@ -30,7 +29,7 @@ const renderMenu = async ({
     const onSaveAs = vi.fn(async () => undefined)
     const onUpdate = vi.fn()
     const screen = await render(
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <ConfigureMenu
                 selectedView={selectedView}
                 dirty={dirty}
@@ -41,7 +40,7 @@ const renderMenu = async ({
                 onSaveAs={onSaveAs}
                 onUpdate={onUpdate}
             />
-        </WorkingListTextProvider>
+        </>
     )
 
     return { screen, onDownload, onSaveAs, onUpdate }

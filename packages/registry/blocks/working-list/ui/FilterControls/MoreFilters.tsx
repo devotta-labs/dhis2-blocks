@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
 import React, { useEffect, useId, useMemo, useState } from 'react'
@@ -18,7 +19,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from '@/components/dhis2/ui/tooltip'
-import { useWorkingListText } from '../WorkingListText'
+
 import { focusFirstAvailableFilter } from './FilterControlPrimitives'
 import { fieldDisplayName } from './filterValueSupport'
 
@@ -47,8 +48,6 @@ export const MoreFilters = ({
     onSelectStage,
     onAddStageFilter,
 }: MoreFiltersProps) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     const lockMessageId = useId()
     const [open, setOpen] = useState(false)
     // Disabling closes the menu for good, so it doesn't reappear by itself
@@ -184,7 +183,7 @@ export const MoreFilters = ({
                                             )
                                         }
                                     >
-                                        {fieldDisplayName(field, translate)}
+                                        {fieldDisplayName(field)}
                                     </DropdownMenuItem>
                                 ))}
                             </DropdownMenuSubContent>
@@ -204,7 +203,7 @@ export const MoreFilters = ({
                             data-test={`add-filter-${field.id}`}
                             onClick={() => onAdd(field.id)}
                         >
-                            {fieldDisplayName(field, translate)}
+                            {fieldDisplayName(field)}
                         </DropdownMenuItem>
                     ))}
                 </DropdownMenuContent>

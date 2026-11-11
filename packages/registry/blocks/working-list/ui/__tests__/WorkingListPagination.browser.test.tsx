@@ -3,7 +3,6 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListPageSize } from '../../provider/contracts'
 import { WorkingListPagination } from '../WorkingListTable/WorkingListPagination'
-import { WorkingListTextProvider } from '../WorkingListText'
 import { roleColour } from '../../../../test/roleColour'
 
 const renderPagination = async (props: {
@@ -15,14 +14,14 @@ const renderPagination = async (props: {
     const onPageChange = vi.fn<(page: number) => void>()
     const onPageSizeChange = vi.fn<(pageSize: WorkingListPageSize) => void>()
     const screen = await render(
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <WorkingListPagination
                 pageSize={15}
                 {...props}
                 onPageChange={onPageChange}
                 onPageSizeChange={onPageSizeChange}
             />
-        </WorkingListTextProvider>
+        </>
     )
     return { screen, onPageChange, onPageSizeChange }
 }
@@ -30,15 +29,13 @@ const renderPagination = async (props: {
 describe('WorkingListPagination', () => {
     it('keeps focus on Next when the last page is reached', async () => {
         const at = (page: number, hasNextPage: boolean) => (
-            <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPagination
-                    pageSize={15}
-                    page={page}
-                    hasNextPage={hasNextPage}
-                    onPageChange={() => undefined}
-                    onPageSizeChange={() => undefined}
-                />
-            </WorkingListTextProvider>
+            <WorkingListPagination
+                pageSize={15}
+                page={page}
+                hasNextPage={hasNextPage}
+                onPageChange={() => undefined}
+                onPageSizeChange={() => undefined}
+            />
         )
         const screen = await render(at(1, true))
         const next = screen.getByRole('button', { name: 'Next' })

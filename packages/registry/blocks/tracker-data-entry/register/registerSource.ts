@@ -22,7 +22,6 @@ import type { RegisterMetadata } from './metadata'
 import { nameOf, newPerson, reservedValues } from './newPerson'
 import {
     ENROLLED_AT,
-    READ_ONLY,
     programEditSchema,
     registerAnswerSchema,
     registerQuery,
@@ -298,7 +297,9 @@ export const registerSource = (
             engine,
             rowReason: program.access.data.write
                 ? undefined
-                : READ_ONLY.program(),
+                : i18n.t(
+                      'You do not have access to enter data in this program'
+                  ),
             noWrite: new Set(
                 program.programStages
                     .filter(({ access }) => !access.data.write)
@@ -499,7 +500,7 @@ export const registerSource = (
                     compiled.slots,
                     rowReason ??
                         (off.status === 'CANCELLED'
-                            ? READ_ONLY.cancelled()
+                            ? i18n.t('This enrolment is cancelled')
                             : undefined)
                 )
 

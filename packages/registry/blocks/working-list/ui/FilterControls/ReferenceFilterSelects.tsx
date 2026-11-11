@@ -1,9 +1,10 @@
+import i18n from '@dhis2/d2-i18n'
 import { OrganisationUnitTree } from '@dhis2/ui'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
 import { z } from 'zod'
 import type { WorkingListClient } from '../../api/client'
-import { useWorkingListText } from '../WorkingListText'
+
 import { ComboboxField } from './FilterSelectFields'
 
 const UserReferenceSchema = z
@@ -39,8 +40,6 @@ export const UserFilterSelect = ({
     selected: string[]
     onChange: (selected: string[]) => void
 }) => {
-    const t = useWorkingListText()
-    const i18n = { t }
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     useEffect(() => {
@@ -120,8 +119,6 @@ export const OrganisationUnitFilterSelect = ({
     selectedId: string
     onChange: (id: string) => void
 }) => {
-    const t = useWorkingListText()
-    const i18n = { t }
     const rootsQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit-roots'],
         queryFn: ({ signal }) =>

@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type {
     AppliedFilter,
@@ -41,7 +42,7 @@ const booleanDefinition: ValueTypeDefinition = {
         if (value === false || value === 'false') {
             return false
         }
-        throw new ValueParseError('Expected a boolean value')
+        throw new ValueParseError(i18n.t('Expected a boolean value'))
     },
     parseEditorValue(value) {
         const parsed = FilterValueSchema.parse(value)
@@ -113,7 +114,7 @@ const trueOnlyDefinition: ValueTypeDefinition = {
         if (value === true || value === 'true') {
             return true
         }
-        throw new ValueParseError('TRUE_ONLY accepts only true')
+        throw new ValueParseError(i18n.t('TRUE_ONLY accepts only true'))
     },
     parseEditorValue(value) {
         const parsed = FilterValueSchema.parse(value)

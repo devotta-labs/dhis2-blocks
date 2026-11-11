@@ -3,7 +3,7 @@ import { Spinner } from '@/components/dhis2/ui/spinner'
 import { OrganisationUnitTree } from '@dhis2/ui'
 import type { ComponentType, MouseEvent } from 'react'
 import React, { useCallback, useMemo, useState } from 'react'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 import type { OrganisationUnitReference } from '../organisationUnitScope'
 import {
     buildOrganisationUnitTreeFilter,

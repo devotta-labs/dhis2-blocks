@@ -25,7 +25,6 @@ import {
     normalizeTrackedEntityValues,
     type NormalizedEvent,
     type NormalizedTrackedEntity,
-    type RowIssueTranslate,
     type TrackedEntityEnrollment,
     type WorkingListRowIssue,
 } from './normalizeRows'
@@ -70,8 +69,6 @@ export interface FetchWorkingListPageInput {
     capabilities: WorkingListCapabilities
     fields: FieldCatalog
     serializationContext?: FilterSerializationContext
-    /** Localizes data-quality issue messages. Defaults to DHIS2 i18n. */
-    translate?: RowIssueTranslate
     range?: WorkingListDateRange
     signal?: AbortSignal
 }
@@ -161,7 +158,6 @@ export const fetchWorkingListPage = async ({
                 normalizeTrackedEntityValues(trackedEntity, input.fields, {
                     programId: input.context.programId,
                     matchesEnrollment,
-                    translate: input.translate,
                 })
             )
         } catch (error) {
@@ -202,7 +198,6 @@ export const fetchWorkingListPage = async ({
         events = eventsResponse.events.map((event) =>
             normalizeEventValues(event, input.fields, {
                 programStageId: configuration.programStageId,
-                translate: input.translate,
             })
         )
     } catch (error) {
@@ -229,7 +224,6 @@ export const fetchWorkingListPage = async ({
                         input.fields,
                         {
                             programId: input.context.programId,
-                            translate: input.translate,
                         }
                     )
                     return [normalized.trackedEntity.trackedEntity, normalized]

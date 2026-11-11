@@ -3,25 +3,13 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import type { EventStatus } from '../model/types'
 import { completionExpired, expiryStart } from './expiry'
 
-// Translated when used, so the reasons follow the user's language.
-const READ_ONLY = {
-    categories: () =>
-        i18n.t(
-            'Programs with attribute categories are not supported in this grid'
-        ),
-    noWrite: () => i18n.t('You do not have access to enter data in this stage'),
-    skipped: () => i18n.t('Skipped events cannot be edited'),
-    blocked: () => i18n.t('Completed events in this stage cannot be edited'),
-    expiredPeriod: () => i18n.t('This event is in an expired period'),
-    expiredCompletion: () =>
-        i18n.t('This event was completed too long ago to edit'),
-}
-
 /** Why a completed event of a stage that blocks its entry form cannot be edited. */
-export const blockedReason = READ_ONLY.blocked
+export const blockedReason = () =>
+    i18n.t('Completed events in this stage cannot be edited')
 
 /** Why an event of a stage the user may not enter data in cannot be edited. */
-export const noWriteReason = READ_ONLY.noWrite
+export const noWriteReason = () =>
+    i18n.t('You do not have access to enter data in this stage')
 
 /** What the edit rules read of an event. */
 export interface EditedEvent {
@@ -77,14 +65,14 @@ export const eventEditRules = ({
         }
         const date = (event.occurredAt ?? event.scheduledAt)?.slice(0, 10)
         if (opensOn !== undefined && date !== undefined && date < opensOn) {
-            return READ_ONLY.expiredPeriod()
+            return i18n.t('This event is in an expired period')
         }
         return completionExpired(
             event.completedAt,
             program.completeEventsExpiryDays,
             today
         )
-            ? READ_ONLY.expiredCompletion()
+            ? i18n.t('This event was completed too long ago to edit')
             : undefined
     }
     return {
@@ -93,19 +81,23 @@ export const eventEditRules = ({
         /** Why the event cannot be edited, if it cannot. */
         readOnlyReason(event: EditedEvent) {
             if (!program.categoryCombo.isDefault) {
-                return READ_ONLY.categories()
+                return i18n.t(
+                    'Programs with attribute categories are not supported in this grid'
+                )
             }
             if (!writable(event.programStage)) {
-                return READ_ONLY.noWrite()
+                return i18n.t(
+                    'You do not have access to enter data in this stage'
+                )
             }
             if (event.status === 'SKIPPED') {
-                return READ_ONLY.skipped()
+                return i18n.t('Skipped events cannot be edited')
             }
             if (
                 event.status === 'COMPLETED' &&
                 stages.get(event.programStage)?.blockEntryForm
             ) {
-                return READ_ONLY.blocked()
+                return i18n.t('Completed events in this stage cannot be edited')
             }
             return expiredReason(event)
         },

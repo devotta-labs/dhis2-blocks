@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { IconLayoutColumns16 } from '@dhis2/ui-icons'
 import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
@@ -13,7 +14,6 @@ import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContex
 import type { WorkingListConfiguration } from '../../provider/contracts'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
 import { Button } from '@/components/dhis2/ui/button'
-import { useWorkingListText } from '../WorkingListText'
 
 const tableFieldsFor = (
     fields: readonly WorkingListField[],
@@ -61,7 +61,6 @@ const tableFieldsFor = (
 }
 
 const ColumnsControl = () => {
-    const translate = useWorkingListText()
     const configuration = useWorkingListState((state) => state.configuration)
     const program = useWorkingListMeta((meta) => meta.program)
     const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
@@ -87,7 +86,7 @@ const ColumnsControl = () => {
                 onClick={() => setDialogOpen(true)}
             >
                 <IconLayoutColumns16 />
-                {translate('Columns')}
+                {i18n.t('Columns')}
             </Button>
             {dialogOpen && (
                 <ColumnSettingsDialog
@@ -116,7 +115,6 @@ export const WorkingListColumnSelector = ({
     className,
     ...props
 }: WorkingListColumnSelectorProps) => {
-    const translate = useWorkingListText()
     const ready = useWorkingListMeta(
         (meta) => meta.activeConfiguration.status === 'ready'
     )
@@ -138,7 +136,7 @@ export const WorkingListColumnSelector = ({
                         disabled
                     >
                         <IconLayoutColumns16 />
-                        {translate('Columns')}
+                        {i18n.t('Columns')}
                     </Button>
                 </div>
             )}

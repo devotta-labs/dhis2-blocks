@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import {
     AlertDialog,
@@ -26,48 +27,40 @@ import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContex
 import { SavedListBar } from '../SavedListBar'
 import { SavedViewsSkeleton } from '../Skeleton'
 import { WorkingListSharingDialog } from '../WorkingList/dialogs'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
 
 type SavedViewActionError =
     | SelectViewError
     | UpdateSelectedViewError
     | DeleteViewError
 
-const actionErrorCopy = (
-    error: SavedViewActionError,
-    translate: WorkingListTranslate
-) => {
+const actionErrorCopy = (error: SavedViewActionError) => {
     switch (error._tag) {
         case 'OfflineMutationError':
-            return translate('This action is unavailable while offline.')
+            return i18n.t('This action is unavailable while offline.')
         case 'WorkingListNetworkError':
-            return translate(
+            return i18n.t(
                 'A network error stopped the request. Check the connection and try again.'
             )
         case 'WorkingListInvalidResponseError':
-            return translate('The server returned an unexpected response.')
+            return i18n.t('The server returned an unexpected response.')
         case 'SavedListPermissionError':
-            return translate('You do not have permission to make this change.')
+            return i18n.t('You do not have permission to make this change.')
         case 'SavedListNotFoundError':
-            return translate(
+            return i18n.t(
                 'The working list could not be found. It may have been deleted.'
             )
         case 'IncompatibleSavedListError':
-            return translate(
+            return i18n.t(
                 'Repair this working list before saving changes to it.'
             )
         case 'NoSelectedSavedListError':
-            return translate('Select a saved working list before updating it.')
+            return i18n.t('Select a saved working list before updating it.')
         case 'InvalidConfigurationError':
-            return translate('The selected working list could not be applied.')
+            return i18n.t('The selected working list could not be applied.')
     }
 }
 
 export const WorkingListSavedViews = () => {
-    const translate = useWorkingListText()
     const savedViews = useWorkingListMeta((meta) => meta.savedViews)
     const selection = useWorkingListMeta((meta) => meta.selection)
     const dirty = useWorkingListMeta((meta) => meta.dirty)
@@ -145,10 +138,10 @@ export const WorkingListSavedViews = () => {
             {savedViews.status === 'error' && (
                 <div className="p-4" data-testid="saved-working-lists-error">
                     <ErrorAlert
-                        title={translate('Could not load saved working lists')}
+                        title={i18n.t('Could not load saved working lists')}
                     >
                         <p>
-                            {translate(
+                            {i18n.t(
                                 'Saved working lists could not be loaded. Check the connection and try again.'
                             )}
                         </p>
@@ -159,7 +152,7 @@ export const WorkingListSavedViews = () => {
                                 void privateActions.retrySavedViews()
                             }
                         >
-                            {translate('Try again')}
+                            {i18n.t('Try again')}
                         </Button>
                     </ErrorAlert>
                 </div>
@@ -181,9 +174,9 @@ export const WorkingListSavedViews = () => {
             {actionError && (
                 <div data-testid="working-list-view-action-error">
                     <ErrorAlert
-                        title={translate('Could not change the working list')}
+                        title={i18n.t('Could not change the working list')}
                     >
-                        {actionErrorCopy(actionError, translate)}
+                        {actionErrorCopy(actionError)}
                     </ErrorAlert>
                 </div>
             )}
@@ -200,17 +193,17 @@ export const WorkingListSavedViews = () => {
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
-                                {translate('Discard unsaved changes?')}
+                                {i18n.t('Discard unsaved changes?')}
                             </AlertDialogTitle>
                         </AlertDialogHeader>
                         <AlertDialogDescription>
-                            {translate(
+                            {i18n.t(
                                 'Changing the saved view will discard the unsaved changes to this working list.'
                             )}
                         </AlertDialogDescription>
                         <AlertDialogFooter>
                             <AlertDialogCancel data-test="discard-saved-view-change-cancel">
-                                {translate('Cancel')}
+                                {i18n.t('Cancel')}
                             </AlertDialogCancel>
                             <Button
                                 variant="destructive"
@@ -221,7 +214,7 @@ export const WorkingListSavedViews = () => {
                                     applySelection(target)
                                 }}
                             >
-                                {translate('Discard changes')}
+                                {i18n.t('Discard changes')}
                             </Button>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -242,7 +235,7 @@ export const WorkingListSavedViews = () => {
                         setSharingError(
                             error instanceof Error
                                 ? error.message
-                                : translate('Could not refresh saved views')
+                                : i18n.t('Could not refresh saved views')
                         )
                     }
                 }}

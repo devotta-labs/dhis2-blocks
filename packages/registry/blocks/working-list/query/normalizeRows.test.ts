@@ -149,19 +149,14 @@ describe('metadata-aware row normalization', () => {
         })
     })
 
-    it('localizes issue messages through the injected translator', () => {
+    it('interpolates value-type issue messages through the runtime', () => {
         const normalized = normalizeTrackedEntityValues(
             record([{ attribute: integerField.id, value: 'abc' }]),
-            fields,
-            {
-                translate: (message, values) =>
-                    `#${message}|${JSON.stringify(values ?? null)}`,
-            }
+            fields
         )
         expect(normalized.values[integerField.id]).toMatchObject({
             valid: false,
-            message:
-                '#Expected a finite {{valueType}} value|{"valueType":"INTEGER_POSITIVE"}',
+            message: 'Expected a finite INTEGER_POSITIVE value',
         })
     })
 

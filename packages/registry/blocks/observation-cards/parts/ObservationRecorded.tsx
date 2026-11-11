@@ -23,9 +23,7 @@ import {
 } from '../format/display'
 
 /**
- * One key per English plural form: d2-app-scripts cannot extract `count`
- * plurals, so the form is picked here. `count` still reaches i18next for a
- * translation that defines its own plural forms.
+ * Keep the existing English-form keys for translation compatibility.
  */
 const staleNote = (days: number): string =>
     days === 1

@@ -1,76 +1,79 @@
+import i18n from '@dhis2/d2-i18n'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListField } from './model'
-
-type FilterPolicyTranslate = (message: string) => string
-
-const identityTranslate: FilterPolicyTranslate = (message) => message
 
 export const usesMultipleOptionSelection = (
     field: WorkingListField,
     capabilities: WorkingListCapabilities
 ) => capabilities.multipleOptionValues && field.source !== 'system'
 
-export const fieldDisplayName = (
-    field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
-) => {
+export const fieldDisplayName = (field: WorkingListField) => {
     if (field.displayNameIsMetadata) {
         return field.displayName
     }
-    const labels = new Map([
-        ['enrollmentStatus', translate('Enrollment status')],
-        ['enrolledAt', translate('Enrollment date')],
-        ['enrollmentOccurredAt', translate('Incident date')],
-        ['followUp', translate('Follow up')],
-        ['assignedUser', translate('Assigned to')],
-        ['eventOccurredAt', translate('Report date')],
-        ['eventStatus', translate('Event status')],
-        ['eventScheduledAt', translate('Scheduled date')],
-        ['eventAssignedUser', translate('Assigned to')],
-        ['programStage', translate('Program stage')],
-        ['createdAt', translate('Registration date')],
-        ['programOwnerId', translate('Owner organisation unit')],
-        ['eventOrgUnit', translate('Event organisation unit')],
-    ])
-    return labels.get(field.id) ?? field.displayName
+    switch (field.id) {
+        case 'enrollmentStatus':
+            return i18n.t('Enrollment status')
+        case 'enrolledAt':
+            return i18n.t('Enrollment date')
+        case 'enrollmentOccurredAt':
+            return i18n.t('Incident date')
+        case 'followUp':
+            return i18n.t('Follow up')
+        case 'assignedUser':
+        case 'eventAssignedUser':
+            return i18n.t('Assigned to')
+        case 'eventOccurredAt':
+            return i18n.t('Report date')
+        case 'eventStatus':
+            return i18n.t('Event status')
+        case 'eventScheduledAt':
+            return i18n.t('Scheduled date')
+        case 'programStage':
+            return i18n.t('Program stage')
+        case 'createdAt':
+            return i18n.t('Registration date')
+        case 'programOwnerId':
+            return i18n.t('Owner organisation unit')
+        case 'eventOrgUnit':
+            return i18n.t('Event organisation unit')
+        default:
+            return field.displayName
+    }
 }
 
 export const optionDisplayName = (
     field: WorkingListField,
-    option: { code: string; displayName: string },
-    translate: FilterPolicyTranslate = identityTranslate
+    option: { code: string; displayName: string }
 ) => {
     if (field.source !== 'system') {
         return option.displayName
     }
     switch (option.code) {
         case 'ACTIVE':
-            return translate('Active')
+            return i18n.t('Active')
         case 'COMPLETED':
-            return translate('Completed')
+            return i18n.t('Completed')
         case 'CANCELLED':
-            return translate('Cancelled')
+            return i18n.t('Cancelled')
         case 'SCHEDULE':
-            return translate('Scheduled')
+            return i18n.t('Scheduled')
         case 'OVERDUE':
-            return translate('Overdue')
+            return i18n.t('Overdue')
         case 'SKIPPED':
-            return translate('Skipped')
+            return i18n.t('Skipped')
         case 'VISITED':
-            return translate('Visited')
+            return i18n.t('Visited')
         default:
             return option.displayName
     }
 }
 
-export const localizedField = (
-    field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
-): WorkingListField => ({
+export const localizedField = (field: WorkingListField): WorkingListField => ({
     ...field,
-    displayName: fieldDisplayName(field, translate),
+    displayName: fieldDisplayName(field),
     options: field.options?.map((option) => ({
         ...option,
-        displayName: optionDisplayName(field, option, translate),
+        displayName: optionDisplayName(field, option),
     })),
 })

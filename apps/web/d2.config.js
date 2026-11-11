@@ -7,6 +7,10 @@ const config = {
     },
 
     viteConfigExtensions: './vite.config.mts',
+
+    i18n: {
+        additionalSourcePaths: ['../../packages/registry'],
+    },
 }
 
 module.exports = config

@@ -18,9 +18,25 @@ export interface TrackerEffects extends CellAnnotations {
     messages: ReadonlyArray<TrackerMessage>
 }
 
+/**
+ * Every write of one update to the effects' `cells` and `rowMessages`, in the order it made them: the cell or the row,
+ * and whether it holds something after the write (set) or nothing (deleted). `before` is what the update wrote over.
+ */
+export interface EffectsWritten {
+    before: Pick<TrackerEffectsState, 'cells' | 'rowMessages'>
+    cells: ReadonlyArray<readonly [key: CellKey, held: boolean]>
+    rowMessages: ReadonlyArray<readonly [rowId: string, held: boolean]>
+}
+
 export interface TrackerEffectsState extends AnnotationsState {
     cells: Partial<Record<CellKey, TrackerEffects>>
     rowMessages: ReadonlyMap<string, ReadonlyArray<TrackerMessage>>
+    /**
+     * What the update that put `cells` and `rowMessages` here wrote, set with them by an update that keeps track
+     * (`effectsWriter`), so the summary sums up only those cells and rows again. An update that sets none leaves the
+     * last one's here: it is this update's only when it is not the state before's and what it wrote over is.
+     */
+    written?: EffectsWritten
 }
 
 export const sameMessages = (
@@ -82,4 +98,45 @@ export const withRow = <T>(
         copy.set(rowId, list)
     }
     return copy
+}
+
+/**
+ * Writes to the effects' cells and row messages, copied once something is written and kept in the order they were
+ * made: `state` is what to set on the effects' store, the same `cells` and `rowMessages` when nothing was written.
+ */
+export const effectsWriter = (
+    state: Pick<TrackerEffectsState, 'cells' | 'rowMessages'>
+) => {
+    let { cells, rowMessages } = state
+    const written = {
+        // Not the state itself, which holds the account of the update before it, and so every one since the first.
+        before: { cells, rowMessages },
+        cells: new Array<[CellKey, boolean]>(),
+        rowMessages: new Array<[string, boolean]>(),
+    }
+    return {
+        /** Sets what is said of the cell, or deletes it when it says nothing; no write when it says the same. */
+        setCell(key: CellKey, effects: TrackerEffects) {
+            const kept = saysNothing(effects) ? undefined : effects
+            if (sameEffects(kept, cells[key])) {
+                return
+            }
+            cells = cells === written.before.cells ? { ...cells } : cells
+            if (kept === undefined) {
+                delete cells[key]
+            } else {
+                cells[key] = kept
+            }
+            written.cells.push([key, kept !== undefined])
+        },
+        /** Sets the row's messages, or deletes them when there are none; no write when they are the same. */
+        setRowMessages(rowId: string, messages: ReadonlyArray<TrackerMessage>) {
+            const next = withRow(rowMessages, rowId, messages, sameMessages)
+            if (next !== rowMessages) {
+                rowMessages = next
+                written.rowMessages.push([rowId, next.has(rowId)])
+            }
+        },
+        state: () => ({ cells, rowMessages, written }),
+    }
 }

@@ -3,7 +3,7 @@ import { cellKey } from '@/components/spreadsheet'
 import type { CellKey, GridTable } from '@/components/spreadsheet'
 import type { TrackerEffects, TrackerEffectsState } from '../logic/effects'
 import { isEmptySlot } from '../logic/ruleEffects'
-import { summarise } from '../logic/summary'
+import { runningSummary, summarise } from '../logic/summary'
 import {
     formOf,
     trackerKeyOf,
@@ -45,6 +45,107 @@ export const summaryOf = (
             )
         }
     )
+}
+
+/**
+ * `summaryOf`, kept as the open form's stores change: each update's own account of the cells it wrote is summed up
+ * (`runningSummary`), not every cell. `changed` is called on every update. Subscribe it before anything that writes
+ * to the stores from their updates, so that it hears of every update in the order they are made.
+ */
+export const followSummary = (
+    { store, effects, tables }: Pick<OpenForm, 'store' | 'effects' | 'tables'>,
+    changed: () => void
+) => {
+    const summary = runningSummary()
+    // What the summary last heard of: an update of anything else is one it missed, and it reads everything again.
+    let cellsHeard = store.getState().cells
+    let effectsHeard = effects.getState()
+    let fields: LoadedForm['fieldsByForm'] | undefined
+    let last: Record<'own' | 'shown', ReturnType<typeof summarise>> | undefined
+    const unsubscribes = [
+        store.subscribe(({ cells, changedCellKeys }, before) => {
+            if (before.cells !== cellsHeard) {
+                summary.forget()
+            } else if (cells !== before.cells) {
+                summary.cellsWritten(changedCellKeys)
+            }
+            cellsHeard = cells
+            changed()
+        }),
+        effects.subscribe((state, before) => {
+            const same =
+                state.cells === before.cells &&
+                state.rowMessages === before.rowMessages
+            const { written } = state
+            // An update that keeps no track of what it wrote leaves the last one's account, of other effects.
+            const told =
+                written !== undefined &&
+                written !== before.written &&
+                written.before.cells === before.cells &&
+                written.before.rowMessages === before.rowMessages
+            if (
+                before.cells !== effectsHeard.cells ||
+                before.rowMessages !== effectsHeard.rowMessages ||
+                (!same && !told)
+            ) {
+                summary.forget()
+            } else if (told) {
+                summary.effectsWritten(written)
+            }
+            effectsHeard = state
+            changed()
+        }),
+        // New rows, columns or records: other names, and other empty slots.
+        tables.subscribe(() => {
+            summary.forget()
+            changed()
+        }),
+    ]
+    return {
+        /**
+         * What `summaryOf` gives now, with the unsent and failed changes no cell of the form holds (`there`) counted
+         * in: the same object while nothing in it changes, so what shows it is not drawn again.
+         */
+        read(
+            {
+                fieldNames,
+                fieldsByForm,
+            }: Pick<LoadedForm, 'fieldNames' | 'fieldsByForm'>,
+            there = { unsent: 0, failed: 0 }
+        ) {
+            if (fieldsByForm !== fields) {
+                fields = fieldsByForm
+                summary.forget()
+            }
+            const { cells } = store.getState()
+            const { records } = tables.getState()
+            const own = summary.read(
+                cells,
+                effects.getState().cells,
+                effects.getState().rowMessages,
+                tables.getState().tables,
+                fieldNames,
+                (id) => {
+                    const record = records.get(id)
+                    return (
+                        record !== undefined &&
+                        isEmptySlot(record, cells, fieldsByForm)
+                    )
+                }
+            )
+            const unsent = own.unsent + there.unsent
+            const failed = own.failed + there.failed
+            if (
+                own !== last?.own ||
+                unsent !== last.shown.unsent ||
+                failed !== last.shown.failed
+            ) {
+                last = { own, shown: { ...own, unsent, failed } }
+            }
+            return last.shown
+        },
+        stop: () => unsubscribes.forEach((unsubscribe) => unsubscribe()),
+    }
 }
 
 const FILES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])

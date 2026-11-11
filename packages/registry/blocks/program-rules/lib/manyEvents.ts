@@ -251,14 +251,14 @@ const rulesForFields = (
     fields: ReadonlyArray<string>
 ): Set<string> => {
     const { graph } = context
-    const order = [...graph.rules.keys()]
+    const backwards = [...graph.rules.keys()].reverse()
     const selected = new Set(graph.alwaysRun)
     for (const field of fields) {
         graph.fieldReaders.get(field)?.forEach((id) => selected.add(id))
     }
     // Backwards: a rule taken for a variable it assigns brings the variables it reads itself.
     const needed = new Set<string>()
-    for (const id of order.toReversed()) {
+    for (const id of backwards) {
         const rule = graph.rules.get(id)
         if (rule === undefined) {
             continue
@@ -282,7 +282,7 @@ const selectedRules = (
     context: RuleContext,
     fields: ReadonlyArray<string>
 ): Set<string> => {
-    const key = fields.toSorted().join('\u0000')
+    const key = [...fields].sort().join('\u0000')
     const known = selections.get(context) ?? new Map<string, Set<string>>()
     selections.set(context, known)
     const selected = known.get(key) ?? rulesForFields(context, fields)

@@ -157,6 +157,10 @@
                     "namespaceMembers"
                 ]
             }
+        },
+        "packages/sandbox": {
+            "entry": ["runtime/server.mjs", "runtime/preview.mjs"],
+            "project": ["src/**/*.ts", "runtime/**/*.mjs"]
         }
     }
 }

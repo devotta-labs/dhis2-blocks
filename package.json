@@ -36,7 +36,8 @@
         "docs:up:dev": "bash scripts/docs/up.sh dev",
         "docs:down": "bash scripts/docs/down.sh",
         "docs:reset": "bash scripts/docs/reset.sh 42",
-        "docs:e2e": "bash scripts/docs/test-e2e.sh 42"
+        "docs:e2e": "bash scripts/docs/test-e2e.sh 42",
+        "sandbox": "pnpm --filter @dhis2-blocks/sandbox cli"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",

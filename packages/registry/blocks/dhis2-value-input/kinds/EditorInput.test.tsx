@@ -50,7 +50,8 @@ const server = () => {
 
 /**
  * A field in a form that keeps the value it is told, with a button after it to leave the field for. `submits` has, for
- * each time the form submitted, how many changes were reported by then. `assign` sets a value as a rule would.
+ * each time the form submitted, how many changes were reported by then. `assign` sets a value as a rule would, and
+ * `update` gives the field other props, such as another field, settings or a lock.
  */
 const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     const onChange = vi.fn()
@@ -60,10 +61,12 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
         shown,
         assigned,
         storedFile = props.storedFile,
+        over,
     }: {
         shown: boolean
         assigned?: { value: string }
         storedFile?: ValueInputProps['storedFile']
+        over?: Partial<ValueInputProps>
     }) => {
         const [value, setValue] = useState(props.value)
         useEffect(() => {
@@ -85,6 +88,7 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
                             settings={SETTINGS}
                             label={LABEL}
                             {...props}
+                            {...over}
                             storedFile={storedFile}
                             value={value}
                             onChange={(next, problem) => {
@@ -110,6 +114,8 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
             screen.rerender(<Host shown assigned={{ value }} />),
         link: (storedFile: ValueInputProps['storedFile']) =>
             screen.rerender(<Host shown storedFile={storedFile} />),
+        update: (over: Partial<ValueInputProps>) =>
+            screen.rerender(<Host shown over={over} />),
     }
 }
 
@@ -511,6 +517,54 @@ test('after a coordinate problem, the host saying back the report keeps it; anot
     await assign('[20,5]')
     await expect.element(latitude).toHaveValue('5')
     await expect.element(longitude).toHaveValue('20')
+    await expect
+        .element(page.getByText('Enter a latitude between -90 and 90'))
+        .not.toBeInTheDocument()
+    await expect.element(latitude).not.toHaveAttribute('aria-invalid')
+})
+
+test('a file field that becomes another field mid-upload stops the upload, which then reports nothing', async () => {
+    const { onChange, uploads, update } = await mount({
+        valueType: 'FILE_RESOURCE',
+    })
+    await choose('scan.txt')
+    await expect.poll(() => uploads).toHaveLength(1)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    await update({ field: { valueType: 'AGE' } })
+    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
+    uploads[0].release()
+    await later(50)
+    expect(onChange).toHaveBeenCalledTimes(1)
+})
+
+test('an age given another date format shows its date of birth in that format', async () => {
+    const { update } = await mount(
+        { valueType: 'AGE' },
+        { value: '1990-01-02' }
+    )
+    const birth = page.getByRole('textbox', { name: 'Date of birth' })
+    await expect.element(birth).toHaveValue('1990-01-02')
+
+    await update({
+        settings: { calendar: 'gregorian', dateFormat: 'DD-MM-YYYY' },
+    })
+    await expect.element(birth).toHaveValue('02-01-1990')
+})
+
+test('a coordinate problem goes once a rule locks the field, and stays gone when it unlocks', async () => {
+    const { leave, update } = await mount({ valueType: 'COORDINATE' })
+    await userEvent.fill(page.getByRole('textbox', { name: 'Latitude' }), '95')
+    await userEvent.fill(page.getByRole('textbox', { name: 'Longitude' }), '10')
+    await leave()
+    await expect
+        .element(page.getByText('Enter a latitude between -90 and 90'))
+        .toBeVisible()
+
+    await update({ readOnly: 'Assigned by a rule' })
+    await update({})
+    const latitude = page.getByRole('textbox', { name: 'Latitude' })
+    await expect.element(latitude).toHaveValue('')
     await expect
         .element(page.getByText('Enter a latitude between -90 and 90'))
         .not.toBeInTheDocument()

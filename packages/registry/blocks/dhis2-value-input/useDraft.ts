@@ -31,7 +31,8 @@ interface DraftState {
     fixed: boolean
 }
 
-const keyOf = (
+/** What makes a field another field, or its text another text: its type, mask, options, calendar and date format. */
+export const keyOf = (
     { valueType, fieldMask, options }: Field,
     { calendar, dateFormat }: ValueSettings
 ) =>

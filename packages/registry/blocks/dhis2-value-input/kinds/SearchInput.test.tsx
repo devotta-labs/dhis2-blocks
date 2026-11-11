@@ -1,5 +1,5 @@
 import { CustomDataProvider, Provider } from '@dhis2/app-runtime'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { ValueSettings } from '@/components/dhis2-value-types'
@@ -39,8 +39,13 @@ const mount = async (
 ) => {
     const onChange = vi.fn()
     const queries: unknown[] = []
-    const Host = () => {
+    const Host = ({ assigned }: { assigned?: string }) => {
         const [value, setValue] = useState(props.value)
+        useEffect(() => {
+            if (assigned !== undefined) {
+                setValue(assigned)
+            }
+        }, [assigned])
         return (
             <CustomDataProvider
                 data={{
@@ -85,7 +90,7 @@ const mount = async (
             </CustomDataProvider>
         )
     }
-    await render(
+    const screen = await render(
         offline ? (
             <Provider
                 config={{ baseUrl: '..', apiVersion: 42 }}
@@ -105,6 +110,8 @@ const mount = async (
         onChange,
         queries,
         box: page.getByRole('combobox', { name: LABEL }),
+        /** Sets a value as a rule would. */
+        assign: (value: string) => screen.rerender(<Host assigned={value} />),
     }
 }
 
@@ -241,4 +248,17 @@ test('a result the mouse rests on is not picked by Tab', async () => {
 
     expect(onChange).not.toHaveBeenCalled()
     await expect.element(box).toHaveValue('')
+})
+
+test('a value a rule assigns after the field was emptied is kept when the field is left', async () => {
+    const { onChange, box, assign } = await mount({
+        value: CHC,
+        valueName: 'Ngelehun CHC',
+    })
+    await userEvent.clear(box)
+    await assign('FwKJ7gYEv8U')
+    await expect.element(box).not.toHaveValue('')
+
+    await userEvent.tab()
+    expect(onChange).not.toHaveBeenCalled()
 })

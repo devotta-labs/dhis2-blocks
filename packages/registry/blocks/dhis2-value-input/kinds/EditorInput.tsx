@@ -14,30 +14,37 @@ type OnChange = (value: string | null, problem?: EditorProblem) => void
 /**
  * What a pop-up field has committed: `commit` reports to the host and shows a problem, `send` only reports. The
  * problem shows until a change without one. A `value` from the host that is not the one last reported (a rule assigned
- * it) is another `version`, for the editor to start again on, without the problem; the one last reported, however late
- * it comes back, is not.
+ * it), another field or calendar (`fieldKey`), or the field being locked, is another `version`, for the editor to start
+ * again on, without the problem; the value last reported, however late it comes back, is not.
  */
 export const useEditorCommits = (
     value: string | undefined,
-    onChange: OnChange
+    onChange: OnChange,
+    fieldKey: string,
+    readOnly: boolean
 ) => {
     const [state, setState] = useState<{
         given: string | undefined
+        fieldKey: string
+        readOnly: boolean
         version: number
         problem?: EditorProblem
-    }>({ given: value, version: 0 })
+    }>({ given: value, fieldKey, readOnly, version: 0 })
     const reported = useRef<string | null>()
     let current = state
-    if (value !== state.given) {
-        current =
-            (value ?? null) === reported.current
-                ? { ...state, given: value }
-                : {
-                      given: value,
-                      version: state.version + 1,
-                      problem: undefined,
-                  }
-        if (current.version !== state.version) {
+    if (
+        value !== state.given ||
+        fieldKey !== state.fieldKey ||
+        readOnly !== state.readOnly
+    ) {
+        const again =
+            fieldKey !== state.fieldKey ||
+            (readOnly && !state.readOnly) ||
+            (value !== state.given && (value ?? null) !== reported.current)
+        current = again
+            ? { given: value, fieldKey, readOnly, version: state.version + 1 }
+            : { ...state, given: value, readOnly }
+        if (again) {
             // What the person committed is history: the host saying it again is a new value too.
             reported.current = undefined
         }

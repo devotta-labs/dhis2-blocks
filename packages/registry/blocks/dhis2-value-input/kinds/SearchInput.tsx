@@ -44,6 +44,20 @@ export const SearchInput = ({
     const { isDisconnected } = useDhis2ConnectionStatus()
     // What has been typed since the field showed its value; null shows the value.
     const [typed, setTyped] = useState<string | null>(null)
+    // A value from the host that is not the one last reported (a rule assigned it) replaces what was typed.
+    const [given, setGiven] = useState(value)
+    const reported = useRef<string | null>()
+    if (value !== given) {
+        setGiven(value)
+        if ((value ?? null) !== reported.current) {
+            setTyped(null)
+        }
+        reported.current = undefined
+    }
+    const report = (next: string | null) => {
+        reported.current = next
+        onChange(next)
+    }
     // A value picked here keeps the name it was listed under.
     const [picked, setPicked] = useState<{ value: string; name: string }>()
     const query = typed === null || isDisconnected ? '' : typed.trim()
@@ -75,14 +89,14 @@ export const SearchInput = ({
     const shown = value === undefined ? '' : (name ?? unknownName(value))
     const leave = () => {
         if (typed?.trim() === '' && value !== undefined) {
-            onChange(null)
+            report(null)
         }
         setTyped(null)
     }
     const pick = (result: { value: string; name: string }) => {
         setPicked(result)
         setTyped(null)
-        onChange(result.value)
+        report(result.value)
     }
     return (
         <>

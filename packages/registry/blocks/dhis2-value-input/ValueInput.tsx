@@ -37,7 +37,7 @@ import { DateInput, dateFormatHint } from './kinds/DateInput'
 import { EditorInput, useEditorCommits } from './kinds/EditorInput'
 import { SearchInput, unknownName } from './kinds/SearchInput'
 import { READ_ONLY_CLASS, TypedInput } from './kinds/TypedInput'
-import { useDraft } from './useDraft'
+import { keyOf, useDraft } from './useDraft'
 
 type Tone = 'error' | 'warning' | 'info'
 
@@ -223,7 +223,12 @@ export const ValueInput = ({
     const radios =
         (kind === 'boolean' || kind === 'option') &&
         asRadios(field, hiddenOptions)
-    const commits = useEditorCommits(value, onChange)
+    const commits = useEditorCommits(
+        value,
+        onChange,
+        keyOf(field, settings),
+        reason !== undefined
+    )
     const problem = draft.problem ?? (editor ? commits.problem : undefined)
     const invalid =
         problem !== undefined || messages.some(({ tone }) => tone === 'error')

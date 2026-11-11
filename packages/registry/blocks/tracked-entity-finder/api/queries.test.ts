@@ -1,6 +1,13 @@
 import { QueryClient } from '@tanstack/react-query'
+import { hivProgram } from '../__tests__/fixtures/program'
+import { buildProgramModel } from '../rules/programModel'
+import { seal } from '../rules/seal'
 import { createFinderResourceClient, type DataEngineQuery } from './client'
-import { finderKeys, programMetadataQueryOptions } from './queries'
+import {
+    finderKeys,
+    programMetadataQueryOptions,
+    searchQueryOptions,
+} from './queries'
 import { systemInfoQueryOptions } from './systemInfo'
 
 describe('program metadata query', () => {
@@ -28,16 +35,6 @@ describe('program metadata query', () => {
         expect(fields).toContain('blockedSearchOperators')
         expect(options.queryKey).toEqual(finderKeys.program('prog'))
         expect(options.gcTime).toBe(3 * 60 * 60_000)
-    })
-
-    it('keys searches by program, submission and page', () => {
-        expect(finderKeys.search('p', { a: 'b' }, 2)).toEqual([
-            'tracked-entity-finder',
-            'search',
-            'p',
-            { a: 'b' },
-            2,
-        ])
     })
 
     it('reloads program rules after their freshness window expires', async () => {
@@ -80,6 +77,67 @@ describe('program metadata query', () => {
                 (await queryClient.fetchQuery(options))
                     .minAttributesRequiredToSearch
             ).toBe(2)
+            expect(query).toHaveBeenCalledTimes(2)
+        } finally {
+            clock.mockRestore()
+            queryClient.clear()
+        }
+    })
+})
+
+describe('search query', () => {
+    const filters = [
+        { attribute: 'artNumber', conditions: [{ op: 'eq', value: 'A1' }] },
+        {
+            attribute: 'firstName',
+            conditions: [{ op: 'like', value: 'Amina' }],
+        },
+    ] as const
+    const search = seal(filters)
+
+    it('keys searches only by program, canonical filters and page', () => {
+        const key = finderKeys.search('p', search, 2)
+        expect(key).toEqual([
+            'tracked-entity-finder',
+            'search',
+            'p',
+            ['artNumber:eq:A1', 'firstName:like:Amina'],
+            2,
+        ])
+        expect(finderKeys.search('p', seal([...filters].reverse()), 2)).toEqual(
+            key
+        )
+        expect(finderKeys.search('other', search, 2)).not.toEqual(key)
+        expect(finderKeys.search('p', search, 1)).not.toEqual(key)
+        expect(finderKeys.search('p', seal([filters[0]]), 2)).not.toEqual(key)
+    })
+
+    it('reuses results for five minutes, then reloads them', async () => {
+        const query = vi.fn(async () => ({
+            trackedEntityFinderResource: {
+                trackedEntities: [],
+                pager: { total: 0 },
+            },
+        }))
+        const client = createFinderResourceClient({ query })
+        const options = searchQueryOptions(
+            client,
+            buildProgramModel(hivProgram),
+            search,
+            1
+        )
+        const queryClient = new QueryClient()
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            expect(options.staleTime).toBe(5 * 60_000)
+            expect(options.gcTime).toBe(5 * 60_000)
+            await queryClient.fetchQuery(options)
+            clock.mockReturnValue(now + 5 * 60_000 - 1)
+            await queryClient.fetchQuery(options)
+            expect(query).toHaveBeenCalledTimes(1)
+            clock.mockReturnValue(now + 5 * 60_000)
+            await queryClient.fetchQuery(options)
             expect(query).toHaveBeenCalledTimes(2)
         } finally {
             clock.mockRestore()

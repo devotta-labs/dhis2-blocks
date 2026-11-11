@@ -51,6 +51,10 @@ the built-in ones.
 `createTrackedEntityFinderClient` wraps a custom data engine; by default the
 block uses the DHIS2 app-runtime.
 
+Program metadata and system info stay fresh for 3 hours. Search results stay
+fresh for 5 minutes, keyed by program, filters and page, including across
+repeated submissions and finder remounts within the same QueryClient.
+
 To list a program's searchable attributes and their uids:
 
 ```

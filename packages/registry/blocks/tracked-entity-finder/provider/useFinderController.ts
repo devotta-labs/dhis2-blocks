@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { resourceClientOf, type TrackedEntityFinderClient } from '../api/client'
-import { programMetadataQueryOptions } from '../api/queries'
+import { programMetadataQueryOptions, searchQueryOptions } from '../api/queries'
 import type { FinderPerson } from '../api/search'
 import { systemInfoQueryOptions } from '../api/systemInfo'
 import { buildProgramModel } from '../rules/programModel'
@@ -33,6 +33,7 @@ export const useFinderController = ({
     onSelect,
     client,
 }: FinderControllerOptions): FinderContextValue => {
+    const queryClient = useQueryClient()
     const resourceClient = useMemo(() => resourceClientOf(client), [client])
     const metadata = useQuery(
         programMetadataQueryOptions(resourceClient, program)
@@ -73,13 +74,19 @@ export const useFinderController = ({
 
     const submit = useCallback<FinderContextValue['actions']['submit']>(
         (search) => {
+            if (model && status === 'ready') {
+                // A repeated key does not remount its observer. Fetch only if stale.
+                void queryClient.prefetchQuery(
+                    searchQueryOptions(resourceClient, model, search, 1)
+                )
+            }
             setSubmission((current) => ({
                 search,
                 id: (current?.id ?? 0) + 1,
             }))
             setPage(1)
         },
-        []
+        [model, status, queryClient, resourceClient]
     )
 
     const select = useCallback(

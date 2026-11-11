@@ -31,7 +31,7 @@ export interface FinderResultsView {
 
 export interface FinderSubmission {
     search: ValidatedSearch
-    /** Grows with every Search, so the same search can run again. */
+    /** Grows with every Search, so each submission can be announced once. */
     id: number
 }
 

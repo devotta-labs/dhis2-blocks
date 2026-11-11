@@ -211,13 +211,13 @@ describe('FinderResults paging and requests', () => {
         expect(searchRequests(server)).toHaveLength(1)
     })
 
-    it('shows only the newest answer after a double submit', async () => {
+    it('shows only the newest answer after submitting different details', async () => {
         const { server } = await renderFinder({
             options: { deferSearches: true },
         })
 
         await searchFor('A1')
-        await page.getByRole('button', { name: 'Search' }).click()
+        await searchFor('A2')
         await expect.poll(() => server.pendingSearches.length).toBe(2)
 
         server.pendingSearches[0].respond(
@@ -237,7 +237,7 @@ describe('FinderResults paging and requests', () => {
         expect(page.getByRole('listitem').all()).toHaveLength(1)
     })
 
-    it('asks the server again for the same search after the finder remounts', async () => {
+    it('reuses a fresh answer for the same search after the finder remounts', async () => {
         const onSelect = vi.fn()
         const server = createFakeServer()
         const screen = await renderWithQueries(
@@ -271,12 +271,114 @@ describe('FinderResults paging and requests', () => {
             page.getByTestId('results').getByText('No one found').query()
         ).toBeNull()
 
-        // Someone may have been registered since: never reuse the answer.
         await searchFor('A1')
-        await expect.poll(() => searchRequests(server)).toHaveLength(2)
         await expect
             .element(page.getByTestId('results').getByText('No one found'))
             .toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+    })
+
+    it('deduplicates identical submissions while a search is in flight', async () => {
+        const { server } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        await searchFor('A1')
+        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        await page.getByRole('button', { name: 'Search' }).click()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+        server.pendingSearches[0].respond(answer([amina]))
+        await expect.element(page.getByText('Amina')).toBeVisible()
+    })
+
+    it('reuses repeated details and separates different searches', async () => {
+        const { server } = await renderFinder({
+            options: {
+                answerSearch: (request) =>
+                    answer([
+                        entity('person', {
+                            firstName: String(request.params?.filter).includes(
+                                'artNumber:eq:A1'
+                            )
+                                ? 'Amina'
+                                : 'Zainab',
+                        }),
+                    ]),
+            },
+        })
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await searchFor('A1')
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+        await searchFor('A2')
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(2)
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(2)
+    })
+
+    it('refreshes an identical submission after five minutes without reloading metadata', async () => {
+        const { server } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            await searchFor('A1')
+            server.pendingSearches[0].respond(answer([amina]))
+            await expect.element(page.getByText('Amina')).toBeVisible()
+            clock.mockReturnValue(now + 5 * 60_000 - 1)
+            await searchFor('A1')
+            await settle()
+            expect(searchRequests(server)).toHaveLength(1)
+            clock.mockReturnValue(now + 5 * 60_000)
+            await searchFor('A1')
+            await expect.poll(() => server.pendingSearches.length).toBe(2)
+            server.pendingSearches[1].respond(
+                answer([entity('new', { firstName: 'Zainab' })])
+            )
+            await expect.element(page.getByText('Zainab')).toBeVisible()
+            expect(
+                server.requests.filter(
+                    ({ resource }) => resource === 'programs'
+                )
+            ).toHaveLength(1)
+            expect(
+                server.requests.filter(
+                    ({ resource }) => resource === 'system/info'
+                )
+            ).toHaveLength(1)
+        } finally {
+            clock.mockRestore()
+        }
+    })
+
+    it('retries a failed search when the same details are submitted again', async () => {
+        let fails = true
+        const { server } = await renderFinder({
+            options: {
+                answerSearch: () => {
+                    if (fails) {
+                        throw Object.assign(new Error('Search failed'), {
+                            httpStatusCode: 400,
+                        })
+                    }
+                    return answer([amina])
+                },
+            },
+        })
+        await searchFor('A1')
+        await expect
+            .element(page.getByTestId('results').getByRole('alert'))
+            .toBeVisible()
+        fails = false
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(2)
     })
 
     it('ignores next and previous when there is no such page', async () => {

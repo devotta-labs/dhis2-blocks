@@ -59,6 +59,10 @@ export interface EventsRules {
      * events: the server's, each replaced by its live row, plus the live rows the server lacks; a row whose person the
      * server did not return is in `failures`. A row that is not in `rows`, whose stage was not asked for, or whose
      * person was added to `enrollmentIds` and has not loaded yet, is in neither map: it was not evaluated.
+     *
+     * With `changedFields`, the data values changed since these rows were last evaluated here, only the rules those
+     * fields reach run and the others keep their effects. Pass it only when nothing else of the rows changed since
+     * (an event date, a person's other events, a row added or removed): leave it out and every rule runs.
      */
     evaluate(
         rows: ReadonlyArray<EventsRuleRow>,

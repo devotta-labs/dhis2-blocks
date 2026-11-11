@@ -120,6 +120,9 @@ export const connectRules = ({
         () => tables.getState().tables,
         (id) => seen.has(id) || touched.has(id)
     )
+    // Rows whose rules all ran here on the values they hold now: only for these can a change run just the rules that
+    // read it. A reconnection starts over, as the rows may have changed while nothing listened.
+    const current = new Set<string>()
     // Control id → row id: a value the rules held back while the cell was typed in.
     const held = new Map<string, string>()
 
@@ -365,12 +368,21 @@ export const connectRules = ({
         // An enrolment runs its enrolment rules; any other record, its event rules.
         const evaluateRecord = (rowId: string, record?: DataRecord) => {
             if (record?.kind !== 'enrollment') {
-                const fields = changedFields?.get(rowId)
-                return rules.evaluate(
+                const fields = current.has(rowId)
+                    ? changedFields?.get(rowId)
+                    : undefined
+                const evaluation = rules.evaluate(
                     ruleRows,
                     [rowId],
                     fields === undefined ? undefined : [...fields]
                 )
+                // A row the rules did not answer for (its person still loads, or they failed) runs them all next.
+                if (evaluation.effects.has(rowId)) {
+                    current.add(rowId)
+                } else {
+                    current.delete(rowId)
+                }
+                return evaluation
             }
             const unit = enrollmentUnitOf(
                 records,
@@ -399,6 +411,9 @@ export const connectRules = ({
             const empty =
                 record !== undefined &&
                 isEmptySlot(record, cells, form.fieldsByForm)
+            if (empty) {
+                current.delete(rowId)
+            }
             const evaluation = empty ? undefined : evaluateRecord(rowId, record)
             const raw = empty ? emptyEffects() : evaluation?.effects.get(rowId)
             const outcome =

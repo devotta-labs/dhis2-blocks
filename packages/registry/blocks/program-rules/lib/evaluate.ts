@@ -185,10 +185,7 @@ export const evaluateEventRuleEffects = (
     ruleIds: ReadonlySet<string>
 ): Engine.RuleEffectJs[] => {
     const built = buildEngineInput(engine, context, input)
-    const orderedRuleIds = [...context.graph.rules.keys()]
-    const rules = context.rules.filter((_rule, index) =>
-        ruleIds.has(orderedRuleIds[index] ?? '')
-    )
+    const rules = context.rules.filter((rule) => ruleIds.has(rule.uid))
     if (rules.length === context.rules.length) {
         return context.engine.evaluateEvent(
             built.event,
@@ -197,7 +194,7 @@ export const evaluateEventRuleEffects = (
             context.engineContext
         )
     }
-    const key = orderedRuleIds.filter((id) => ruleIds.has(id)).join('\u0000')
+    const key = rules.map((rule) => rule.uid).join('\u0000')
     let contexts = subsetContexts.get(context)
     if (contexts === undefined) {
         contexts = new Map()

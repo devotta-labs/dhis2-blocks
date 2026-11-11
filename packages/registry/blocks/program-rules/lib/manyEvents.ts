@@ -241,45 +241,61 @@ export const evaluateEventsRules = (
             evaluateEventRules(engine, context, ruleInput)
     )
 
+/**
+ * The rules to run again after `fields` changed: those that read one of them, straight or through a variable an earlier
+ * rule assigns, those whose reads the graph cannot place, and the earlier rules that assign the variables any of these
+ * read, so each finds its variables as a full run leaves them.
+ */
 const rulesForFields = (
     context: RuleContext,
     fields: ReadonlyArray<string>
 ): Set<string> => {
-    const ids = [...context.graph.rules.keys()]
-    const positions = new Map(ids.map((id, index) => [id, index]))
-    const selected = new Set(context.graph.alwaysRun)
+    const { graph } = context
+    const order = [...graph.rules.keys()]
+    const selected = new Set(graph.alwaysRun)
     for (const field of fields) {
-        context.graph.fieldReaders.get(field)?.forEach((id) => selected.add(id))
+        graph.fieldReaders.get(field)?.forEach((id) => selected.add(id))
     }
-
-    const visited = new Set<string>()
-    const includeVariableInputs = (id: string) => {
-        if (visited.has(id)) return
-        visited.add(id)
-        const position = positions.get(id)
-        const dependencies = context.graph.rules.get(id)
-        if (position === undefined || dependencies === undefined) return
-        const needed = new Set(dependencies.readsVariables)
-        for (let index = position - 1; index >= 0; index -= 1) {
-            const earlierId = ids[index]
-            if (earlierId === undefined) continue
-            const earlier = context.graph.rules.get(earlierId)
-            if (
-                earlier === undefined ||
-                !earlier.writesVariables.some((name) => needed.has(name))
-            ) {
-                continue
-            }
-            selected.add(earlierId)
-            earlier.readsVariables.forEach((name) => needed.add(name))
-            includeVariableInputs(earlierId)
+    // Backwards: a rule taken for a variable it assigns brings the variables it reads itself.
+    const needed = new Set<string>()
+    for (const id of order.toReversed()) {
+        const rule = graph.rules.get(id)
+        if (rule === undefined) {
+            continue
+        }
+        if (
+            !selected.has(id) &&
+            rule.writesVariables.some((name) => needed.has(name))
+        ) {
+            selected.add(id)
+        }
+        if (selected.has(id)) {
+            rule.readsVariables.forEach((name) => needed.add(name))
         }
     }
-    for (const id of selected) includeVariableInputs(id)
     return selected
 }
 
-/** Creates a stateful evaluator that re-runs only rules indexed for edited fields. */
+const selections = new WeakMap<RuleContext, Map<string, Set<string>>>()
+
+const selectedRules = (
+    context: RuleContext,
+    fields: ReadonlyArray<string>
+): Set<string> => {
+    const key = fields.toSorted().join('\u0000')
+    const known = selections.get(context) ?? new Map<string, Set<string>>()
+    selections.set(context, known)
+    const selected = known.get(key) ?? rulesForFields(context, fields)
+    known.set(key, selected)
+    return selected
+}
+
+/**
+ * `evaluateEventsRules` that remembers what each rule said of each row, so a row can run only the rules its changed
+ * fields reach and keep the others' effects. Pass `changedFields` only for a row this evaluator ran last with every
+ * other input as it is now (its other values, its dates, its person's other events): a row it has not run, or runs
+ * without `changedFields`, runs every rule.
+ */
 export const createEventsRuleEvaluator = (
     engine: RuleEngineModule,
     contexts: ReadonlyMap<string, RuleContext>
@@ -289,48 +305,52 @@ export const createEventsRuleEvaluator = (
         input: EventsRuleInput,
         rowIds: ReadonlyArray<string>,
         changedFields?: ReadonlyArray<string>
-    ): EventsRulesEvaluation =>
-        evaluateEventsRulesWith(
+    ): EventsRulesEvaluation => {
+        // Rows that left the grid are forgotten once they outnumber those in it.
+        if (previous.size > 2 * input.rows.length + 100) {
+            const { byId } = indexRows(input.rows)
+            for (const rowId of previous.keys()) {
+                if (!byId.has(rowId)) {
+                    previous.delete(rowId)
+                }
+            }
+        }
+        return evaluateEventsRulesWith(
             engine,
             contexts,
             input,
             rowIds,
             (rowId, context, ruleInput) => {
                 const cached = previous.get(rowId)
+                const all = [...context.graph.rules.keys()]
                 const incremental =
                     changedFields !== undefined && cached?.context === context
                 const selected = incremental
-                    ? rulesForFields(context, changedFields)
-                    : new Set(context.graph.rules.keys())
-                const byRule = incremental
-                    ? new Map(cached.byRule)
-                    : new Map<string, Engine.RuleEffectJs[]>()
-                try {
-                    const raw = evaluateEventRuleEffects(
-                        engine,
-                        context,
-                        ruleInput,
-                        selected
-                    )
-                    for (const id of selected) byRule.delete(id)
-                    for (const effect of raw) {
-                        const id =
-                            effect.ruleAction.values.get('ruleId') ??
-                            effect.ruleId
-                        if (!selected.has(id)) continue
-                        const effects = byRule.get(id) ?? []
-                        effects.push(effect)
-                        byRule.set(id, effects)
-                    }
-                    previous.set(rowId, { context, byRule })
-                    const combined = [...context.graph.rules.keys()].flatMap(
-                        (id) => byRule.get(id) ?? []
-                    )
-                    return sortEventRuleEffects(context, combined)
-                } catch (error) {
-                    previous.delete(rowId)
-                    throw error
+                    ? selectedRules(context, changedFields)
+                    : new Set(all)
+                const byRule = new Map(incremental ? cached.byRule : [])
+                // A failed run leaves nothing to build on.
+                previous.delete(rowId)
+                const raw = evaluateEventRuleEffects(
+                    engine,
+                    context,
+                    ruleInput,
+                    selected
+                )
+                for (const id of selected) {
+                    byRule.delete(id)
                 }
+                for (const effect of raw) {
+                    const id =
+                        effect.ruleAction.values.get('ruleId') ?? effect.ruleId
+                    byRule.set(id, [...(byRule.get(id) ?? []), effect])
+                }
+                previous.set(rowId, { context, byRule })
+                return sortEventRuleEffects(
+                    context,
+                    all.flatMap((id) => byRule.get(id) ?? [])
+                )
             }
         )
+    }
 }

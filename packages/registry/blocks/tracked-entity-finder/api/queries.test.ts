@@ -11,7 +11,7 @@ import {
 } from './queries'
 import { systemInfoQueryOptions } from './systemInfo'
 
-const server = 'https://dhis2.test'
+const server = { server: 'https://dhis2.test', userId: 'userA' }
 type DataEngineQuery = Parameters<FinderEngine['query']>[0]
 
 describe('program metadata query', () => {
@@ -101,12 +101,13 @@ describe('search query', () => {
     ] as const
     const search = seal(filters)
 
-    it('keys searches only by program, canonical filters and page', () => {
+    it('keys searches by server, user, program, canonical filters and page', () => {
         const key = finderKeys.search(server, 'p', search, 2)
         expect(key).toEqual([
             'tracked-entity-finder',
             'search',
-            server,
+            server.server,
+            server.userId,
             'p',
             ['artNumber:eq:A1', 'firstName:like:Amina'],
             2,
@@ -120,12 +121,31 @@ describe('search query', () => {
             finderKeys.search(server, 'p', seal([filters[0]]), 2)
         ).not.toEqual(key)
         expect(
-            finderKeys.search('https://other.dhis2.test', 'p', search, 2)
+            finderKeys.search(
+                { ...server, server: 'https://other.dhis2.test' },
+                'p',
+                search,
+                2
+            )
         ).not.toEqual(key)
-        expect(finderKeys.program('https://other.dhis2.test', 'p')).not.toEqual(
+        expect(
+            finderKeys.program(
+                { ...server, server: 'https://other.dhis2.test' },
+                'p'
+            )
+        ).not.toEqual(finderKeys.program(server, 'p'))
+        expect(
+            finderKeys.systemInfo({
+                ...server,
+                server: 'https://other.dhis2.test',
+            })
+        ).not.toEqual(finderKeys.systemInfo(server))
+        const otherUser = { ...server, userId: 'userB' }
+        expect(finderKeys.search(otherUser, 'p', search, 2)).not.toEqual(key)
+        expect(finderKeys.program(otherUser, 'p')).not.toEqual(
             finderKeys.program(server, 'p')
         )
-        expect(finderKeys.systemInfo('https://other.dhis2.test')).not.toEqual(
+        expect(finderKeys.systemInfo(otherUser)).not.toEqual(
             finderKeys.systemInfo(server)
         )
     })

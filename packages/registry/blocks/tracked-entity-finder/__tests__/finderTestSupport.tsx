@@ -156,11 +156,18 @@ export const createFakeServer = (
 
 export const FinderTestProvider = ({
     server,
+    userId = 'userA',
     ...props
-}: FinderProviderProps & { server: FakeServer }) => (
+}: FinderProviderProps & { server: FakeServer; userId?: string }) => (
     <Provider
         config={{ baseUrl: server.baseUrl, apiVersion: 43 }}
-        userInfo={undefined}
+        userInfo={{
+            id: userId,
+            username: userId,
+            displayName: userId,
+            authorities: [],
+            organisationUnits: [],
+        }}
         plugin={false}
         parentAlertsAdd={undefined}
         showAlertsInPlugin={false}

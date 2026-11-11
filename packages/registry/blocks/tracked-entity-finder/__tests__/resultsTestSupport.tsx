@@ -63,9 +63,15 @@ export const ui = (
     server: FakeServer,
     program: string,
     onSelect: (person: FinderPerson) => void,
-    results: ReactNode
+    results: ReactNode,
+    userId = 'userA'
 ) => (
-    <FinderProvider program={program} server={server} onSelect={onSelect}>
+    <FinderProvider
+        program={program}
+        server={server}
+        userId={userId}
+        onSelect={onSelect}
+    >
         <SearchForm />
         {results}
     </FinderProvider>

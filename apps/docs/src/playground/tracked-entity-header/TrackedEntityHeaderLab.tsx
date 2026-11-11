@@ -55,7 +55,11 @@ export const TrackedEntityHeaderLab = () => {
         trackedEntity: mode === 'lab' ? LAB_PERSON : live.trackedEntityId,
         program: mode === 'lab' ? subject.program : live.programId,
         parts: mode === 'lab' ? partsFor(settings) : LIVE_PARTS,
-        settings: { arrangement: settings.arrangement, width: settings.width },
+        settings: {
+            arrangement: settings.arrangement,
+            width: settings.width,
+            frame: settings.frame,
+        },
     }
     const { Canvas, source } = CANVASES[canvas]
 

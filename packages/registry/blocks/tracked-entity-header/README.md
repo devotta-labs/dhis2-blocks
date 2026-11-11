@@ -53,6 +53,11 @@ record is shown by the banner's muted surface alone. `ObservationInline` is
 from the `observation-cards` block and needs an `ObservationsProvider`;
 stickiness is the host's.
 
+The banner draws its background and padding but no edge. Add one with
+`className`: `border-b border-dhis2-border-strong px-6` for a bar across the
+top of a page, or `rounded-dhis2-md border border-dhis2-border-strong` for a
+card. Your padding replaces the banner's.
+
 Parts: `TrackedEntityName`, `TrackedEntityDate`, `TrackedEntityAttribute`,
 `TrackedEntityStatus`, `TrackedEntityOwner`, `TrackedEntityEnrollment`,
 `TrackedEntityFacts`, `TrackedEntityActions`, `TrackedEntityDetails`,

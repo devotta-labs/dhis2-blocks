@@ -93,6 +93,15 @@ export const OptionsControls = ({
             onChange={(width) => onChange({ width })}
         />
         <SegmentedRow
+            label="Frame"
+            value={settings.frame}
+            options={[
+                ['card', 'Card'],
+                ['page', 'Top of page'],
+            ]}
+            onChange={(frame) => onChange({ frame })}
+        />
+        <SegmentedRow
             label="Actions"
             value={settings.actions}
             options={[

@@ -8,7 +8,7 @@ describe('tracked entity banner in forced colours', () => {
         expect(matchMedia('(forced-colors: active)').matches).toBe(true)
     })
 
-    it('keeps the inactive banner edged and its tags outlined in words', async () => {
+    it('keeps the inactive banner’s tags outlined in words', async () => {
         await renderParts(<TrackedEntityBanner />, {
             person: (raw) => ({
                 ...raw,
@@ -18,9 +18,6 @@ describe('tracked entity banner in forced colours', () => {
         })
         await expect.element(page.getByText('Inactive')).toBeVisible()
 
-        const section = getComputedStyle(page.getByRole('region').element())
-        expect(section.borderTopStyle).toBe('solid')
-        expect(section.borderTopWidth).toBe('1px')
         for (const tag of ['Inactive', 'Possible duplicate']) {
             const style = getComputedStyle(page.getByText(tag).element())
             expect(style.borderTopStyle).toBe('solid')

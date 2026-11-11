@@ -26,20 +26,32 @@ interface Props {
     trackedEntity: string
     program: string
     parts: Parts
-    settings: Pick<LabSettings, 'arrangement' | 'width'>
+    settings: Pick<LabSettings, 'arrangement' | 'width' | 'frame'>
 }
+
+// The banner draws no edge; the host adds one, and matches the padding to its page.
+const FRAMES = {
+    card: 'rounded-dhis2-md border border-dhis2-border-strong',
+    page: 'border-b border-dhis2-border-strong px-6',
+}
+
+// A stand-in for the host's page, so the bar shows across its top.
+const PAGE =
+    'overflow-hidden rounded-dhis2-md border border-dhis2-border bg-dhis2-background'
 
 /** The banner on its own, or with every part placed by hand. */
 const Banner = ({
     parts,
     arrangement,
     onSelect,
+    className,
 }: {
     parts: Parts
     arrangement: LabSettings['arrangement']
     onSelect: (trackedEntity: string) => void
+    className: string
 }) => (
-    <TrackedEntityBanner>
+    <TrackedEntityBanner className={className}>
         {arrangement === 'composed' ? (
             <>
                 <TrackedEntityName attributes={parts.name} />
@@ -117,7 +129,9 @@ export const BannerCanvas = ({
 }: Props) => {
     const [opened, setOpened] = useState<string>()
     return (
-        <div className={settings.width === 'narrow' ? 'max-w-sm' : 'max-w-4xl'}>
+        <div
+            className={`${settings.width === 'narrow' ? 'max-w-sm' : 'max-w-4xl'} ${settings.frame === 'page' ? PAGE : ''}`}
+        >
             <WithObservations
                 trackedEntity={trackedEntity}
                 program={program}
@@ -131,9 +145,15 @@ export const BannerCanvas = ({
                         parts={parts}
                         arrangement={settings.arrangement}
                         onSelect={setOpened}
+                        className={FRAMES[settings.frame]}
                     />
                 </TrackedEntityHeaderProvider>
             </WithObservations>
+            {settings.frame === 'page' ? (
+                <p className="m-0 px-6 py-8 text-sm text-dhis2-muted-foreground">
+                    The rest of the page
+                </p>
+            ) : null}
             {opened ? (
                 <p className="m-0 mt-2 text-xs text-dhis2-muted-foreground">
                     Host opens {opened}

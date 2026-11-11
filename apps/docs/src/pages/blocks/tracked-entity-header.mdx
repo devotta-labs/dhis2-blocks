@@ -56,6 +56,25 @@ record that has loaded stays on screen if a later refresh fails, unless access
 has been withdrawn. Program metadata and organisation unit names are kept for
 an hour.
 
+## Framing the banner
+
+The banner draws its background and padding but no edge, so it fits wherever
+you put it. Add the edge with `className`: a bottom border for a bar across
+the top of a page, or a border and rounded corners for a card. Your padding
+replaces the banner's, so a bar can line up with the page's own margins.
+
+Across the top of a page:
+
+```tsx
+<TrackedEntityBanner className="border-b border-dhis2-border-strong px-6" />
+```
+
+As a card:
+
+```tsx
+<TrackedEntityBanner className="rounded-dhis2-md border border-dhis2-border-strong" />
+```
+
 ## Composing a banner
 
 Place parts inside `TrackedEntityBanner` to choose what it shows. Line one is
@@ -303,6 +322,7 @@ GET /api/programs/<program>?fields=programTrackedEntityAttributes[displayInList,
 
 - `children?: ReactNode` — the parts to show. Without children, the program's
   list attributes, the tags and the details.
-- `className?: string` — applied to the banner.
+- `className?: string` — applied to the banner. Use it for the edge, which the
+  banner doesn't draw, and to replace its padding.
 
 The parts take `className` and the props listed in their types.

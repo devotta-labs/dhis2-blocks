@@ -9,7 +9,7 @@ describe('tracked entity banner with more contrast', () => {
         expect(matchMedia('(prefers-contrast: more)').matches).toBe(true)
     })
 
-    it('keeps the inactive surface, its edge and its tags in the darker roles', async () => {
+    it('keeps the inactive surface and its tags in the darker roles', async () => {
         await renderParts(<TrackedEntityBanner />, {
             person: (raw) => ({
                 ...raw,
@@ -21,7 +21,6 @@ describe('tracked entity banner with more contrast', () => {
 
         const section = getComputedStyle(page.getByRole('region').element())
         expect(section.backgroundColor).toBe(roleColour('muted'))
-        expect(section.borderTopColor).toBe(roleColour('border-strong'))
         for (const tag of ['Inactive', 'Possible duplicate']) {
             const style = getComputedStyle(page.getByText(tag).element())
             expect(style.color).toBe(roleColour('foreground'))

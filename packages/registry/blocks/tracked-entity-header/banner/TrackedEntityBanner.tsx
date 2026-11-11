@@ -145,7 +145,8 @@ export function TrackedEntityBanner({
             data-tone={inactive ? 'inactive' : 'default'}
             className={cn(
                 '@container outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
-                'rounded-dhis2-md border border-dhis2-border-strong bg-dhis2-card px-3.5 py-2.5 text-dhis2-card-foreground',
+                // A surface without an edge: the host adds a border, a card or a bottom rule.
+                'bg-dhis2-card px-3.5 py-2.5 text-dhis2-card-foreground',
                 inactive && 'bg-dhis2-muted',
                 className
             )}

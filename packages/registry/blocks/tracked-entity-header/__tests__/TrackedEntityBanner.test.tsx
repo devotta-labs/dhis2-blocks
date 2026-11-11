@@ -422,6 +422,24 @@ describe('TrackedEntityBanner', () => {
         )
     })
 
+    it('draws no edge of its own', async () => {
+        await renderParts(<TrackedEntityBanner />)
+        await expect.element(page.getByText('Linda')).toBeVisible()
+        expect(getComputedStyle(banner()).borderTopWidth).toBe('0px')
+        expect(getComputedStyle(banner()).borderTopLeftRadius).toBe('0px')
+    })
+
+    it('takes the host’s edge, corners and padding', async () => {
+        await renderParts(
+            <TrackedEntityBanner className="rounded-dhis2-md border px-6" />
+        )
+        await expect.element(page.getByText('Linda')).toBeVisible()
+        const style = getComputedStyle(banner())
+        expect(style.borderTopWidth).toBe('1px')
+        expect(style.borderTopLeftRadius).not.toBe('0px')
+        expect(style.paddingInlineStart).toBe('24px')
+    })
+
     it('a new trackedEntity never renders the old name', async () => {
         const server = createFakeServer({ deferFor: 'te2' })
         const Wrapper = createWrapper()

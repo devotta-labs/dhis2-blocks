@@ -30,6 +30,8 @@ const UNIQUE_ID = 'lZGmxYbs97q'
 const ALLERGIES = 'gu1fqsmoU8r'
 /** A number from the person's visits. */
 const HAEMOGLOBIN = 'vANAXwtLwcT'
+/** The banner draws no edge; here each one is a card. */
+const CARD = 'rounded-dhis2-md border border-dhis2-border-strong'
 
 /**
  * The default banner, then one composed from parts. The facts line reads the
@@ -43,14 +45,14 @@ export default function PersonBanner() {
                     trackedEntity={PERSON}
                     program={PROGRAM}
                 >
-                    <TrackedEntityBanner />
+                    <TrackedEntityBanner className={CARD} />
                 </TrackedEntityHeaderProvider>
                 {/* One provider per banner: the details skip what any banner under a provider shows. */}
                 <TrackedEntityHeaderProvider
                     trackedEntity={PERSON}
                     program={PROGRAM}
                 >
-                    <TrackedEntityBanner>
+                    <TrackedEntityBanner className={CARD}>
                         <TrackedEntityName
                             attributes={[FIRST_NAME, LAST_NAME]}
                         />

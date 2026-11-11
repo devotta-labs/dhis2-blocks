@@ -40,6 +40,8 @@ export interface LabSettings {
     /** The default banner, or the parts composed by hand. */
     arrangement: 'default' | 'composed'
     width: 'narrow' | 'wide'
+    /** The host's edge round the banner: a card, or a bar across the top of a page. */
+    frame: 'card' | 'page'
     /** The host's buttons: one, or several. */
     actions: 'one' | 'several'
     /** Line one as composed, or with more of the attributes placed on it. */

@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     calendar: 'gregorian',
     arrangement: 'composed',
     width: 'wide',
+    frame: 'card',
     rtl: false,
     actions: 'one',
     lineOne: 'usual',
@@ -71,6 +72,8 @@ export const PRESETS: readonly Preset[] = [
         rtl: true,
         width: 'narrow',
     }),
+    preset('Layout', 'Top of page', { frame: 'page' }),
+    preset('Layout', 'Top of page, narrow', { frame: 'page', width: 'narrow' }),
     preset('Layout', 'Several actions', { actions: 'several' }),
     preset('Layout', 'Several actions, narrow', {
         actions: 'several',

@@ -80,6 +80,8 @@ export interface SpreadsheetContext {
     fileNames: StoreApi<{ names: ReadonlyMap<string, string> }>
 }
 
+export type SpreadsheetStableContext = Omit<SpreadsheetContext, 'tables'>
+
 /** What cells that show no names read instead: it never changes, so it renders nothing again. */
 export const NO_NAMES: SpreadsheetContext['orgUnitNames'] = createStore(() => ({
     names: new Map(),
@@ -109,8 +111,20 @@ export const SpreadsheetReactContext = createContext<
     SpreadsheetContext | undefined
 >(undefined)
 
+export const SpreadsheetStableReactContext = createContext<
+    SpreadsheetStableContext | undefined
+>(undefined)
+
 export const useSpreadsheetContext = (): SpreadsheetContext => {
     const context = useContext(SpreadsheetReactContext)
+    if (context === undefined) {
+        throw new Error('Cells must be used inside Spreadsheet.')
+    }
+    return context
+}
+
+export const useSpreadsheetStableContext = (): SpreadsheetStableContext => {
+    const context = useContext(SpreadsheetStableReactContext)
     if (context === undefined) {
         throw new Error('Cells must be used inside Spreadsheet.')
     }
@@ -123,7 +137,7 @@ export const useViewOf = (
     cell: CellState,
     effects: CellAnnotations
 ): CellView => {
-    const { store } = useSpreadsheetContext()
+    const { store } = useSpreadsheetStableContext()
     // The store's gate reads the cell's lock and hiding when it commits, so a rule that closed the cell while its text
     // was typed wins.
     const commit = useCallback(
@@ -138,7 +152,7 @@ export const useViewOf = (
 
 /** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
 export const useCellView = (key: CellKey): CellView => {
-    const { store, effects } = useSpreadsheetContext()
+    const { store, effects } = useSpreadsheetStableContext()
     const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
     const cellEffects = useStore(
         effects,
@@ -152,7 +166,7 @@ export const useCellView = (key: CellKey): CellView => {
  * and a new array only when one of its cells changed.
  */
 export const useRowCells = (keys: ReadonlyArray<CellKey>) => {
-    const { store, effects } = useSpreadsheetContext()
+    const { store, effects } = useSpreadsheetStableContext()
     const selectStates = useShallow((state: CellStoreState) =>
         keys.map((key) => state.cells[key] ?? EMPTY_CELL)
     )

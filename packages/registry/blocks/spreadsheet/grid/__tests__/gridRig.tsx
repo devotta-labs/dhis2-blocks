@@ -2,7 +2,7 @@ import { announce as sharedAnnounce } from '@/components/dhis2/ui/announcer'
 import type { Politeness } from '@/components/dhis2/ui/announcer'
 import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ProfilerOnRenderCallback, ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
@@ -28,6 +28,7 @@ import type { SpreadsheetContext } from '../../provider/context'
 import { Spreadsheet } from '../../provider/Spreadsheet'
 import { createCellStore } from '../../store/store'
 import { SpreadsheetGrid } from '../SpreadsheetGrid'
+import { TableRowProfilerContext } from '../TableBody'
 
 const GREGORIAN = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 /** What the grids of this rig prefix their DOM ids with. */
@@ -119,6 +120,8 @@ interface MountOptions {
     rowNotes?: Array<[string, string[]]>
     /** What each row header shows beside its label. */
     RowBadge?: SpreadsheetContext['RowBadge']
+    /** Profiles rows in React tests. */
+    onRowRender?: ProfilerOnRenderCallback
     /** What follows the tables. */
     GridFooter?: SpreadsheetContext['GridFooter']
     /** The provider's cell key; `cellKey(row.id, column.id)` when absent. */
@@ -155,6 +158,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         rowKeysOf,
         fieldIdOf,
         RowBadge,
+        onRowRender,
         GridFooter,
         bulkColumn,
         confirmBulk,
@@ -276,7 +280,9 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
                     {above === undefined ? null : (
                         <div style={{ height: above }} />
                     )}
-                    <SpreadsheetGrid />
+                    <TableRowProfilerContext.Provider value={onRowRender}>
+                        <SpreadsheetGrid />
+                    </TableRowProfilerContext.Provider>
                     <button type="button">After</button>
                 </CountedTables>
             </Spreadsheet>

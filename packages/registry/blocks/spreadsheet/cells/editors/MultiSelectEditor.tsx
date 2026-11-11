@@ -6,7 +6,7 @@ import { Button } from '@/components/dhis2/ui/button'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
-import { useSpreadsheetContext } from '../../provider/context'
+import { useSpreadsheetStableContext } from '../../provider/context'
 import { matchCount, useAnnounced } from '../OptionCell'
 import type { PopupEditorProps } from '../popupEditors'
 import { EditorButtons } from './EditorButtons'
@@ -31,7 +31,7 @@ export const MultiSelectEditor = ({
     report,
     cancel,
 }: PopupEditorProps) => {
-    const { announce } = useSpreadsheetContext()
+    const { announce } = useSpreadsheetStableContext()
     const options = field.options ?? NO_OPTIONS
     const [stored] = useState<ReadonlySet<string>>(
         () => new Set(value?.split(','))

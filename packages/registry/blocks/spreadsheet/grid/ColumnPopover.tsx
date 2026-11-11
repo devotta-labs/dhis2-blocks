@@ -16,7 +16,9 @@ import { cellKey } from '../model/types'
 import type { GridColumn, GridTable } from '../model/types'
 import {
     SpreadsheetReactContext,
+    SpreadsheetStableReactContext,
     useSpreadsheetContext,
+    useSpreadsheetStableContext,
 } from '../provider/context'
 import { createCellStore } from '../store/store'
 import { openKeyOf, skippedClause } from './bulk'
@@ -79,6 +81,7 @@ const ColumnValue = ({
     onCancel(): void
 }) => {
     const context = useSpreadsheetContext()
+    const stableContext = useSpreadsheetStableContext()
     const { store, keyOf, idScope, settings, announce } = context
     const key = cellKey('bulk', column.id)
     // The column's one field, from an open cell; `takesColumnActions` makes sure it has one.
@@ -108,6 +111,15 @@ const ColumnValue = ({
             idScope: scope,
         }),
         [context, scratch, scope]
+    )
+    const stableScoped = useMemo(
+        () => ({
+            ...stableContext,
+            store: scratch,
+            effects: NO_ANNOTATIONS,
+            idScope: scope,
+        }),
+        [stableContext, scratch, scope]
     )
     // Text typed but not yet saved, which Apply saves first.
     const [typing, setTyping] = useState(false)
@@ -148,16 +160,18 @@ const ColumnValue = ({
                 onInput={() => setTyping(true)}
                 onBlur={() => setTyping(false)}
             >
-                <SpreadsheetReactContext.Provider value={scoped}>
-                    <Cell
-                        cellKey={key}
-                        field={field}
-                        labelledBy={
-                            headersOf(idScope, table, column).labelledBy
-                        }
-                        move={stay}
-                    />
-                </SpreadsheetReactContext.Provider>
+                <SpreadsheetStableReactContext.Provider value={stableScoped}>
+                    <SpreadsheetReactContext.Provider value={scoped}>
+                        <Cell
+                            cellKey={key}
+                            field={field}
+                            labelledBy={
+                                headersOf(idScope, table, column).labelledBy
+                            }
+                            move={stay}
+                        />
+                    </SpreadsheetReactContext.Provider>
+                </SpreadsheetStableReactContext.Provider>
             </div>
             <Label className="cursor-pointer">
                 <Checkbox

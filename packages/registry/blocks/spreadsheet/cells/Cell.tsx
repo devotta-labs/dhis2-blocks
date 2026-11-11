@@ -6,7 +6,7 @@ import type { CellAnnotations } from '../model/annotations'
 import type { CellState } from '../model/types'
 import {
     useCellView,
-    useSpreadsheetContext,
+    useSpreadsheetStableContext,
     useViewOf,
 } from '../provider/context'
 import type { CellView } from '../provider/context'
@@ -52,7 +52,8 @@ export const replacementFor = (
 // One control whatever a rule does to the cell, so focus stays where it is.
 const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     const { hiddenBy, readOnly } = view.effects
-    const { overrides, idScope, settings, store } = useSpreadsheetContext()
+    const { overrides, idScope, settings, store } =
+        useSpreadsheetStableContext()
     const kind = cellKind(props.field)
     const replacement = replacementFor(
         overrides,

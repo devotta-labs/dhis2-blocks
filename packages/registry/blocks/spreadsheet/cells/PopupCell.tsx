@@ -8,7 +8,7 @@ import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
-import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
+import { NO_NAMES, useSpreadsheetStableContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { storedFileUrl } from './editors/FileEditor'
@@ -91,7 +91,7 @@ export const PopupCell = memo(function PopupCell({
     aria,
 }: ControlProps) {
     const { store, settings, announce, fileNames, fileUrl } =
-        useSpreadsheetContext()
+        useSpreadsheetStableContext()
     const { view } = useCellContext()
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined

@@ -6,7 +6,7 @@ import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
 import { formatCount } from '../cells/OptionCell'
 import type { AnnotationsState } from '../model/annotations'
 import type { GridRow } from '../model/types'
-import { useSpreadsheetContext } from '../provider/context'
+import { useSpreadsheetStableContext } from '../provider/context'
 
 const NO_NOTES: ReadonlyArray<string> = []
 
@@ -15,7 +15,7 @@ const NO_NOTES: ReadonlyArray<string> = []
  * events, once, as a program's rule says the same of every event it runs on.
  */
 export const useRowNotes = (row: GridRow) => {
-    const { effects, rowKeysOf } = useSpreadsheetContext()
+    const { effects, rowKeysOf } = useSpreadsheetStableContext()
     const selectNotes = useShallow((state: AnnotationsState) => [
         ...new Set(
             rowKeysOf(row).flatMap((id) => state.rowNotes.get(id) ?? NO_NOTES)

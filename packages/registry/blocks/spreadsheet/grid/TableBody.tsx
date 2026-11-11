@@ -1,8 +1,16 @@
 import { defaultRangeExtractor, useVirtualizer } from '@tanstack/react-virtual'
 import type { Range } from '@tanstack/react-virtual'
-import { useCallback, useMemo, useState } from 'react'
-import type { RefObject, SyntheticEvent } from 'react'
-import type { GridTable } from '../model/types'
+import {
+    Profiler,
+    createContext,
+    useCallback,
+    useContext,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
+import type { ProfilerOnRenderCallback, RefObject, SyntheticEvent } from 'react'
+import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { BulkTarget } from './BulkMenu'
 import type { NavKey } from './navigation'
 import type { NotesTarget } from './RowNotes'
@@ -13,10 +21,15 @@ const ROW_HEIGHT = 36
 // Rows drawn beyond each edge of the view, so a short scroll shows rows at once.
 const OVERSCAN = 5
 
+export const TableRowProfilerContext = createContext<
+    ProfilerOnRenderCallback | undefined
+>(undefined)
+
 interface TableBodyProps {
     idScope: string
     table: GridTable
     labels: ReadonlyArray<string>
+    keyOf(row: GridRow, column: GridColumn): CellKey
     move(key: NavKey): void
     openMenu(target: BulkTarget): void
     openNotes(target: NotesTarget): void
@@ -44,6 +57,7 @@ export const TableBody = ({
     idScope,
     table,
     labels,
+    keyOf,
     move,
     openMenu,
     openNotes,
@@ -51,6 +65,9 @@ export const TableBody = ({
     headerHeight,
     reveal,
 }: TableBodyProps) => {
+    const profileRow = useContext(TableRowProfilerContext)
+    const latestTable = useRef(table)
+    latestTable.current = table
     const { rows } = table
     const count = rows.length
     // By id, so rows added above it never move it.
@@ -102,26 +119,40 @@ export const TableBody = ({
         const row = rows[item.index]
         const gap = item.start - end
         end = item.end
-        return row === undefined
-            ? []
-            : [
-                  gap > 0 ? (
-                      <Gap key={`gap-${row.id}`} height={gap} span={span} />
-                  ) : null,
-                  <TableRow
-                      key={row.id}
-                      idScope={idScope}
-                      table={table}
-                      row={row}
-                      index={item.index}
-                      rowIndex={table.headerRows.length + item.index + 1}
-                      measure={virtualizer.measureElement}
-                      labels={labels}
-                      move={move}
-                      openMenu={openMenu}
-                      openNotes={openNotes}
-                  />,
-              ]
+        if (row === undefined) {
+            return []
+        }
+        const keys = table.columns.map((column) => keyOf(row, column))
+        const tableRow = (
+            <TableRow
+                key={row.id}
+                idScope={idScope}
+                table={table}
+                tableRef={latestTable}
+                row={row}
+                keys={keys}
+                closedReasons={keys.map((key) => table.closed.get(key))}
+                index={item.index}
+                rowIndex={table.headerRows.length + item.index + 1}
+                measure={virtualizer.measureElement}
+                labels={labels}
+                move={move}
+                openMenu={openMenu}
+                openNotes={openNotes}
+            />
+        )
+        return [
+            gap > 0 ? (
+                <Gap key={`gap-${row.id}`} height={gap} span={span} />
+            ) : null,
+            profileRow === undefined ? (
+                tableRow
+            ) : (
+                <Profiler key={row.id} id={row.id} onRender={profileRow}>
+                    {tableRow}
+                </Profiler>
+            ),
+        ]
     })
     const after = virtualizer.getTotalSize() - end
     return (

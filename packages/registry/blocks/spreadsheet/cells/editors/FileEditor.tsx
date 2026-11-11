@@ -5,7 +5,10 @@ import { z } from 'zod'
 import { useStore } from 'zustand'
 import { Button, buttonVariants } from '@/components/dhis2/ui/button'
 import type { CellKey, CellState } from '../../model/types'
-import { useCellView, useSpreadsheetContext } from '../../provider/context'
+import {
+    useCellView,
+    useSpreadsheetStableContext,
+} from '../../provider/context'
 import type { SpreadsheetContext } from '../../provider/context'
 import { useAnnounced } from '../OptionCell'
 import type { PopupEditorProps } from '../popupEditors'
@@ -81,7 +84,7 @@ export const FileEditor = ({
     cancel,
 }: PopupEditorProps) => {
     const { announce, effects, fileNames, offline, fileUrl } =
-        useSpreadsheetContext()
+        useSpreadsheetStableContext()
     const engine = useDataEngine()
     const image = field.valueType === 'IMAGE'
     const view = useCellView(cellKey)

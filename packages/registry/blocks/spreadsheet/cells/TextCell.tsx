@@ -6,7 +6,7 @@ import {
     typedText,
 } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useSpreadsheetContext } from '../provider/context'
+import { useSpreadsheetStableContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
@@ -32,7 +32,7 @@ export const TextCell = memo(function TextCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings } = useSpreadsheetContext()
+    const { store, settings } = useSpreadsheetStableContext()
     const { view } = useCellContext()
     // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)

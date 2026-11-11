@@ -1,8 +1,8 @@
 import { memo } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { RowCell } from '../cells/Cell'
-import type { GridRow, GridTable } from '../model/types'
-import { useSpreadsheetContext, useRowCells } from '../provider/context'
+import type { CellKey, GridRow, GridTable } from '../model/types'
+import { useRowCells, useSpreadsheetStableContext } from '../provider/context'
 import { RowActions } from './BulkMenu'
 import type { BulkTarget } from './BulkMenu'
 import { rowHeaderDomId } from './headers'
@@ -19,7 +19,10 @@ export const LAST_CLASS = 'border-e-0'
 interface TableRowProps {
     idScope: string
     table: GridTable
+    tableRef: { current: GridTable }
     row: GridRow
+    keys: ReadonlyArray<CellKey>
+    closedReasons: ReadonlyArray<string | undefined>
     /** The row's place among the table's rows, from 0. */
     index: number
     /** The row's place in the whole table, header rows included, from 1, for screen readers. */
@@ -33,11 +36,34 @@ interface TableRowProps {
     openNotes(target: NotesTarget): void
 }
 
+const sameValues = <T,>(left: ReadonlyArray<T>, right: ReadonlyArray<T>) =>
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+
+const sameRow = (before: TableRowProps, after: TableRowProps) =>
+    before.idScope === after.idScope &&
+    before.table.id === after.table.id &&
+    before.table.columns === after.table.columns &&
+    before.tableRef === after.tableRef &&
+    before.row === after.row &&
+    sameValues(before.keys, after.keys) &&
+    sameValues(before.closedReasons, after.closedReasons) &&
+    before.index === after.index &&
+    before.rowIndex === after.rowIndex &&
+    before.measure === after.measure &&
+    before.labels === after.labels &&
+    before.move === after.move &&
+    before.openMenu === after.openMenu &&
+    before.openNotes === after.openNotes
+
 /** One row of a table: it reads its cells' states and effects, once for the row, and hands each cell its own. */
 export const TableRow = memo(function TableRow({
     idScope,
     table,
+    tableRef,
     row,
+    keys,
+    closedReasons,
     index,
     rowIndex,
     measure,
@@ -46,8 +72,7 @@ export const TableRow = memo(function TableRow({
     openMenu,
     openNotes,
 }: TableRowProps) {
-    const { keyOf, store } = useSpreadsheetContext()
-    const keys = table.columns.map((column) => keyOf(row, column))
+    const { store } = useSpreadsheetStableContext()
     const { states, effects } = useRowCells(keys)
     const rowHeader = rowHeaderDomId(idScope, table.id, row.id)
     return (
@@ -71,7 +96,7 @@ export const TableRow = memo(function TableRow({
                         field={fieldAt(store.getState(), keys[c])}
                         labelledBy={`${labels[c]} ${rowHeader}`}
                         move={move}
-                        closedReason={table.closed.get(keys[c])}
+                        closedReason={closedReasons[c]}
                         cell={states[c]}
                         effects={effects[c]}
                     />
@@ -79,8 +104,10 @@ export const TableRow = memo(function TableRow({
             ))}
             <RowActions
                 rowHeader={rowHeader}
-                onOpen={(anchor) => openMenu({ anchor, table, row })}
+                onOpen={(anchor) =>
+                    openMenu({ anchor, table: tableRef.current, row })
+                }
             />
         </tr>
     )
-})
+}, sameRow)

@@ -330,6 +330,21 @@ test('a table’s add button says what its addRow says', async () => {
     )
 })
 
+test('adding a row renders only the new row', async () => {
+    const rendered: string[] = []
+    await mount([makeTable({ rows: ['one', 'two', 'three'] })], {
+        newRowTables: ['t1'],
+        onRowRender: (id, _phase, actualDuration) => {
+            if (actualDuration > 0) {
+                rendered.push(id)
+            }
+        },
+    })
+    rendered.length = 0
+    await page.getByRole('button', { name: 'Add event' }).click()
+    await expect.poll(() => rendered).toEqual(['t1r3'])
+})
+
 test('RowBadge and GridFooter render where they are slotted', async () => {
     await mount(
         [

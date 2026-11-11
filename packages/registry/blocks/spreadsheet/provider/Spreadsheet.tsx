@@ -10,8 +10,16 @@ import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import type { CellStoreState } from '../store/store'
-import { SpreadsheetReactContext } from './context'
-import type { Announcer, ReadonlyStore, SpreadsheetContext } from './context'
+import {
+    SpreadsheetReactContext,
+    SpreadsheetStableReactContext,
+} from './context'
+import type {
+    Announcer,
+    ReadonlyStore,
+    SpreadsheetContext,
+    SpreadsheetStableContext,
+} from './context'
 
 type Names = SpreadsheetContext['orgUnitNames']
 
@@ -102,8 +110,8 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
         },
         [scope, own]
     )
-    const context = useMemo(
-        (): SpreadsheetContext => ({
+    const stableContext = useMemo(
+        (): SpreadsheetStableContext => ({
             store: cells,
             effects: annotations,
             idScope: scope,
@@ -111,7 +119,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             announce,
             focusCell,
             focusing: own.focusing,
-            tables,
             keyOf,
             rowKeysOf,
             addRow,
@@ -135,7 +142,6 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             settings,
             announce,
             focusCell,
-            tables,
             keyOf,
             rowKeysOf,
             addRow,
@@ -152,9 +158,15 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             own,
         ]
     )
+    const context = useMemo(
+        (): SpreadsheetContext => ({ ...stableContext, tables }),
+        [stableContext, tables]
+    )
     return (
-        <SpreadsheetReactContext.Provider value={context}>
-            {children}
-        </SpreadsheetReactContext.Provider>
+        <SpreadsheetStableReactContext.Provider value={stableContext}>
+            <SpreadsheetReactContext.Provider value={context}>
+                {children}
+            </SpreadsheetReactContext.Provider>
+        </SpreadsheetStableReactContext.Provider>
     )
 }

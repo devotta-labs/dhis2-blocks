@@ -77,7 +77,7 @@ const TableView = memo(function TableView({
     const head = useRef<HTMLTableSectionElement>(null)
     const labels = useMemo(
         () => columnHeaderIds(idScope, table),
-        [idScope, table]
+        [idScope, table.id, table.columns, table.headerRows]
     )
     // The column each leaf heading names, for the columns that take column actions.
     const bulkLeaves = useMemo(
@@ -220,6 +220,7 @@ const TableView = memo(function TableView({
                         idScope={idScope}
                         table={table}
                         labels={labels}
+                        keyOf={context.keyOf}
                         move={move}
                         openMenu={openMenu}
                         openNotes={openNotes}

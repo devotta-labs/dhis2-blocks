@@ -9,7 +9,7 @@ import {
 } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
-import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
+import { NO_NAMES, useSpreadsheetStableContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
@@ -64,7 +64,7 @@ const searchNews = (found: Found, none: string, count: string) => {
 
 /** Says `text` in the grid's live region when it changes, not on every keystroke. */
 export const useAnnounced = (text: string) => {
-    const { announce } = useSpreadsheetContext()
+    const { announce } = useSpreadsheetStableContext()
     useEffect(() => {
         if (text !== '') {
             announce(text)
@@ -93,7 +93,7 @@ export const OptionCell = memo(function OptionCell({
     aria,
     quickKeys,
 }: ControlProps & { quickKeys?: ReadonlyMap<string, string> }) {
-    const { store, settings, orgUnitNames } = useSpreadsheetContext()
+    const { store, settings, orgUnitNames } = useSpreadsheetStableContext()
     const { view } = useCellContext()
     const server = searchFor(field.valueType)
     const searching = server !== undefined

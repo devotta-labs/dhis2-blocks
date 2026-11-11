@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { AnnotationsState, CellMessage, Tone } from '../model/annotations'
 import type { CellKey, GridRow } from '../model/types'
-import { useSpreadsheetContext } from '../provider/context'
+import { useSpreadsheetStableContext } from '../provider/context'
 import type { CellStoreState } from '../store/store'
 import { nameFrom, rowHeaderDomId } from './headers'
 import { NotesMarker, notesDomId, useRowNotes } from './RowNotes'
@@ -27,7 +27,7 @@ const MESSAGE_TONES = {
 
 /** A row's name as it changes: its label cells' values (`labelFrom`), each as its field shows it, else its label. */
 const CellsLabel = ({ row }: { row: GridRow }) => {
-    const { store, settings } = useSpreadsheetContext()
+    const { store, settings } = useSpreadsheetStableContext()
     const labelFrom = row.labelFrom ?? NO_KEYS
     const selectNamed = useShallow((state: CellStoreState) =>
         labelFrom.map((key) => state.cells[key]?.value)
@@ -61,7 +61,7 @@ export const RowHeader = memo(function RowHeader({
         rowKeysOf,
         RowLabel = CellsLabel,
         RowBadge,
-    } = useSpreadsheetContext()
+    } = useSpreadsheetStableContext()
     const rowHeader = rowHeaderDomId(idScope, tableId, row.id)
     const notes = useRowNotes(row)
     // Every key the row's messages are under, as for its notes.

@@ -15,7 +15,8 @@ import type { TrackerEffectsState } from '../logic/effects'
 import type { FormTables } from './openForm'
 import { formEffects } from './formRows'
 
-// Rules run for the rows the grid draws and the rows people change; the grid here is a store the test writes.
+// Rules run for the rows the grid draws and the rows people change, then for the others when idle; the grid here is a
+// store the test writes.
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -149,31 +150,39 @@ const connect = (
     }
 }
 
-test('rules run for the rows the grid draws; another row’s run once the grid draws it, when idle', () => {
+test('rules run for the rows the grid draws, then for the others when idle', () => {
     const idle = holdIdle()
-    const { ran, hidden, draw, stop } = connect(['r1', 'r2'])
-    idle.run()
+    const { ran, hidden, stop } = connect(['r1', 'r2'])
     expect(ran).toEqual(['r1', 'r2'])
     expect(hidden('r2')).toBe(true)
     expect(hidden('r3')).toBe(false)
 
-    draw(['r2', 'r3', 'r4'])
-    // Not in the task that drew them: scrolling is not held up.
-    expect(ran).toEqual(['r1', 'r2'])
     idle.run()
-    expect(ran).toEqual(['r1', 'r2', 'r3', 'r4'])
-    expect(hidden('r4')).toBe(true)
-
-    // A row drawn again does not run again.
-    draw(['r1', 'r2'])
-    draw(['r3', 'r4'])
-    idle.run()
-    expect(ran).toEqual(['r1', 'r2', 'r3', 'r4'])
-    expect(hidden('r5')).toBe(false)
+    expect(ran).toEqual(['r1', 'r2', 'r3', 'r4', 'r5'])
+    expect(hidden('r5')).toBe(true)
+    // Every row has run: none runs again as the grid draws it.
     stop()
 })
 
-test('a row scrolled away before its turn waits until the grid draws it again', () => {
+test('a row the grid comes to draw goes before the rows still out of sight, and does not run again', () => {
+    const idle = holdIdle()
+    const { ran, draw, stop } = connect(['r1'], { slow: true })
+    expect(ran).toEqual(['r1'])
+    // A slice of idle time reaches one slow row.
+    idle.next()
+    expect(ran).toEqual(['r1', 'r2'])
+    draw(['r5'])
+    // Not in the task that drew it: scrolling is not held up.
+    expect(ran).toEqual(['r1', 'r2'])
+    idle.next()
+    expect(ran).toEqual(['r1', 'r2', 'r5'])
+    draw(['r1', 'r2'])
+    idle.run()
+    expect(ran).toEqual(['r1', 'r2', 'r5', 'r3', 'r4'])
+    stop()
+})
+
+test('a row scrolled away before its turn runs after the rows the grid draws now', () => {
     const idle = holdIdle()
     const { ran, draw, stop } = connect(['r1', 'r2', 'r3', 'r4'], {
         slow: true,
@@ -181,81 +190,80 @@ test('a row scrolled away before its turn waits until the grid draws it again', 
     // The first slice, about 100 ms, reached two rows.
     expect(ran).toEqual(['r1', 'r2'])
     draw(['r4', 'r5'])
-    idle.run()
+    idle.next()
+    idle.next()
     expect(ran).toEqual(['r1', 'r2', 'r4', 'r5'])
-    draw(['r3'])
     idle.run()
     expect(ran).toEqual(['r1', 'r2', 'r4', 'r5', 'r3'])
     stop()
 })
 
-test('a row changed before the grid opened runs without being drawn: its rules’ values are saved with it', () => {
+test('a row changed before the grid opened runs with the rows it draws: its rules’ values are saved with it', () => {
     const idle = holdIdle()
     const { ran, stop } = connect(['r1'], {
         before: (opened) =>
             opened.getState().commit(cellKey('r4', 'c3'), 'changed'),
     })
-    idle.run()
     expect(ran).toEqual(['r1', 'r4'])
+    idle.run()
+    expect(ran).toEqual(['r1', 'r4', 'r2', 'r3', 'r5'])
     stop()
 })
 
-test('a change runs its row’s rules, drawn or not', async () => {
-    const idle = holdIdle()
+test('a change runs its row’s rules without waiting for idle time, drawn or not', async () => {
+    holdIdle()
     const { ran, store, hidden, stop } = connect(['r1'])
-    idle.run()
     store.getState().commit(cellKey('r5', 'c3'), 'changed')
     await expect.poll(() => ran).toEqual(['r1', 'r5'])
     expect(hidden('r5')).toBe(true)
     stop()
 })
 
-test('completing a row the grid never drew runs its rules first', () => {
+test('completing a row the rules have not reached runs them first, and once', () => {
     const idle = holdIdle()
     const { ran, beforeComplete, hidden, stop } = connect(['r1'])
-    idle.run()
     expect(hidden('r5')).toBe(false)
     expect([...beforeComplete].map((prepare) => prepare('r5'))).toEqual([
         undefined,
     ])
     expect(ran).toEqual(['r1', 'r5'])
     expect(hidden('r5')).toBe(true)
+    idle.run()
+    expect(ran).toEqual(['r1', 'r5', 'r2', 'r3', 'r4'])
     stop()
 })
 
-test('a row added runs before the next paint once the grid draws it; one it does not draw waits', async () => {
+test('a row added runs before the next paint once the grid draws it; one it does not draw waits for idle time', async () => {
     const idle = holdIdle()
     const { ran, tables, draw, stop } = connect(['r1', 'r5'])
     idle.run()
-    expect(ran).toEqual(['r1', 'r5'])
+    expect(ran).toEqual(['r1', 'r5', 'r2', 'r3', 'r4'])
 
-    const more = visitForm({ rows: SIX_ROWS })
-    // The records there keep their identity: only r6 is new.
+    const more = visitForm({ rows: [...SIX_ROWS, visit('r7', 'r7')] })
+    // The records there keep their identity: only r6 and r7 are new.
     tables.setState(({ records }) => ({
         tables: more.tables,
         records: new Map([...more.records, ...records]),
     }))
     await Promise.resolve()
-    expect(ran).toEqual(['r1', 'r5'])
+    expect(ran).toEqual(['r1', 'r5', 'r2', 'r3', 'r4'])
     draw(['r1', 'r5', 'r6'])
     // No idle time, no paint: a microtask.
     await Promise.resolve()
-    expect(ran).toEqual(['r1', 'r5', 'r6'])
+    expect(ran).toEqual(['r1', 'r5', 'r2', 'r3', 'r4', 'r6'])
+    idle.run()
+    expect(ran).toEqual(['r1', 'r5', 'r2', 'r3', 'r4', 'r6', 'r7'])
     stop()
 })
 
-test('while no grid draws the form, every row runs', () => {
-    const idle = holdIdle()
+test('while no grid draws the form, no row waits for idle time', () => {
+    holdIdle()
     const { ran, undraw, stop, reconnect } = connect(['r1'])
-    idle.run()
     expect(ran).toEqual(['r1'])
-    // A table's rows waiting for a grid keep waiting when it goes, as when it draws its table anew.
     undraw()
-    idle.run()
-    expect(ran).toEqual(['r1'])
     stop()
     const again = reconnect()
-    idle.run()
+    // The rows not evaluated yet first.
     expect(ran).toEqual(['r1', 'r2', 'r3', 'r4', 'r5', 'r1'])
     again()
 })

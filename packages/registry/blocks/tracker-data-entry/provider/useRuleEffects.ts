@@ -19,7 +19,7 @@ interface RuleEffectsOptions {
     announce: Announcer['announce']
     /** Starts the form's DOM ids. */
     idScope: string
-    /** The rows the grid draws: rules run for these, and for the rows people change. Every row's without it. */
+    /** The rows the grid draws: rules run for these, and for the rows people change, before the others. */
     drawn?: Drawn
 }
 

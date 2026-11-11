@@ -83,8 +83,8 @@ interface ConnectOptions {
 
 /**
  * Runs the rules over the rows the grid draws and the touched ones: the visible ones first for a slice of time, the
- * rest when idle, a row not evaluated yet once the grid draws it, then again for what each change can affect. A row
- * never drawn, changed or completed is never evaluated. Rule effects are merged with the form's own; in touched rows
+ * rest when idle, a row not evaluated yet once the grid draws it, then again for what each change can affect. The
+ * rows the grid does not draw run last, when idle. Rule effects are merged with the form's own; in touched rows
  * the values rules assign or clear are committed as the rule's. Returns how to stop.
  */
 export const connectRules = ({
@@ -108,7 +108,7 @@ export const connectRules = ({
             touched.add(recordIdOf(key))
         }
     }
-    // A row neither evaluated nor touched waits for the grid to draw it: its rules' values would not be saved.
+    // A row neither evaluated nor touched waits behind the rows the grid draws: its rules' values would not be saved.
     const lazy = ruleWindow(
         drawn,
         () => tables.getState().tables,
@@ -545,6 +545,7 @@ export const connectRules = ({
                 ),
             ]
             rerunNow(lazy.park(rowIds, (id) => !was.has(id)))
+            queue.schedule()
         }),
     ]
     document.addEventListener('focusout', onFocusOut)

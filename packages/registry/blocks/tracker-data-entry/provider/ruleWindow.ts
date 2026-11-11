@@ -51,8 +51,9 @@ const drawnRecordsOf = (drawn: Drawn | undefined) => {
 }
 
 /**
- * The records whose rules wait for the grid to draw their row: those outside the rows it draws now that `held` does
- * not keep, as the rules ran for them before or a person changed them. While no grid draws the form, no more wait.
+ * The records whose rules wait behind those of the rows the grid draws: those outside the rows it draws now that
+ * `held` does not keep, as the rules ran for them before or a person changed them. They run once the grid draws their
+ * row, or when nothing else is left to run. While no grid draws the form, no more wait.
  */
 export const ruleWindow = (
     drawn: Drawn | undefined,
@@ -94,6 +95,9 @@ export const ruleWindow = (
         evaluated(recordId: string) {
             waiting.delete(recordId)
         },
+        /** The records still waiting, in the order they began to. */
+        left: (): ReadonlyArray<string> => [...waiting],
+        isEmpty: () => waiting.size === 0,
         /** The waiting records the grid draws now, which wait no more: `now` those just added, `idle` the others. */
         entered() {
             const window = drawnNow(tables())
@@ -120,9 +124,9 @@ interface QueueOptions {
 
 /**
  * The records whose rules are yet to run, in slices of time: the visible rows' first, one slice after another, then
- * the rest when idle, in their rows' order. Rows evaluated before a reconnection show their effects meanwhile: they
- * run again after the rows not evaluated yet, in view and off screen alike, as the people the rules have now can
- * change them.
+ * the rest when idle, in their rows' order: those the grid draws, then the others, so a row scrolled to never waits
+ * behind one out of sight. Rows evaluated before a reconnection show their effects meanwhile: they run again after
+ * the rows not evaluated yet, in view and off screen alike, as the people the rules have now can change them.
  */
 export const ruleQueue = ({
     tables,
@@ -151,7 +155,7 @@ export const ruleQueue = ({
     const start = performance.now()
     let inView = true
     const slice = (ms: number) => {
-        // A row the grid does not draw, or no longer, waits until it does.
+        // A row the grid does not draw, or no longer, waits until it does, or until the drawn ones are done.
         rest = run(lazy.park(rest), performance.now() + ms)
         // The rows in view are done, however many slices they took.
         if (inView && !first.has(rest[0])) {
@@ -159,19 +163,31 @@ export const ruleQueue = ({
             performance.measure('data-entry:rules-visible', { start })
         }
     }
+    // The rows out of sight, once no drawn row is left: every row's messages are known soon after the form opens.
+    const sliceOfWaiting = (ms: number) => {
+        const ids = lazy.left()
+        const left = run(ids, performance.now() + ms)
+        // One the rules did not answer for had its turn too.
+        ids.slice(0, ids.length - left.length).forEach(lazy.evaluated)
+    }
     let cancel: (() => void) | undefined
     // Rows still in view take short slices one after another; the rest wait for idle time.
     const schedule = () => {
-        if (!stopped && rest.length > 0) {
+        if (!stopped && (rest.length > 0 || !lazy.isEmpty())) {
             cancel ??= (inView ? soon : whenIdle)(nextSlice)
         }
     }
     const nextSlice = () => {
         cancel = undefined
-        if (!stopped && rest.length > 0) {
-            slice(IDLE_SLICE_MS)
-            schedule()
+        if (stopped) {
+            return
         }
+        if (rest.length > 0) {
+            slice(IDLE_SLICE_MS)
+        } else {
+            sliceOfWaiting(IDLE_SLICE_MS)
+        }
+        schedule()
     }
     return {
         start() {
@@ -180,6 +196,8 @@ export const ruleQueue = ({
         },
         /** Whether the record's rules are yet to run. */
         has: (recordId: string) => rest.includes(recordId),
+        /** Records began to wait: they get their turn. */
+        schedule,
         /**
          * The grid draws other rows: those that waited for it run when idle; a row just added, before the next paint,
          * so its rule effects never go missing for a frame.

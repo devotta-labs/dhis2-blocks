@@ -306,7 +306,7 @@ export const TrackerDataEntry = ({
         () => fileUrlOf(baseUrl, () => active.tables.getState().records),
         [baseUrl, active]
     )
-    // The rows the grid draws: program rules run for these only, and for the rows people change.
+    // The rows the grid draws: program rules run for these and the rows people change before the other rows.
     const [drawn] = useState(() =>
         createStore<DrawnRows>()(() => ({ rows: new Map() }))
     )

@@ -8,11 +8,7 @@ import {
     rowHeaderDomId,
     cellKey,
 } from '@/components/spreadsheet'
-import {
-    control,
-    nextFrame,
-    shown,
-} from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control, shown } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { recordIdOf } from '../model/types'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
@@ -92,7 +88,7 @@ const mountRmnch = async (
 const sentKeys = (memory: ReturnType<typeof memorySource>) =>
     memory.sent.flat().map(({ key }) => key)
 
-test('evaluates the visible rows first, the rows near them when idle, and the rest once the grid draws them', async () => {
+test('evaluates the visible rows first, the rows near them when idle, and then the rest, without being scrolled to', async () => {
     const idle = holdIdle()
     const events = Array.from({ length: 10 }, (_, k) =>
         antenatalOf(k).map((event) =>
@@ -114,34 +110,31 @@ test('evaluates the visible rows first, the rows near them when idle, and the re
 
     // The first row is in view, so it is in the first slice.
     expect(assigned(rows[0].id)).toBe(true)
-    // The rows in view take timer slices first; on a slow machine they are still running when idle time is let out.
+    // The rows in view take timer slices first; on a slow machine they are still running when idle time is let out,
+    // one slice at a time.
+    const waiting = () =>
+        rows.filter(({ id }) => drawn(id) && !assigned(id)).length
     await expect
         .poll(() => {
-            idle.run()
-            return rows.filter(({ id }) => drawn(id) && !assigned(id)).length
+            if (waiting() > 0) {
+                idle.next()
+            }
+            return waiting()
         })
         .toBe(0)
-    // A row the grid does not draw is not evaluated, however long the page is idle.
-    await later(100)
-    idle.run()
+    // The rows the grid does not draw come after every row it draws.
     const away = rows.filter(({ id }) => !drawn(id))
     expect(away.length).toBeGreaterThan(30)
     expect(away.filter(({ id }) => assigned(id))).toEqual([])
 
-    // Scrolling draws the other rows: each is evaluated when idle after the grid draws it.
-    const region = page.getByRole('region').element()
-    while (region.scrollTop + region.clientHeight < region.scrollHeight - 1) {
-        region.scrollTop += region.clientHeight / 2
-        await nextFrame()
-        await nextFrame()
-        idle.run()
-    }
+    // They run when idle, without being scrolled to.
     await expect
         .poll(() => {
             idle.run()
             return rows.filter(({ id }) => assigned(id)).length
         })
         .toBe(60)
+    expect(away.some(({ id }) => drawn(id))).toBe(false)
     // Shown, not saved: no person changed these rows.
     await later(100)
     expect(memory.sent).toEqual([])

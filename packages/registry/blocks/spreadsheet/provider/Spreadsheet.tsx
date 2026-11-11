@@ -40,7 +40,7 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
     orgUnitNames?: Names
     /** Names of files by id, for file cells; a store of its own by default. */
     fileNames?: Names
-    /** Kept up to date with the rows the grid draws, for logic that runs only for those; nothing by default. */
+    /** Kept up to date with the rows the grid draws, for logic that runs for those first; nothing by default. */
     drawnRows?: StoreApi<DrawnRows>
     /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline?: boolean

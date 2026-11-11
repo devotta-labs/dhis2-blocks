@@ -46,7 +46,7 @@ export interface SpreadsheetContext {
     focusCell(key: CellKey): void
     /** The cell `focusCell` waits on while the grid draws its row. */
     focusing: StoreApi<{ key?: CellKey }>
-    /** Where the grid says which rows it draws, for logic that runs only for those. */
+    /** Where the grid says which rows it draws, for logic that runs for those first. */
     drawnRows?: StoreApi<DrawnRows>
     tables: ReadonlyArray<GridTable>
     /** The key of the row's cell in the column: what the cell's state, effects and DOM id are found by. */

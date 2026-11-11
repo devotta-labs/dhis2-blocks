@@ -117,6 +117,9 @@ export const connectRules = ({
     // Rows whose rules all ran here on the values they hold now: only for these can a change run just the rules that
     // read it. A reconnection starts over, as the rows may have changed while nothing listened.
     const current = new Set<string>()
+    // Row id → the fields the rules wrote in the row since its rules last ran. They do not run again for their own
+    // values, so the row's next run takes these as changed too.
+    const owed = new Map<string, Set<string>>()
     // Control id → row id: a value the rules held back while the cell was typed in.
     const held = new Map<string, string>()
 
@@ -355,10 +358,12 @@ export const connectRules = ({
                 const fields = current.has(rowId)
                     ? changedFields?.get(rowId)
                     : undefined
+                const written = owed.get(rowId) ?? NONE
+                owed.delete(rowId)
                 const evaluation = rules.evaluate(
                     ruleRows,
                     [rowId],
-                    fields === undefined ? undefined : [...fields]
+                    fields === undefined ? undefined : [...fields, ...written]
                 )
                 // A row the rules did not answer for (its person still loads, or they failed) runs them all next.
                 if (evaluation.effects.has(rowId)) {
@@ -417,15 +422,16 @@ export const connectRules = ({
         for (const { key } of changed) {
             const rowId = recordIdOf(key)
             const field = fieldIdOfKey(key)
+            const indexed =
+                field !== EVENT_DATE_COLUMN && form.fields.has(field)
+            if (indexed) {
+                owed.set(rowId, (owed.get(rowId) ?? new Set()).add(field))
+            } else {
+                current.delete(rowId)
+            }
             for (const other of affectedBy(records, ruleRows, rowId, field)) {
                 if (other !== rowId && seen.has(other)) {
-                    addChangedField(
-                        next,
-                        other,
-                        field === EVENT_DATE_COLUMN || !form.fields.has(field)
-                            ? undefined
-                            : field
-                    )
+                    addChangedField(next, other, indexed ? field : undefined)
                 }
             }
         }

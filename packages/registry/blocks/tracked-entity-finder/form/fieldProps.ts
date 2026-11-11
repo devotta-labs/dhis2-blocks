@@ -1,5 +1,4 @@
 import { useComposedField } from '../hooks'
-import { useFinderContext } from '../provider/context'
 import type { FormField } from '../rules/types'
 import type { FieldInputProps } from './inputs/types'
 
@@ -31,16 +30,17 @@ export const useFieldPart = (
     | { state: 'metadata-error'; message: string }
     | { state: 'pending'; label: string }
     | { state: 'ready'; input: FieldInputProps } => {
-    const { state } = useFinderContext()
-    const { found, field, error, metadataError } = useComposedField(
-        attribute,
-        match
-    )
+    const {
+        attribute: found,
+        field,
+        error,
+        metadataError,
+        ready,
+    } = useComposedField(attribute, match)
     if (metadataError) {
         return { state: 'metadata-error', message: metadataError }
     }
-    // Inputs wait for the server calendar too, not only the program.
-    if (!found || state.status !== 'ready') {
+    if (!found || !ready) {
         return { state: 'pending', label: label ?? found?.label ?? '' }
     }
     return {

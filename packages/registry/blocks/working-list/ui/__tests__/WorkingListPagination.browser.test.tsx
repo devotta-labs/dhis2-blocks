@@ -3,7 +3,6 @@ import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListPageSize } from '../../provider/contracts'
 import { WorkingListPagination } from '../WorkingListTable/WorkingListPagination'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const renderPagination = async (props: {
     page: number
@@ -14,14 +13,12 @@ const renderPagination = async (props: {
     const onPageChange = vi.fn<(page: number) => void>()
     const onPageSizeChange = vi.fn<(pageSize: WorkingListPageSize) => void>()
     const screen = await render(
-        <WorkingListTextProvider translate={(message) => message}>
-            <WorkingListPagination
-                pageSize={15}
-                {...props}
-                onPageChange={onPageChange}
-                onPageSizeChange={onPageSizeChange}
-            />
-        </WorkingListTextProvider>
+        <WorkingListPagination
+            pageSize={15}
+            {...props}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+        />
     )
     return { screen, onPageChange, onPageSizeChange }
 }

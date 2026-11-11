@@ -1,8 +1,9 @@
 import i18n from '@dhis2/d2-i18n'
 /**
- * Literal extraction markers for the reusable UI. Runtime rendering uses the
- * injectable translation context; d2-app-scripts currently only discovers
- * literal `i18n.t` calls. This function is intentionally never invoked.
+ * Literal extraction markers for the working-list block. The block calls
+ * `i18n.t` itself, but d2-app-scripts only extracts strings from this app's
+ * own `src`, so the block's strings are repeated here to reach the app's
+ * translation files. This function is intentionally never invoked.
  */
 export const workingListTranslationCatalog = () => [
     i18n.t('Calendar'),

@@ -1,24 +1,39 @@
+import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { useContext, type ReactNode } from 'react'
+import React, { useContext, type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
-import {
-    createTrackedEntityFinderClient,
-    type DataEngineQuery,
-    type DataEngineLike,
-    type ResourceRequest,
-    type TrackedEntityFinderClient,
-} from '../api/client'
+import { z } from 'zod'
 import type { ProgramMetadata } from '../api/schemas'
 import { FinderContext } from '../provider/context'
 import { FinderProvider } from '../provider/FinderProvider'
 import { serializeFilter } from '../rules/searchParams'
 import { hivProgram } from './fixtures/program'
 
-type EngineResult = Awaited<ReturnType<DataEngineLike['query']>>
-type EngineValue = EngineResult[string]
+type CustomData = ComponentProps<typeof CustomDataProvider>['data']
+
+/** A request as the data engine hands it to the server. */
+const RequestSchema = z.object({
+    resource: z.string(),
+    id: z.string().optional(),
+    params: z.record(z.string(), z.json()).optional(),
+})
+type FinderRequest = z.infer<typeof RequestSchema>
+
+const BodySchema = z.json()
+type Body = z.infer<typeof BodySchema>
+
+/** A failed request as app-runtime throws it; a 400 is never retried. */
+export const requestFailure = (message: string, httpStatusCode = 400) =>
+    new FetchError({
+        type: 'unknown',
+        message,
+        details: { httpStatusCode, message },
+    })
+
+const never = () => new Promise<never>(() => {})
 
 /** The raw `GET programs/<uid>` response the fixture was normalised from. */
-const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
+const toProgramResponse = (program: ProgramMetadata) => ({
     displayName: program.name,
     minAttributesRequiredToSearch: program.minAttributesRequiredToSearch,
     maxTeiCountToReturn: program.maxTeiCountToReturn,
@@ -48,16 +63,17 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
     ),
 })
 
-/** A search the fake engine holds open until the test answers it. */
+/** A search the fake server holds open until the test answers it. */
 interface PendingSearch {
-    request: ResourceRequest
-    respond: (response: EngineValue) => void
+    request: FinderRequest
+    respond: (response: Body) => void
 }
 
 export interface FakeServer {
-    client: TrackedEntityFinderClient
+    /** The DHIS2 resources the finder asks for, for `CustomDataProvider`. */
+    data: CustomData
     /** Every request the finder made, in order. */
-    requests: ResourceRequest[]
+    requests: FinderRequest[]
     /** With `deferSearches`, every search request, in order, still open or not. */
     pendingSearches: PendingSearch[]
 }
@@ -72,115 +88,107 @@ export interface FakeServerOptions {
     systemInfoFails?: boolean
     /** The DHIS2 version system info reports; 2.43.1 by default. */
     version?: string
-    searchResponse?: EngineValue
+    searchResponse?: Body
     /** Answers each search from its request, e.g. by page. */
-    answerSearch?: (request: ResourceRequest) => EngineValue
+    answerSearch?: (request: FinderRequest) => Body
     /** Answers searches with a 400, which is never retried. */
     searchFails?: boolean
     /** Holds every search open until the test calls `respond`. */
     deferSearches?: boolean
 }
 
-const EMPTY_SEARCH: EngineValue = {
+const EMPTY_SEARCH: Body = {
     trackedEntities: [],
     pager: { page: 1, pageSize: 10, total: 0 },
 }
 
-/** A finder client over a fake engine serving `hivProgram` by default. */
+/** A fake DHIS2 behind app-runtime's data engine, serving `hivProgram` by default. */
 export const createFakeServer = (
     options: FakeServerOptions = {}
 ): FakeServer => {
-    const requests: ResourceRequest[] = []
+    const requests: FinderRequest[] = []
     const pendingSearches: PendingSearch[] = []
     const program = options.program ?? hivProgram
-    const engine: DataEngineLike = {
-        query: async (query: DataEngineQuery) => {
-            const [[key, request]] = Object.entries(query)
-            requests.push(request)
-            switch (request.resource) {
-                case 'programs':
-                    if (options.programPending) {
-                        return new Promise<EngineResult>(() => {})
-                    }
-                    if (options.programFails) {
-                        throw new Error('Program request failed')
-                    }
-                    return { [key]: toProgramResponse(program) }
-                case 'system/info':
-                    if (options.systemInfoPending) {
-                        return new Promise<EngineResult>(() => {})
-                    }
-                    if (options.systemInfoFails) {
-                        throw new Error('System info request failed')
-                    }
-                    return {
-                        [key]: {
-                            calendar: 'gregorian',
-                            dateFormat: 'YYYY-MM-DD',
-                            version: options.version ?? '2.43.1',
-                        },
-                    }
-                default: {
-                    if (options.searchFails) {
-                        throw Object.assign(new Error('Search failed'), {
-                            httpStatusCode: 400,
-                        })
-                    }
-                    if (options.deferSearches) {
-                        return new Promise<EngineResult>((resolve) => {
-                            pendingSearches.push({
-                                request,
-                                respond: (response) =>
-                                    resolve({ [key]: response }),
-                            })
-                        })
-                    }
-                    return {
-                        [key]:
-                            options.answerSearch?.(request) ??
-                            options.searchResponse ??
-                            EMPTY_SEARCH,
-                    }
-                }
+    const record = (request: FinderRequest) => {
+        requests.push(request)
+        return request
+    }
+    const data: CustomData = {
+        programs: async (_type, query) => {
+            record(RequestSchema.parse(query))
+            if (options.programPending) {
+                return never()
+            }
+            if (options.programFails) {
+                throw requestFailure('Program request failed')
+            }
+            return BodySchema.parse(toProgramResponse(program))
+        },
+        'system/info': async (_type, query) => {
+            record(RequestSchema.parse(query))
+            if (options.systemInfoPending) {
+                return never()
+            }
+            if (options.systemInfoFails) {
+                throw requestFailure('System info request failed')
+            }
+            return {
+                calendar: 'gregorian',
+                dateFormat: 'YYYY-MM-DD',
+                version: options.version ?? '2.43.1',
             }
         },
+        'tracker/trackedEntities': async (_type, query) => {
+            const request = record(RequestSchema.parse(query))
+            if (options.searchFails) {
+                throw requestFailure('Search failed')
+            }
+            if (options.deferSearches) {
+                return new Promise<Body>((respond) => {
+                    pendingSearches.push({ request, respond })
+                })
+            }
+            return (
+                options.answerSearch?.(request) ??
+                options.searchResponse ??
+                EMPTY_SEARCH
+            )
+        },
     }
-    return {
-        client: createTrackedEntityFinderClient(engine),
-        requests,
-        pendingSearches,
-    }
+    return { data, requests, pendingSearches }
 }
 
-/** Renders inside a fresh QueryClient with retries off by default. */
-export const renderWithQueries = (ui: ReactNode) => {
+/**
+ * Renders inside app-runtime's data provider, with the fake server behind
+ * it, and a fresh QueryClient that retries without the wait between tries.
+ */
+export const renderWithQueries = (
+    ui: ReactNode,
+    server: FakeServer = createFakeServer()
+) => {
     const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false } },
+        defaultOptions: { queries: { retryDelay: 0 } },
     })
-    // A wrapper, so `rerender` keeps the same QueryClient.
+    // A wrapper, so `rerender` keeps the same server and QueryClient.
     return render(ui, {
         wrapper: ({ children }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
+            <CustomDataProvider data={server.data}>
+                <QueryClientProvider client={queryClient}>
+                    {children}
+                </QueryClientProvider>
+            </CustomDataProvider>
         ),
     })
 }
 
 /** Renders `children` under a `hivProgram` provider, with a SubmissionProbe. */
-export const renderInFinder = (children: ReactNode) => {
-    const server = createFakeServer()
-    return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={() => undefined}
-        >
+export const renderInFinder = (children: ReactNode) =>
+    renderWithQueries(
+        <FinderProvider program="hivProgram" onSelect={() => undefined}>
             {children}
             <SubmissionProbe />
         </FinderProvider>
     )
-}
 
 /**
  * Test-only: shows the last submitted search as serialised filters, one per
@@ -188,7 +196,7 @@ export const renderInFinder = (children: ReactNode) => {
  */
 export const SubmissionProbe = () => {
     const context = useContext(FinderContext)
-    const submission = context?.state.submission
+    const submission = context?.submission
     return (
         <output data-testid="submission">
             {submission

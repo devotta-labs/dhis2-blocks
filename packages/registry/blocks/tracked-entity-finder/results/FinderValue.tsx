@@ -2,7 +2,7 @@ import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { formatValue } from '../format/formatValue'
 import { useFinderPerson } from '../hooks'
-import { useFinderContext } from '../provider/context'
+import { useFinderModel } from '../provider/useFinderModel'
 import { attributeOf } from '../rules/programModel'
 
 export interface FinderValueProps extends Omit<
@@ -22,15 +22,15 @@ export function FinderValue({
     className,
     ...props
 }: FinderValueProps) {
-    const { state, meta } = useFinderContext()
+    const { model, info } = useFinderModel()
     const person = useFinderPerson()
     const raw = Object.hasOwn(person.attributes, attribute)
         ? person.attributes[attribute]
         : ''
-    const found = state.model ? attributeOf(state.model, attribute) : undefined
+    const found = model ? attributeOf(model, attribute) : undefined
     return (
         <span {...props} data-slot="finder-value" className={cn(className)}>
-            {meta.info ? formatValue(found, raw, meta.info) : raw}
+            {info ? formatValue(found, raw, info) : raw}
         </span>
     )
 }

@@ -1,7 +1,7 @@
-import { Result } from 'better-result'
-import type { TimelineClient } from './client'
+import { FetchError, type useDataEngine } from '@dhis2/app-runtime'
 import {
     ChangeLogPageSchema,
+    EVENT_FIELDS,
     EventsPageSchema,
     OrgUnitNamesSchema,
     ProgramTimelineMetadataSchema,
@@ -16,19 +16,14 @@ import {
 // Parameters are the ones recorded in __tests__/fixtures/README.md; 2.41, 2.42 and
 // 2.43 accept the same requests.
 
+export type DataEngine = ReturnType<typeof useDataEngine>
+
 export type EventTimeField =
     | 'occurredAt'
     | 'scheduledAt'
     | 'completedAt'
     | 'createdAt'
     | 'updatedAt'
-
-/**
- * The event fields the entries read.
- * @public For hosts fetching their own events, such as a server-paged feed.
- */
-export const EVENT_FIELDS =
-    'event,status,program,programStage,enrollment,trackedEntity,orgUnit,occurredAt,scheduledAt,completedAt,completedBy,createdAt,updatedAt,createdBy,updatedBy,dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy]'
 
 const NOTE_FIELDS = 'notes[note,value,storedAt,storedBy,createdBy]'
 
@@ -38,6 +33,18 @@ const VALUE_METADATA_FIELDS =
     'id,displayName,displayFormName,valueType,optionSet[options[code,displayName]]'
 
 const PROGRAM_FIELDS = `id,displayName,displayEnrollmentDateLabel,displayIncidentDateLabel,programStages[id,displayName,sortOrder,hideDueDate,repeatable,programStageDataElements[displayInReports,dataElement[${VALUE_METADATA_FIELDS}]]],programTrackedEntityAttributes[trackedEntityAttribute[${VALUE_METADATA_FIELDS}]]`
+
+/**
+ * A failed request is retried twice, and only when the server or the network
+ * failed: a malformed response or a client error would fail the same way
+ * again.
+ */
+export const shouldRetryRequest = (failureCount: number, error: Error) =>
+    failureCount < 2 &&
+    error instanceof FetchError &&
+    error.type !== 'access' &&
+    (error.details.httpStatusCode === undefined ||
+        error.details.httpStatusCode >= 500)
 
 export interface EventsResult {
     /** Newest first by the time field; events with no value in it come first. */
@@ -53,7 +60,7 @@ export interface EventsResult {
  * whether any were left out.
  */
 export const fetchEvents = async (
-    client: TimelineClient,
+    engine: DataEngine,
     {
         trackedEntity,
         program,
@@ -66,26 +73,25 @@ export const fetchEvents = async (
         cap: number
     },
     signal?: AbortSignal
-): Promise<Result<EventsResult, Error>> => {
-    const result = await client.query(
+): Promise<EventsResult> => {
+    const { page } = await engine.query(
         {
-            resource: 'tracker/events',
-            params: {
-                trackedEntity,
-                program,
-                fields: EVENT_FIELDS,
-                order: `${timeField}:desc,event:asc`,
-                page: 1,
-                pageSize: cap + 1,
+            page: {
+                resource: 'tracker/events',
+                params: {
+                    trackedEntity,
+                    program,
+                    fields: EVENT_FIELDS,
+                    order: `${timeField}:desc,event:asc`,
+                    page: 1,
+                    pageSize: cap + 1,
+                },
             },
         },
-        EventsPageSchema,
-        signal
+        { signal }
     )
-    return result.map((events) => ({
-        events: events.slice(0, cap),
-        capped: events.length > cap,
-    }))
+    const events = EventsPageSchema.parse(page)
+    return { events: events.slice(0, cap), capped: events.length > cap }
 }
 
 /**
@@ -93,70 +99,95 @@ export const fetchEvents = async (
  * and their notes. Without `program` the server answers every enrollment
  * (checked on 2.41.10 and 2.43.2).
  */
-export const fetchTrackedEntity = (
-    client: TimelineClient,
+export const fetchTrackedEntity = async (
+    engine: DataEngine,
     { trackedEntity }: { trackedEntity: string },
     signal?: AbortSignal
-): Promise<Result<TrackedEntity, Error>> =>
-    client.query(
+): Promise<TrackedEntity> => {
+    const { entity } = await engine.query(
         {
-            resource: 'tracker/trackedEntities',
-            id: trackedEntity,
-            params: {
-                fields: `trackedEntity,trackedEntityType,orgUnit,${ENROLLMENT_FIELDS}`,
+            entity: {
+                resource: 'tracker/trackedEntities',
+                id: trackedEntity,
+                params: {
+                    fields: `trackedEntity,trackedEntityType,orgUnit,${ENROLLMENT_FIELDS}`,
+                },
             },
         },
-        TrackedEntitySchema,
-        signal
+        { signal }
     )
+    return TrackedEntitySchema.parse(entity)
+}
 
 export interface ChangeLogResult {
     rows: ChangeLogRow[]
-    /** More rows than `maxRows` exist; the oldest were left out. */
+    /** More than 500 rows exist; the oldest were left out. */
     truncated: boolean
+    /** The server has no changelog endpoint: it answered 404. */
+    unsupported: boolean
 }
 
 const CHANGELOG_PAGE_SIZE = 100
 
+/** Most changelog rows read for one event or one program's attributes. */
+const CHANGELOG_MAX_ROWS = 500
+
+/**
+ * The status is in the JSON body, or only in the message when the body wasn't
+ * JSON (a proxy's own 404 page).
+ */
+const isNotFound = (error: FetchError) =>
+    error.details.httpStatusCode === 404 || error.message.endsWith('(404)')
+
 /**
  * Every changelog row, newest first, a page at a time until the last page or
- * more than `maxRows`. "More pages" is "the page came back full", counted before rows
- * this block doesn't know were skipped.
+ * more than 500 rows. "More pages" is "the page came back full", counted
+ * before rows this block doesn't know were skipped. A 404 is an answer, not a
+ * failure: the server has no changelog.
  */
 const fetchChangeLog = async (
-    client: TimelineClient,
+    engine: DataEngine,
     resource: string,
     params: Record<string, string>,
-    maxRows: number,
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> => {
+): Promise<ChangeLogResult> => {
     const rows: ChangeLogRow[] = []
-    for (let page = 1; ; page++) {
-        const result = await client.query(
-            {
-                resource,
-                params: {
-                    ...params,
-                    order: 'createdAt:desc',
-                    page,
-                    pageSize: CHANGELOG_PAGE_SIZE,
+    try {
+        for (let page = 1; ; page++) {
+            const { changeLog } = await engine.query(
+                {
+                    changeLog: {
+                        resource,
+                        params: {
+                            ...params,
+                            order: 'createdAt:desc',
+                            page,
+                            pageSize: CHANGELOG_PAGE_SIZE,
+                        },
+                    },
                 },
-            },
-            ChangeLogPageSchema,
-            signal
-        )
-        if (Result.isError(result)) {
-            return Result.err(result.error)
+                { signal }
+            )
+            const answer = ChangeLogPageSchema.parse(changeLog)
+            rows.push(...answer.rows)
+            // More than the most read: some were left out. Exactly that many
+            // on full pages asks once more, to tell "no more" from "more".
+            if (rows.length > CHANGELOG_MAX_ROWS) {
+                return {
+                    rows: rows.slice(0, CHANGELOG_MAX_ROWS),
+                    truncated: true,
+                    unsupported: false,
+                }
+            }
+            if (answer.received < CHANGELOG_PAGE_SIZE) {
+                return { rows, truncated: false, unsupported: false }
+            }
         }
-        rows.push(...result.value.rows)
-        // More than `maxRows` read: some were left out. Exactly `maxRows`
-        // on full pages asks once more, to tell "no more" from "more".
-        if (rows.length > maxRows) {
-            return Result.ok({ rows: rows.slice(0, maxRows), truncated: true })
+    } catch (error) {
+        if (error instanceof FetchError && isNotFound(error)) {
+            return { rows: [], truncated: false, unsupported: true }
         }
-        if (result.value.received < CHANGELOG_PAGE_SIZE) {
-            return Result.ok({ rows, truncated: false })
-        }
+        throw error
     }
 }
 
@@ -166,71 +197,65 @@ const fetchChangeLog = async (
  * program and drops the rows the answers share.
  */
 export const fetchAttributeChangeLog = (
-    client: TimelineClient,
-    {
-        trackedEntity,
-        program,
-        maxRows,
-    }: { trackedEntity: string; program: string; maxRows: number },
+    engine: DataEngine,
+    { trackedEntity, program }: { trackedEntity: string; program: string },
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> =>
+): Promise<ChangeLogResult> =>
     fetchChangeLog(
-        client,
+        engine,
         `tracker/trackedEntities/${trackedEntity}/changeLogs`,
         { program },
-        maxRows,
         signal
     )
 
 /** Data value changes (and, from 2.42, event field changes), newest first. */
 export const fetchEventChangeLog = (
-    client: TimelineClient,
-    { event, maxRows }: { event: string; maxRows: number },
+    engine: DataEngine,
+    { event }: { event: string },
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> =>
-    fetchChangeLog(
-        client,
-        `tracker/events/${event}/changeLogs`,
-        {},
-        maxRows,
-        signal
-    )
+): Promise<ChangeLogResult> =>
+    fetchChangeLog(engine, `tracker/events/${event}/changeLogs`, {}, signal)
 
-export const fetchProgramTimelineMetadata = (
-    client: TimelineClient,
+export const fetchProgramTimelineMetadata = async (
+    engine: DataEngine,
     { program }: { program: string },
     signal?: AbortSignal
-): Promise<Result<ProgramTimelineMetadata, Error>> =>
-    client.query(
+): Promise<ProgramTimelineMetadata> => {
+    const { metadata } = await engine.query(
         {
-            resource: 'programs',
-            id: program,
-            params: { fields: PROGRAM_FIELDS },
+            metadata: {
+                resource: 'programs',
+                id: program,
+                params: { fields: PROGRAM_FIELDS },
+            },
         },
-        ProgramTimelineMetadataSchema,
-        signal
+        { signal }
     )
+    return ProgramTimelineMetadataSchema.parse(metadata)
+}
 
 /** Names for all ids in one request. */
 export const fetchOrgUnitNames = async (
-    client: TimelineClient,
+    engine: DataEngine,
     { ids }: { ids: ReadonlyArray<string> },
     signal?: AbortSignal
-): Promise<Result<OrgUnitName[], Error>> => {
+): Promise<OrgUnitName[]> => {
     // An empty `id:in:[]` filter is not guaranteed to match nothing.
     if (ids.length === 0) {
-        return Result.ok([])
+        return []
     }
-    return client.query(
+    const { names } = await engine.query(
         {
-            resource: 'organisationUnits',
-            params: {
-                filter: `id:in:[${ids.join(',')}]`,
-                fields: 'id,displayName',
-                paging: false,
+            names: {
+                resource: 'organisationUnits',
+                params: {
+                    filter: `id:in:[${ids.join(',')}]`,
+                    fields: 'id,displayName',
+                    paging: false,
+                },
             },
         },
-        OrgUnitNamesSchema,
-        signal
+        { signal }
     )
+    return OrgUnitNamesSchema.parse(names)
 }

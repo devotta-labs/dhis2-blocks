@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import {
     Table,
@@ -22,10 +23,6 @@ import type {
     StaleReferenceIssue,
     StaleReferenceRepairDecision,
 } from '../../../../domain/staleReferences'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../../../WorkingListText'
 
 interface WorkingListRepairPreview {
     decisions: StaleReferenceRepairDecision[]
@@ -43,8 +40,7 @@ const referenceDetails = (
         NormalizedSavedWorkingList,
         { compatibility: 'incompatible' }
     >,
-    issue: StaleReferenceIssue,
-    translate: WorkingListTranslate
+    issue: StaleReferenceIssue
 ) => {
     const filterIndex = issue.path.match(/^filters\.(\d+)\./)?.[1]
     const savedField =
@@ -57,7 +53,7 @@ const referenceDetails = (
     ) {
         return {
             id: issue.referenceId,
-            kind: translate('Tracked entity attribute'),
+            kind: i18n.t('Tracked entity attribute'),
         }
     }
     if (
@@ -66,13 +62,13 @@ const referenceDetails = (
     ) {
         return {
             id: issue.referenceId,
-            kind: translate('Data element'),
+            kind: i18n.t('Data element'),
         }
     }
     if (savedField?.source === 'system') {
         return {
             id: issue.referenceId,
-            kind: translate('System field'),
+            kind: i18n.t('System field'),
         }
     }
     if (
@@ -80,33 +76,30 @@ const referenceDetails = (
         issue.path === 'sort.fieldId' ||
         issue.path === 'order'
     ) {
-        return { id: issue.referenceId, kind: translate('Unknown') }
+        return { id: issue.referenceId, kind: i18n.t('Unknown') }
     }
-    return { id: issue.referenceId, kind: translate('Unknown') }
+    return { id: issue.referenceId, kind: i18n.t('Unknown') }
 }
 
-const repairAction = (
-    decision: StaleReferenceRepairDecision,
-    translate: WorkingListTranslate
-) => {
+const repairAction = (decision: StaleReferenceRepairDecision) => {
     if (decision.action === 'remove' && filterPath.test(decision.path)) {
-        return translate('Remove')
+        return i18n.t('Remove')
     }
     if (decision.action === 'remove' && columnPath.test(decision.path)) {
-        return translate('Remove')
+        return i18n.t('Remove')
     }
     if (decision.action === 'replaceColumn') {
-        return translate('Replace with default')
+        return i18n.t('Replace with default')
     }
     if (decision.action === 'replaceSort') {
-        return translate('Replace with default')
+        return i18n.t('Replace with default')
     }
     if (decision.action === 'replaceFilter') {
-        return translate('Replace with {{replacement}}', {
+        return i18n.t('Replace with {{replacement}}', {
             replacement: decision.filter.field.id,
         })
     }
-    return translate('Remove')
+    return i18n.t('Remove')
 }
 
 interface WorkingListRepairDialogProps {
@@ -131,8 +124,6 @@ export const WorkingListRepairDialog = ({
     onClose,
     onRepair,
 }: WorkingListRepairDialogProps) => {
-    const i18n = { t: useWorkingListText() }
-
     if (
         !open ||
         list?.compatibility !== 'incompatible' ||
@@ -148,13 +139,13 @@ export const WorkingListRepairDialog = ({
         if (!issue) {
             return []
         }
-        const { id, kind } = referenceDetails(list, issue, i18n.t)
+        const { id, kind } = referenceDetails(list, issue)
         return [
             {
                 path: decision.path,
                 id,
                 kind,
-                action: repairAction(decision, i18n.t),
+                action: repairAction(decision),
             },
         ]
     })

@@ -8,6 +8,10 @@ export interface ObservationCardContextValue {
     title: string
     unit?: string
     staleAfterDays?: number
+    /** The latest reading is older than `staleAfterDays`. */
+    stale: boolean
+    /** When the card rendered, for "3 days ago". */
+    now: Date
     display: DisplayOptions
     /** Called by a placed recorded note; returns its unregister. */
     registerRecorded: () => () => void

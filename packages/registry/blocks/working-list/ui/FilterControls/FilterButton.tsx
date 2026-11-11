@@ -1,7 +1,7 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import React, { useState } from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
-import type { WorkingListClient } from '../../api/client'
 import {
     type AppliedFilter,
     type FilterOperator,
@@ -17,7 +17,6 @@ import {
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
 import { Separator } from '@/components/dhis2/ui/separator'
-import { useWorkingListText } from '../WorkingListText'
 import { PopoverTitle } from '@/components/dhis2/ui/popover'
 import { FilterChip } from './FilterControlPrimitives'
 import { EditorValue } from './FilterEditorValue'
@@ -31,7 +30,6 @@ import {
 } from './filterValueSupport'
 
 interface FilterButtonProps {
-    client: WorkingListClient
     field: WorkingListField
     filter?: AppliedFilter
     capabilities: WorkingListCapabilities
@@ -47,7 +45,6 @@ interface FilterButtonProps {
 
 export const FilterButton = ({
     field,
-    client,
     filter,
     capabilities,
     validationContext,
@@ -59,11 +56,9 @@ export const FilterButton = ({
     onReset,
     onRemove,
 }: FilterButtonProps) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     const [open, setOpen] = useState(defaultOpen ?? false)
-    const summary = summaryForFilter(filter, translate)
-    const displayPrefix = prefix ?? fieldDisplayName(field, translate)
+    const summary = summaryForFilter(filter)
+    const displayPrefix = prefix ?? fieldDisplayName(field)
 
     return (
         <FilterChip
@@ -86,7 +81,6 @@ export const FilterButton = ({
                 <FilterEditor
                     key={`${field.id}-${JSON.stringify(filter?.value)}`}
                     field={field}
-                    client={client}
                     filter={filter}
                     capabilities={capabilities}
                     validationContext={validationContext}
@@ -111,7 +105,6 @@ interface FilterEditorProps extends Omit<FilterButtonProps, 'onReset'> {
 
 const FilterEditor = ({
     field,
-    client,
     filter,
     capabilities,
     validationContext,
@@ -119,8 +112,6 @@ const FilterEditor = ({
     onApply,
     onReset,
 }: FilterEditorProps) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     const definition = getValueTypeDefinition(field.valueType)
     const operators = getAllowedFilterOperators(field, capabilities)
     const isTrueOnly = definition.editor === 'trueOnly'
@@ -163,7 +154,7 @@ const FilterEditor = ({
             }}
         >
             <PopoverTitle render={<h3 />}>
-                {fieldDisplayName(field, translate)}
+                {fieldDisplayName(field)}
             </PopoverTitle>
             {!isTrueOnly && operators.length > 1 && (
                 <SelectField
@@ -172,7 +163,7 @@ const FilterEditor = ({
                     value={operator}
                     options={operators.map((item) => ({
                         value: item,
-                        label: translatedOperator(item, translate),
+                        label: translatedOperator(item),
                     }))}
                     onChange={(next) => {
                         setOperator(next)
@@ -191,7 +182,6 @@ const FilterEditor = ({
                 />
             )}
             <FilterValueInput
-                client={client}
                 field={field}
                 editor={definition.editor}
                 value={value}
@@ -243,8 +233,6 @@ const FilterValueInput = ({
     operators: FilterOperator[]
     onOperatorChange: (operator: FilterOperator) => void
 }) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     const { field, editor, value, onChange } = editorProps
 
     if (editor === 'trueOnly') {
@@ -272,7 +260,7 @@ const FilterValueInput = ({
                                 )
                             }}
                         />
-                        {translatedOperator('empty', translate)}
+                        {translatedOperator('empty')}
                     </Label>
                 )}
                 {operators.includes('notEmpty') && (
@@ -296,7 +284,7 @@ const FilterValueInput = ({
                                 )
                             }}
                         />
-                        {translatedOperator('notEmpty', translate)}
+                        {translatedOperator('notEmpty')}
                     </Label>
                 )}
                 {(operators.includes('empty') ||

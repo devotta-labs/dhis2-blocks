@@ -4,8 +4,22 @@ import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
-import type { ObservationSeries } from '../api/types'
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
+} from 'react'
+import { buildSeries } from '../api/buildSeries'
+import { usePersonEvents, useProgramMetadata } from '../api/queries'
+import type {
+    DataElementMetadata,
+    ObservationSeries,
+    ProgramMetadata,
+    StageMetadata,
+    TrackerEventRecord,
+} from '../api/types'
 import {
     displayLocale,
     elementShowsTrend,
@@ -14,7 +28,6 @@ import {
     showsTrend,
     type DisplayOptions,
 } from '../format/display'
-import { useObservation } from '../hooks'
 import { ObservationChange } from '../parts/ObservationChange'
 import { ObservationLabel } from '../parts/ObservationLabel'
 import { ObservationLegend } from '../parts/ObservationLegend'
@@ -24,7 +37,7 @@ import {
 } from '../parts/ObservationRecorded'
 import { ObservationSparkline } from '../parts/ObservationSparkline'
 import { ObservationValue } from '../parts/ObservationValue'
-import { useObservationsContext } from '../provider/context'
+import { useObservationsSubject } from '../provider/context'
 import { isProduction } from '../provider/env'
 import { ObservationCardContext } from './context'
 import { CardHeading, CardNote, FOOTER_BAND } from './frame'
@@ -88,24 +101,6 @@ function Frame({
             {children}
         </Card>
     )
-}
-
-/**
- * What the program's metadata already says about the card's data element:
- * its name, for cards that never get a series, and whether the loaded card
- * will show a trend, so its skeleton takes the same shape. Until the metadata
- * says, a trend, the taller of the two.
- */
-const useElementMetadata = (dataElement: string) => {
-    const { metadata } = useObservationsContext()
-    const element = metadata?.dataElements.get(dataElement)
-    return {
-        name:
-            element?.displayFormName ||
-            element?.displayName ||
-            metadata?.invalidDataElements.get(dataElement)?.displayName,
-        pendingTrend: element === undefined || elementShowsTrend(element),
-    }
 }
 
 /** The loading card, in the shape of the arrangement it will become. */
@@ -194,6 +189,145 @@ function ReadyContent({
     )
 }
 
+function LoadingCard({
+    name,
+    trend,
+    className,
+}: {
+    name?: string
+    trend: boolean
+    className?: string
+}) {
+    return (
+        <Frame name={name} busy className={className}>
+            <LoadingContent
+                heading={name ? <CardHeading>{name}</CardHeading> : null}
+                trend={trend}
+            />
+        </Frame>
+    )
+}
+
+function ErrorCard({ name, className }: { name?: string; className?: string }) {
+    return (
+        <Frame name={name} className={className}>
+            {name ? <CardHeading>{name}</CardHeading> : null}
+            <p data-slot="observation-error" className="text-sm">
+                <CardNote tone="error">
+                    {i18n.t("Couldn't load this value")}
+                </CardNote>
+            </p>
+        </Frame>
+    )
+}
+
+const describeMisconfigured = (
+    dataElement: string,
+    program: string,
+    metadata: ProgramMetadata
+) => {
+    const captured = [...metadata.dataElements.values()]
+        .map(({ id, displayName }) => `${id} (${displayName})`)
+        .join(', ')
+    return `Data element ${dataElement} is not captured by any stage of program ${program}. Captured data elements: ${captured || 'none'}`
+}
+
+/**
+ * A data element no stage of the program captures. Development shows the
+ * full setup message on the card; production shows a short one and logs
+ * the full message instead.
+ */
+function MisconfiguredCard({
+    name,
+    message,
+    className,
+}: {
+    name?: string
+    message: string
+    className?: string
+}) {
+    useEffect(() => {
+        if (isProduction()) {
+            console.error(message)
+        }
+    }, [message])
+    return (
+        <Frame name={name} className={className}>
+            {name ? <CardHeading>{name}</CardHeading> : null}
+            <p
+                role="alert"
+                data-slot="observation-config-error"
+                className="m-0 rounded-dhis2-sm border border-dhis2-red-500 bg-dhis2-red-050 px-3 py-2 text-sm break-words text-dhis2-red-900"
+            >
+                {isProduction()
+                    ? i18n.t("This card isn't set up correctly")
+                    : message}
+            </p>
+        </Frame>
+    )
+}
+
+function ReadyCard({
+    element,
+    stages,
+    events,
+    label,
+    unit,
+    staleAfterDays,
+    className,
+    children,
+}: {
+    element: DataElementMetadata
+    stages: StageMetadata[]
+    events: TrackerEventRecord[]
+    label?: string
+    unit?: string
+    staleAfterDays?: number
+    className?: string
+    children?: ReactNode
+}) {
+    const display = useDisplayOptions()
+    const series = useMemo(
+        () => buildSeries({ dataElement: element, stages, events }),
+        [element, stages, events]
+    )
+    const [recordedNotes, setRecordedNotes] = useState(0)
+    const registerRecorded = useCallback(() => {
+        setRecordedNotes((count) => count + 1)
+        return () => setRecordedNotes((count) => count - 1)
+    }, [])
+    const title = label ?? series.label
+    // Read per render so tests can stub the clock.
+    const now = new Date()
+    const stale =
+        series.latest !== undefined &&
+        isStale(series.latest, staleAfterDays, now)
+
+    return (
+        <Frame name={title} stale={stale} className={className}>
+            <ObservationCardContext.Provider
+                value={{
+                    series,
+                    title,
+                    unit,
+                    staleAfterDays,
+                    stale,
+                    now,
+                    display,
+                    registerRecorded,
+                }}
+            >
+                <ReadyContent
+                    series={series}
+                    recordedPlaced={recordedNotes > 0}
+                >
+                    {children}
+                </ReadyContent>
+            </ObservationCardContext.Provider>
+        </Frame>
+    )
+}
+
 /**
  * One data element's readings for the provider's person. It shows the
  * loading, error, setup, never recorded and unsupported states itself; its
@@ -207,81 +341,68 @@ export function ObservationCard({
     className,
     children,
 }: ObservationCardProps) {
-    const state = useObservation(dataElement)
-    const { name, pendingTrend } = useElementMetadata(dataElement)
-    const display = useDisplayOptions()
-    const [recordedNotes, setRecordedNotes] = useState(0)
-    const registerRecorded = useCallback(() => {
-        setRecordedNotes((count) => count + 1)
-        return () => setRecordedNotes((count) => count - 1)
-    }, [])
+    const subject = useObservationsSubject()
+    const metadata = useProgramMetadata(subject.program)
+    const events = usePersonEvents(subject)
     // An empty label is no label.
     const hostLabel = label || undefined
-    // Before there is a series, the element's name from the metadata, once known.
-    const earlyName = hostLabel ?? name
-    const heading = earlyName ? <CardHeading>{earlyName}</CardHeading> : null
 
-    switch (state.status) {
-        case 'pending':
-            return (
-                <Frame name={earlyName} busy className={className}>
-                    <LoadingContent heading={heading} trend={pendingTrend} />
-                </Frame>
-            )
-        case 'error':
-            return (
-                <Frame name={earlyName} className={className}>
-                    {heading}
-                    <p data-slot="observation-error" className="text-sm">
-                        <CardNote tone="error">
-                            {i18n.t("Couldn't load this value")}
-                        </CardNote>
-                    </p>
-                </Frame>
-            )
-        case 'misconfigured':
-            return (
-                <Frame name={earlyName} className={className}>
-                    {heading}
-                    {/* The provider logs the full message in production. */}
-                    <p
-                        role="alert"
-                        data-slot="observation-config-error"
-                        className="m-0 rounded-dhis2-sm border border-dhis2-red-500 bg-dhis2-red-050 px-3 py-2 text-sm break-words text-dhis2-red-900"
-                    >
-                        {isProduction()
-                            ? i18n.t("This card isn't set up correctly")
-                            : state.message}
-                    </p>
-                </Frame>
-            )
-        default: {
-            const { series } = state
-            const title = hostLabel ?? series.label
-            const stale =
-                series.latest !== undefined &&
-                isStale(series.latest, staleAfterDays, new Date())
-            return (
-                <Frame name={title} stale={stale} className={className}>
-                    <ObservationCardContext.Provider
-                        value={{
-                            series,
-                            title,
-                            unit,
-                            staleAfterDays,
-                            display,
-                            registerRecorded,
-                        }}
-                    >
-                        <ReadyContent
-                            series={series}
-                            recordedPlaced={recordedNotes > 0}
-                        >
-                            {children}
-                        </ReadyContent>
-                    </ObservationCardContext.Provider>
-                </Frame>
-            )
-        }
+    if (metadata.isError) {
+        return <ErrorCard name={hostLabel} className={className} />
     }
+    if (metadata.isPending) {
+        // Until the metadata says otherwise, a trend: the taller skeleton.
+        return <LoadingCard name={hostLabel} trend className={className} />
+    }
+
+    const element = metadata.data.dataElements.get(dataElement)
+    if (!element) {
+        // Captured, but its metadata can't be read: only this card fails.
+        const invalid = metadata.data.invalidDataElements.get(dataElement)
+        return invalid ? (
+            <ErrorCard
+                name={hostLabel ?? invalid.displayName}
+                className={className}
+            />
+        ) : (
+            // A wrong id is wrong for every person, so it outranks their errors.
+            <MisconfiguredCard
+                name={hostLabel}
+                message={describeMisconfigured(
+                    dataElement,
+                    subject.program,
+                    metadata.data
+                )}
+                className={className}
+            />
+        )
+    }
+
+    const name = hostLabel ?? (element.displayFormName || element.displayName)
+    if (events.isError) {
+        return <ErrorCard name={name} className={className} />
+    }
+    if (events.isPending) {
+        return (
+            <LoadingCard
+                name={name}
+                trend={elementShowsTrend(element)}
+                className={className}
+            />
+        )
+    }
+
+    return (
+        <ReadyCard
+            element={element}
+            stages={metadata.data.stages}
+            events={events.data}
+            label={hostLabel}
+            unit={unit}
+            staleAfterDays={staleAfterDays}
+            className={className}
+        >
+            {children}
+        </ReadyCard>
+    )
 }

@@ -3,9 +3,9 @@ import type { WorkingListCapabilities } from '../api/capabilities'
 import {
     asWorkingListBoundaryError,
     shouldRetryWorkingListRequest,
+    type DataEngine,
     type ResourceRequest,
-    type WorkingListClient,
-} from '../api/client'
+} from '../api/request'
 import {
     EventsResponseSchema,
     TrackedEntitiesResponseSchema,
@@ -25,7 +25,6 @@ import {
     normalizeTrackedEntityValues,
     type NormalizedEvent,
     type NormalizedTrackedEntity,
-    type RowIssueTranslate,
     type TrackedEntityEnrollment,
     type WorkingListRowIssue,
 } from './normalizeRows'
@@ -63,15 +62,13 @@ export type WorkingListPage =
     | EventWorkingListPage
 
 export interface FetchWorkingListPageInput {
-    client: WorkingListClient
+    engine: DataEngine
     context: WorkingListContext
     configuration: WorkingListConfiguration
     pagination: WorkingListPagination
     capabilities: WorkingListCapabilities
     fields: FieldCatalog
     serializationContext?: FilterSerializationContext
-    /** Localizes data-quality issue messages. Defaults to DHIS2 i18n. */
-    translate?: RowIssueTranslate
     range?: WorkingListDateRange
     signal?: AbortSignal
 }
@@ -137,20 +134,28 @@ const enrollmentMatcher = (
         isWithin(enrollment.occurredAt, occurred)
 }
 
+const queryRecords = async (
+    engine: DataEngine,
+    request: ResourceRequest,
+    signal?: AbortSignal
+) => {
+    const { records } = await engine.query({ records: request }, { signal })
+    return records
+}
+
 export const fetchWorkingListPage = async ({
-    client,
+    engine,
     signal,
     ...input
 }: FetchWorkingListPageInput): Promise<WorkingListPage> => {
     const request = serializeWorkingListRequest(input)
     const { configuration } = input
     if (configuration.mode === 'trackedEntity') {
-        const rawResponse = await client.query(
-            request,
-            TrackedEntitiesResponseSchema,
-            signal
+        const response = normalizeTrackedEntitiesResponse(
+            TrackedEntitiesResponseSchema.parse(
+                await queryRecords(engine, request, signal)
+            )
         )
-        const response = normalizeTrackedEntitiesResponse(rawResponse)
         const matchesEnrollment = enrollmentMatcher(
             request,
             input.capabilities.enrollmentStatusParameter
@@ -161,7 +166,6 @@ export const fetchWorkingListPage = async ({
                 normalizeTrackedEntityValues(trackedEntity, input.fields, {
                     programId: input.context.programId,
                     matchesEnrollment,
-                    translate: input.translate,
                 })
             )
         } catch (error) {
@@ -191,18 +195,14 @@ export const fetchWorkingListPage = async ({
         }
     }
 
-    const rawEventsResponse = await client.query(
-        request,
-        EventsResponseSchema,
-        signal
+    const eventsResponse = normalizeEventsResponse(
+        EventsResponseSchema.parse(await queryRecords(engine, request, signal))
     )
-    const eventsResponse = normalizeEventsResponse(rawEventsResponse)
     let events: NormalizedEvent[]
     try {
         events = eventsResponse.events.map((event) =>
             normalizeEventValues(event, input.fields, {
                 programStageId: configuration.programStageId,
-                translate: input.translate,
             })
         )
     } catch (error) {
@@ -215,12 +215,11 @@ export const fetchWorkingListPage = async ({
     })
     let trackedEntitiesById = new Map<string, NormalizedTrackedEntity>()
     if (joinPlan) {
-        const rawJoinResponse = await client.query(
-            joinPlan.request,
-            TrackedEntitiesResponseSchema,
-            signal
+        const joinResponse = normalizeTrackedEntitiesResponse(
+            TrackedEntitiesResponseSchema.parse(
+                await queryRecords(engine, joinPlan.request, signal)
+            )
         )
-        const joinResponse = normalizeTrackedEntitiesResponse(rawJoinResponse)
         try {
             trackedEntitiesById = new Map(
                 joinResponse.trackedEntities.map((trackedEntity) => {
@@ -229,7 +228,6 @@ export const fetchWorkingListPage = async ({
                         input.fields,
                         {
                             programId: input.context.programId,
-                            translate: input.translate,
                         }
                     )
                     return [normalized.trackedEntity.trackedEntity, normalized]

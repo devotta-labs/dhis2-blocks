@@ -1,5 +1,5 @@
+import { useDataEngine } from '@dhis2/app-runtime'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import type { createAppWorkingListClient } from './createAppWorkingListClient'
 import {
     OrganisationUnitsResponseSchema,
     retryOperationalError,
@@ -8,32 +8,34 @@ import {
 const PAGE_SIZE = 50
 
 export const useOrganisationUnitSearch = ({
-    client,
     search,
     enabled,
 }: {
-    client: ReturnType<typeof createAppWorkingListClient>
     search: string
     enabled: boolean
-}) =>
-    useInfiniteQuery({
+}) => {
+    const engine = useDataEngine()
+    return useInfiniteQuery({
         queryKey: ['working-list', 'shell', 'org-unit-search', search],
-        queryFn: ({ signal, pageParam }) =>
-            client.query(
+        queryFn: async ({ signal, pageParam }) => {
+            const { organisationUnits } = await engine.query(
                 {
-                    resource: 'organisationUnits',
-                    params: {
-                        fields: 'id,displayName,path',
-                        paging: true,
-                        query: search,
-                        withinUserSearchHierarchy: true,
-                        page: pageParam,
-                        pageSize: PAGE_SIZE,
+                    organisationUnits: {
+                        resource: 'organisationUnits',
+                        params: {
+                            fields: 'id,displayName,path',
+                            paging: true,
+                            query: search,
+                            withinUserSearchHierarchy: true,
+                            page: pageParam,
+                            pageSize: PAGE_SIZE,
+                        },
                     },
                 },
-                OrganisationUnitsResponseSchema,
-                signal
-            ),
+                { signal }
+            )
+            return OrganisationUnitsResponseSchema.parse(organisationUnits)
+        },
         initialPageParam: 1,
         getNextPageParam: (lastPage) =>
             lastPage.pager &&
@@ -45,3 +47,4 @@ export const useOrganisationUnitSearch = ({
         gcTime: 30 * 60 * 1000,
         retry: retryOperationalError,
     })
+}

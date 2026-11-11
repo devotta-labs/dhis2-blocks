@@ -1,6 +1,5 @@
 import type { AttributeMetadata, ProgramMetadata } from '../api/schemas'
 import type {
-    BlockedOperators,
     FieldKind,
     FinderAttribute,
     ProgramModel,
@@ -74,26 +73,9 @@ const kindOf = (meta: AttributeMetadata, support: SearchSupport): FieldKind => {
     }
 }
 
-/**
- * Operators that can be read but not changed: unlike a frozen Set, this has
- * no add/delete/clear, and Set methods called on it throw.
- */
-const blockedOperators = (
-    operators: Iterable<SearchOperator>
-): BlockedOperators => {
-    const set = new Set(operators)
-    return Object.freeze({
-        get size() {
-            return set.size
-        },
-        has: (operator: SearchOperator) => set.has(operator),
-        [Symbol.iterator]: () => set.values(),
-    })
-}
-
 const textOperatorOf = (
     meta: AttributeMetadata,
-    blocked: BlockedOperators
+    blocked: ReadonlySet<SearchOperator>
 ): FinderAttribute['textOperator'] => {
     const preferred = TEXT_OPERATORS.find(
         (operator) => operator === meta.preferredSearchOperator
@@ -130,7 +112,7 @@ const operatorsFor = (
 /** Whether a match sends only operators that are allowed. */
 export const canSendMatch = (
     attribute: OperatorSource,
-    blocked: BlockedOperators,
+    blocked: ReadonlySet<SearchOperator>,
     match: 'exact' | 'range'
 ): boolean =>
     operatorsFor(attribute, match).every(
@@ -143,7 +125,7 @@ export const canSendMatch = (
  */
 const canSend = (
     attribute: OperatorSource,
-    blocked: BlockedOperators
+    blocked: ReadonlySet<SearchOperator>
 ): boolean => {
     if (attribute.kind === 'unsupported') {
         return false
@@ -159,7 +141,7 @@ const toAttribute =
     (support: SearchSupport) =>
     (meta: AttributeMetadata): FinderAttribute => {
         const kind = kindOf(meta, support)
-        const blocked = blockedOperators(
+        const blocked = new Set(
             meta.blockedSearchOperators.filter(
                 (operator): operator is SearchOperator =>
                     SEARCH_OPERATORS.includes(operator)
@@ -167,7 +149,7 @@ const toAttribute =
         )
         const textOperator =
             kind === 'text' ? textOperatorOf(meta, blocked) : undefined
-        return Object.freeze({
+        return {
             id: meta.id,
             label: meta.label,
             valueType: meta.valueType,
@@ -175,35 +157,28 @@ const toAttribute =
             unique: meta.unique,
             searchable: meta.searchable,
             displayInList: meta.displayInList,
+            options: meta.options,
+            textOperator,
             blocked,
             minCharacters: meta.minCharactersToSearch,
             usable:
                 meta.searchable &&
                 canSend({ kind, unique: meta.unique, textOperator }, blocked),
-            ...(meta.options && {
-                options: Object.freeze(
-                    meta.options.map(({ code, name }) =>
-                        Object.freeze({ code, name })
-                    )
-                ),
-            }),
-            ...(textOperator && { textOperator }),
-        })
+        }
     }
 
 /** Without `support`, MULTI_TEXT attributes cannot be searched. */
 export const buildProgramModel = (
     meta: ProgramMetadata,
     support: SearchSupport = { multiTextSearch: false }
-): ProgramModel =>
-    Object.freeze({
-        program: meta.program,
-        name: meta.name,
-        trackedEntityType: meta.trackedEntityType,
-        attributes: Object.freeze(meta.attributes.map(toAttribute(support))),
-        minAttributes: meta.minAttributesRequiredToSearch,
-        maxResults: meta.maxTeiCountToReturn,
-    })
+): ProgramModel => ({
+    program: meta.program,
+    name: meta.name,
+    trackedEntityType: meta.trackedEntityType,
+    attributes: meta.attributes.map(toAttribute(support)),
+    minAttributes: meta.minAttributesRequiredToSearch,
+    maxResults: meta.maxTeiCountToReturn,
+})
 
 export const attributeOf = (
     model: ProgramModel,

@@ -37,7 +37,7 @@ export const amina = entity('te1', {
 })
 
 export const answer = (
-    people: ReadonlyArray<ReturnType<typeof entity>>,
+    people: Array<ReturnType<typeof entity>>,
     total = people.length,
     current = 1
 ) => ({
@@ -60,16 +60,11 @@ interface Setup {
 }
 
 export const ui = (
-    server: FakeServer,
     program: string,
     onSelect: (person: FinderPerson) => void,
     results: ReactNode
 ) => (
-    <FinderProvider
-        program={program}
-        client={server.client}
-        onSelect={onSelect}
-    >
+    <FinderProvider program={program} onSelect={onSelect}>
         <SearchForm />
         {results}
     </FinderProvider>
@@ -82,7 +77,8 @@ export const renderFinder = async ({
 }: Setup = {}) => {
     const server = createFakeServer(options)
     const screen = await renderWithQueries(
-        ui(server, 'hivProgram', onSelect, results)
+        ui('hivProgram', onSelect, results),
+        server
     )
     return { server, screen, onSelect }
 }

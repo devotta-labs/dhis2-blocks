@@ -1,59 +1,22 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Result } from 'better-result'
-import React, {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-    useSyncExternalStore,
-} from 'react'
-import { shouldRetryWorkingListRequest } from '../api/client'
-import { fieldsForConfiguration } from '../api/metadata'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { defaultWorkingListId } from '../api/savedLists'
 import {
-    fetchSavedWorkingLists,
-    type NormalizedSavedWorkingList,
-} from '../api/savedLists'
-import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
-import { workingListQueryKeys } from '../query/keys'
-import { WorkingListTextProvider } from '../ui/WorkingListText'
-import {
-    publicConfigurationFingerprint,
-    resolveSelectedSavedListId,
     resolvePublicConfiguration,
-    type toPublicConfiguration,
+    resolveSelectedSavedListId,
+    selectsDifferentRows,
 } from './configuration'
-import type {
-    WorkingListMeta,
-    WorkingListMutationStatus,
-    WorkingListPagination,
-    WorkingListSavedView,
-    WorkingListSavedViewsMeta,
+import {
+    WORKING_LIST_PAGE_SIZES,
+    type WorkingListConfiguration,
+    type WorkingListPagination,
 } from './contracts'
-import { WORKING_LIST_PAGE_SIZES } from './contracts'
-import { toTransportError } from './errorNormalization'
-import { useRuntimeWorkingListClient } from './engineAdapter'
+import { useProgramMetadata, useSelectedView } from './queries'
 import {
-    createWorkingListProviderStore,
-    type WorkingListProviderStore,
-} from './store'
-import {
-    useStableWorkingListActions,
-    WorkingListPublicContext,
+    WorkingListContext,
+    type WorkingListContextValue,
 } from './WorkingListContext'
-import {
-    createWorkingListActions,
-    type WorkingListActionRuntime,
-} from './actionCommands'
-import { useWorkingListResults } from './useWorkingListResults'
-import { useWorkingListRepair } from './useWorkingListRepair'
-import { useWorkingListSelection } from './useWorkingListSelection'
-import { useWorkingListLifecycle } from './useWorkingListLifecycle'
-import {
-    WorkingListPrivateUiContext,
-    type WorkingListPrivateUiContextValue,
-} from './WorkingListPrivateContext'
+
+const DEFAULT_PAGINATION: WorkingListPagination = { page: 1, pageSize: 15 }
 
 const assertPagination = (pagination: WorkingListPagination) => {
     if (!Number.isInteger(pagination.page) || pagination.page < 1) {
@@ -68,527 +31,195 @@ const assertPagination = (pagination: WorkingListPagination) => {
     }
 }
 
-const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
+/** A draft, and the view it was made on. */
+interface Draft {
+    viewId: string
+    configuration: WorkingListConfiguration
+}
 
-const initialMeta = (pagination: WorkingListPagination): WorkingListMeta => ({
-    lifecycle: { status: 'pending' },
-    selection: { status: 'pending' },
-    activeConfiguration: { status: 'unavailable' },
-    savedViews: { status: 'pending', views: [] },
-    mutations: {
-        create: idleMutation(),
-        update: idleMutation(),
-        delete: idleMutation(),
-    },
-    results: { status: 'pending' },
-    dirty: false,
-    online: true,
-    pagination,
-    fields: [],
-})
-
-const asSavedView = (
-    list: NormalizedSavedWorkingList,
-    generated: boolean
-): WorkingListSavedView => ({
-    id: list.id,
-    name: list.name,
-    generated,
-    compatible: list.compatibility === 'compatible',
-    canUpdate:
-        !generated &&
-        list.sharing.access?.write === true &&
-        list.sharing.access.update === true,
-    canDelete: !generated && list.sharing.access?.delete === true,
-    canShare: !generated && list.sharing.access?.manage === true,
-})
-
-interface WorkingListProviderProps {
+export interface WorkingListProviderProps {
     children: React.ReactNode
     programId: string
     orgUnitId: string
-    selectedSavedListId: string | null
-    onSelectedSavedListChange(id: string): void
-    pagination: WorkingListPagination
-    onPaginationChange(next: WorkingListPagination): void
+    /** Controls the selected view; `null` is the program's default list. */
+    viewId?: string | null
+    defaultViewId?: string | null
+    onViewChange?(id: string): void
+    /** Controls the page; left out, the list keeps its own. */
+    pagination?: WorkingListPagination
+    defaultPagination?: WorkingListPagination
+    onPaginationChange?(next: WorkingListPagination): void
+    /**
+     * Called with whether the configuration on screen differs from the saved
+     * list: once on mount, then each time that changes.
+     */
+    onDirtyChange?(dirty: boolean): void
 }
 
 const WorkingListProviderInstance = ({
+    children,
     programId,
     orgUnitId,
-    selectedSavedListId,
-    onSelectedSavedListChange,
-    pagination,
+    viewId: controlledViewId,
+    defaultViewId,
+    onViewChange,
+    pagination: controlledPagination,
+    defaultPagination,
     onPaginationChange,
-    children,
+    onDirtyChange,
 }: WorkingListProviderProps) => {
-    assertPagination(pagination)
-    const queryClient = useQueryClient()
-    const client = useRuntimeWorkingListClient()
+    const viewControlled = controlledViewId !== undefined
+    const paginationControlled = controlledPagination !== undefined
+    if (viewControlled && !onViewChange) {
+        throw new Error(
+            'WorkingList requires onViewChange when viewId is controlled.'
+        )
+    }
+    if (paginationControlled && !onPaginationChange) {
+        throw new Error(
+            'WorkingList requires onPaginationChange when pagination is controlled.'
+        )
+    }
 
-    const [store] = useState<WorkingListProviderStore>(() =>
-        createWorkingListProviderStore(initialMeta(pagination))
-    )
-    const updateStore = useCallback(
-        (
-            update: (
-                current: ReturnType<typeof store.getState>
-            ) => Partial<ReturnType<typeof store.getState>>
-        ) => store.setState((current) => update(current)),
-        [store]
-    )
-
-    const {
-        online,
-        translate,
-        locale,
-        program,
-        systemInfo,
-        capabilities,
-        metadata,
-        parsingContext,
-        serializationContext,
-        calendarContext,
-        defaultList,
-        generatedLists,
-        defaultListId,
-        lifecycleReady,
-    } = useWorkingListLifecycle({ client, programId, updateStore })
-    const effectiveSelectedSavedListId = resolveSelectedSavedListId(
-        selectedSavedListId,
+    const [localViewId, setLocalViewId] = useState(defaultViewId ?? null)
+    const defaultListId = defaultWorkingListId(programId)
+    const viewId = resolveSelectedSavedListId(
+        viewControlled ? controlledViewId : localViewId,
         defaultListId
     )
 
-    const savedListsQuery = useQuery({
-        queryKey: workingListQueryKeys.savedLists(programId),
-        queryFn: ({ signal }) => {
-            if (!metadata) throw new Error('Program metadata is not ready')
-            return fetchSavedWorkingLists({
-                client,
-                programId,
-                metadata,
-                parsingContext,
-                signal,
-            })
-        },
-        staleTime: 30_000,
-        gcTime: 5 * 60_000,
-        retry: shouldRetryWorkingListRequest,
-        enabled: lifecycleReady,
-    })
-    const [confirmedLists, setConfirmedLists] =
-        useState<NormalizedSavedWorkingList[]>()
-    useEffect(() => {
-        if (savedListsQuery.data) setConfirmedLists(savedListsQuery.data)
-    }, [savedListsQuery.data])
-    const usingGeneratedLists = confirmedLists?.length === 0
-    const displayedLists = useMemo(() => {
-        if (!confirmedLists) return []
-        return usingGeneratedLists ? generatedLists : confirmedLists
-    }, [confirmedLists, generatedLists, usingGeneratedLists])
-
-    const savedViewsError = savedListsQuery.error
-        ? toTransportError(savedListsQuery.error, 'Loading saved working lists')
-        : undefined
-    useEffect(() => {
-        const views = displayedLists.map((list) =>
-            asSavedView(list, Boolean(usingGeneratedLists))
-        )
-        let savedViews: WorkingListSavedViewsMeta
-        if (savedViewsError) {
-            savedViews = {
-                status: 'error',
-                views,
-                error: savedViewsError,
-            }
-        } else if (!confirmedLists) {
-            savedViews = savedViewsError
-                ? { status: 'error', views, error: savedViewsError }
-                : { status: 'pending', views }
-        } else {
-            savedViews = {
-                status: 'ready',
-                views,
-                usingGeneratedViews: Boolean(usingGeneratedLists),
-                isUpdating: savedListsQuery.isFetching,
-            }
-        }
-        updateStore((current) => ({
-            meta: { ...current.meta, savedViews },
-        }))
-    }, [
-        confirmedLists,
-        displayedLists,
-        savedListsQuery.isFetching,
-        savedViewsError,
-        updateStore,
-        usingGeneratedLists,
-    ])
-
-    const [stagedPagination, setStagedPagination] =
-        useState<WorkingListPagination>()
-    const effectivePagination = stagedPagination ?? pagination
-    useLayoutEffect(() => {
-        if (!stagedPagination) return
-        setStagedPagination(undefined)
-    }, [pagination, stagedPagination])
-    useEffect(() => {
-        updateStore((current) => ({
-            meta: { ...current.meta, pagination: effectivePagination },
-        }))
-    }, [effectivePagination, updateStore])
-    const onPaginationChangeRef = useRef(onPaginationChange)
-    onPaginationChangeRef.current = onPaginationChange
-    const stagePagination = useCallback(
+    const [localPagination, setLocalPagination] = useState(
+        defaultPagination ?? DEFAULT_PAGINATION
+    )
+    const requested = controlledPagination ?? localPagination
+    assertPagination(requested)
+    const setPagination = useCallback(
         (next: WorkingListPagination) => {
-            setStagedPagination(next)
-            updateStore((current) => ({
-                meta: { ...current.meta, pagination: next },
-            }))
-            onPaginationChangeRef.current(next)
+            assertPagination(next)
+            if (!paginationControlled) setLocalPagination(next)
+            onPaginationChange?.(next)
         },
-        [updateStore]
+        [onPaginationChange, paginationControlled]
     )
 
-    const {
-        requestedId,
-        selectionToken,
-        latestRequestedIdRef,
-        hardTransition,
-        commitSelection,
-    } = useWorkingListSelection({
-        selectedSavedListId: effectiveSelectedSavedListId,
-        onSelectedSavedListChange,
-        defaultList,
-        confirmedLists,
-        defaultListId,
-        metadata,
-        displayedLists,
-        stagePagination,
-        store,
-        updateStore,
-    })
-
-    const subscribe = useCallback(
-        (notify: () => void) => store.subscribe(notify),
-        [store]
-    )
-    const activeState = useSyncExternalStore(
-        subscribe,
-        () => store.getState().activeState
-    )
+    // A page is a page of one view in one organisation unit. When either
+    // changes after mount, the list reads page 1 at once and then says so,
+    // so whoever owns the page can follow. The page the list mounts with is
+    // left alone, which is what lets a deep link open on it.
+    const pageOf = `${orgUnitId} ${viewId}`
+    const [settledPageOf, setSettledPageOf] = useState(pageOf)
+    const moved = settledPageOf !== pageOf
+    const page = moved ? 1 : requested.page
+    const { pageSize } = requested
+    const pagination = useMemo(() => ({ page, pageSize }), [page, pageSize])
     useEffect(() => {
-        if (!activeState || !metadata) return
-        const fields = Array.from(
-            fieldsForConfiguration(metadata, activeState.configuration).values()
-        )
-        updateStore((current) => ({
-            meta: { ...current.meta, fields },
-        }))
-    }, [activeState, metadata, updateStore])
-    const resolvedConfiguration = useSyncExternalStore(
-        subscribe,
-        () => store.getState().resolvedConfiguration
-    )
-    const selectionMeta = useSyncExternalStore(
-        subscribe,
-        () => store.getState().meta.selection
-    )
-    const mutationMeta = useSyncExternalStore(
-        subscribe,
-        () => store.getState().meta.mutations
-    )
+        if (!moved) return
+        setSettledPageOf(pageOf)
+        setPagination({ page: 1, pageSize })
+    }, [moved, pageOf, pageSize, setPagination])
 
-    const {
-        pageQuery,
-        organisationUnitLabelsQuery,
-        formattingContext,
-        resultTargets,
-        rows,
-    } = useWorkingListResults({
-        client,
-        programId,
-        orgUnitId,
-        resolvedConfiguration,
-        configuration: activeState?.configuration,
-        metadata,
-        effectivePagination,
-        capabilities,
-        serializationContext,
-        systemInfo,
-        locale,
-        translate,
-        online,
-        stagePagination,
-        store,
-        updateStore,
-    })
-
-    const refreshSavedLists = useCallback(async () => {
-        if (!metadata) throw new Error('Program metadata is not ready')
-        const queryKey = workingListQueryKeys.savedLists(programId)
-        await queryClient.resetQueries({ queryKey })
-        const lists = await queryClient.fetchQuery({
-            queryKey,
-            queryFn: ({ signal }) =>
-                fetchSavedWorkingLists({
-                    client,
-                    programId,
-                    metadata,
-                    parsingContext,
-                    signal,
-                }),
-            staleTime: 0,
-            retry: shouldRetryWorkingListRequest,
-        })
-        setConfirmedLists(lists)
-        return lists
-    }, [client, metadata, parsingContext, programId, queryClient])
-
-    const setMutation = useCallback(
-        (
-            operation: keyof WorkingListMeta['mutations'],
-            status: WorkingListMutationStatus
-        ) =>
-            updateStore((current) => ({
-                meta: {
-                    ...current.meta,
-                    mutations: {
-                        ...current.meta.mutations,
-                        [operation]: status,
-                    },
-                },
-            })),
-        [updateStore]
-    )
-    const runtimeRef = useRef<WorkingListActionRuntime>({
-        activeState,
-        resolvedConfiguration,
-        metadata,
-        serializationContext,
-        formattingContext,
-        confirmedLists,
-        displayedLists,
-        effectivePagination,
-        online,
-        program,
-        rows,
-    })
-    runtimeRef.current = {
-        activeState,
-        resolvedConfiguration,
-        metadata,
-        serializationContext,
-        formattingContext,
-        confirmedLists,
-        displayedLists,
-        effectivePagination,
-        online,
-        program,
-        rows,
+    const [storedDraft, setStoredDraft] = useState<Draft>()
+    const draft =
+        storedDraft?.viewId === viewId ? storedDraft.configuration : undefined
+    const metadata = useProgramMetadata(programId).data
+    const view = useSelectedView({ programId, viewId, draft }).data
+    // A draft ends when its view is left, and when the saved list says the
+    // same: after it is saved, or when the change is undone by hand.
+    if (
+        storedDraft &&
+        (storedDraft.viewId !== viewId || view?.isDirty === false)
+    ) {
+        setStoredDraft(undefined)
     }
 
-    const commitConfiguration = useCallback(
-        (
-            configuration: ReturnType<typeof toPublicConfiguration>,
-            internal: InternalConfiguration,
-            resetPage: boolean
-        ) => {
-            updateStore((current) => ({
-                activeState: current.activeState
-                    ? { ...current.activeState, configuration }
-                    : undefined,
-                resolvedConfiguration: internal,
-                meta: {
-                    ...current.meta,
-                    dirty:
-                        publicConfigurationFingerprint(configuration) !==
-                        current.baselineFingerprint,
-                    results: { status: 'pending' },
-                },
-            }))
-            if (resetPage) {
-                stagePagination({
-                    page: 1,
-                    pageSize: store.getState().meta.pagination.pageSize,
-                })
-            }
-        },
-        [stagePagination, store, updateStore]
-    )
+    const isDirty = view?.isDirty ?? false
+    useEffect(() => {
+        onDirtyChange?.(isDirty)
+        // Only a change of `isDirty` is news; a new callback is not.
+    }, [isDirty])
 
-    const validateAndCommit = useCallback(
-        (
-            configuration: ReturnType<typeof toPublicConfiguration>,
-            resetPage: boolean
-        ) => {
-            const runtime = runtimeRef.current
-            if (!runtime.metadata || !runtime.activeState) {
+    const currentConfiguration = view?.configuration
+    const setDraft = useCallback(
+        (configuration: WorkingListConfiguration) => {
+            if (!metadata || !currentConfiguration) {
                 throw new Error('Working List configuration is unavailable')
             }
             const resolved = resolvePublicConfiguration({
                 configuration,
                 programId,
-                metadata: runtime.metadata,
-                serializationContext: runtime.serializationContext,
+                metadata: metadata.fieldCatalog,
+                serializationContext: metadata.serializationContext,
             })
-            if (resolved.isErr()) return resolved
-            commitConfiguration(configuration, resolved.value, resetPage)
-            return Result.ok()
+            if (resolved.isErr()) throw resolved.error
+            setStoredDraft({ viewId, configuration })
+            // The rows on page 4 of one filter are not those of another.
+            if (selectsDifferentRows(currentConfiguration, configuration)) {
+                setPagination({ page: 1, pageSize })
+            }
         },
-        [commitConfiguration, programId]
-    )
-
-    const currentActions = useMemo(
-        () =>
-            createWorkingListActions({
-                runtimeRef,
-                selectionToken,
-                capabilities,
-                client,
-                defaultListId,
-                hardTransition,
-                refreshSavedLists,
-                setMutation,
-                stagePagination,
-                store,
-                translate,
-                updateStore,
-                validateAndCommit,
-            }),
         [
-            capabilities,
-            client,
-            defaultListId,
-            hardTransition,
-            refreshSavedLists,
-            setMutation,
-            stagePagination,
-            store,
-            translate,
-            updateStore,
-            validateAndCommit,
+            currentConfiguration,
+            metadata,
+            pageSize,
+            programId,
+            setPagination,
+            viewId,
         ]
     )
-    const actions = useStableWorkingListActions(currentActions)
+    const selectView = useCallback(
+        (next: string | null) => {
+            const id = resolveSelectedSavedListId(next, defaultListId)
+            setStoredDraft(undefined)
+            if (!viewControlled) setLocalViewId(id)
+            onViewChange?.(id)
+            // Selecting the selected view again starts it over.
+            if (id === viewId) setPagination({ page: 1, pageSize })
+        },
+        [
+            defaultListId,
+            onViewChange,
+            pageSize,
+            setPagination,
+            viewControlled,
+            viewId,
+        ]
+    )
 
-    const selectedId =
-        activeState?.selectedSavedListId ??
-        (selectionMeta.status === 'error'
-            ? selectionMeta.requestedSavedListId
-            : requestedId)
-    const selectedList = displayedLists.find((list) => list.id === selectedId)
-    const { privateActions, repairComputation, repairPending } =
-        useWorkingListRepair({
-            selectedId,
-            selectedList,
-            metadata,
-            programId,
-            parsingContext,
-            serializationContext,
-            online,
-            capabilities,
-            client,
-            refreshSavedLists,
-            latestRequestedIdRef,
-            commitSelection,
-            retrySavedViews: savedListsQuery.refetch,
-            retryPage: pageQuery.refetch,
-            organisationUnitLabelsError: organisationUnitLabelsQuery.error,
-            retryOrganisationUnitLabels: organisationUnitLabelsQuery.refetch,
-        })
-
-    const mutationBusy =
-        Object.values(mutationMeta).some(
-            (mutation) => mutation.status === 'pending'
-        ) || repairPending
-    const publicContext = useMemo(() => ({ store, actions }), [actions, store])
-    const privateContext = useMemo<WorkingListPrivateUiContextValue>(
+    const value = useMemo<WorkingListContextValue>(
         () => ({
-            store,
-            actions,
-            privateActions,
-            client,
             programId,
             orgUnitId,
-            online,
-            locale,
-            translate,
-            program,
-            systemInfo,
-            capabilities,
-            metadata,
-            calendarContext,
-            parsingContext,
-            serializationContext,
-            formattingContext,
-            resolvedConfiguration,
-            confirmedLists,
-            displayedLists,
-            selectedList,
-            defaultList,
-            selectedIsGenerated:
-                selectedId === defaultListId || Boolean(usingGeneratedLists),
-            mutationBusy,
-            repair: repairComputation
-                ? {
-                      plan: repairComputation.plan,
-                      repairedConfiguration:
-                          repairComputation.result.status === 'repaired'
-                              ? repairComputation.result.configuration
-                              : undefined,
-                      canRepair: repairComputation.canRepair,
-                      isPending: repairPending,
-                  }
-                : undefined,
-            resultTargets,
-            savedViewsQueryError: savedViewsError,
+            viewId,
+            selectView,
+            draft,
+            setDraft,
+            pagination,
+            setPagination,
         }),
         [
-            actions,
-            calendarContext,
-            capabilities,
-            client,
-            confirmedLists,
-            defaultList,
-            defaultListId,
-            displayedLists,
-            formattingContext,
-            locale,
-            metadata,
-            mutationBusy,
-            online,
+            draft,
             orgUnitId,
-            parsingContext,
-            privateActions,
-            program,
+            pagination,
             programId,
-            repairComputation,
-            repairPending,
-            resolvedConfiguration,
-            resultTargets,
-            savedViewsError,
-            selectedId,
-            selectedList,
-            serializationContext,
-            store,
-            systemInfo,
-            translate,
-            usingGeneratedLists,
+            selectView,
+            setDraft,
+            setPagination,
+            viewId,
         ]
     )
 
     return (
-        <WorkingListPublicContext.Provider value={publicContext}>
-            <WorkingListPrivateUiContext.Provider value={privateContext}>
-                {children}
-            </WorkingListPrivateUiContext.Provider>
-        </WorkingListPublicContext.Provider>
+        <WorkingListContext.Provider value={value}>
+            {children}
+        </WorkingListContext.Provider>
     )
 }
 
+/**
+ * Holds what the person has chosen: the view, the draft and the page. Each
+ * is state here or a prop from above, never both, and nothing loaded from the
+ * server is kept: the query hooks derive that from these choices.
+ */
 export const WorkingListProvider = (props: WorkingListProviderProps) => (
-    <WorkingListTextProvider>
-        <WorkingListProviderInstance key={props.programId} {...props} />
-    </WorkingListTextProvider>
+    <WorkingListProviderInstance key={props.programId} {...props} />
 )

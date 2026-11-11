@@ -16,7 +16,6 @@ import { useObservationCard } from '../card/context'
 import { CardNote, FOOTER_BAND, STALE_BAND } from '../card/frame'
 import {
     formatRecordedDate,
-    isStale,
     NO_ESCAPE,
     relativeTime,
     type DisplayOptions,
@@ -165,14 +164,11 @@ export function RecordedFooter({
     className,
     ...props
 }: ObservationRecordedProps) {
-    const { series, staleAfterDays, display } = useObservationCard()
+    const { series, staleAfterDays, stale, now, display } = useObservationCard()
     const { latest, partial } = series
     if (latest === undefined && !partial) {
         return null
     }
-    // Read per render so tests can stub the clock.
-    const now = new Date()
-    const stale = latest !== undefined && isStale(latest, staleAfterDays, now)
     return (
         <div
             {...props}

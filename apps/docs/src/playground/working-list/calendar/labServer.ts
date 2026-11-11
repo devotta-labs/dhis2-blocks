@@ -1,4 +1,4 @@
-import type { DataEngineQueryParameters } from '@/components/working-list/api/client'
+import type { DataEngineQueryParameters } from '@/components/working-list/api/request'
 import {
     addDays,
     ATTRIBUTES,

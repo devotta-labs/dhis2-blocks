@@ -10,8 +10,9 @@ import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useStore } from '@tanstack/react-form'
-import { useMetadataErrorMessage } from '../hooks'
 import { FinderFormContext, useFinderContext } from '../provider/context'
+import { useFinderModel } from '../provider/useFinderModel'
+import { describeMetadataError } from '../rules/describeMetadataError'
 import { evaluateForm } from '../rules/evaluateForm'
 import type { FormField } from '../rules/types'
 import { useFinderFormApi } from './finderFormApi'
@@ -37,7 +38,7 @@ const useRegistrations = () => {
             )
     }, [])
     const fields = useMemo(
-        () => Object.freeze(registrations.map(({ field }) => field)),
+        () => registrations.map(({ field }) => field),
         [registrations]
     )
     return { fields, register }
@@ -54,18 +55,18 @@ export function FinderForm({
     children,
     ...props
 }: FinderFormProps) {
-    const { state, actions } = useFinderContext()
+    const { setSubmission } = useFinderContext()
+    const { model, isPending, isError } = useFinderModel()
     const { fields, register } = useRegistrations()
-    const { model, status } = state
     // TanStack calls this once the fields' Zod schemas pass; the search rules
     // still decide whether the values make a search.
     const form = useFinderFormApi((values) => {
-        const search =
-            model && status === 'ready'
-                ? evaluateForm(model, fields, values).search
-                : undefined
+        if (!model || isPending || isError) {
+            return
+        }
+        const { search } = evaluateForm(model, fields, values)
         if (search) {
-            actions.submit(search)
+            setSubmission({ search, submittedAt: Date.now(), page: 1 })
         }
     })
     const values = useStore(form.store, (formState) => formState.values)
@@ -87,18 +88,16 @@ export function FinderForm({
     // already-mounted empty form.
     const [registered, setRegistered] = useState(false)
     useLayoutEffect(() => setRegistered(true), [])
-    const metadataError = useMetadataErrorMessage(
-        registered
-            ? verdict?.metadataErrors.find(
-                  ({ kind }) => kind === 'form-cannot-search'
-              )
-            : undefined
-    )
+    const cannotSearch = registered
+        ? verdict?.metadataErrors.find(
+              ({ kind }) => kind === 'form-cannot-search'
+          )
+        : undefined
     return (
         <FinderFormContext.Provider value={formContext}>
             <form
                 noValidate
-                aria-busy={state.status === 'loading'}
+                aria-busy={isPending}
                 {...props}
                 data-slot="finder-form"
                 className={cn('flex flex-col gap-4', className)}
@@ -112,14 +111,16 @@ export function FinderForm({
                     void form.handleSubmit()
                 }}
             >
-                {state.status === 'loading' && <Spinner />}
-                {state.status === 'error' && (
+                {isPending && <Spinner />}
+                {isError && (
                     <ErrorAlert
                         title={i18n.t("The search couldn't be loaded")}
                     />
                 )}
-                {metadataError && (
-                    <MetadataErrorNotice>{metadataError}</MetadataErrorNotice>
+                {model && cannotSearch && (
+                    <MetadataErrorNotice
+                        message={describeMetadataError(model, cannotSearch)}
+                    />
                 )}
                 {children}
             </form>

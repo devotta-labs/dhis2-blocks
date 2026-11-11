@@ -1,10 +1,10 @@
-import { PAGE_SIZE, toSearchParams } from '../rules/searchParams'
-import type { ProgramModel, ValidatedSearch } from '../rules/types'
-import { FinderRequestError, type FinderResourceClient } from './client'
+import type { FetchError } from '@dhis2/app-runtime'
+import { PAGE_SIZE } from '../rules/searchParams'
+import type { ProgramModel } from '../rules/types'
 import {
     normaliseTrackedEntities,
-    TrackedEntitiesResponseSchema,
     type RawTrackedEntity,
+    type TrackedEntitiesResponse,
 } from './schemas'
 
 export interface FinderPerson {
@@ -16,6 +16,7 @@ export interface FinderPerson {
     attributes: Record<string, string>
 }
 
+/** One page of a search: its people, or that it matched too many to show. */
 export type SearchOutcome =
     | {
           kind: 'results'
@@ -27,10 +28,10 @@ export type SearchOutcome =
 
 const TOO_MANY_MARKER = 'maxteicountreached'
 
-const isTooManyConflict = (cause: unknown) =>
-    cause instanceof FinderRequestError &&
-    cause.status === 409 &&
-    [cause.serverMessage, cause.message].some((text) =>
+/** DHIS2 answers a search over the program's cap with this conflict, not rows. */
+export const isTooManyConflict = ({ details, message }: FetchError) =>
+    details.httpStatusCode === 409 &&
+    [details.message, message].some((text) =>
         text?.toLowerCase().includes(TOO_MANY_MARKER)
     )
 
@@ -52,30 +53,12 @@ const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
     return person
 }
 
-/** A failed request throws; going over the result cap is an answer. */
-export const runSearch = async (
-    client: FinderResourceClient,
+/** Reads one page of a search, holding it against the program's result cap. */
+export const toSearchOutcome = (
     model: ProgramModel,
-    search: ValidatedSearch,
-    page: number,
-    signal?: AbortSignal
-): Promise<SearchOutcome> => {
-    let response
-    try {
-        response = await client.query(
-            {
-                resource: 'tracker/trackedEntities',
-                params: toSearchParams(model, search, page),
-            },
-            TrackedEntitiesResponseSchema,
-            signal
-        )
-    } catch (error) {
-        if (isTooManyConflict(error) && !signal?.aborted) {
-            return { kind: 'too-many' }
-        }
-        throw error
-    }
+    response: TrackedEntitiesResponse,
+    page: number
+): SearchOutcome => {
     const { rows, total } = normaliseTrackedEntities(response)
     // Without a total, only a short first page proves the search is below
     // the cap. Never expose rows when the total could exceed it.

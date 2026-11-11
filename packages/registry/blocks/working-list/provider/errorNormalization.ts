@@ -1,27 +1,11 @@
-import { ZodError, z } from 'zod'
-import { WorkingListBoundaryError } from '../api/client'
+import { FetchError } from '@dhis2/app-runtime'
+import { ZodError } from 'zod'
+import { WorkingListBoundaryError } from '../api/request'
 import {
     WorkingListInvalidResponseError,
     WorkingListNetworkError,
     WorkingListResultsError,
 } from './errors'
-
-const RequestFailureSchema = z
-    .object({
-        status: z.number().optional(),
-        response: z.object({ status: z.number().optional() }).optional(),
-        details: z.object({ httpStatusCode: z.number().optional() }).optional(),
-    })
-    .passthrough()
-
-const getRequestErrorStatus = (cause: unknown) => {
-    const parsed = RequestFailureSchema.safeParse(cause)
-    return parsed.success
-        ? (parsed.data.status ??
-              parsed.data.response?.status ??
-              parsed.data.details?.httpStatusCode)
-        : undefined
-}
 
 export const toTransportError = (cause: unknown, operation: string) => {
     if (
@@ -40,7 +24,8 @@ export const toTransportError = (cause: unknown, operation: string) => {
             cause,
         })
     }
-    const status = getRequestErrorStatus(cause)
+    const status =
+        cause instanceof FetchError ? cause.details.httpStatusCode : undefined
     return new WorkingListNetworkError({
         operation,
         message:

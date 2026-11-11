@@ -18,13 +18,8 @@ import {
 } from './finderTestSupport'
 
 const renderFinder = (children: ReactNode) => {
-    const server = createFakeServer()
     return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={vi.fn()}
-        >
+        <FinderProvider program="hivProgram" onSelect={vi.fn()}>
             {children}
             <SubmissionProbe />
         </FinderProvider>
@@ -381,16 +376,13 @@ describe('FinderForm', () => {
     it('disables fields with a spinner while metadata loads', async () => {
         const server = createFakeServer({ programPending: true })
         await renderWithQueries(
-            <FinderProvider
-                program="hivProgram"
-                client={server.client}
-                onSelect={vi.fn()}
-            >
+            <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                 <FinderForm>
                     <FinderField attribute="firstName" label="First name" />
                     <FinderSubmit />
                 </FinderForm>
-            </FinderProvider>
+            </FinderProvider>,
+            server
         )
 
         await expect.element(page.getByRole('status')).toBeVisible()
@@ -403,17 +395,14 @@ describe('FinderForm', () => {
     it('keeps fields disabled with their labels while system info loads', async () => {
         const server = createFakeServer({ systemInfoPending: true })
         await renderWithQueries(
-            <FinderProvider
-                program="hivProgram"
-                client={server.client}
-                onSelect={vi.fn()}
-            >
+            <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                 <FinderForm>
                     <FinderField attribute="firstName" />
                     <FinderField attribute="dob" />
                     <FinderSubmit />
                 </FinderForm>
-            </FinderProvider>
+            </FinderProvider>,
+            server
         )
 
         await expect.element(page.getByRole('status')).toBeVisible()
@@ -429,17 +418,14 @@ describe('FinderForm', () => {
     it('shows an error and keeps fields disabled when system info fails', async () => {
         const server = createFakeServer({ systemInfoFails: true })
         await renderWithQueries(
-            <FinderProvider
-                program="hivProgram"
-                client={server.client}
-                onSelect={vi.fn()}
-            >
+            <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                 <FinderForm>
                     <FinderField attribute="firstName" />
                     <FinderField attribute="dob" />
                     <FinderSubmit />
                 </FinderForm>
-            </FinderProvider>
+            </FinderProvider>,
+            server
         )
 
         await expect
@@ -457,15 +443,12 @@ describe('FinderForm', () => {
     it('shows an error in the form when metadata fails', async () => {
         const server = createFakeServer({ programFails: true })
         await renderWithQueries(
-            <FinderProvider
-                program="hivProgram"
-                client={server.client}
-                onSelect={vi.fn()}
-            >
+            <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                 <FinderForm>
                     <FinderField attribute="firstName" />
                 </FinderForm>
-            </FinderProvider>
+            </FinderProvider>,
+            server
         )
 
         await expect

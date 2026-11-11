@@ -1,3 +1,3 @@
 export { WorkingListDataTable } from './WorkingListTable'
 
-export { WorkingListTableSkeleton } from './WorkingListTableView'
+export { WorkingListTableSkeleton } from './WorkingListTableSkeleton'

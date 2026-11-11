@@ -188,9 +188,9 @@ import {
     WorkingListToolbar,
     WorkingListToolbarActions,
     WorkingListViewSwitcher,
-    useWorkingListActions,
-    useWorkingListMeta,
-    useWorkingListState,
+    useWorkingList,
+    useWorkingListRecords,
+    useWorkingListView,
 } from '@/components/working-list'
 ```
 

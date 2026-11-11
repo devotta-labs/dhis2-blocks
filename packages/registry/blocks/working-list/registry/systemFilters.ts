@@ -1,5 +1,5 @@
 import type { WorkingListCapabilities } from '../api/capabilities'
-import type { DataEngineQueryParameters } from '../api/client'
+import type { DataEngineQueryParameters } from '../api/request'
 import {
     TRACKER_ENROLLMENT_STATUSES,
     TRACKER_EVENT_STATUSES,

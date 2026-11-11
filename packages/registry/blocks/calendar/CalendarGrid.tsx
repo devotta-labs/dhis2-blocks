@@ -12,6 +12,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useCalendar, type CalendarDay } from './context'
 import { CalendarCellRecords, CalendarDayContext } from './CalendarCell'
+import type { CalendarResults } from './types'
 
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
 export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
@@ -59,10 +60,14 @@ const HiddenDaysNote = ({ count }: { count: number }) =>
         </p>
     ) : null
 
-const ResultsStatus = () => {
-    const {
-        state: { results, weeks },
-    } = useCalendar()
+/** What the grid says about its records: failed, loading, cut short or none. */
+const ResultsStatus = ({
+    results,
+    isEmpty,
+}: {
+    results: CalendarResults
+    isEmpty: boolean
+}) => {
     if (results.status === 'error') {
         return (
             <ErrorAlert title={i18n.t('Records could not be loaded')}>
@@ -90,7 +95,7 @@ const ResultsStatus = () => {
             </p>
         )
     }
-    if (weeks.every((week) => week.every((day) => day.records.length === 0))) {
+    if (isEmpty) {
         return (
             <p className="m-0 text-sm text-dhis2-grey-700">
                 {i18n.t('No records this month.')}
@@ -98,6 +103,81 @@ const ResultsStatus = () => {
         )
     }
     return null
+}
+
+interface CalendarGridDayProps {
+    day: CalendarDay
+    isWeekend: boolean
+    /** The day sits in a narrowed column and has room for little. */
+    compact: boolean
+    /** The one day of the grid that Tab lands on. */
+    isTabStop: boolean
+    onFocus: () => void
+    onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
+    children: ReactNode
+}
+
+/** One day of the grid: a cell whose button selects the day and holds its parts. */
+const CalendarGridDay = ({
+    day,
+    isWeekend,
+    compact,
+    isTabStop,
+    onFocus,
+    onKeyDown,
+    children,
+}: CalendarGridDayProps) => {
+    const {
+        state: { selectedDay },
+        actions: { selectDay },
+        meta: { dayName },
+    } = useCalendar()
+    const isSelected = day.date === selectedDay?.date
+    return (
+        <td
+            // h-px lets the button fill the row's full height.
+            className="h-px border border-dhis2-grey-300 p-0 align-top"
+            aria-selected={isSelected}
+        >
+            <button
+                type="button"
+                data-date={day.date}
+                data-weekend={isWeekend || undefined}
+                tabIndex={isTabStop ? 0 : -1}
+                aria-label={recordCountName(day, dayName(day))}
+                aria-disabled={day.isDisabled}
+                aria-current={day.isToday ? 'date' : undefined}
+                onFocus={onFocus}
+                onKeyDown={onKeyDown}
+                onClick={() => {
+                    if (!day.isDisabled) selectDay(day.date)
+                }}
+                className={cn(
+                    'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-white p-1.5 text-start hover:bg-dhis2-grey-050 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
+                    isWeekend && 'bg-dhis2-grey-050',
+                    !day.isInCurrentMonth && 'bg-dhis2-grey-050',
+                    day.isDisabled &&
+                        'cursor-default bg-dhis2-grey-100 hover:bg-dhis2-grey-100',
+                    isSelected &&
+                        'bg-dhis2-blue-050 shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] hover:bg-dhis2-blue-050'
+                )}
+            >
+                <span
+                    className={cn(
+                        'text-[13px] leading-5 text-dhis2-grey-700',
+                        !day.isInCurrentMonth && 'text-dhis2-grey-600',
+                        day.isToday &&
+                            'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-blue-600 text-white'
+                    )}
+                >
+                    {day.label}
+                </span>
+                <CalendarDayContext.Provider value={{ day, compact }}>
+                    {children}
+                </CalendarDayContext.Provider>
+            </button>
+        </td>
+    )
 }
 
 export interface CalendarGridProps extends ComponentPropsWithoutRef<'div'> {
@@ -129,8 +209,7 @@ export const CalendarGrid = ({
 }: CalendarGridProps) => {
     const {
         state: { weeks, selectedDay, results },
-        actions: { selectDay },
-        meta: { weekDayLabels, dayName },
+        meta: { weekDayLabels },
     } = useCalendar()
     const tableRef = useRef<HTMLTableElement>(null)
     const [focusedDate, setFocusedDate] = useState<string | null>(null)
@@ -180,7 +259,10 @@ export const CalendarGrid = ({
             data-slot="calendar-grid"
             className={cn('flex min-w-0 flex-col gap-2', className)}
         >
-            <ResultsStatus />
+            <ResultsStatus
+                results={results}
+                isEmpty={weeks.flat().every((day) => day.records.length === 0)}
+            />
             <HiddenDaysNote count={hiddenCount} />
             <table
                 ref={tableRef}
@@ -223,76 +305,20 @@ export const CalendarGrid = ({
                     {rows.map((row) => (
                         <tr key={row[0]?.day.date}>
                             {row.map(({ day, weekday }) => (
-                                <td
+                                <CalendarGridDay
                                     key={day.date}
-                                    // h-px lets the button fill the row's full height.
-                                    className="h-px border border-dhis2-grey-300 p-0 align-top"
-                                    aria-selected={
-                                        day.date === selectedDay?.date
+                                    day={day}
+                                    isWeekend={isWeekend(weekday)}
+                                    compact={
+                                        weekendColumns === 'narrow' &&
+                                        isWeekend(weekday)
                                     }
+                                    isTabStop={day.date === tabStop?.date}
+                                    onFocus={() => setFocusedDate(day.date)}
+                                    onKeyDown={(event) => onKeyDown(event, day)}
                                 >
-                                    <button
-                                        type="button"
-                                        data-date={day.date}
-                                        data-weekend={
-                                            isWeekend(weekday) || undefined
-                                        }
-                                        tabIndex={
-                                            day.date === tabStop?.date ? 0 : -1
-                                        }
-                                        aria-label={recordCountName(
-                                            day,
-                                            dayName(day)
-                                        )}
-                                        aria-disabled={day.isDisabled}
-                                        aria-current={
-                                            day.isToday ? 'date' : undefined
-                                        }
-                                        onFocus={() => setFocusedDate(day.date)}
-                                        onKeyDown={(event) =>
-                                            onKeyDown(event, day)
-                                        }
-                                        onClick={() => {
-                                            if (!day.isDisabled) {
-                                                selectDay(day.date)
-                                            }
-                                        }}
-                                        className={cn(
-                                            'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-white p-1.5 text-start hover:bg-dhis2-grey-050 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
-                                            isWeekend(weekday) &&
-                                                'bg-dhis2-grey-050',
-                                            !day.isInCurrentMonth &&
-                                                'bg-dhis2-grey-050',
-                                            day.isDisabled &&
-                                                'cursor-default bg-dhis2-grey-100 hover:bg-dhis2-grey-100',
-                                            day.date === selectedDay?.date &&
-                                                'bg-dhis2-blue-050 shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] hover:bg-dhis2-blue-050'
-                                        )}
-                                    >
-                                        <span
-                                            className={cn(
-                                                'text-[13px] leading-5 text-dhis2-grey-700',
-                                                !day.isInCurrentMonth &&
-                                                    'text-dhis2-grey-600',
-                                                day.isToday &&
-                                                    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-blue-600 text-white'
-                                            )}
-                                        >
-                                            {day.label}
-                                        </span>
-                                        <CalendarDayContext.Provider
-                                            value={{
-                                                day,
-                                                compact:
-                                                    weekendColumns ===
-                                                        'narrow' &&
-                                                    isWeekend(weekday),
-                                            }}
-                                        >
-                                            {children}
-                                        </CalendarDayContext.Provider>
-                                    </button>
-                                </td>
+                                    {children}
+                                </CalendarGridDay>
                             ))}
                         </tr>
                     ))}

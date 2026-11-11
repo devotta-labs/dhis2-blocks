@@ -19,9 +19,10 @@ export function FinderField(props: FinderFieldProps) {
     const part = useFieldPart(props, 'exact')
     if (part.state === 'metadata-error') {
         return (
-            <MetadataErrorNotice className={props.className}>
-                {part.message}
-            </MetadataErrorNotice>
+            <MetadataErrorNotice
+                message={part.message}
+                className={props.className}
+            />
         )
     }
     if (part.state === 'pending') {

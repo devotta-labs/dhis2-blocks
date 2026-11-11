@@ -42,8 +42,8 @@ export function PersonVitals({ personId }: { personId: string }) {
 }
 ```
 
-The provider loads the program's metadata and the person's events once, for
-every card inside it. Cards are read-only. They read the readings from every
+The provider names the person and the program. The cards under it share one
+request for the program's metadata and one for the person's events. Cards are read-only. They read the readings from every
 stage the user can see that captures the data element, as DHIS2's own forms
 show them: a value left on a stage that no longer captures the element doesn't
 count. A data element the program doesn't capture shows a setup message. List a program's data elements with:
@@ -128,12 +128,8 @@ smoking status go stale at different speeds.
 - `program: string` — **required.** The tracker program whose stages capture
   the cards' data elements. Changing either prop starts from nothing, so a card
   never shows the previous person's values.
-- `children?: ReactNode` — the cards and any of your own UI that uses
-  `useObservation`. The provider renders only its children.
-- `client?: ObservationsClient` — a custom data engine, from
-  `createObservationsClient`. Defaults to the DHIS2 app runtime. Create it
-  once, outside render: each client keeps its own cache, so two engines never
-  share results.
+- `children?: ReactNode` — the cards, anywhere below. The provider renders
+  only its children.
 
 ### ObservationCard
 
@@ -146,5 +142,4 @@ smoking status go stale at different speeds.
 - `children?: ReactNode` — the parts to show. Without children, the card
   picks them by value type.
 
-The parts take `className` and the props listed in their types. `useObservation(dataElement)`
-returns a card's status and series, for layouts of your own.
+The parts take `className` and the props listed in their types.

@@ -1,7 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import { shouldRetryFinderRequest, type FinderResourceClient } from './client'
-import { finderKeys } from './queries'
 
 const FINDER_CALENDARS = [
     'coptic',
@@ -54,7 +51,7 @@ const DateFormatSchema = z
         value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
     )
 
-const FinderSystemInfoSchema = z
+export const FinderSystemInfoSchema = z
     .object({
         calendar: z.enum(FINDER_CALENDARS),
         dateFormat: DateFormatSchema,
@@ -65,22 +62,3 @@ const FinderSystemInfoSchema = z
         dateFormat,
         multiTextSearch: searchesMultiText(version),
     }))
-
-const SYSTEM_INFO_FIELDS = 'calendar,dateFormat,version'
-
-export const systemInfoQueryOptions = (client: FinderResourceClient) =>
-    queryOptions({
-        queryKey: finderKeys.systemInfo(),
-        queryFn: ({ signal }) =>
-            client.query(
-                {
-                    resource: 'system/info',
-                    params: { fields: SYSTEM_INFO_FIELDS },
-                },
-                FinderSystemInfoSchema,
-                signal
-            ),
-        staleTime: Number.POSITIVE_INFINITY,
-        gcTime: Number.POSITIVE_INFINITY,
-        retry: shouldRetryFinderRequest,
-    })

@@ -3,10 +3,17 @@ import {
     fieldsForProgramStage,
     type ProgramFieldCatalog,
 } from '../api/metadata'
-import type { NormalizedSavedWorkingList } from '../api/savedLists'
+import {
+    repairSavedWorkingList,
+    type NormalizedSavedWorkingList,
+} from '../api/savedLists'
 import { ProgramStageWorkingListSchema } from '../api/schemas'
 import type { StaleReferenceRepairDecision } from '../domain/staleReferences'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
+import type {
+    FilterParsingContext,
+    FilterSerializationContext,
+} from '../registry/valueTypes'
 
 export interface SavedListRepairPlan {
     decisions: StaleReferenceRepairDecision[]
@@ -16,7 +23,7 @@ export interface SavedListRepairPlan {
     replacedSort: boolean
 }
 
-export const createSavedListRepairPlan = (
+const createSavedListRepairPlan = (
     list: Extract<
         NormalizedSavedWorkingList,
         { compatibility: 'incompatible' }
@@ -136,5 +143,38 @@ export const createSavedListRepairPlan = (
         replacedSort: decisions.some(
             (decision) => decision.action === 'replaceSort'
         ),
+    }
+}
+
+/**
+ * What a repair would change in `list`, and the configuration it would save.
+ * There is none when the list cannot be repaired without a person choosing.
+ */
+export const planSavedListRepair = ({
+    list,
+    metadata,
+    programId,
+    parsingContext,
+    serializationContext,
+}: {
+    list: Extract<NormalizedSavedWorkingList, { compatibility: 'incompatible' }>
+    metadata: ProgramFieldCatalog
+    programId: string
+    parsingContext?: FilterParsingContext
+    serializationContext?: FilterSerializationContext
+}) => {
+    const plan = createSavedListRepairPlan(list, metadata)
+    const result = repairSavedWorkingList({
+        list,
+        decisions: plan.decisions,
+        programId,
+        metadata,
+        parsingContext,
+        serializationContext,
+    })
+    return {
+        plan,
+        repairedConfiguration:
+            result.status === 'repaired' ? result.configuration : undefined,
     }
 }

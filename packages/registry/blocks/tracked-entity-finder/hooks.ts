@@ -1,13 +1,7 @@
-import i18n from '@dhis2/d2-i18n'
-import {
-    useCallback,
-    useContext,
-    useEffect,
-    useId,
-    useLayoutEffect,
-    useMemo,
-} from 'react'
+import { useContext, useId, useLayoutEffect, useMemo } from 'react'
+import { useSearchPages } from './api/queries'
 import type { FinderPerson } from './api/search'
+import { metadataErrorText } from './form/errorText'
 import {
     useFinderFieldApi,
     type FinderFieldApi,
@@ -17,19 +11,11 @@ import {
     FinderPersonContext,
     useFinderContext,
     useFinderFormContext,
-    type FinderResultsStatus,
-    type FinderStatus,
 } from './provider/context'
-import { isProduction } from './provider/env'
+import { useFinderModel } from './provider/useFinderModel'
 import { describeMetadataError } from './rules/describeMetadataError'
 import { attributeOf, searchableAttributes } from './rules/programModel'
-import type {
-    FieldKind,
-    FinderAttribute,
-    FormField,
-    FormVerdict,
-    MetadataError,
-} from './rules/types'
+import type { FieldKind, FormField, FormVerdict } from './rules/types'
 
 interface FinderFieldAttribute {
     /**
@@ -71,35 +57,11 @@ export interface FinderFieldState {
 }
 
 /**
- * The text to show for a metadata error: the full message in development, a
- * short one in production, where the full message is logged instead.
+ * Internal: adds a field to the form around it, and reads its attribute,
+ * its TanStack field and what is wrong with it.
  */
-export const useMetadataErrorMessage = (
-    error: MetadataError | undefined
-): string | undefined => {
-    const { state, actions } = useFinderContext()
-    const full =
-        error && state.model
-            ? describeMetadataError(state.model, error)
-            : undefined
-    const production = isProduction()
-    useEffect(() => {
-        if (full && production) {
-            actions.logMetadataError(full)
-        }
-    }, [full, production, actions])
-    if (!full) {
-        return undefined
-    }
-    return production ? i18n.t("This search isn't set up correctly") : full
-}
-
-/** Internal: a field registered in the current form, with its attribute. */
-export const useComposedField = (
-    id: string,
-    match: FormField['match']
-): FinderFieldState & { found?: FinderAttribute } => {
-    const { state } = useFinderContext()
+export const useComposedField = (id: string, match: FormField['match']) => {
+    const { model, isPending, isError } = useFinderModel()
     const { form, register, submitted, verdict } = useFinderFormContext()
     const key = useId()
 
@@ -111,48 +73,48 @@ export const useComposedField = (
     const metadataError = verdict?.metadataErrors.find(
         (error) => error.kind !== 'form-cannot-search' && error.attribute === id
     )
-    const found = state.model ? attributeOf(state.model, id) : undefined
-    const attribute = useMemo(
-        () =>
-            found &&
-            Object.freeze({
-                kind: found.kind,
-                label: found.label,
-                valueType: found.valueType,
-                unique: found.unique,
-                ...(found.options && { options: found.options }),
-            }),
-        [found]
-    )
+    const attribute = model ? attributeOf(model, id) : undefined
+    // A field with a metadata error is left out of the search: no validation.
     const field = useFinderFieldApi(
         form,
         id,
-        metadataError ? undefined : found,
+        metadataError ? undefined : attribute,
         match
     )
-    const shown = submitted || field.state.meta.isBlurred
     const [error] = field.state.meta.errors
     return {
-        found,
         field,
         attribute,
-        error: shown ? error : undefined,
-        metadataError: useMetadataErrorMessage(metadataError),
+        error: submitted || field.state.meta.isBlurred ? error : undefined,
+        /** The full setup message, for whoever composed the form. */
+        metadataError:
+            model && metadataError
+                ? describeMetadataError(model, metadataError)
+                : undefined,
+        /** Inputs wait for the server calendar too, not only the program. */
+        ready: !isPending && !isError,
     }
 }
 
-const publicField = ({
-    found: _found,
-    ...field
-}: ReturnType<typeof useComposedField>): FinderFieldState => field
+const toFieldState = ({
+    field,
+    attribute,
+    error,
+    metadataError,
+}: ReturnType<typeof useComposedField>): FinderFieldState => ({
+    field,
+    attribute,
+    error,
+    metadataError: metadataError && metadataErrorText(metadataError),
+})
 
 /** A field searched by exact value. Use inside `FinderForm`. */
 export const useFinderField = (attribute: string): FinderFieldState =>
-    publicField(useComposedField(attribute, 'exact'))
+    toFieldState(useComposedField(attribute, 'exact'))
 
 /** A From–To field for a number or date attribute. Use inside `FinderForm`. */
 export const useFinderRangeField = (attribute: string): FinderFieldState =>
-    publicField(useComposedField(attribute, 'range'))
+    toFieldState(useComposedField(attribute, 'range'))
 
 export interface FinderSearchState {
     /** Whether the values make a search now. */
@@ -168,25 +130,18 @@ export interface FinderSearchState {
 
 /** The current form's search: whether it can run, and running it. */
 export const useFinderSearch = (): FinderSearchState => {
-    const { state } = useFinderContext()
+    const { model, isPending, isError } = useFinderModel()
     const { form, verdict } = useFinderFormContext()
-    const search = state.status === 'ready' ? verdict?.search : undefined
-    // Through TanStack, so a search with field errors shows them instead.
-    const submit = useCallback(() => {
-        void form.handleSubmit()
-    }, [form])
-    const searchingBy =
-        verdict?.searchingBy && state.model
-            ? attributeOf(state.model, verdict.searchingBy)?.label
-            : undefined
     return {
-        canSearch: search !== undefined,
+        canSearch: !isPending && !isError && verdict?.search !== undefined,
         missing: verdict?.missing ?? 0,
-        reason:
-            verdict?.reason ??
-            (state.status === 'error' ? 'metadata-error' : 'empty'),
-        searchingBy,
-        submit,
+        reason: verdict?.reason ?? (isError ? 'metadata-error' : 'empty'),
+        searchingBy:
+            model && verdict?.searchingBy
+                ? attributeOf(model, verdict.searchingBy)?.label
+                : undefined,
+        // Through TanStack, so a search with field errors shows them instead.
+        submit: () => void form.handleSubmit(),
     }
 }
 
@@ -198,33 +153,35 @@ interface FinderProgramAttribute {
 }
 
 export interface FinderProgramState {
-    readonly status: FinderStatus
+    readonly status: 'loading' | 'ready' | 'error'
     readonly name?: string
     readonly searchableAttributes: ReadonlyArray<FinderProgramAttribute>
 }
 
+const NO_ATTRIBUTES: FinderProgramAttribute[] = []
+
 /** The program's name and searchable attributes, read-only. */
 export const useFinderProgram = (): FinderProgramState => {
-    const { state } = useFinderContext()
-    const { status, model } = state
-    return useMemo(
-        () =>
-            Object.freeze({
-                status,
-                name: model?.name,
-                searchableAttributes: Object.freeze(
-                    (model ? searchableAttributes(model) : []).map(
-                        ({ id, label, valueType, unique }) =>
-                            Object.freeze({ id, label, valueType, unique })
-                    )
-                ),
-            }),
-        [status, model]
+    const { model, isPending, isError } = useFinderModel()
+    const attributes = useMemo(
+        () => (model ? searchableAttributes(model) : NO_ATTRIBUTES),
+        [model]
     )
+    const status = (): FinderProgramState['status'] => {
+        if (isError) {
+            return 'error'
+        }
+        return isPending ? 'loading' : 'ready'
+    }
+    return {
+        status: status(),
+        name: model?.name,
+        searchableAttributes: attributes,
+    }
 }
 
 export interface FinderResultsState {
-    status: FinderResultsStatus
+    status: 'idle' | 'searching' | 'results' | 'empty' | 'too-many' | 'error'
     /** The people on the current page. */
     people: readonly FinderPerson[]
     page: number
@@ -237,35 +194,70 @@ export interface FinderResultsState {
     select: (person: FinderPerson) => void
 }
 
+const NO_PEOPLE: FinderPerson[] = []
+
 /** The last submitted search's results, and paging through them. */
 export const useFinderResults = (): FinderResultsState => {
-    const { state, actions } = useFinderContext()
-    const { page } = state
-    const { status, people, hasNext, refreshing } = state.results
-    const { setPage, select } = actions
+    const { submission, setSubmission, onSelect } = useFinderContext()
+    const { model, isError: setupFailed } = useFinderModel()
+    const query = useSearchPages(model, submission)
+    const pages = query.data?.pages ?? []
+    // A page past the loaded ones is on screen only while it loads, or
+    // after it failed; otherwise the last loaded page is.
+    const reachable =
+        pages.length + (query.isFetchingNextPage || query.isError ? 1 : 0)
+    const page = Math.max(1, Math.min(submission?.page ?? 1, reachable))
+    const loaded = pages[page - 1]
+    // The previous page stays on screen while the next one loads.
+    const outcome = loaded ?? pages.at(-1)
+
+    const status = ((): FinderResultsState['status'] => {
+        if (setupFailed) {
+            return 'error'
+        }
+        if (!submission) {
+            return 'idle'
+        }
+        if (!loaded && query.isError && !query.isFetching) {
+            return 'error'
+        }
+        if (!outcome) {
+            return 'searching'
+        }
+        if (outcome.kind === 'too-many') {
+            return 'too-many'
+        }
+        return outcome.people.length > 0 ? 'results' : 'empty'
+    })()
+    const found = status === 'results' && outcome?.kind === 'results'
+    const hasNext = found && outcome.hasNext
     // Also after a failed or empty later page, so the user can go back.
     const hasPrevious = page > 1 && status !== 'searching'
-    // No-ops without a page to go to, as the disabled buttons are.
-    const next = useCallback(() => {
-        if (hasNext) {
-            setPage(page + 1)
-        }
-    }, [setPage, page, hasNext])
-    const previous = useCallback(() => {
-        if (hasPrevious) {
-            setPage(page - 1)
-        }
-    }, [setPage, page, hasPrevious])
+    const refreshing = status !== 'searching' && query.isFetching
+
     return {
         status,
-        people,
+        people: found ? outcome.people : NO_PEOPLE,
         page,
         hasNext,
         hasPrevious,
         refreshing,
-        next,
-        previous,
-        select,
+        // No-ops without a page to go to, as the disabled buttons are.
+        next: () => {
+            if (!submission || !hasNext || refreshing) {
+                return
+            }
+            setSubmission({ ...submission, page: page + 1 })
+            if (page === pages.length) {
+                void query.fetchNextPage()
+            }
+        },
+        previous: () => {
+            if (submission && hasPrevious) {
+                setSubmission({ ...submission, page: page - 1 })
+            }
+        },
+        select: onSelect,
     }
 }
 

@@ -1,9 +1,4 @@
 import type { ValueMeta } from '@/components/dhis2-value-display/formatDhis2Value'
-import type {
-    TimelineEntry,
-    TimelineNotice,
-    TimelineStatus,
-} from '../core/types'
 import type { DerivedEventStatus } from './eventStatus'
 import type { Enrollment, Note, TrackerEvent } from './schemas'
 
@@ -90,14 +85,3 @@ export type HistoryEntryData =
     | MilestoneEntryData
     | NoteEntryData
     | ChangeEntryData
-
-/** What every history hook returns. */
-export interface HistoryResult<TData> {
-    entries: ReadonlyArray<TimelineEntry<TData>>
-    /** `pending` until every request has answered once; `error` when all failed. */
-    status: TimelineStatus
-    /** Failed parts (with retry), unsupported changelogs, capped events. */
-    notices: TimelineNotice[]
-    isFetching: boolean
-    refetch(): void
-}

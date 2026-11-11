@@ -13,14 +13,11 @@ import {
 const renderFinder = (children: ReactNode, version?: string) => {
     const server = createFakeServer({ version })
     return renderWithQueries(
-        <FinderProvider
-            program="hivProgram"
-            client={server.client}
-            onSelect={vi.fn()}
-        >
+        <FinderProvider program="hivProgram" onSelect={vi.fn()}>
             {children}
             <SubmissionProbe />
-        </FinderProvider>
+        </FinderProvider>,
+        server
     )
 }
 

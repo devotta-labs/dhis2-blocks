@@ -1,6 +1,7 @@
+import { useDataEngine } from '@dhis2/app-runtime'
+import i18n from '@dhis2/d2-i18n'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import type { WorkingListClient } from '../api/client'
 import type { WorkingListSystemInfo } from '../api/systemInfo'
 import type { FieldCatalog } from '../domain/model'
 import type { WorkingListPage } from '../query/fetchers'
@@ -15,15 +16,12 @@ import {
     organisationUnitLabelsQueryOptions,
 } from '../query/referenceLabels'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
 
 interface UseReferenceFormattingOptions {
-    client: WorkingListClient
     pages: readonly WorkingListPage[]
     fields?: FieldCatalog
     systemInfo?: WorkingListSystemInfo
-    locale: string
-    translate: WorkingListTranslate
+    locale?: string
 }
 
 const referencedIds = (
@@ -40,19 +38,18 @@ const referencedIds = (
  * formats cells with them, so every loaded row shows names instead of ids.
  */
 export const useReferenceFormatting = ({
-    client,
     pages,
     fields,
     systemInfo,
     locale,
-    translate,
 }: UseReferenceFormattingOptions) => {
+    const engine = useDataEngine()
     const organisationUnitIds = useMemo(
         () => referencedIds(pages, fields, collectOrganisationUnitIds),
         [fields, pages]
     )
     const organisationUnitLabelsQuery = useQuery({
-        ...organisationUnitLabelsQueryOptions(client, organisationUnitIds),
+        ...organisationUnitLabelsQueryOptions(engine, organisationUnitIds),
         enabled: organisationUnitIds.length > 0,
     })
     const fileResourceIds = useMemo(
@@ -60,7 +57,7 @@ export const useReferenceFormatting = ({
         [fields, pages]
     )
     const fileResourceNamesQuery = useQuery({
-        ...fileResourceNamesQueryOptions(client, fileResourceIds),
+        ...fileResourceNamesQueryOptions(engine, fileResourceIds),
         enabled: fileResourceIds.length > 0,
     })
     const formattingContext = useMemo(
@@ -69,8 +66,8 @@ export const useReferenceFormatting = ({
                 ? createWorkingListValueTransformers({
                       systemInfo,
                       locale,
-                      trueLabel: translate('Yes'),
-                      falseLabel: translate('No'),
+                      trueLabel: i18n.t('Yes'),
+                      falseLabel: i18n.t('No'),
                       resolveDisplayName: createOrganisationUnitLabelResolver(
                           organisationUnitLabelsQuery.data ?? new Map()
                       ),
@@ -84,7 +81,6 @@ export const useReferenceFormatting = ({
             locale,
             organisationUnitLabelsQuery.data,
             systemInfo,
-            translate,
         ]
     )
 

@@ -50,6 +50,13 @@ const DataValueSchema = z.object({
     value: z.string().nullish(),
 })
 
+/**
+ * The event fields the entries read: the `fields` to ask `tracker/events` for.
+ * @public For hosts fetching their own events, such as a server-paged feed.
+ */
+export const EVENT_FIELDS =
+    'event,status,program,programStage,enrollment,trackedEntity,orgUnit,occurredAt,scheduledAt,completedAt,completedBy,createdAt,updatedAt,createdBy,updatedBy,dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy]'
+
 export const TrackerEventSchema = z.object({
     event: z.string().min(1),
     /** ACTIVE, COMPLETED, VISITED, SCHEDULE, SKIPPED or the legacy OVERDUE. */

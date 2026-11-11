@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React, { useId, useMemo } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
@@ -23,7 +24,6 @@ import {
     selectTriggerVariants,
 } from '@/components/dhis2/ui/select'
 import { Spinner } from '@/components/dhis2/ui/spinner'
-import { useWorkingListText } from '../WorkingListText'
 
 export interface SelectFieldOption<Value extends string = string> {
     value: Value
@@ -106,7 +106,6 @@ export const ComboboxField = ({
     onSearchChange?: (search: string) => void
     onChange: (values: string[]) => void
 }) => {
-    const translate = useWorkingListText()
     const triggerId = useId()
     const anchor = useComboboxAnchor()
     const labels = useMemo(
@@ -131,7 +130,7 @@ export const ComboboxField = ({
             <ComboboxEmpty>
                 {loading ? (
                     <Spinner
-                        aria-label={translate('Loading')}
+                        aria-label={i18n.t('Loading')}
                         className="size-4"
                     />
                 ) : (
@@ -143,7 +142,7 @@ export const ComboboxField = ({
             {loading && items.length > 0 && (
                 <div className="flex justify-center px-6 py-2">
                     <Spinner
-                        aria-label={translate('Loading')}
+                        aria-label={i18n.t('Loading')}
                         className="size-4"
                     />
                 </div>
@@ -220,7 +219,7 @@ export const ComboboxField = ({
                     />
                     {collapsed ? (
                         <span className="pointer-events-none relative flex-1">
-                            {translate('{{count}} selected', {
+                            {i18n.t('{{count}} selected', {
                                 count: values.length,
                             })}
                         </span>
@@ -229,7 +228,7 @@ export const ComboboxField = ({
                             {values.map((value) => (
                                 <ComboboxChip
                                     key={value}
-                                    removeLabel={translate('Remove {{label}}', {
+                                    removeLabel={i18n.t('Remove {{label}}', {
                                         label: labelFor(value),
                                     })}
                                 >

@@ -1,8 +1,9 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useId, useState } from 'react'
-import type { WorkingListSavedView } from '../../provider/contracts'
+import type { WorkingListView } from '../../provider/contracts'
 import {
     Dialog,
     DialogContent,
@@ -19,10 +20,9 @@ import {
 } from '@/components/dhis2/ui/dropdown-menu'
 import { Field, FieldLabel } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
-import { useWorkingListText } from '../WorkingListText'
 
 interface ConfigureMenuProps {
-    selectedView?: WorkingListSavedView
+    selectedView?: WorkingListView
     dirty: boolean
     online: boolean
     busy: boolean
@@ -42,7 +42,6 @@ export const ConfigureMenu = ({
     onSaveAs,
     onUpdate,
 }: ConfigureMenuProps) => {
-    const i18n = { t: useWorkingListText() }
     const [nameDialogOpen, setNameDialogOpen] = useState(false)
     const [name, setName] = useState('')
     const nameInputId = useId()

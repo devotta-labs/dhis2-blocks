@@ -1,9 +1,9 @@
 /**
  * Public entry point for the installed Working List source block.
  *
- * Aggregate contracts are named here; nested state and meta slices can be
- * derived from `WorkingListState` and `WorkingListMeta` when consumers need a
- * reusable local alias.
+ * `useWorkingList` holds what the person has chosen (view, draft, page); the
+ * query hooks load what the server holds for those choices, and the mutation
+ * hooks save it.
  */
 export {
     WorkingList,
@@ -25,10 +25,24 @@ export {
 export type { WorkingListDataQualityMode } from './ui/types'
 
 export {
-    useWorkingListActions,
-    useWorkingListMeta,
-    useWorkingListState,
+    useWorkingList,
+    type WorkingListContextValue,
 } from './provider/WorkingListContext'
+export {
+    useSavedLists,
+    useWorkingListMetadata,
+    useWorkingListRecords,
+    useWorkingListView,
+    type WorkingListMetadata,
+    type WorkingListRecords,
+    type WorkingListSelectedView,
+} from './provider/queries'
+export {
+    useCreateSavedList,
+    useDeleteSavedList,
+    useRepairSavedList,
+    useUpdateSavedList,
+} from './provider/mutations'
 export {
     useWorkingListDateBounds,
     useWorkingListDateRange,
@@ -51,28 +65,22 @@ export {
 } from './provider/recordStatus'
 export type {
     AppliedFilter,
-    WorkingListActions,
     WorkingListConfiguration,
     WorkingListDisplayRow,
-    WorkingListMeta,
     WorkingListPageSize,
     WorkingListPagination,
     WorkingListResultTarget,
-    WorkingListState,
     WorkingListView,
 } from './provider/contracts'
 
 export {
-    DownloadVisibleRowsError,
     IncompatibleSavedListError,
     InvalidConfigurationError,
-    InvalidPaginationError,
     NoSelectedSavedListError,
     OfflineMutationError,
     SavedListNotFoundError,
     SavedListPermissionError,
     UnknownFieldError,
-    UnknownProgramStageError,
     WorkingListInitializationError,
     WorkingListInvalidResponseError,
     WorkingListNetworkError,
@@ -82,8 +90,7 @@ export type {
     ConfigurationCommandError,
     CreateViewError,
     DeleteViewError,
-    PaginationCommandError,
-    SelectViewError,
+    RepairSavedListError,
     UpdateSelectedViewError,
 } from './provider/errors'
 

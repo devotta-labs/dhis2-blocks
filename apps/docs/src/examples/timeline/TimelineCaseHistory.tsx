@@ -42,7 +42,7 @@ const OpenEvent = () => {
     )
 }
 
-const TimelineCaseHistory = () => {
+const CaseHistory = () => {
     const calendar = useSystemCalendar()
     const history = useTrackedEntityHistory({
         trackedEntity: TRACKED_ENTITY,
@@ -52,15 +52,14 @@ const TimelineCaseHistory = () => {
         step: 10,
     })
 
+    if (history.isPending) {
+        return <TimelineLoading />
+    }
+    if (history.isError) {
+        return <TimelineError onRetry={history.refetch} />
+    }
     return (
-        <Timeline<HistoryEntryData>
-            entries={entries}
-            status={history.status}
-            calendar={calendar}
-            className="p-6"
-        >
-            <TimelineLoading />
-            <TimelineError onRetry={history.refetch} />
+        <Timeline<HistoryEntryData> entries={entries} calendar={calendar}>
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
             <TimelineFeed<HistoryEntryData>>
@@ -79,5 +78,11 @@ const TimelineCaseHistory = () => {
         </Timeline>
     )
 }
+
+const TimelineCaseHistory = () => (
+    <div className="p-6">
+        <CaseHistory />
+    </div>
+)
 
 export default TimelineCaseHistory

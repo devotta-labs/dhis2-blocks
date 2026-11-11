@@ -11,7 +11,6 @@ import { useObservationCard } from '../card/context'
 import {
     formatPointValue,
     formatRecordedDate,
-    isStale,
     NO_ESCAPE,
     showsTrend,
 } from '../format/display'
@@ -39,7 +38,7 @@ export function ObservationSparkline({
     points = DEFAULT_POINTS,
     className,
 }: ObservationSparklineProps) {
-    const { series, unit, staleAfterDays, display } = useObservationCard()
+    const { series, unit, stale, display } = useObservationCard()
     // Where the hovered point sits, so the tooltip can stand just above it.
     const [anchor, setAnchor] = useState<{
         index: number
@@ -85,11 +84,9 @@ export function ObservationSparkline({
         value: {
             label: series.label,
             // An out-of-date line greys with the rest of the card, so it never reads as current.
-            color:
-                series.latest &&
-                isStale(series.latest, staleAfterDays, new Date())
-                    ? 'var(--color-dhis2-grey-500)'
-                    : 'var(--color-dhis2-primary)',
+            color: stale
+                ? 'var(--color-dhis2-grey-500)'
+                : 'var(--color-dhis2-primary)',
         },
     }
     const data = plotted.map((point) => ({

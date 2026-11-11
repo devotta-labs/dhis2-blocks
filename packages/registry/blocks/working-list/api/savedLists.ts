@@ -1,6 +1,6 @@
 import type { FieldCatalog } from '../domain/model'
 import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
-import type { WorkingListClient } from './client'
+import type { DataEngine } from './request'
 import {
     DeleteMutationResponseSchema,
     MutationResponseSchema,
@@ -12,6 +12,10 @@ import type {
     SavedListResource,
 } from './savedListContracts'
 import { buildSavedListPayload } from './savedListPayload'
+import {
+    PROGRAM_STAGE_WORKING_LIST_FIELDS,
+    TRACKED_ENTITY_FILTER_FIELDS,
+} from './savedListQueries'
 
 export type {
     NormalizedSavedWorkingList,
@@ -23,15 +27,18 @@ export { fetchSavedWorkingLists } from './savedListQueries'
 export { repairSavedWorkingList } from './savedListRepair'
 
 export const createSavedWorkingList = async ({
-    client,
+    engine,
     ...input
 }: Parameters<typeof buildSavedListPayload>[0] & {
-    client: WorkingListClient
+    engine: DataEngine
 }) => {
     const payload = buildSavedListPayload(input)
-    const response = await client.mutate(
-        { resource: payload.resource, type: 'create', data: payload.data },
-        MutationResponseSchema
+    const response = MutationResponseSchema.parse(
+        await engine.mutate({
+            resource: payload.resource,
+            type: 'create',
+            data: payload.data,
+        })
     )
     const id = response.response?.uid
     if (!id) {
@@ -40,14 +47,36 @@ export const createSavedWorkingList = async ({
     return id
 }
 
+const fetchSavedListResource = async (
+    engine: DataEngine,
+    resource: SavedListResource,
+    id: string
+) => {
+    const { list } = await engine.query({
+        list: {
+            resource,
+            id,
+            params: {
+                fields:
+                    resource === 'trackedEntityInstanceFilters'
+                        ? TRACKED_ENTITY_FILTER_FIELDS
+                        : PROGRAM_STAGE_WORKING_LIST_FIELDS,
+            },
+        },
+    })
+    return resource === 'trackedEntityInstanceFilters'
+        ? TrackedEntityInstanceFilterSchema.parse(list)
+        : ProgramStageWorkingListSchema.parse(list)
+}
+
 export const replaceSavedWorkingList = async ({
-    client,
+    engine,
     id,
     resource,
     existingResource,
     ...input
 }: Parameters<typeof buildSavedListPayload>[0] & {
-    client: WorkingListClient
+    engine: DataEngine
     id: string
     resource: SavedListResource
 }) => {
@@ -61,22 +90,7 @@ export const replaceSavedWorkingList = async ({
         )
     }
     const currentResource =
-        existingResource ??
-        (await client.query(
-            {
-                resource,
-                id,
-                params: {
-                    fields:
-                        resource === 'trackedEntityInstanceFilters'
-                            ? 'id,displayName,sortOrder,program,entityQueryCriteria,access,externalAccess,publicAccess,user,userAccesses,userGroupAccesses'
-                            : 'id,displayName,sortOrder,program,programStage,programStageQueryCriteria,access,externalAccess,publicAccess,user,userAccesses,userGroupAccesses',
-                },
-            },
-            resource === 'trackedEntityInstanceFilters'
-                ? TrackedEntityInstanceFilterSchema
-                : ProgramStageWorkingListSchema
-        ))
+        existingResource ?? (await fetchSavedListResource(engine, resource, id))
     if (currentResource.id !== id) {
         throw new Error(
             `Loaded saved-list ${currentResource.id} while replacing ${id}`
@@ -91,25 +105,23 @@ export const replaceSavedWorkingList = async ({
             `Cannot replace ${resource} with ${payload.resource} configuration`
         )
     }
-    await client.mutate(
-        {
+    MutationResponseSchema.parse(
+        await engine.mutate({
             resource,
             id,
             type: 'replace',
             data: payload.data,
-        },
-        MutationResponseSchema
+        })
     )
 }
 
 export const deleteSavedWorkingList = async (
-    client: WorkingListClient,
+    engine: DataEngine,
     resource: SavedListResource,
     id: string
 ) =>
-    client.mutate(
-        { resource, id, type: 'delete' },
-        DeleteMutationResponseSchema
+    DeleteMutationResponseSchema.parse(
+        await engine.mutate({ resource, id, type: 'delete' })
     )
 
 export const getSharingType = (resource: SavedListResource) =>

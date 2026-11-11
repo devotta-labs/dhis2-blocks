@@ -3,7 +3,6 @@ export {
     groupChangelogRows,
     type ResolveField,
 } from './changelog'
-export type { TimelineClient } from './client'
 export { TimelineHistoryEntry, isEntryOf } from './entries/TimelineHistoryEntry'
 export {
     TimelineChangeEntry,
@@ -30,10 +29,10 @@ export { useTimelineEventEntry } from './entries/hooks/useTimelineEventEntry'
 export { TimelineMilestoneEntry } from './entries/TimelineMilestoneEntry'
 export { TimelineNoteEntry } from './entries/TimelineNoteEntry'
 export { deriveEventStatus, type DerivedEventStatus } from './eventStatus'
-export { addWhenReady, combineStatus, mergeHistory } from './history'
 export { toProgramInfo } from './metadata'
-export { EVENT_FIELDS, type EventTimeField } from './queries'
+export type { EventTimeField } from './queries'
 export {
+    EVENT_FIELDS,
     EventsPageSchema,
     type Enrollment,
     type Note,
@@ -55,33 +54,20 @@ export type {
     MilestoneEntryData,
     NoteEntryData,
     FieldInfo,
-    HistoryResult,
     MilestoneKind,
     ProgramInfo,
     ResolvedChange,
     StageInfo,
 } from './types'
 export {
-    useAttributeChangeEntries,
-    type AttributeChangeEntriesOptions,
-} from './hooks/useAttributeChangeEntries'
-export {
-    useEnrollmentEntries,
-    type EnrollmentEntriesOptions,
-} from './hooks/useEnrollmentEntries'
-export {
     useEventChangelog,
     type EventChangelog,
 } from './hooks/useEventChangelog'
-export {
-    useEventEntries,
-    type EventEntriesOptions,
-} from './hooks/useEventEntries'
 export { useOrgUnitNames } from './hooks/useOrgUnitNames'
-export { useProgramInfo, type ProgramInfoResult } from './hooks/useProgramInfo'
+export { useProgramInfo } from './hooks/useProgramInfo'
 export { useSystemCalendar } from './hooks/useSystemCalendar'
-export { useTimelineClient } from './hooks/useTimelineClient'
 export {
     useTrackedEntityHistory,
+    type TrackedEntityHistory,
     type TrackedEntityHistoryOptions,
 } from './hooks/useTrackedEntityHistory'

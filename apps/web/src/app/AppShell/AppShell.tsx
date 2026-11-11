@@ -9,7 +9,6 @@ import {
     WorkingListToolbar,
     WorkingListToolbarActions,
     WorkingListViewSwitcher,
-    useWorkingListMeta,
     type WorkingListDataQualityMode,
     type WorkingListResultTarget,
 } from '@/components/working-list'
@@ -37,7 +36,6 @@ import {
     retryOperationalError,
 } from './contextSchemas'
 import { ContextStatus } from './ContextStatus'
-import { createAppWorkingListClient } from './createAppWorkingListClient'
 import {
     buildProgramOptions,
     hasCaptureProgramDataReadAccess,
@@ -46,17 +44,6 @@ import { RecordDetailsModal } from './RecordDetailsModal'
 import { WorkingListContextControls } from './WorkingListContextControls'
 import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
 import { useOrganisationUnitSearch } from './useOrganisationUnitSearch'
-
-const WorkingListDirtyBridge = ({
-    onChange,
-}: {
-    onChange(dirty: boolean): void
-}) => {
-    const dirty = useWorkingListMeta((meta) => meta.dirty)
-
-    useEffect(() => onChange(dirty), [dirty, onChange])
-    return null
-}
 
 interface PendingTransition {
     proceed: () => void
@@ -70,7 +57,6 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const client = useMemo(() => createAppWorkingListClient(engine), [engine])
     const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
     const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
     const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')
@@ -134,22 +120,25 @@ export const AppShell = () => {
     }, [externalTransitionBlocker])
 
     const programsQuery = useQuery(
-        trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
+        trackerProgramsQueryOptions(engine, runtimeConfig.apiVersion)
     )
 
     const currentUserQuery = useQuery({
         queryKey: ['working-list', 'shell', 'current-user-org-units'],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const { me } = await engine.query(
                 {
-                    resource: 'me',
-                    params: {
-                        fields: 'organisationUnits[id,displayName,path],teiSearchOrganisationUnits[id,displayName,path]',
+                    me: {
+                        resource: 'me',
+                        params: {
+                            fields: 'organisationUnits[id,displayName,path],teiSearchOrganisationUnits[id,displayName,path]',
+                        },
                     },
                 },
-                CurrentUserSchema,
-                signal
-            ),
+                { signal }
+            )
+            return CurrentUserSchema.parse(me)
+        },
         staleTime: 60 * 60 * 1000,
         gcTime: 2 * 60 * 60 * 1000,
         retry: retryOperationalError,
@@ -175,18 +164,21 @@ export const AppShell = () => {
             'program-org-units',
             urlState.programId,
         ],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const { program } = await engine.query(
                 {
-                    resource: 'programs',
-                    id: urlState.programId,
-                    params: {
-                        fields: 'organisationUnits[id,displayName,path]',
+                    program: {
+                        resource: 'programs',
+                        id: urlState.programId,
+                        params: {
+                            fields: 'organisationUnits[id,displayName,path]',
+                        },
                     },
                 },
-                ProgramOrganisationUnitsSchema,
-                signal
-            ),
+                { signal }
+            )
+            return ProgramOrganisationUnitsSchema.parse(program)
+        },
         enabled: Boolean(selectedProgramSummary),
         staleTime: 60 * 60 * 1000,
         gcTime: 2 * 60 * 60 * 1000,
@@ -200,16 +192,19 @@ export const AppShell = () => {
             'selected-org-unit',
             urlState.orgUnitId,
         ],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const { organisationUnit } = await engine.query(
                 {
-                    resource: 'organisationUnits',
-                    id: urlState.orgUnitId,
-                    params: { fields: 'id,displayName,path' },
+                    organisationUnit: {
+                        resource: 'organisationUnits',
+                        id: urlState.orgUnitId,
+                        params: { fields: 'id,displayName,path' },
+                    },
                 },
-                OrganisationUnitReferenceSchema,
-                signal
-            ),
+                { signal }
+            )
+            return OrganisationUnitReferenceSchema.parse(organisationUnit)
+        },
         enabled: Boolean(urlState.orgUnitId),
         staleTime: 60 * 60 * 1000,
         gcTime: 2 * 60 * 60 * 1000,
@@ -217,7 +212,6 @@ export const AppShell = () => {
     })
 
     const organisationUnitSearchQuery = useOrganisationUnitSearch({
-        client,
         search: debouncedOrganisationUnitSearch,
         enabled: Boolean(selectedProgramSummary),
     })
@@ -523,8 +517,8 @@ export const AppShell = () => {
                                     page: 1,
                                 }))
                             }
+                            onDirtyChange={setDirty}
                         >
-                            <WorkingListDirtyBridge onChange={setDirty} />
                             <WorkingListViewSwitcher />
                             <WorkingListToolbar>
                                 <WorkingListColumnSelector />

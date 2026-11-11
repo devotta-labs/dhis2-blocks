@@ -1,6 +1,5 @@
 import type { FilterParsingContext } from '../registry/valueTypes'
-import { asWorkingListBoundaryError } from './client'
-import type { WorkingListClient } from './client'
+import { asWorkingListBoundaryError, type DataEngine } from './request'
 import type { ProgramFieldCatalog } from './metadata'
 import {
     ProgramStageWorkingListsResponseSchema,
@@ -9,14 +8,21 @@ import {
 import type { NormalizedSavedWorkingList } from './savedListContracts'
 import { normalizeSavedWorkingListResource } from './savedListNormalization'
 
+const SAVED_LIST_SHARING_FIELDS =
+    'access,externalAccess,publicAccess,user,userAccesses,userGroupAccesses'
+
+export const TRACKED_ENTITY_FILTER_FIELDS = `id,displayName,sortOrder,program,entityQueryCriteria,${SAVED_LIST_SHARING_FIELDS}`
+
+export const PROGRAM_STAGE_WORKING_LIST_FIELDS = `id,displayName,sortOrder,program,programStage,programStageQueryCriteria,${SAVED_LIST_SHARING_FIELDS}`
+
 export const fetchSavedWorkingLists = async ({
-    client,
+    engine,
     programId,
     metadata,
     parsingContext,
     signal,
 }: {
-    client: WorkingListClient
+    engine: DataEngine
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
@@ -26,30 +32,29 @@ export const fetchSavedWorkingLists = async ({
         filter: `program.id:eq:${programId}`,
         paging: false,
     }
-    const [trackedEntityResponse, eventResponse] = await Promise.all([
-        client.query(
-            {
+    const { trackedEntityLists, eventLists } = await engine.query(
+        {
+            trackedEntityLists: {
                 resource: 'trackedEntityInstanceFilters',
                 params: {
                     ...commonParams,
-                    fields: 'id,displayName,sortOrder,program,entityQueryCriteria,access,externalAccess,publicAccess,user,userAccesses,userGroupAccesses',
+                    fields: TRACKED_ENTITY_FILTER_FIELDS,
                 },
             },
-            TrackedEntityInstanceFiltersResponseSchema,
-            signal
-        ),
-        client.query(
-            {
+            eventLists: {
                 resource: 'programStageWorkingLists',
                 params: {
                     ...commonParams,
-                    fields: 'id,displayName,sortOrder,program,programStage,programStageQueryCriteria,access,externalAccess,publicAccess,user,userAccesses,userGroupAccesses',
+                    fields: PROGRAM_STAGE_WORKING_LIST_FIELDS,
                 },
             },
-            ProgramStageWorkingListsResponseSchema,
-            signal
-        ),
-    ])
+        },
+        { signal }
+    )
+    const trackedEntityResponse =
+        TrackedEntityInstanceFiltersResponseSchema.parse(trackedEntityLists)
+    const eventResponse =
+        ProgramStageWorkingListsResponseSchema.parse(eventLists)
     try {
         return [
             ...trackedEntityResponse.trackedEntityInstanceFilters.map(

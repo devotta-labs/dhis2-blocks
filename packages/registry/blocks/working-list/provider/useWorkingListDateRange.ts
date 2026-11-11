@@ -1,7 +1,8 @@
+import { useDataEngine } from '@dhis2/app-runtime'
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { z } from 'zod'
-import { shouldRetryWorkingListRequest } from '../api/client'
+import { shouldRetryWorkingListRequest } from '../api/request'
 import { fieldsForConfiguration } from '../api/metadata'
 import type { WorkingListSystemInfo } from '../api/systemInfo'
 import type { WorkingListPagination } from '../domain/model'
@@ -19,10 +20,10 @@ import type {
 } from './contracts'
 import { toResultsError } from './errorNormalization'
 import type { WorkingListResultsError } from './errors'
+import { useWorkingListMetadata, useWorkingListView } from './queries'
 import { cellText, toDisplayRows, toResultTargets } from './results'
 import { useReferenceFormatting } from './useReferenceFormatting'
-import { useWorkingListState } from './WorkingListContext'
-import { useWorkingListPrivateUi } from './WorkingListPrivateContext'
+import { useWorkingList } from './WorkingListContext'
 
 const RANGE_PAGE_SIZE = 200
 
@@ -135,28 +136,24 @@ const datedRecords = (
 
 /** The list's request and the API dates its saved filters allow on `fieldId`. */
 const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
-    const {
-        client,
-        programId,
-        orgUnitId,
-        capabilities,
-        metadata,
-        resolvedConfiguration,
-        serializationContext,
-        translate,
-    } = useWorkingListPrivateUi()
+    const engine = useDataEngine()
+    const { programId, orgUnitId } = useWorkingList()
+    const metadata = useWorkingListMetadata().data
+    const view = useWorkingListView().data
     return useMemo(() => {
-        const toApiDate = serializationContext?.toApiDate
-        if (!resolvedConfiguration || !metadata || !toApiDate) return undefined
+        const toApiDate = metadata?.serializationContext.toApiDate
+        if (!view || !metadata || !toApiDate) return undefined
         const input = {
-            client,
+            engine,
             context: { programId, orgUnitId },
-            configuration: resolvedConfiguration,
+            configuration: view.resolvedConfiguration,
             pagination: { page: 1, pageSize: RANGE_PAGE_SIZE },
-            capabilities,
-            fields: fieldsForConfiguration(metadata, resolvedConfiguration),
-            serializationContext,
-            translate,
+            capabilities: metadata.capabilities,
+            fields: fieldsForConfiguration(
+                metadata.fieldCatalog,
+                view.resolvedConfiguration
+            ),
+            serializationContext: metadata.serializationContext,
         }
         return {
             input,
@@ -166,17 +163,7 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
                 fieldId
             ),
         }
-    }, [
-        capabilities,
-        client,
-        fieldId,
-        metadata,
-        orgUnitId,
-        programId,
-        resolvedConfiguration,
-        serializationContext,
-        translate,
-    ])
+    }, [engine, fieldId, metadata, orgUnitId, programId, view])
 }
 
 /**
@@ -186,20 +173,21 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
 export const useWorkingListDateBounds = (
     fieldId: WorkingListDateFieldId
 ): WorkingListDateBounds | undefined => {
-    const { calendarContext, parsingContext } = useWorkingListPrivateUi()
+    const metadata = useWorkingListMetadata().data
     const request = useDateFieldRequest(fieldId)
-    const fromApiDate = parsingContext?.fromApiDate
     return useMemo(() => {
-        if (!request || !calendarContext || !fromApiDate) return undefined
+        const fromApiDate = metadata?.parsingContext.fromApiDate
+        if (!request || !metadata || !fromApiDate) return undefined
+        const { calendar, timeZone, locale } = metadata.calendarContext
         const { start, end } = request.filterBounds
         return {
-            calendar: calendarContext.calendar,
-            timeZone: calendarContext.timeZone,
-            locale: calendarContext.locale,
+            calendar,
+            timeZone,
+            locale,
             start: start === undefined ? undefined : fromApiDate(start),
             end: end === undefined ? undefined : fromApiDate(end),
         }
-    }, [calendarContext, fromApiDate, request])
+    }, [metadata, request])
 }
 
 /**
@@ -213,11 +201,11 @@ export const useWorkingListDateRange = ({
     end,
     limit = 1000,
 }: WorkingListDateRangeOptions): WorkingListDateRangeResults => {
-    const { client, programId, systemInfo, locale, translate, parsingContext } =
-        useWorkingListPrivateUi()
-    const configuration = useWorkingListState((state) => state.configuration)
+    const { programId } = useWorkingList()
+    const metadata = useWorkingListMetadata().data
+    const configuration = useWorkingListView().data?.configuration
     const request = useDateFieldRequest(fieldId)
-    const fromApiDate = parsingContext?.fromApiDate
+    const fromApiDate = metadata?.parsingContext.fromApiDate
 
     const plan = useMemo(() => {
         if (!request) return undefined
@@ -266,12 +254,10 @@ export const useWorkingListDateRange = ({
     const pages = useMemo(() => data?.pages ?? [], [data])
     const fields = request?.input.fields
     const references = useReferenceFormatting({
-        client,
         pages,
         fields,
-        systemInfo,
-        locale,
-        translate,
+        systemInfo: metadata?.systemInfo,
+        locale: metadata?.locale,
     })
     const { formattingContext } = references
     const formatCell = useCallback(
@@ -283,7 +269,7 @@ export const useWorkingListDateRange = ({
     )
     const records = useMemo(
         () =>
-            fromApiDate
+            fromApiDate && configuration
                 ? datedRecords(
                       pages,
                       fieldId,

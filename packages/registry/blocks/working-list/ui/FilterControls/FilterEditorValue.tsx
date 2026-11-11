@@ -1,6 +1,6 @@
+import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
-import type { WorkingListClient } from '../../api/client'
 import { usesMultipleOptionSelection } from '../../domain/filterControlPolicy'
 import {
     RELATIVE_DATE_PERIODS,
@@ -11,10 +11,6 @@ import {
 import type { FilterEditorKind } from '../../registry/valueTypes'
 import { Checkbox } from '@/components/dhis2/ui/checkbox'
 import { Label } from '@/components/dhis2/ui/label'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
 import { CalendarRangeFields } from './CalendarRangeFields'
 import {
     ComboboxField,
@@ -30,17 +26,15 @@ import {
     UserFilterSelect,
 } from './ReferenceFilterSelects'
 
-const relativePeriodOptions = (
-    translate: WorkingListTranslate
-): SelectFieldOption<RelativeDatePeriod>[] => {
+const relativePeriodOptions = (): SelectFieldOption<RelativeDatePeriod>[] => {
     const labels = {
-        TODAY: translate('Today'),
-        THIS_WEEK: translate('This week'),
-        LAST_WEEK: translate('Last week'),
-        THIS_MONTH: translate('This month'),
-        LAST_MONTH: translate('Last month'),
-        LAST_3_MONTHS: translate('Last three months'),
-        THIS_YEAR: translate('This year'),
+        TODAY: i18n.t('Today'),
+        THIS_WEEK: i18n.t('This week'),
+        LAST_WEEK: i18n.t('Last week'),
+        THIS_MONTH: i18n.t('This month'),
+        LAST_MONTH: i18n.t('Last month'),
+        LAST_3_MONTHS: i18n.t('Last three months'),
+        THIS_YEAR: i18n.t('This year'),
     } satisfies Record<RelativeDatePeriod, string>
     return RELATIVE_DATE_PERIODS.map((value) => ({
         value,
@@ -49,7 +43,6 @@ const relativePeriodOptions = (
 }
 
 export const EditorValue = ({
-    client,
     field,
     editor,
     value,
@@ -57,7 +50,6 @@ export const EditorValue = ({
     calendarContext,
     onChange,
 }: {
-    client: WorkingListClient
     field: WorkingListField
     editor: FilterEditorKind
     value: FilterValue
@@ -65,8 +57,6 @@ export const EditorValue = ({
     calendarContext: FilterCalendarContext
     onChange: (value: FilterValue) => void
 }) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     if (field.id === 'assignedUser' || field.id === 'eventAssignedUser') {
         const assignee =
             value.kind === 'assignee'
@@ -87,7 +77,6 @@ export const EditorValue = ({
                 />
                 {assignee.mode === 'PROVIDED' && (
                     <UserFilterSelect
-                        client={client}
                         selected={assignee.userIds ?? []}
                         onChange={(userIds) =>
                             onChange({
@@ -106,7 +95,7 @@ export const EditorValue = ({
         const values = value.kind === 'options' ? value.values : []
         const optionItems = field.options.map((option) => ({
             value: option.code,
-            label: optionDisplayName(field, option, translate),
+            label: optionDisplayName(field, option),
         }))
         // Tracker supports multiple option-set values on capable servers, but
         // Capture's system status filters are intentionally single-valued.
@@ -261,7 +250,7 @@ export const EditorValue = ({
                                 dataTest={`relative-period-${field.id}`}
                                 label={i18n.t('Relative period')}
                                 value={date.period}
-                                options={relativePeriodOptions(translate)}
+                                options={relativePeriodOptions()}
                                 onChange={(period) =>
                                     onChange({
                                         kind: 'dateRange',
@@ -340,7 +329,6 @@ export const EditorValue = ({
         const id = value.kind === 'organisationUnit' ? value.id : ''
         return (
             <OrganisationUnitFilterSelect
-                client={client}
                 selectedId={id}
                 onChange={(nextId) =>
                     onChange({ kind: 'organisationUnit', id: nextId })

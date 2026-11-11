@@ -1,9 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import {
-    shouldRetryWorkingListRequest,
-    type WorkingListClient,
-} from '../api/client'
+import { shouldRetryWorkingListRequest, type DataEngine } from '../api/request'
 import type { FieldCatalog } from '../domain/model'
 import { isWorkingListFileValue } from '../registry/valueTypes'
 import type { WorkingListPage } from './fetchers'
@@ -57,28 +54,26 @@ export const collectFileResourceIds = (
     return [...result].sort()
 }
 
-export const fetchFileResourceNames = async ({
-    client,
-    ids,
-    signal,
-}: {
-    client: WorkingListClient
-    ids: string[]
+export const fetchFileResourceNames = async (
+    engine: DataEngine,
+    ids: string[],
     signal?: AbortSignal
-}): Promise<ReadonlyMap<string, string>> => {
+): Promise<ReadonlyMap<string, string>> => {
     const uniqueIds = [...new Set(ids)].sort()
     const entries = await Promise.all(
         uniqueIds.map(async (id) => {
             try {
-                const resource = await client.query(
+                const { file } = await engine.query(
                     {
-                        resource: 'fileResources',
-                        id,
-                        params: { fields: 'id,displayName' },
+                        file: {
+                            resource: 'fileResources',
+                            id,
+                            params: { fields: 'id,displayName' },
+                        },
                     },
-                    FileResourceSchema,
-                    signal
+                    { signal }
                 )
+                const resource = FileResourceSchema.parse(file)
                 return [resource.id, resource.displayName] as const
             } catch (error) {
                 if (signal?.aborted) {
@@ -98,13 +93,12 @@ export const fetchFileResourceNames = async ({
 }
 
 export const fileResourceNamesQueryOptions = (
-    client: WorkingListClient,
+    engine: DataEngine,
     ids: string[]
 ) =>
     queryOptions({
         queryKey: workingListQueryKeys.fileResourceNames(ids),
-        queryFn: ({ signal }) =>
-            fetchFileResourceNames({ client, ids, signal }),
+        queryFn: ({ signal }) => fetchFileResourceNames(engine, ids, signal),
         staleTime: 60 * 60_000,
         gcTime: 4 * 60 * 60_000,
         retry: shouldRetryWorkingListRequest,

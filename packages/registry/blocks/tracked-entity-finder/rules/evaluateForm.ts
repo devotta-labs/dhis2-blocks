@@ -1,6 +1,5 @@
 import { errorCodeOf, fieldSchema } from './fieldSchema'
 import { attributeOf, canSendMatch, RANGE_KINDS } from './programModel'
-import { seal } from './seal'
 import type {
     FieldErrorCode,
     FieldValue,
@@ -79,20 +78,6 @@ const readField = (
     }
     return result.data ? fill([...result.data]) : EMPTY
 }
-
-const verdict = (
-    fields: Omit<FormVerdict, 'metadataErrors' | 'errors'> & {
-        metadataErrors: MetadataError[]
-        errors: Record<string, FieldErrorCode>
-    }
-): FormVerdict =>
-    Object.freeze({
-        ...fields,
-        metadataErrors: Object.freeze(
-            fields.metadataErrors.map((error) => Object.freeze(error))
-        ),
-        errors: Object.freeze(fields.errors),
-    })
 
 /** A composed field the program allows, with its attribute. */
 interface UsableField {
@@ -179,40 +164,42 @@ export const evaluateForm = (
     const base = { metadataErrors, errors, missing }
 
     if (metadataErrors.some(({ kind }) => kind === 'form-cannot-search')) {
-        return verdict({ ...base, reason: 'metadata-error' })
+        return { ...base, reason: 'metadata-error' }
     }
     if (Object.keys(errors).length) {
-        return verdict({ ...base, reason: 'has-errors' })
+        return { ...base, reason: 'has-errors' }
     }
     if (filledUnique.length > 1) {
-        return verdict({ ...base, reason: 'two-ids' })
+        return { ...base, reason: 'two-ids' }
     }
     const [id] = filledUnique
     if (id) {
-        return verdict({
+        return {
             ...base,
             reason: 'ready',
             searchingBy: id.attribute.id,
             dropped: filledOthers.length,
-            search: seal([
-                { attribute: id.attribute.id, conditions: id.conditions },
-            ]),
-        })
+            search: {
+                filters: [
+                    { attribute: id.attribute.id, conditions: id.conditions },
+                ],
+            },
+        }
     }
     if (!filledOthers.length) {
-        return verdict({ ...base, reason: 'empty' })
+        return { ...base, reason: 'empty' }
     }
     if (missing > 0) {
-        return verdict({ ...base, reason: 'needs-more' })
+        return { ...base, reason: 'needs-more' }
     }
-    return verdict({
+    return {
         ...base,
         reason: 'ready',
-        search: seal(
-            filledOthers.map(({ attribute, conditions }) => ({
+        search: {
+            filters: filledOthers.map(({ attribute, conditions }) => ({
                 attribute: attribute.id,
                 conditions,
-            }))
-        ),
-    })
+            })),
+        },
+    }
 }

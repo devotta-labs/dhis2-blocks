@@ -1,9 +1,9 @@
+import { useDataEngine } from '@dhis2/app-runtime'
+import i18n from '@dhis2/d2-i18n'
 import { OrganisationUnitTree } from '@dhis2/ui'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
 import { z } from 'zod'
-import type { WorkingListClient } from '../../api/client'
-import { useWorkingListText } from '../WorkingListText'
 import { ComboboxField } from './FilterSelectFields'
 
 const UserReferenceSchema = z
@@ -31,15 +31,13 @@ const OrganisationUnitRootsSchema = z
     .passthrough()
 
 export const UserFilterSelect = ({
-    client,
     selected,
     onChange,
 }: {
-    client: WorkingListClient
     selected: string[]
     onChange: (selected: string[]) => void
 }) => {
-    const i18n = { t: useWorkingListText() }
+    const engine = useDataEngine()
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     useEffect(() => {
@@ -51,23 +49,21 @@ export const UserFilterSelect = ({
     }, [search])
     const usersQuery = useQuery({
         queryKey: ['working-list', 'users', debouncedSearch],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const params = { fields: 'id,displayName,username', pageSize: 50 }
+            const { users } = await engine.query(
                 {
-                    resource: 'users',
-                    params: (() => {
-                        const params = {
-                            fields: 'id,displayName,username',
-                            pageSize: 50,
-                        }
-                        return debouncedSearch
+                    users: {
+                        resource: 'users',
+                        params: debouncedSearch
                             ? { ...params, query: debouncedSearch }
-                            : params
-                    })(),
+                            : params,
+                    },
                 },
-                UsersResponseSchema,
-                signal
-            ),
+                { signal }
+            )
+            return UsersResponseSchema.parse(users)
+        },
         placeholderData: (previous) => previous,
         staleTime: 60_000,
     })
@@ -111,42 +107,46 @@ export const UserFilterSelect = ({
 }
 
 export const OrganisationUnitFilterSelect = ({
-    client,
     selectedId,
     onChange,
 }: {
-    client: WorkingListClient
     selectedId: string
     onChange: (id: string) => void
 }) => {
-    const i18n = { t: useWorkingListText() }
+    const engine = useDataEngine()
     const rootsQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit-roots'],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const { me } = await engine.query(
                 {
-                    resource: 'me',
-                    params: {
-                        fields: 'organisationUnits[id,displayName,path]',
+                    me: {
+                        resource: 'me',
+                        params: {
+                            fields: 'organisationUnits[id,displayName,path]',
+                        },
                     },
                 },
-                OrganisationUnitRootsSchema,
-                signal
-            ),
+                { signal }
+            )
+            return OrganisationUnitRootsSchema.parse(me)
+        },
         staleTime: 60 * 60_000,
     })
     const selectedQuery = useQuery({
         queryKey: ['working-list', 'filter-organisation-unit', selectedId],
-        queryFn: ({ signal }) =>
-            client.query(
+        queryFn: async ({ signal }) => {
+            const { organisationUnit } = await engine.query(
                 {
-                    resource: 'organisationUnits',
-                    id: selectedId,
-                    params: { fields: 'id,displayName,path' },
+                    organisationUnit: {
+                        resource: 'organisationUnits',
+                        id: selectedId,
+                        params: { fields: 'id,displayName,path' },
+                    },
                 },
-                OrganisationUnitReferenceSchema,
-                signal
-            ),
+                { signal }
+            )
+            return OrganisationUnitReferenceSchema.parse(organisationUnit)
+        },
         enabled: Boolean(selectedId),
         staleTime: 60 * 60_000,
     })

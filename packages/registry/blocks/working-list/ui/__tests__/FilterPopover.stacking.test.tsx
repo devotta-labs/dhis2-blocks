@@ -2,15 +2,8 @@ import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
-import type { WorkingListClient } from '../../api/client'
 import type { WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
-
-const unusedClient: WorkingListClient = {
-    query: () => Promise.reject(new Error('Unexpected query')),
-    mutate: () => Promise.reject(new Error('Unexpected mutation')),
-}
 
 const textField: WorkingListField = {
     id: 'firstName',
@@ -32,28 +25,25 @@ const dateField: WorkingListField = {
 
 const renderFilter = (field: WorkingListField) =>
     render(
-        <WorkingListTextProvider translate={(message) => message}>
-            <div className="p-4">
-                <FilterButton
-                    client={unusedClient}
-                    field={field}
-                    capabilities={resolveWorkingListCapabilities({
-                        apiVersion: 43,
-                    })}
-                    calendarContext={{
-                        calendar: 'gregorian',
-                        dateFormat: 'YYYY-MM-DD',
-                        locale: 'en',
-                        timeZone: 'Etc/UTC',
-                    }}
-                    onApply={() => undefined}
-                    onReset={() => undefined}
-                />
-                <button type="button" className="fixed right-2 bottom-2">
-                    Elsewhere
-                </button>
-            </div>
-        </WorkingListTextProvider>
+        <div className="p-4">
+            <FilterButton
+                field={field}
+                capabilities={resolveWorkingListCapabilities({
+                    apiVersion: 43,
+                })}
+                calendarContext={{
+                    calendar: 'gregorian',
+                    dateFormat: 'YYYY-MM-DD',
+                    locale: 'en',
+                    timeZone: 'Etc/UTC',
+                }}
+                onApply={() => undefined}
+                onReset={() => undefined}
+            />
+            <button type="button" className="fixed right-2 bottom-2">
+                Elsewhere
+            </button>
+        </div>
     )
 
 const editor = (field: WorkingListField) =>

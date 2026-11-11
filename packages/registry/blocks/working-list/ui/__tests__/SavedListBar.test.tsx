@@ -1,11 +1,10 @@
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import type { WorkingListSavedView } from '../../provider/contracts'
+import type { WorkingListView } from '../../provider/contracts'
 import { SavedListBar } from '../SavedListBar'
-import { WorkingListTextProvider } from '../WorkingListText'
 
-const generatedList: WorkingListSavedView = {
+const generatedList: WorkingListView = {
     id: 'active',
     name: 'Active enrollments',
     generated: true,
@@ -15,7 +14,7 @@ const generatedList: WorkingListSavedView = {
     canShare: false,
 }
 
-const ownedList: WorkingListSavedView = {
+const ownedList: WorkingListView = {
     ...generatedList,
     id: 'OwnedList01',
     name: 'My working list',
@@ -25,7 +24,7 @@ const ownedList: WorkingListSavedView = {
     canShare: true,
 }
 
-const readOnlyList: WorkingListSavedView = {
+const readOnlyList: WorkingListView = {
     ...generatedList,
     id: 'ReadOnly01',
     name: 'Shared with me',
@@ -33,7 +32,7 @@ const readOnlyList: WorkingListSavedView = {
 }
 
 interface RenderBarOptions {
-    lists?: WorkingListSavedView[]
+    lists?: WorkingListView[]
     selectedId?: string
     dirty?: boolean
     online?: boolean
@@ -49,24 +48,14 @@ const renderBar = async (options: RenderBarOptions = {}) => {
         onDelete: vi.fn(),
     }
     const screen = await render(
-        <WorkingListTextProvider
-            translate={(message, values) =>
-                Object.entries(values ?? {}).reduce(
-                    (translated, [key, value]) =>
-                        translated.replace(`{{${key}}}`, String(value)),
-                    message
-                )
-            }
-        >
-            <SavedListBar
-                lists={lists}
-                selectedId={options.selectedId}
-                dirty={options.dirty ?? false}
-                online={options.online ?? true}
-                busy={options.busy ?? false}
-                {...callbacks}
-            />
-        </WorkingListTextProvider>
+        <SavedListBar
+            lists={lists}
+            selectedId={options.selectedId}
+            dirty={options.dirty ?? false}
+            online={options.online ?? true}
+            busy={options.busy ?? false}
+            {...callbacks}
+        />
     )
 
     return { callbacks, screen }

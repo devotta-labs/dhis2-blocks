@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { FieldDescription, FieldError } from '@/components/dhis2/ui/field'
 import { CalendarDateInput } from '../../calendar/CalendarDateInput'
-import { useFinderContext } from '../../provider/context'
+import { useSystemInfo } from '../../api/queries'
 import type { FieldInputProps } from './types'
 
 /** A day on the server calendar; DATETIME attributes search the whole day. */
@@ -15,13 +15,13 @@ export const DateInput = ({
     onBlur,
     error,
 }: FieldInputProps) => {
-    const { meta } = useFinderContext()
+    const { data: info } = useSystemInfo()
     // Stable, so the memoised calendar skips renders for other fields.
     const onChange = useCallback(
         (date: string) => setValue({ kind: 'date', date }),
         [setValue]
     )
-    if (!meta.info) {
+    if (!info) {
         return null
     }
     return (
@@ -33,7 +33,7 @@ export const DateInput = ({
         >
             <CalendarDateInput
                 label={label}
-                info={meta.info}
+                info={info}
                 invalid={error !== undefined}
                 value={value?.kind === 'date' ? (value.date ?? '') : ''}
                 onChange={onChange}

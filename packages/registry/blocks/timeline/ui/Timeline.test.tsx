@@ -1,11 +1,7 @@
 import axe from 'axe-core'
 import React, { useState } from 'react'
 import { render } from 'vitest-browser-react'
-import type {
-    TimelineEntry,
-    TimelineNotice,
-    TimelineStatus,
-} from '../core/types'
+import type { TimelineEntry, TimelineNotice } from '../core/types'
 import { Timeline } from './Timeline'
 import { TimelineMetaProvider } from './TimelineContext'
 import { useTimeline } from '../hooks/useTimeline'
@@ -47,19 +43,9 @@ const renderEntry = (item: TimelineEntry<string>) => (
     </>
 )
 
-const renderTimeline = (
-    entries = ENTRIES,
-    children?: React.ReactNode,
-    status?: TimelineStatus
-) =>
+const renderTimeline = (entries = ENTRIES, children?: React.ReactNode) =>
     render(
-        <Timeline
-            entries={entries}
-            status={status}
-            calendar="gregorian"
-            locale="en"
-            now={NOW}
-        >
+        <Timeline entries={entries} calendar="gregorian" locale="en" now={NOW}>
             {children ?? <TimelineFeed<string>>{renderEntry}</TimelineFeed>}
         </Timeline>
     )
@@ -82,14 +68,6 @@ const textOrder = (container: HTMLElement, ...texts: string[]) => {
                 Node.DOCUMENT_POSITION_FOLLOWING
     )
 }
-
-const AllStates = ({ onRetry }: { onRetry?: () => void }) => (
-    <>
-        <TimelineLoading />
-        <TimelineError onRetry={onRetry} />
-        <TimelineEmpty />
-    </>
-)
 
 describe('Timeline', () => {
     it('renders an ordered list of day groups, each a section labelled by its heading', async () => {
@@ -170,12 +148,7 @@ describe('Timeline', () => {
 
     it('marks every part with a timeline data-slot', async () => {
         const { container } = await render(
-            <Timeline
-                entries={ENTRIES}
-                status="success"
-                calendar="gregorian"
-                now={NOW}
-            >
+            <Timeline entries={ENTRIES} calendar="gregorian" now={NOW}>
                 <TimelineNotices
                     notices={[{ id: 'a', tone: 'info', message: 'Capped.' }]}
                 />
@@ -345,34 +318,28 @@ describe('Timeline', () => {
 })
 
 describe('timeline states', () => {
-    it('shows TimelineLoading, and nothing else, while pending', async () => {
-        const { container } = await renderTimeline([], <AllStates />, 'pending')
+    it('shows TimelineLoading as a status, with or without a Timeline', async () => {
+        const { container } = await render(<TimelineLoading />)
 
         expect(container.querySelector('[role=status]')?.textContent).toContain(
             'Loading'
         )
-        expect(container.textContent).not.toContain('No history yet')
     })
 
-    it('shows TimelineEmpty only on success with no entries', async () => {
+    it('shows TimelineEmpty only when the timeline has no entries', async () => {
         expect(
-            (await renderTimeline([], <AllStates />)).container.textContent
+            (await renderTimeline([], <TimelineEmpty />)).container.textContent
         ).toContain('No history yet')
 
-        const { container } = await renderTimeline(ENTRIES, <AllStates />)
+        const { container } = await renderTimeline(ENTRIES, <TimelineEmpty />)
         expect(container.textContent).not.toContain('No history yet')
     })
 
     it('shows TimelineError with a Retry that calls onRetry', async () => {
         const onRetry = vi.fn()
-        const { container } = await renderTimeline(
-            [],
-            <AllStates onRetry={onRetry} />,
-            'error'
-        )
+        const { container } = await render(<TimelineError onRetry={onRetry} />)
 
         expect(container.textContent).toContain("Couldn't load the history")
-        expect(container.textContent).not.toContain('No history yet')
         container.querySelector('button')?.click()
         expect(onRetry).toHaveBeenCalledTimes(1)
     })
@@ -399,30 +366,20 @@ describe('timeline states', () => {
         expect(empty.container.querySelector('ul')).toBeNull()
     })
 
-    it('leaves failures to TimelineError when the status is error', async () => {
-        const notices: TimelineNotice[] = [
-            { id: 'a', tone: 'error', message: "Events couldn't load." },
-            { id: 'b', tone: 'info', message: 'Capped.' },
-        ]
-        const { container } = await renderTimeline(
-            [],
-            <TimelineNotices notices={notices} />,
-            'error'
-        )
-
-        expect(container.textContent).toBe('Capped.')
-    })
-
-    it('has no axe violations in the error and notice states', async () => {
-        const { container } = await renderTimeline(
-            [],
+    it('has no axe violations in the loading, error, empty and notice states', async () => {
+        const { container } = await render(
             <>
-                <AllStates onRetry={() => undefined} />
-                <TimelineNotices
-                    notices={[{ id: 'a', tone: 'warning', message: 'Capped.' }]}
-                />
-            </>,
-            'error'
+                <TimelineLoading />
+                <TimelineError onRetry={() => undefined} />
+                <Timeline entries={[]} calendar="gregorian" now={NOW}>
+                    <TimelineNotices
+                        notices={[
+                            { id: 'a', tone: 'warning', message: 'Capped.' },
+                        ]}
+                    />
+                    <TimelineEmpty />
+                </Timeline>
+            </>
         )
 
         const results = await axe.run(container)

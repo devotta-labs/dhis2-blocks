@@ -1,7 +1,8 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { IconMore16 } from '@dhis2/ui-icons'
 import React, { useRef, useState } from 'react'
-import type { WorkingListSavedView } from '../../provider/contracts'
+import type { WorkingListView } from '../../provider/contracts'
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -23,18 +24,17 @@ import {
     ToggleGroup,
     ToggleGroupItem,
 } from '@/components/dhis2/ui/toggle-group'
-import { useWorkingListText } from '../WorkingListText'
 
 interface SavedListBarProps {
-    lists: readonly WorkingListSavedView[]
+    lists: readonly WorkingListView[]
     selectedId?: string
     dirty: boolean
     online: boolean
     busy: boolean
-    onSelect: (list: WorkingListSavedView) => void
-    onUpdate: (list: WorkingListSavedView) => void
-    onShare: (list: WorkingListSavedView) => void
-    onDelete: (list: WorkingListSavedView) => void
+    onSelect: (list: WorkingListView) => void
+    onUpdate: (list: WorkingListView) => void
+    onShare: (list: WorkingListView) => void
+    onDelete: (list: WorkingListView) => void
 }
 
 export const SavedListBar = ({
@@ -48,11 +48,10 @@ export const SavedListBar = ({
     onShare,
     onDelete,
 }: SavedListBarProps) => {
-    const i18n = { t: useWorkingListText() }
     // The actions menu lines up with the whole pill, not just its trigger.
     const pillElements = useRef(new Map<string, HTMLElement>())
-    const [deleteList, setDeleteList] = useState<WorkingListSavedView>()
-    const generatedListName = (list: WorkingListSavedView) => {
+    const [deleteList, setDeleteList] = useState<WorkingListView>()
+    const generatedListName = (list: WorkingListView) => {
         if (!list.generated) {
             return list.name
         }

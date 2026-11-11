@@ -208,7 +208,9 @@ program's minimum, shows the message for the whole form.
 In development, the message says what is wrong and lists the program's
 searchable attributes with their uids and its minimum, so you, or your coding
 agent, can fix the field. In production builds, users see "This search isn't
-set up correctly" and the full message is logged to the console.
+set up correctly" and the built-in parts log the full message to the console.
+A custom field's `metadataError` is the same text: the full message in
+development, the short one in production.
 
 ## API reference
 
@@ -219,8 +221,6 @@ set up correctly" and the full message is logged to the console.
   person the user picks.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses
   the hooks. The provider renders only its children.
-- `client?: TrackedEntityFinderClient` — a custom data engine, from
-  `createTrackedEntityFinderClient`. Defaults to the DHIS2 app runtime.
 
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and

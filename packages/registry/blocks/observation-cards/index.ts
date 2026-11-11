@@ -1,14 +1,8 @@
-export {
-    createObservationsClient,
-    type DataEngineLike,
-    type ObservationsClient,
-} from './api/client'
 export type { ObservationPoint, ObservationSeries } from './api/types'
 export {
     ObservationCard,
     type ObservationCardProps,
 } from './card/ObservationCard'
-export { type ObservationState, useObservation } from './hooks'
 export {
     ObservationChange,
     type ObservationChangeProps,

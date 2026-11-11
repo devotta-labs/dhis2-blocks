@@ -2,7 +2,11 @@ import React from 'react'
 import { page } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
-import { createFakeServer, renderWithQueries } from './finderTestSupport'
+import {
+    createFakeServer,
+    renderWithQueries,
+    requestFailure,
+} from './finderTestSupport'
 import { hivProgram } from './fixtures/program'
 import {
     amina,
@@ -74,9 +78,7 @@ describe('FinderResults paging and requests', () => {
                 program: { ...hivProgram, maxTeiCountToReturn: 0 },
                 answerSearch: (request) => {
                     if (Number(request.params?.page ?? 1) > 1) {
-                        throw Object.assign(new Error('Search failed'), {
-                            httpStatusCode: 400,
-                        })
+                        throw requestFailure('Search failed')
                     }
                     return answer(
                         Array.from({ length: 10 }, (_, index) =>
@@ -139,15 +141,14 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer({ deferSearches: true })
         const screen = await renderWithQueries(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
+            ui('hivProgram', onSelect, <FinderResults />),
+            server
         )
 
         await searchFor('A1')
         await expect.element(page.getByText('Searching…')).toBeVisible()
 
-        await screen.rerender(
-            ui(server, 'otherProgram', onSelect, <FinderResults />)
-        )
+        await screen.rerender(ui('otherProgram', onSelect, <FinderResults />))
         server.pendingSearches[0].respond(answer([amina]))
 
         await expect
@@ -192,7 +193,8 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer()
         const screen = await renderWithQueries(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
+            ui('hivProgram', onSelect, <FinderResults />),
+            server
         )
 
         await searchFor('A1')
@@ -200,9 +202,7 @@ describe('FinderResults paging and requests', () => {
         expect(searchRequests(server)).toHaveLength(1)
 
         await screen.rerender(<></>)
-        await screen.rerender(
-            ui(server, 'hivProgram', onSelect, <FinderResults />)
-        )
+        await screen.rerender(ui('hivProgram', onSelect, <FinderResults />))
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toBeEnabled()

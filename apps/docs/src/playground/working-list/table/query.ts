@@ -1,4 +1,4 @@
-import type { DataEngineQueryParameters } from '@/components/working-list/api/client'
+import type { DataEngineQueryParameters } from '@/components/working-list/api/request'
 import { LAB_ORG_UNIT, type LabPerson } from './labData'
 
 type Params = DataEngineQueryParameters

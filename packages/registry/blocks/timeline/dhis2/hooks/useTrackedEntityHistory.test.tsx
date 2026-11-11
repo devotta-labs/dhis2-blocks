@@ -11,7 +11,10 @@ import orgUnitNames from '../__tests__/fixtures/v43/org-unit-names.json'
 import programMetadata from '../__tests__/fixtures/v43/program-metadata.json'
 import trackedEntity from '../__tests__/fixtures/v43/tracked-entity.json'
 import { timelineKeys } from '../timelineKeys'
-import { useTrackedEntityHistory } from './useTrackedEntityHistory'
+import {
+    useTrackedEntityHistory,
+    type TrackedEntityHistory,
+} from './useTrackedEntityHistory'
 
 type CustomData = ComponentProps<typeof CustomDataProvider>['data']
 type Json = z.infer<ReturnType<typeof z.json>>
@@ -176,13 +179,21 @@ const setup = (server: Server = {}) => {
     return { wrapper, requests, queryClient }
 }
 
+/** What a host would render. */
+const stateOf = ({ isPending, isError }: TrackedEntityHistory) => {
+    if (isPending) {
+        return 'pending'
+    }
+    return isError ? 'error' : 'shown'
+}
+
 const renderHistory = (
     server: Server = {},
     options: { programs?: string[]; cap?: number } = {}
 ) => {
     const { wrapper, requests, queryClient } = setup(server)
-    /** Every render's status and entry count, to catch states in between. */
-    const renders: Array<{ status: string; count: number }> = []
+    /** Every render's state and entry count, to catch states in between. */
+    const renders: Array<{ state: string; count: number }> = []
     return renderHook(
         () => {
             const history = useTrackedEntityHistory({
@@ -192,7 +203,7 @@ const renderHistory = (
                 ...options,
             })
             renders.push({
-                status: history.status,
+                state: stateOf(history),
                 count: history.entries.length,
             })
             return history
@@ -208,9 +219,9 @@ describe('useTrackedEntityHistory', () => {
     it('covers every enrolled program, with names resolved, once every request has answered', async () => {
         const { result, requests } = await renderHistory()
 
-        expect(result.current.status).toBe('pending')
+        expect(stateOf(result.current)).toBe('pending')
         expect(result.current.entries).toEqual([])
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         const { entries } = result.current
         expect(kinds(entries)).toEqual(['change', 'event', 'milestone', 'note'])
@@ -236,7 +247,7 @@ describe('useTrackedEntityHistory', () => {
 
     it("keeps a save shared by two programs' changelogs once", async () => {
         const { result } = await renderHistory()
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         const saves = result.current.entries.flatMap((entry) =>
             entry.data.kind === 'change' ? [entry.data.save] : []
@@ -256,7 +267,7 @@ describe('useTrackedEntityHistory', () => {
             release = resolve
         })
         const { result, renders } = await renderHistory({ changesGate })
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         expect(kinds(result.current.entries)).toEqual([
             'event',
@@ -272,7 +283,7 @@ describe('useTrackedEntityHistory', () => {
             .poll(() => kinds(result.current.entries))
             .toEqual(['change', 'event', 'milestone', 'note'])
         const during = renders.slice(from)
-        expect(during.every((render) => render.status === 'success')).toBe(true)
+        expect(during.every((render) => render.state === 'shown')).toBe(true)
         expect(during.every((render) => render.count >= shown)).toBe(true)
     })
 
@@ -281,7 +292,7 @@ describe('useTrackedEntityHistory', () => {
             {},
             { programs: [ANC] }
         )
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         expect(requests).not.toContain(`events:${TB}`)
         expect(
@@ -293,7 +304,7 @@ describe('useTrackedEntityHistory', () => {
         const { result } = await renderHistory({
             events: { [TB]: new Error('boom') },
         })
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         expect(
             result.current.entries.some((entry) =>
@@ -319,7 +330,7 @@ describe('useTrackedEntityHistory', () => {
                 }
             },
         })
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
         const shown = result.current.entries.length
         const notice = result.current.notices.find(
             (candidate) => candidate.id === `events-failed:${TB}`
@@ -339,7 +350,7 @@ describe('useTrackedEntityHistory', () => {
         // Never back to pending or to fewer entries while the retry ran.
         const during = renders.slice(from)
         expect(during.length).toBeGreaterThan(1)
-        expect(during.every((render) => render.status === 'success')).toBe(true)
+        expect(during.every((render) => render.state === 'shown')).toBe(true)
         expect(during.every((render) => render.count >= shown)).toBe(true)
         expect(
             result.current.notices.some(
@@ -351,7 +362,7 @@ describe('useTrackedEntityHistory', () => {
     it('adds a program enrolled after the first load without emptying the history', async () => {
         const server: Server = {}
         const { result, queryClient, renders } = await renderHistory(server)
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
         const shown = result.current.entries.length
         const from = renders.length
 
@@ -374,7 +385,7 @@ describe('useTrackedEntityHistory', () => {
             .toBe(true)
 
         const during = renders.slice(from)
-        expect(during.every((render) => render.status === 'success')).toBe(true)
+        expect(during.every((render) => render.state === 'shown')).toBe(true)
         expect(during.every((render) => render.count >= shown)).toBe(true)
         const added = result.current.entries.find(
             (entry) => entry.id === 'milestone:TlE2eNewEnr:enrolled'
@@ -428,7 +439,7 @@ describe('useTrackedEntityHistory', () => {
 
     it('is an error, with the enrollments notice, when the tracked entity fails', async () => {
         const { result } = await renderHistory({ entity: new Error('down') })
-        await expect.poll(() => result.current.status).toBe('error')
+        await expect.poll(() => stateOf(result.current)).toBe('error')
 
         expect(result.current.entries).toEqual([])
         expect(result.current.notices.map((notice) => notice.id)).toEqual([
@@ -440,7 +451,7 @@ describe('useTrackedEntityHistory', () => {
         const { result } = await renderHistory({
             changelogs: { [ANC]: notFound(), [TB]: notFound() },
         })
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         expect(result.current.notices.map((notice) => notice.id)).toEqual([
             'changes-unsupported',
@@ -454,7 +465,7 @@ describe('useTrackedEntityHistory', () => {
 
     it('says when a program has more events than the cap', async () => {
         const { result } = await renderHistory({}, { cap: 2 })
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
 
         expect(result.current.notices).toContainEqual(
             expect.objectContaining({
@@ -473,14 +484,14 @@ describe('useTrackedEntityHistory', () => {
 
     it('refreshes on refetch and on invalidating timelineKeys.root, keeping entries meanwhile', async () => {
         const { result, requests, queryClient } = await renderHistory()
-        await expect.poll(() => result.current.status).toBe('success')
+        await expect.poll(() => stateOf(result.current)).toBe('shown')
         const before = requests.length
 
         result.current.refetch()
         expect(result.current.entries.length).toBeGreaterThan(0)
         await expect.poll(() => requests.length).toBeGreaterThan(before)
         await expect.poll(() => result.current.isFetching).toBe(false)
-        // Three hooks share the tracked entity: one request, none cancelled.
+        // One request for the tracked entity, none cancelled.
         expect(
             requests.slice(before).filter((r) => r === 'trackedEntity')
         ).toHaveLength(1)
@@ -488,6 +499,6 @@ describe('useTrackedEntityHistory', () => {
         const again = requests.length
         await queryClient.invalidateQueries({ queryKey: timelineKeys.root })
         expect(requests.length).toBeGreaterThan(again)
-        expect(result.current.status).toBe('success')
+        expect(stateOf(result.current)).toBe('shown')
     })
 })

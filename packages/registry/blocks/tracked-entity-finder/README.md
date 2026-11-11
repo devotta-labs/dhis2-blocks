@@ -48,8 +48,8 @@ form; `useFinderField` returns the attribute's TanStack `field`, its `error`
 and any `metadataError`, so a custom input counts toward the search like
 the built-in ones.
 
-`createTrackedEntityFinderClient` wraps a custom data engine; by default the
-block uses the DHIS2 app-runtime.
+The finder fetches through the DHIS2 app-runtime's data engine and TanStack
+Query, so it needs the app's `QueryClientProvider` above it.
 
 To list a program's searchable attributes and their uids:
 
@@ -59,8 +59,8 @@ GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTra
 
 The block reads the literal `process.env.NODE_ENV`, which your bundler
 replaces at build time, to choose between the full development metadata-error
-messages and the short production ones (the full message is logged instead).
-Where nothing replaces it, the full messages show.
+messages and the short production ones (the built-in parts log the full
+message instead). Where nothing replaces it, the full messages show.
 
 See the docs page at `/blocks/tracked-entity-finder` for every part, hook and
 example.

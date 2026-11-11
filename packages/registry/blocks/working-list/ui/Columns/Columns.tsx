@@ -1,81 +1,37 @@
+import i18n from '@dhis2/d2-i18n'
 import { IconLayoutColumns16 } from '@dhis2/ui-icons'
-import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
-import type { TrackerProgram } from '../../api/schemas'
-import type { WorkingListField } from '../../domain/model'
+import { useIsSavingList } from '../../provider/mutations'
 import {
-    useWorkingListActions,
-    useWorkingListMeta,
-    useWorkingListState,
-} from '../../provider/WorkingListContext'
-import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
-import type { WorkingListConfiguration } from '../../provider/contracts'
+    useWorkingListMetadata,
+    useWorkingListView,
+    type WorkingListMetadata,
+    type WorkingListSelectedView,
+} from '../../provider/queries'
+import { useWorkingList } from '../../provider/WorkingListContext'
 import { ColumnSettingsDialog } from '../ColumnSettingsDialog'
+import { tableFieldsFor } from '../tableFields'
 import { Button } from '@/components/dhis2/ui/button'
-import { useWorkingListText } from '../WorkingListText'
 
-const tableFieldsFor = (
-    fields: readonly WorkingListField[],
-    program: TrackerProgram,
-    configuration: WorkingListConfiguration
-) => {
-    const currentStage =
-        configuration.mode === 'event'
-            ? program.programStages.find(
-                  (stage) => stage.id === configuration.programStageId
-              )
-            : undefined
-    const stageDataElementIds = new Set(
-        currentStage?.programStageDataElements.map(
-            (binding) => binding.dataElement.id
-        ) ?? []
-    )
-    return fields.filter((field) => {
-        if (field.columnable === false) {
-            return false
-        }
-        if (field.source === 'trackedEntityAttribute') {
-            return true
-        }
-        if (field.source === 'eventDataElement') {
-            return (
-                configuration.mode === 'event' &&
-                stageDataElementIds.has(field.id)
-            )
-        }
-        if (['createdAt', 'programOwnerId'].includes(field.id)) {
-            return true
-        }
-        return (
-            configuration.mode === 'event' &&
-            [
-                'eventStatus',
-                'eventOccurredAt',
-                'eventScheduledAt',
-                'eventOrgUnit',
-                'eventAssignedUser',
-            ].includes(field.id)
-        )
-    })
-}
-
-const ColumnsControl = () => {
-    const translate = useWorkingListText()
-    const configuration = useWorkingListState((state) => state.configuration)
-    const program = useWorkingListMeta((meta) => meta.program)
-    const metadata = useWorkingListMeta((meta) => meta.fieldCatalog)
-    const actions = useWorkingListActions()
-    const { mutationBusy } = useWorkingListPrivateUi()
+const ColumnsControl = ({
+    metadata,
+    view: { configuration },
+}: {
+    metadata: WorkingListMetadata
+    view: WorkingListSelectedView
+}) => {
+    const { setDraft } = useWorkingList()
+    const saving = useIsSavingList()
     const [dialogOpen, setDialogOpen] = useState(false)
 
-    if (!program || !metadata) {
-        throw new Error(
-            'WorkingListColumnSelector requires resolved program metadata.'
-        )
-    }
-    const fields = [...fieldsForConfiguration(metadata, configuration).values()]
-    const tableFields = tableFieldsFor(fields, program, configuration)
+    const fields = [
+        ...fieldsForConfiguration(
+            metadata.fieldCatalog,
+            configuration
+        ).values(),
+    ]
+    const tableFields = tableFieldsFor(fields, metadata.program, configuration)
 
     return (
         <div className="flex flex-none items-center">
@@ -83,23 +39,20 @@ const ColumnsControl = () => {
                 variant="secondary"
                 size="field-dense"
                 data-test="configure-columns"
-                disabled={mutationBusy}
+                disabled={saving}
                 onClick={() => setDialogOpen(true)}
             >
                 <IconLayoutColumns16 />
-                {translate('Columns')}
+                {i18n.t('Columns')}
             </Button>
             {dialogOpen && (
                 <ColumnSettingsDialog
                     fields={tableFields}
                     visibleColumnIds={configuration.columns}
-                    disabled={mutationBusy}
-                    onChange={(columns) => {
-                        const result = actions.setColumns(columns)
-                        if (Result.isError(result)) {
-                            throw result.error
-                        }
-                    }}
+                    disabled={saving}
+                    onChange={(columns) =>
+                        setDraft({ ...configuration, columns })
+                    }
                     onClose={() => setDialogOpen(false)}
                 />
             )}
@@ -116,10 +69,8 @@ export const WorkingListColumnSelector = ({
     className,
     ...props
 }: WorkingListColumnSelectorProps) => {
-    const translate = useWorkingListText()
-    const ready = useWorkingListMeta(
-        (meta) => meta.activeConfiguration.status === 'ready'
-    )
+    const metadata = useWorkingListMetadata().data
+    const view = useWorkingListView().data
 
     return (
         <div
@@ -127,8 +78,8 @@ export const WorkingListColumnSelector = ({
             className={className}
             data-testid="working-list-columns"
         >
-            {ready ? (
-                <ColumnsControl />
+            {metadata && view ? (
+                <ColumnsControl metadata={metadata} view={view} />
             ) : (
                 <div className="flex flex-none items-center">
                     <Button
@@ -138,7 +89,7 @@ export const WorkingListColumnSelector = ({
                         disabled
                     >
                         <IconLayoutColumns16 />
-                        {translate('Columns')}
+                        {i18n.t('Columns')}
                     </Button>
                 </div>
             )}

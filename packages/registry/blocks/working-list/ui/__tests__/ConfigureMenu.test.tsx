@@ -1,11 +1,10 @@
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import type { WorkingListSavedView } from '../../provider/contracts'
+import type { WorkingListView } from '../../provider/contracts'
 import { ConfigureMenu } from '../ConfigureMenu'
-import { WorkingListTextProvider } from '../WorkingListText'
 
-const ownedList: WorkingListSavedView = {
+const ownedList: WorkingListView = {
     id: 'OwnedList01',
     name: 'My working list',
     generated: false,
@@ -20,7 +19,7 @@ const renderMenu = async ({
     dirty = false,
     online = true,
 }: {
-    selectedView?: WorkingListSavedView
+    selectedView?: WorkingListView
     dirty?: boolean
     online?: boolean
 }) => {
@@ -28,18 +27,16 @@ const renderMenu = async ({
     const onSaveAs = vi.fn(async () => undefined)
     const onUpdate = vi.fn()
     const screen = await render(
-        <WorkingListTextProvider translate={(message) => message}>
-            <ConfigureMenu
-                selectedView={selectedView}
-                dirty={dirty}
-                online={online}
-                busy={false}
-                createPending={false}
-                onDownload={onDownload}
-                onSaveAs={onSaveAs}
-                onUpdate={onUpdate}
-            />
-        </WorkingListTextProvider>
+        <ConfigureMenu
+            selectedView={selectedView}
+            dirty={dirty}
+            online={online}
+            busy={false}
+            createPending={false}
+            onDownload={onDownload}
+            onSaveAs={onSaveAs}
+            onUpdate={onUpdate}
+        />
     )
 
     return { screen, onDownload, onUpdate }

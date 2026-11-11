@@ -83,7 +83,6 @@ export interface ProgramMetadata {
     }>
 }
 
-/** The recorded program as the hooks resolve it, after `edit` changes a copy. */
 /** A stage of the recorded program's metadata, to edit before resolving it. */
 export const stageOf = (metadata: ProgramMetadata, id: string) => {
     const stage = metadata.programStages.find(
@@ -95,6 +94,7 @@ export const stageOf = (metadata: ProgramMetadata, id: string) => {
     return stage
 }
 
+/** The recorded program as the hooks resolve it, after `edit` changes a copy. */
 export const recordedProgram = (
     edit?: (metadata: ProgramMetadata) => void
 ): ProgramInfo => {
@@ -112,7 +112,7 @@ const ORG_UNIT_NAMES: ReadonlyMap<string, string> = new Map(
     ])
 )
 
-/** An event entry as `useEventEntries` builds it; `program: undefined` is metadata that failed. */
+/** An event entry as the history builds it; `program: null` is metadata that failed. */
 export const eventEntryOf = (
     event: TrackerEvent,
     { program = recordedProgram() }: { program?: ProgramInfo | null } = {}

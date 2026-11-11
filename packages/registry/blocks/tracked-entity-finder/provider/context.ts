@@ -1,67 +1,23 @@
 import { createContext, useContext } from 'react'
-import type { FinderResourceClient } from '../api/client'
 import type { FinderPerson } from '../api/search'
-import type { FinderSystemInfo } from '../api/systemInfo'
 import type { FinderFormApi } from '../form/finderFormApi'
-import type {
-    FormField,
-    FormVerdict,
-    ProgramModel,
-    ValidatedSearch,
-} from '../rules/types'
+import type { FormField, FormVerdict, ValidatedSearch } from '../rules/types'
 
-export type FinderStatus = 'loading' | 'ready' | 'error'
-
-export type FinderResultsStatus =
-    | 'idle'
-    | 'searching'
-    | 'results'
-    | 'empty'
-    | 'too-many'
-    | 'error'
-
-/** The last submitted search's answer for the current page. */
-export interface FinderResultsView {
-    status: FinderResultsStatus
-    people: readonly FinderPerson[]
-    hasNext: boolean
-    /** The previous page stays on screen while the next one loads. */
-    refreshing: boolean
-}
-
+/** A search the user ran, and the page of its results on screen. */
 export interface FinderSubmission {
     search: ValidatedSearch
-    /** Grows with every Search, so the same search can run again. */
-    id: number
-}
-
-interface FinderState {
-    status: FinderStatus
-    model?: ProgramModel
-    submission?: FinderSubmission
+    /** When Search was pressed, so the same search can run again. */
+    submittedAt: number
     page: number
-    /** Run once here, so every results part reads the same answer. */
-    results: FinderResultsView
 }
 
-interface FinderActions {
-    submit: (search: ValidatedSearch) => void
-    setPage: (page: number) => void
-    select: (person: FinderPerson) => void
-    /** Logs a metadata error's full text, once per provider. */
-    logMetadataError: (message: string) => void
-}
-
-interface FinderMeta {
-    program: string
-    client: FinderResourceClient
-    info?: FinderSystemInfo
-}
-
+/** What the finder's parts share; server data they load themselves. */
 export interface FinderContextValue {
-    state: FinderState
-    actions: FinderActions
-    meta: FinderMeta
+    program: string
+    onSelect: (person: FinderPerson) => void
+    /** The last submitted search, of whichever form ran it. */
+    submission?: FinderSubmission
+    setSubmission: (submission: FinderSubmission) => void
 }
 
 /** Internal: never exported from the block, so it cannot be swapped out. */
@@ -84,7 +40,7 @@ export interface FinderFormContextValue {
     form: FinderFormApi
     /** Set once the user tried to search, so every field error shows. */
     submitted: boolean
-    /** Undefined until program metadata is ready. */
+    /** Undefined until program metadata has loaded. */
     verdict?: FormVerdict
 }
 

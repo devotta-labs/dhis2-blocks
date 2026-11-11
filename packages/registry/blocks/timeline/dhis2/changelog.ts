@@ -1,6 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 import { compareText } from '../core/sort'
-import { httpStatusOf } from './client'
 import type { ChangeLogRow, TrackerUser } from './schemas'
 import type { ChangeSave, FieldInfo, ResolvedChange } from './types'
 
@@ -98,5 +97,3 @@ export const groupChangelogRows = (
     }
     return [...saves.values()]
 }
-
-export const isNotFound = (error: Error) => httpStatusOf(error) === 404

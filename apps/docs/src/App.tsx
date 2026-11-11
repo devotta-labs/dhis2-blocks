@@ -133,6 +133,10 @@ const router = createBrowserRouter([
                         '/blocks/tracked-entity-finder',
                         './pages/blocks/tracked-entity-finder.mdx'
                     ),
+                    docRoute(
+                        '/blocks/tracked-entity-header',
+                        './pages/blocks/tracked-entity-header.mdx'
+                    ),
                 ],
             },
             { path: '/playground/:slug?', element: <PlaygroundPage /> },

@@ -11,6 +11,7 @@
 @source '../../../packages/registry/blocks/observation-cards';
 @source '../../../packages/registry/blocks/timeline';
 @source '../../../packages/registry/blocks/tracked-entity-finder';
+@source '../../../packages/registry/blocks/tracked-entity-header';
 
 @import 'shadcn/tailwind.css';
 

@@ -4,6 +4,8 @@ import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
+import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
+import { PersonBannerPlaceholder } from './tracked-entity-header/TrackedEntityHeaderPlaceholders'
 import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
@@ -149,6 +151,15 @@ const examples = [
         source: personVitalsSource,
         minHeight: 220,
         Placeholder: PersonVitalsPlaceholder,
+    },
+    {
+        slug: 'tracked-entity-header/person-banner',
+        title: 'Person banner',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-header/PersonBanner')),
+        source: personBannerSource,
+        minHeight: 200,
+        Placeholder: PersonBannerPlaceholder,
     },
     {
         slug: 'timeline/case-history',

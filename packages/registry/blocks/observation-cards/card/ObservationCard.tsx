@@ -1,19 +1,16 @@
 import { Card } from '@/components/dhis2/ui/card'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
-import { parseDhis2Calendar } from '@/components/dhis2-value-display'
-import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
+import React, { useCallback, useState, type ReactNode } from 'react'
 import type { ObservationSeries } from '../api/types'
 import {
-    displayLocale,
     elementShowsTrend,
     isStale,
     isSupportedValueType,
     showsTrend,
-    type DisplayOptions,
 } from '../format/display'
+import { useDisplayOptions } from '../format/useDisplayOptions'
 import { useObservation } from '../hooks'
 import { ObservationChange } from '../parts/ObservationChange'
 import { ObservationLabel } from '../parts/ObservationLabel'
@@ -45,17 +42,6 @@ export interface ObservationCardProps {
     className?: string
     /** The parts to show; without children the card picks them by value type. */
     children?: ReactNode
-}
-
-/** The system calendar and the user's locale, for every date and number shown. */
-const useDisplayOptions = (): DisplayOptions => {
-    const { systemInfo } = useConfig()
-    // `calendar` is in every server's systemInfo, though app-runtime's type leaves it out.
-    const calendar = parseDhis2Calendar(
-        systemInfo && 'calendar' in systemInfo ? systemInfo.calendar : undefined
-    )
-    const locale = displayLocale()
-    return useMemo(() => ({ calendar, locale }), [calendar, locale])
 }
 
 function Frame({

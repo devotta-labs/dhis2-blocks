@@ -1013,6 +1013,11 @@
                     "target": "@components/observation-cards/format/display.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/observation-cards/format/useDisplayOptions.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/format/useDisplayOptions.ts"
+                },
+                {
                     "path": "packages/registry/blocks/observation-cards/hooks.ts",
                     "type": "registry:file",
                     "target": "@components/observation-cards/hooks.ts"
@@ -1021,6 +1026,11 @@
                     "path": "packages/registry/blocks/observation-cards/index.ts",
                     "type": "registry:file",
                     "target": "@components/observation-cards/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/inline/ObservationInline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/inline/ObservationInline.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/observation-cards/parts/ObservationChange.tsx",
@@ -1068,7 +1078,7 @@
                     "target": "@components/observation-cards/provider/env.ts"
                 }
             ],
-            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; it loads the program's metadata and the person's events once for every card inside. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. Use useObservation for custom layouts. See the observation cards docs page for examples."
+            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; it loads the program's metadata and the person's events once for every card inside. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. ObservationInline shows one data element as a single line of label, value, legend and recorded time, for a banner's facts line; it reads the same provider and adds no requests. Use useObservation for custom layouts. See the observation cards docs page for examples."
         },
         {
             "name": "program-rules",
@@ -1997,6 +2007,223 @@
                 }
             ],
             "docs": "Wrap the finder in FinderProvider with a program and an onSelect callback. Inside it compose a FinderForm containing FinderField (exact value) and FinderRangeField (number or date range) inputs, one per program attribute uid, plus an optional FinderHint and a FinderSubmit button. Show matches with FinderResults, which holds the state parts FinderSearching, FinderEmpty, FinderTooMany and FinderError, a FinderList of FinderItem rows with FinderValue cells, and FinderPagination. The program's search rules are enforced inside and cannot be loosened by props. Use the useFinder* hooks for custom layouts. See the tracked entity finder docs page for examples."
+        },
+        {
+            "name": "tracked-entity-header",
+            "type": "registry:block",
+            "title": "DHIS2 Tracked Entity Header",
+            "description": "A banner for one tracked entity, such as a person or a shipment: what it is and the facts that matter most, composed from attribute parts.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/relationshipSchemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/relationshipSchemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/relationships.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/relationships.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/banner/TrackedEntityBanner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/banner/TrackedEntityBanner.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/format/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/format/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/format/display.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/format/display.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/DisclosureToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/DisclosureToggle.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/FactPair.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/FactPair.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityActions.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityAttribute.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityAttribute.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityDate.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityDate.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityDetails.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityDetails.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityEnrollment.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityEnrollment.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityFacts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityFacts.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityName.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityOwner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityOwner.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityRelationship.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityRelationship.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityRelationships.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityRelationships.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/divided.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/divided.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/LinkedName.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/LinkedName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/Names.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/Names.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/resolve.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/resolve.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/useRelationships.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/useRelationships.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/useAttributeValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/useAttributeValue.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/actionsSlot.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/actionsSlot.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/env.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/frame.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/frame.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/labelledRegion.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/labelledRegion.ts"
+                }
+            ],
+            "docs": "Wrap a banner in TrackedEntityHeaderProvider with a trackedEntity and, usually, a program; it loads the tracked entity and the program's attribute metadata once for every part inside. TrackedEntityBanner with no children shows the program's list attributes, its state tags and a details disclosure for the rest. To compose a banner, place the parts TrackedEntityName, TrackedEntityDate, TrackedEntityAttribute, TrackedEntityStatus, TrackedEntityOwner, TrackedEntityEnrollment, TrackedEntityFacts, TrackedEntityActions, TrackedEntityDetails, TrackedEntityRelationship and TrackedEntityRelationships inside it, and place TrackedEntityStatus yourself so an inactive record is never shown by colour alone. Event facts such as a latest reading come from ObservationInline in observation-cards, inside an ObservationsProvider. Every part works outside the banner under the provider; read status and retry from useTrackedEntityHeader to draw the loading, failed, restricted and not-found states yourself. A restricted record shows no values. TrackedEntityRelationship shows one relationship type by uid and TrackedEntityRelationships every link, as a Related disclosure in a banner; both take href or onSelect for the names and labels to replace relationship type names, and the block ships no peek. See the tracked entity header docs page for examples."
         },
         {
             "name": "tracker-data-entry",

@@ -4,6 +4,7 @@ export const PLAYGROUND_BLOCKS = [
     { slug: 'observation-cards', title: 'Observation Cards' },
     { slug: 'timeline', title: 'Timeline' },
     { slug: 'tracked-entity-finder', title: 'Tracked Entity Finder' },
+    { slug: 'tracked-entity-header', title: 'Tracked Entity Header' },
     { slug: 'tracker-data-entry', title: 'Tracker Data Entry' },
 ] as const
 

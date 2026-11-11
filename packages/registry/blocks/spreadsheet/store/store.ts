@@ -36,7 +36,10 @@ type Source = CellState['source']
 export interface CellStoreState {
     /** Only cells that were loaded or touched have an entry; read the rest as `EMPTY_CELL`. */
     cells: Partial<Record<CellKey, CellState>>
-    /** Cell keys written by the most recent store update. */
+    /**
+     * Cell keys written by the most recent store update, each once, in the order it first wrote them: the order
+     * `cells` holds the new ones in, after those it held before.
+     */
     changedCellKeys: ReadonlyArray<CellKey>
     /** The id of the cell's field, as `fieldIdOf` names it: cell overrides by field id are looked up by it. */
     fieldIdOf(key: CellKey): string

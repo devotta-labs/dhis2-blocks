@@ -41,7 +41,9 @@ import {
 /** The parts the canvases place, as the person's own attribute uids. */
 export interface Parts {
     name: string[]
-    date: { attribute: string } | { enrollmentDate: 'occurredAt' }
+    date:
+        | { attribute: string; age?: boolean }
+        | { enrollmentDate: 'occurredAt'; age?: boolean }
     identifier: string
     /** An attribute the person's program lists, shown as a fact. */
     fact: string
@@ -113,7 +115,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { enrollmentDate: 'occurredAt' },
+            date: { enrollmentDate: 'occurredAt', age: true },
             fact: GENDER,
         },
     },
@@ -145,7 +147,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
             haemoglobin: 'labCardDe01',
         },
@@ -173,7 +175,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },
@@ -208,7 +210,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },
@@ -234,7 +236,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },
@@ -266,7 +268,7 @@ export const SUBJECTS: Subjects = {
         parts: {
             name: [FIRST_NAME, BROKEN_LAST],
             identifier: UNIQUE_ID,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: BROKEN_ALLERGIES,
         },
     },
@@ -299,7 +301,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },
@@ -332,7 +334,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },
@@ -393,7 +395,7 @@ export const SUBJECTS: Subjects = {
         },
         parts: {
             ...COMMON,
-            date: { attribute: BIRTH_DATE },
+            date: { attribute: BIRTH_DATE, age: true },
             fact: ALLERGIES,
         },
     },

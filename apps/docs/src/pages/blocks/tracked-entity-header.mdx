@@ -70,7 +70,7 @@ move below everything.
         <TrackedEntityBanner className="sticky top-0">
             <TrackedEntityName attributes={['w75KJ2mc4zz', 'zDhUuAYrxNC']} />
             <TrackedEntityStatus />
-            <TrackedEntityDate attribute="gHGyrwKPzej" label="Born" />
+            <TrackedEntityDate attribute="gHGyrwKPzej" label="Born" age />
             <TrackedEntityAttribute attribute="lZGmxYbs97q" label="ID" />
             <TrackedEntityEnrollment />
             <TrackedEntityOwner />
@@ -117,8 +117,16 @@ The parts are `TrackedEntityName`, `TrackedEntityDate`,
 `TrackedEntityRelationships`. Each takes a `className`. `TrackedEntityDate` takes
 a date `attribute`, or `enrollmentDate="occurredAt"` or `"enrolledAt"` for a
 date kept on the enrollment, labelled as the program labels it: a birth date
-in a child programme, or "Dispatched" for a shipment. It shows the date only.
-`TrackedEntityOwner` and `TrackedEntityEnrollment` need a `program`.
+in a child programme, or "Dispatched" for a shipment. With `age`, the part
+also shows the age in the system's calendar: days under one month,
+months under two years, years after.
+
+The block can't tell what a date means, so `age` counts from whichever date
+you give it to today. Give it a date where that count means something: a date
+of birth for a person's age, or a manufacture date with `label="Age of vial"`.
+On an enrollment date that means "registered", it counts the time since
+registration, so label it that way rather than as an age. A date recorded in
+an event isn't an attribute or an enrollment date, so this part can't read it.
 
 The event facts, such as the haemoglobin above, come from
 [Observation Cards](/blocks/observation-cards): `ObservationInline` needs an

@@ -27,7 +27,7 @@ the parts yourself, here for a person:
         <TrackedEntityBanner className="sticky top-0">
             <TrackedEntityName attributes={[firstName, lastName]} />
             <TrackedEntityStatus />
-            <TrackedEntityDate attribute={birthDate} label="Born" />
+            <TrackedEntityDate attribute={birthDate} label="Born" age />
             <TrackedEntityAttribute attribute={uniqueId} label="ID" />
             <TrackedEntityActions>
                 <Button size="sm" onClick={recordVisit}>
@@ -59,7 +59,7 @@ Parts: `TrackedEntityName`, `TrackedEntityDate`, `TrackedEntityAttribute`,
 `TrackedEntityRelationship` and `TrackedEntityRelationships`; each takes a
 `className`. `TrackedEntityDate` shows a date attribute, or with
 `enrollmentDate` the enrollment's incident or enrollment date under the
-program's own label. Every value part renders nothing until the record is
+program's own label; `age` adds the time from that date to today, in the system's calendar. Every value part renders nothing until the record is
 ready, so a restricted record never shows a value. `TrackedEntityActions`
 renders in every state outside a banner; inside one it shows once the record
 is ready, and when access is restricted, so a "Request access" button still

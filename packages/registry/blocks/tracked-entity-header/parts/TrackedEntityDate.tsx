@@ -1,24 +1,52 @@
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
+import { ageOf, formatAge, todayIso } from '../format/age'
 import { useHeaderContext, type HeaderContextValue } from '../provider/context'
 import { AttributeFact } from './FactPair'
-import { TrackedEntityAttribute } from './TrackedEntityAttribute'
-import { useLoggedProblem, type AttributeValueState } from './useAttributeValue'
+import {
+    useAttributeValue,
+    useLoggedProblem,
+    type AttributeValueState,
+} from './useAttributeValue'
 
 interface DateBase {
     /** Replaces the label. */
     label?: string
+    /** Shows the time from this date to today beside it: days under one month, months under two years, years after. */
+    age?: boolean
     className?: string
 }
 
 export type TrackedEntityDateProps =
-    | (DateBase & { attribute: string; enrollmentDate?: never })
+    | (DateBase & {
+          attribute: string
+          enrollmentDate?: never
+      })
     | (DateBase & {
           /** The date to show from the enrollment in the `program`. */
           enrollmentDate: 'occurredAt' | 'enrolledAt'
           attribute?: never
       })
+
+/** The value with its age appended, when asked for and the raw date gives one. */
+const withAge = (
+    state: AttributeValueState,
+    raw: string | undefined,
+    { display }: HeaderContextValue
+): AttributeValueState => {
+    const ageNow = raw ? ageOf(raw, todayIso(), display.calendar) : undefined
+    return state.kind === 'value' && ageNow
+        ? {
+              ...state,
+              text: i18n.t('{{date}} ({{age}})', {
+                  date: state.text,
+                  age: formatAge(ageNow),
+                  interpolation: { escapeValue: false },
+              }),
+          }
+        : state
+}
 
 const resolveEnrollmentDate = (
     enrollmentDate: 'occurredAt' | 'enrolledAt',
@@ -48,11 +76,20 @@ const resolveEnrollmentDate = (
 
 const FromEnrollment = ({
     enrollmentDate,
+    age,
     label,
     className,
 }: DateBase & { enrollmentDate: 'occurredAt' | 'enrolledAt' }) => {
     const context = useHeaderContext()
-    const result = resolveEnrollmentDate(enrollmentDate, context)
+    const resolved = resolveEnrollmentDate(enrollmentDate, context)
+    const result =
+        age && context.state.status === 'ready'
+            ? withAge(
+                  resolved,
+                  context.state.trackedEntity.enrollment?.[enrollmentDate],
+                  context
+              )
+            : resolved
     useLoggedProblem(
         result.kind === 'misconfigured' ? result.message : undefined
     )
@@ -65,11 +102,36 @@ const FromEnrollment = ({
     )
 }
 
+const FromAttribute = ({
+    attribute,
+    age,
+    label,
+    className,
+}: DateBase & { attribute: string }) => {
+    const context = useHeaderContext()
+    const state = useAttributeValue(attribute)
+    const shown =
+        age && context.state.status === 'ready'
+            ? withAge(
+                  state,
+                  context.state.trackedEntity.values.get(attribute),
+                  context
+              )
+            : state
+    return (
+        <AttributeFact
+            state={shown}
+            label={label || undefined}
+            className={className}
+        />
+    )
+}
+
 /** A date of the record: a date attribute, or an enrollment date labelled by the program. */
 export function TrackedEntityDate(props: TrackedEntityDateProps) {
     return props.enrollmentDate ? (
         <FromEnrollment {...props} enrollmentDate={props.enrollmentDate} />
     ) : (
-        <TrackedEntityAttribute {...props} attribute={props.attribute ?? ''} />
+        <FromAttribute {...props} attribute={props.attribute ?? ''} />
     )
 }

@@ -58,6 +58,7 @@ export default function PersonBanner() {
                         <TrackedEntityDate
                             attribute={BIRTH_DATE}
                             label="Born"
+                            age
                         />
                         <TrackedEntityAttribute
                             attribute={UNIQUE_ID}

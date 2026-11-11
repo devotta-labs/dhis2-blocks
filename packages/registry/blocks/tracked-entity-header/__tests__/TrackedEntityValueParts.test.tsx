@@ -250,6 +250,37 @@ describe('TrackedEntityDate', () => {
         await expect.element(page.getByText('May 28, 1992')).toBeVisible()
     })
 
+    it('shows the age beside the date when asked', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date(2026, 10, 11))
+        try {
+            await renderParts(<TrackedEntityDate attribute={BIRTH_DATE} age />)
+
+            await expect
+                .element(page.getByText('May 28, 1992 (34 years)'))
+                .toBeVisible()
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it('shows the age beside an enrollment date', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(new Date(2026, 10, 11))
+        try {
+            await renderParts(
+                <TrackedEntityDate enrollmentDate="occurredAt" age />,
+                { program: CHILD }
+            )
+
+            await expect
+                .element(page.getByText('Mar 4, 2026 (8 months)'))
+                .toBeVisible()
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
     it("shows the enrollment's occurredAt, labelled by the program's incident date label", async () => {
         await renderParts(<TrackedEntityDate enrollmentDate="occurredAt" />, {
             program: CHILD,

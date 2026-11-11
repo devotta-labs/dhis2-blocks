@@ -56,6 +56,84 @@ const names = (): Names =>
         names: new Map(),
     }))
 
+const inView = (element: HTMLElement) => {
+    const box = element.getBoundingClientRect()
+    let bounds = {
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+        left: 0,
+    }
+    for (
+        let ancestor = element.parentElement;
+        ancestor !== null;
+        ancestor = ancestor.parentElement
+    ) {
+        const style = getComputedStyle(ancestor)
+        const clipsX = /^(auto|clip|hidden|overlay|scroll)$/.test(
+            style.overflowX
+        )
+        const clipsY = /^(auto|clip|hidden|overlay|scroll)$/.test(
+            style.overflowY
+        )
+        if (!clipsX && !clipsY) {
+            continue
+        }
+        const parent = ancestor.getBoundingClientRect()
+        const padding = (value: string) => Number.parseFloat(value) || 0
+        bounds = {
+            top: clipsY
+                ? Math.max(
+                      bounds.top,
+                      parent.top +
+                          ancestor.clientTop +
+                          padding(style.scrollPaddingTop)
+                  )
+                : bounds.top,
+            right: clipsX
+                ? Math.min(
+                      bounds.right,
+                      parent.left +
+                          ancestor.clientLeft +
+                          ancestor.clientWidth -
+                          padding(style.scrollPaddingRight)
+                  )
+                : bounds.right,
+            bottom: clipsY
+                ? Math.min(
+                      bounds.bottom,
+                      parent.top +
+                          ancestor.clientTop +
+                          ancestor.clientHeight -
+                          padding(style.scrollPaddingBottom)
+                  )
+                : bounds.bottom,
+            left: clipsX
+                ? Math.max(
+                      bounds.left,
+                      parent.left +
+                          ancestor.clientLeft +
+                          padding(style.scrollPaddingLeft)
+                  )
+                : bounds.left,
+        }
+    }
+    return (
+        box.top >= bounds.top &&
+        box.right <= bounds.right &&
+        box.bottom <= bounds.bottom &&
+        box.left >= bounds.left
+    )
+}
+
+const focusElementWithoutScroll = (cell: HTMLElement) => {
+    const scroll = !inView(cell)
+    cell.focus({ preventScroll: true })
+    if (scroll) {
+        cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    }
+}
+
 /**
  * What the grid and its cells read: the cell store, what logic says about each cell, the tables and how their cells
  * are keyed, and how outcomes are announced.
@@ -97,7 +175,7 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
             if (cell === null) {
                 own.focusing.setState({ key })
             } else {
-                cell.focus()
+                focusElementWithoutScroll(cell)
             }
         },
         [scope, own]

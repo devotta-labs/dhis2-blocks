@@ -97,6 +97,33 @@ test('the focused cell is not hidden under the sticky header', async () => {
     )
 })
 
+test('moving focus between visible cells does not scroll the table', async () => {
+    const { innerWidth, innerHeight } = window
+    await page.viewport(1280, 800)
+    try {
+        await mount([
+            makeTable({
+                columns: range(12, (i) => `Column ${i}`),
+                rows: range(40, (i) => `Row ${i}`),
+            }),
+        ])
+        const region = page.getByRole('region').element()
+        const start = control(cellKey('t1r8', 'c4'))
+        start.scrollIntoView({ block: 'center', inline: 'center' })
+        await nextFrame()
+        start.focus()
+        const { scrollTop, scrollLeft } = region
+
+        await userEvent.keyboard('{ArrowDown}{ArrowRight}')
+
+        expect(focused()).toMatch(/-cell-t1r9\.c5$/)
+        expect(region.scrollTop).toBe(scrollTop)
+        expect(region.scrollLeft).toBe(scrollLeft)
+    } finally {
+        await page.viewport(innerWidth, innerHeight)
+    }
+})
+
 test('Enter at the last row of the first table continues into the second', async () => {
     await mount(
         [

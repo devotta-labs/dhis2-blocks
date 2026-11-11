@@ -336,11 +336,11 @@ export const SpreadsheetGrid = ({
             waiting === undefined
                 ? null
                 : document.getElementById(cellDomId(idScope, waiting))
-        if (cell !== null) {
-            cell.focus()
+        if (waiting !== undefined && cell !== null) {
+            focusCell(waiting)
             focusing.setState({ key: undefined })
         }
-    }, [waiting, idScope, focusing])
+    }, [waiting, idScope, focusing, focusCell])
     const { ask, dialog } = useBulkConfirm()
 
     // The one menu of row and column actions, kept after it closes so it closes in place.

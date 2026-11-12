@@ -7,9 +7,10 @@ import { roleColour } from '../../../test/roleColour'
 describe('MetadataErrorNotice', () => {
     it('renders as a destructive alert', async () => {
         await render(
-            <MetadataErrorNotice className="custom-notice">
-                The program has no search attributes.
-            </MetadataErrorNotice>
+            <MetadataErrorNotice
+                className="custom-notice"
+                message="The program has no search attributes."
+            />
         )
         const notice = page.getByRole('alert').element()
         expect(notice.getAttribute('data-slot')).toBe('finder-metadata-error')

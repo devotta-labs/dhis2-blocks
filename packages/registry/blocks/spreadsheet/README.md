@@ -9,9 +9,9 @@ upload, and showing the file or image an event holds. It builds on `dhis2-value-
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/spreadsheet
 ```
 
-`Spreadsheet` needs the DHIS2 app-runtime provider above it, for the data engine, nothing else. Its text goes through
-`@dhis2/d2-i18n` as literal `i18n.t` calls, so `d2-app-scripts i18n extract` finds every string once the block is in
-your app's `src`.
+`Spreadsheet` needs the DHIS2 app-runtime provider and a React Query `QueryClientProvider` above it, nothing else: its
+searching cells and file uploads go to DHIS2 through them. Its text goes through `@dhis2/d2-i18n` as literal `i18n.t`
+calls, so `d2-app-scripts i18n extract` finds every string once the block is in your app's `src`.
 
 ## Use it
 

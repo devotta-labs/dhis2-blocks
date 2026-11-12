@@ -1,4 +1,4 @@
-import { FetchError, useDataEngine } from '@dhis2/app-runtime'
+import { FetchError } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
@@ -10,7 +10,7 @@ import type { SpreadsheetContext } from '../../provider/context'
 import { useAnnounced } from '../OptionCell'
 import type { PopupEditorProps } from '../popupEditors'
 import { EditorButtons } from './EditorButtons'
-import { uploadFile } from './fileApi'
+import { useUploadFile } from './fileApi'
 
 // A file's name and DHIS2's reason are said as they are, not HTML-escaped.
 const AS_IS = { escapeValue: false }
@@ -34,6 +34,10 @@ const failure = (error: Error) => {
         : i18n.t('Could not upload the file. Try again.')
 }
 
+/** What the editor says, and shows, while a file uploads. */
+const uploadingText = (file: File) =>
+    i18n.t('Uploading {{file}}', { file: file.name, interpolation: AS_IS })
+
 /**
  * Where `fileUrl` says the server serves a cell's file, while the cell holds the file it saved; a file not saved yet
  * has no address.
@@ -56,15 +60,17 @@ const stopUpload = (key: CellKey, controller: AbortController | undefined) => {
     }
 }
 
+/** Ends an upload as its cell's; says whether it still counts. */
+const settle = (key: CellKey, controller: AbortController) => {
+    if (running.get(key) === controller) {
+        running.delete(key)
+    }
+    return !controller.signal.aborted
+}
+
 // The house button looks disabled only when `:disabled`; these buttons stay focusable and say it with `aria-disabled`.
 const LOOKS_DISABLED =
     'aria-disabled:cursor-not-allowed aria-disabled:border-dhis2-border-strong aria-disabled:bg-dhis2-muted aria-disabled:text-dhis2-disabled-foreground aria-disabled:shadow-none aria-disabled:hover:bg-dhis2-muted aria-disabled:active:bg-dhis2-muted'
-
-interface Upload {
-    /** What the editor says while it runs. */
-    said: string
-    controller: AbortController
-}
 
 /**
  * A file, or an image, uploaded to DHIS2 as soon as it is chosen: a file cannot wait in the outbox, its id can. The
@@ -82,15 +88,14 @@ export const FileEditor = ({
 }: PopupEditorProps) => {
     const { announce, effects, fileNames, offline, fileUrl } =
         useSpreadsheetContext()
-    const engine = useDataEngine()
     const image = field.valueType === 'IMAGE'
     const view = useCellView(cellKey)
     const url = storedFileUrl(fileUrl, cellKey, view, image)
     const name = useStore(fileNames, ({ names }) =>
         value === undefined ? undefined : names.get(value)
     )
-    const [upload, setUpload] = useState<Upload>()
-    const [problem, setProblem] = useState<string>()
+    // Why the file last chosen was not uploaded at all.
+    const [refusal, setRefusal] = useState<string>()
     // An image that does not load leaves its name, as in the cell.
     const [unloadable, setUnloadable] = useState<string>()
     const picker = useRef<HTMLInputElement>(null)
@@ -102,16 +107,54 @@ export const FileEditor = ({
             closed.current = true
         }
     }, [])
+    const upload = useUploadFile({
+        onSuccess: (uploaded, { file, controller }) => {
+            if (!settle(cellKey, controller)) {
+                return
+            }
+            fileNames.setState(({ names }) => ({
+                names: new Map(names).set(uploaded.id, uploaded.name),
+            }))
+            // The `save` of when the upload started commits by this cell's key, wherever focus is now.
+            const result = save(uploaded.id)
+            if (closed.current) {
+                announce(
+                    result === 'queued'
+                        ? i18n.t('Uploaded {{file}}', {
+                              file: file.name,
+                              interpolation: AS_IS,
+                          })
+                        : i18n.t('Not saved: {{reason}}', {
+                              nsSeparator: '::',
+                              reason:
+                                  effects.getState().cells[cellKey]?.readOnly ??
+                                  '',
+                              interpolation: AS_IS,
+                          })
+                )
+            }
+        },
+        onError: (error, { controller }) => {
+            if (settle(cellKey, controller)) {
+                // Said even when the editor has closed: the person has moved on and sees no editor.
+                announce(failure(error), 'assertive')
+            }
+        },
+    })
     const disconnected = i18n.t('Connect to the internet to upload files')
     useAnnounced(offline ? disconnected : '')
-    const busy = upload !== undefined
+    const busy = upload.isPending
     // A refusal shows at once, over an earlier upload still running.
+    const problem =
+        refusal ?? (upload.isError ? failure(upload.error) : undefined)
     const status =
-        problem ?? upload?.said ?? (offline ? disconnected : undefined)
+        problem ??
+        (upload.isPending ? uploadingText(upload.variables.file) : undefined) ??
+        (offline ? disconnected : undefined)
 
     /** Cancel: this editor's upload stops and the value stays. */
     const quit = () => {
-        stopUpload(cellKey, upload?.controller)
+        stopUpload(cellKey, upload.variables?.controller)
         cancel()
     }
     /** A change made here wins over an upload still running in the cell. */
@@ -137,72 +180,18 @@ export const FileEditor = ({
         }
         // A dropped or "All files" file may not be an image; an empty type (HEIC on some systems) passes.
         if (image && file.type !== '' && !file.type.startsWith('image/')) {
-            const refusal = i18n.t('Choose an image file')
-            setProblem(refusal)
-            announce(refusal, 'assertive')
+            const refused = i18n.t('Choose an image file')
+            setRefusal(refused)
+            announce(refused, 'assertive')
             return
         }
+        // A newer choice wins over an upload still running in the cell, whichever editor started it.
         stopUpload(cellKey, running.get(cellKey))
         const controller = new AbortController()
         running.set(cellKey, controller)
-        const clear = () =>
-            setUpload((now) =>
-                now?.controller === controller ? undefined : now
-            )
-        // However it is stopped, the editor stops waiting for it.
-        controller.signal.addEventListener('abort', clear)
-        /** Ends the upload as the cell's; says whether it still counts. */
-        const settle = () => {
-            if (running.get(cellKey) === controller) {
-                running.delete(cellKey)
-            }
-            clear()
-            return !controller.signal.aborted
-        }
-        const said = i18n.t('Uploading {{file}}', {
-            file: file.name,
-            interpolation: AS_IS,
-        })
-        setUpload({ said, controller })
-        setProblem(undefined)
-        announce(said)
-        uploadFile(engine, file, controller.signal).then(
-            (uploaded) => {
-                if (!settle()) {
-                    return
-                }
-                fileNames.setState(({ names }) => ({
-                    names: new Map(names).set(uploaded.id, uploaded.name),
-                }))
-                // The `save` of when the upload started commits by this cell's key, wherever focus is now.
-                const result = save(uploaded.id)
-                if (closed.current) {
-                    announce(
-                        result === 'queued'
-                            ? i18n.t('Uploaded {{file}}', {
-                                  file: file.name,
-                                  interpolation: AS_IS,
-                              })
-                            : i18n.t('Not saved: {{reason}}', {
-                                  nsSeparator: '::',
-                                  reason:
-                                      effects.getState().cells[cellKey]
-                                          ?.readOnly ?? '',
-                                  interpolation: AS_IS,
-                              })
-                    )
-                }
-            },
-            (error: Error) => {
-                if (!settle()) {
-                    return
-                }
-                const reason = failure(error)
-                setProblem(reason)
-                // Said even when the editor has closed: the person has moved on and sees no editor.
-                announce(reason, 'assertive')
-            }
-        )
+        setRefusal(undefined)
+        announce(uploadingText(file))
+        upload.mutate({ file, controller })
     }
 
     const storedFile =

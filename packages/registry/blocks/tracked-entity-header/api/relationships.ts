@@ -1,5 +1,10 @@
-import type { Result } from 'better-result'
-import type { TrackedEntityHeaderResourceClient } from './client'
+import { useDataEngine } from '@dhis2/app-runtime'
+import { skipToken, useQuery } from '@tanstack/react-query'
+import {
+    METADATA_STALE_TIME,
+    shouldRetryRequest,
+    type DataEngine,
+} from './queries'
 import {
     RelationshipsResponseSchema,
     RelationshipTypesResponseSchema,
@@ -38,78 +43,128 @@ const endOf = (
 }
 
 /** Every relationship the tracked entity is an end of, with the end opposite it. */
-export const fetchRelationships = async (
-    client: TrackedEntityHeaderResourceClient,
+const fetchRelationships = async (
+    engine: DataEngine,
     trackedEntity: string,
-    signal?: AbortSignal
-): Promise<Result<RelationshipRecord[], Error>> => {
-    const result = await client.query(
+    signal: AbortSignal
+): Promise<RelationshipRecord[]> => {
+    const { relationships } = await engine.query(
         {
-            resource: 'tracker/relationships',
-            params: {
-                trackedEntity,
-                paging: false,
-                fields: RELATIONSHIP_FIELDS,
+            relationships: {
+                resource: 'tracker/relationships',
+                params: {
+                    trackedEntity,
+                    paging: false,
+                    fields: RELATIONSHIP_FIELDS,
+                },
             },
         },
-        RelationshipsResponseSchema,
-        signal
+        { signal }
     )
-    return result.map((relationships) =>
-        relationships.flatMap((r) => {
-            const end = endOf(r, trackedEntity)
-            if (end === undefined) {
-                return []
-            }
-            return [
-                {
-                    id: r.relationship,
-                    type: r.relationshipType,
-                    ...(r.relationshipName !== undefined && {
-                        name: r.relationshipName,
-                    }),
-                    end,
-                    // A self-link is one record: its other end is the entity itself.
-                    other: (end === 'from' ? r.to : r.from).linked,
-                },
-            ]
-        })
-    )
+    return RelationshipsResponseSchema.parse(relationships).flatMap((r) => {
+        const end = endOf(r, trackedEntity)
+        if (end === undefined) {
+            return []
+        }
+        return [
+            {
+                id: r.relationship,
+                type: r.relationshipType,
+                ...(r.relationshipName !== undefined && {
+                    name: r.relationshipName,
+                }),
+                end,
+                // A self-link is one record: its other end is the entity itself.
+                other: (end === 'from' ? r.to : r.from).linked,
+            },
+        ]
+    })
 }
 
-export const fetchRelationshipTypes = (
-    client: TrackedEntityHeaderResourceClient,
+const fetchRelationshipTypes = async (
+    engine: DataEngine,
     ids: string[],
-    signal?: AbortSignal
-): Promise<Result<Map<string, RelationshipTypeMeta>, Error>> =>
-    client.query(
+    signal: AbortSignal
+): Promise<Map<string, RelationshipTypeMeta>> => {
+    const { types } = await engine.query(
         {
-            resource: 'relationshipTypes',
-            params: {
-                filter: idsFilter(ids),
-                paging: false,
-                fields: TYPE_FIELDS,
+            types: {
+                resource: 'relationshipTypes',
+                params: {
+                    filter: idsFilter(ids),
+                    paging: false,
+                    fields: TYPE_FIELDS,
+                },
             },
         },
-        RelationshipTypesResponseSchema,
-        signal
+        { signal }
     )
+    return RelationshipTypesResponseSchema.parse(types)
+}
 
 /** Labels and value types of the attributes a relationship type's data view shows. */
-export const fetchViewAttributes = (
-    client: TrackedEntityHeaderResourceClient,
+const fetchViewAttributes = async (
+    engine: DataEngine,
     ids: string[],
-    signal?: AbortSignal
-): Promise<Result<Map<string, AttributeMeta>, Error>> =>
-    client.query(
+    signal: AbortSignal
+): Promise<Map<string, AttributeMeta>> => {
+    const { attributes } = await engine.query(
         {
-            resource: 'trackedEntityAttributes',
-            params: {
-                filter: idsFilter(ids),
-                paging: false,
-                fields: ATTRIBUTE_FIELDS,
+            attributes: {
+                resource: 'trackedEntityAttributes',
+                params: {
+                    filter: idsFilter(ids),
+                    paging: false,
+                    fields: ATTRIBUTE_FIELDS,
+                },
             },
         },
-        ViewAttributesResponseSchema,
-        signal
+        { signal }
     )
+    return ViewAttributesResponseSchema.parse(attributes)
+}
+
+/** The same ids in any order are one request. */
+const idsKey = (ids: string[]) => [...ids].sort().join(',')
+
+/** A tracked entity's relationships, asked for fresh every time. Waits while there is no tracked entity. */
+export const useRelationshipLinks = (trackedEntity: string | undefined) => {
+    const engine = useDataEngine()
+    return useQuery({
+        queryKey: [
+            'tracked-entity-header',
+            'relationships',
+            trackedEntity ?? null,
+        ],
+        queryFn:
+            trackedEntity === undefined
+                ? skipToken
+                : ({ signal }) =>
+                      fetchRelationships(engine, trackedEntity, signal),
+        retry: shouldRetryRequest,
+    })
+}
+
+/** Nothing is asked for without an id. */
+export const useRelationshipTypes = (ids: string[]) => {
+    const engine = useDataEngine()
+    return useQuery({
+        queryKey: ['tracked-entity-header', 'relationshipTypes', idsKey(ids)],
+        queryFn: ({ signal }) => fetchRelationshipTypes(engine, ids, signal),
+        enabled: ids.length > 0,
+        retry: shouldRetryRequest,
+        staleTime: METADATA_STALE_TIME,
+    })
+}
+
+/** Nothing is asked for without an id. */
+export const useViewAttributes = (ids: string[]) => {
+    const engine = useDataEngine()
+    return useQuery({
+        queryKey: ['tracked-entity-header', 'viewAttributes', idsKey(ids)],
+        queryFn: ({ signal }) => fetchViewAttributes(engine, ids, signal),
+        enabled: ids.length > 0,
+        retry: shouldRetryRequest,
+        staleTime: METADATA_STALE_TIME,
+    })
+}

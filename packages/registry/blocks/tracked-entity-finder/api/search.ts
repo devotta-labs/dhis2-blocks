@@ -1,11 +1,10 @@
-import type { z } from 'zod'
+import type { FetchError } from '@dhis2/app-runtime'
 import { PAGE_SIZE } from '../rules/searchParams'
 import type { ProgramModel } from '../rules/types'
-import { FinderRequestError } from './requestErrors'
 import {
     normaliseTrackedEntities,
-    type TrackedEntitiesResponseSchema,
     type RawTrackedEntity,
+    type TrackedEntitiesResponse,
 } from './schemas'
 
 export interface FinderPerson {
@@ -17,10 +16,12 @@ export interface FinderPerson {
     attributes: Record<string, string>
 }
 
+/** One page of a search: its people, or that it matched too many to show. */
 export type SearchOutcome =
     | {
           kind: 'results'
           people: FinderPerson[]
+          /** How many people matched in all, when the server says. */
           total?: number
           page: number
           hasNext: boolean
@@ -29,10 +30,10 @@ export type SearchOutcome =
 
 const TOO_MANY_MARKER = 'maxteicountreached'
 
-export const isTooManyConflict = (cause: unknown) =>
-    cause instanceof FinderRequestError &&
-    cause.status === 409 &&
-    [cause.serverMessage, cause.message].some((text) =>
+/** DHIS2 answers a search over the program's cap with this conflict, not rows. */
+export const isTooManyConflict = ({ details, message }: FetchError) =>
+    details.httpStatusCode === 409 &&
+    [details.message, message].some((text) =>
         text?.toLowerCase().includes(TOO_MANY_MARKER)
     )
 
@@ -54,10 +55,10 @@ const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
     return person
 }
 
-/** Going over the result cap is an answer, with no people exposed. */
+/** Reads one page of a search, holding it against the program's result cap. */
 export const toSearchOutcome = (
-    response: z.infer<typeof TrackedEntitiesResponseSchema>,
     model: ProgramModel,
+    response: TrackedEntitiesResponse,
     page: number
 ): SearchOutcome => {
     const { rows, total } = normaliseTrackedEntities(response)

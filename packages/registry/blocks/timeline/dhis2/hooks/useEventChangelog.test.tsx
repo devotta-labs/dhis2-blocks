@@ -1,9 +1,13 @@
 import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import {
+    QueryClient,
+    QueryClientProvider,
+    type UseQueryResult,
+} from '@tanstack/react-query'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
 import v43 from '../__tests__/fixtures/v43/event-changelog.json'
-import { useEventChangelog } from './useEventChangelog'
+import { useEventChangelog, type EventChangelog } from './useEventChangelog'
 import { z } from 'zod'
 
 type CustomData = ComponentProps<typeof CustomDataProvider>['data']
@@ -45,6 +49,17 @@ const setup = (respond: Respond) => {
     return { requests, wrapper }
 }
 
+/** The changelog, once it has answered. */
+const loaded = async (result: {
+    current: UseQueryResult<EventChangelog>
+}): Promise<EventChangelog> => {
+    await expect.poll(() => result.current.data).toBeDefined()
+    if (result.current.data === undefined) {
+        throw new Error('no changelog')
+    }
+    return result.current.data
+}
+
 /** A distinct data value change per row, one millisecond apart, newest first. */
 const generatedRow = (index: number) => ({
     change: {
@@ -73,18 +88,14 @@ describe('useEventChangelog', () => {
 
         await new Promise((resolve) => setTimeout(resolve, 30))
         expect(requests).toHaveLength(0)
-        expect(result.current).toEqual({
-            status: 'idle',
-            saves: [],
-            truncated: false,
-        })
+        expect(result.current.data).toBeUndefined()
 
         await rerender({ enabled: true })
 
-        await expect.poll(() => result.current.status).toBe('success')
+        const changelog = await loaded(result)
         expect(requests[0]).toMatchObject({ order: 'createdAt:desc', page: 1 })
         expect(
-            result.current.saves.map((save) =>
+            changelog.saves.map((save) =>
                 save.changes.map((change) => [change.field.id, change.type])
             )
         ).toEqual([
@@ -99,11 +110,14 @@ describe('useEventChangelog', () => {
                 ['occurredAt', 'CREATE'],
             ],
         ])
-        expect(result.current.saves[0]?.user.displayName).toBe('John Traore')
+        expect(changelog.saves[0]?.user.displayName).toBe('John Traore')
         // Event fields are labelled; data elements need the stage.
-        expect(result.current.saves[2]?.changes[1]?.name).toBe('Due date')
-        expect(result.current.saves[2]?.changes[0]?.name).toBe('roKuXYfw1BW')
-        expect(result.current.truncated).toBe(false)
+        expect(changelog.saves[2]?.changes[1]?.name).toBe('Due date')
+        expect(changelog.saves[2]?.changes[0]?.name).toBe('roKuXYfw1BW')
+        expect(changelog).toMatchObject({
+            truncated: false,
+            unsupported: false,
+        })
     })
 
     it('reports unsupported when the endpoint answers 404, without retrying', async () => {
@@ -120,13 +134,16 @@ describe('useEventChangelog', () => {
             { wrapper }
         )
 
-        await expect.poll(() => result.current.status).toBe('unsupported')
+        expect(await loaded(result)).toEqual({
+            saves: [],
+            truncated: false,
+            unsupported: true,
+        })
         expect(requests).toHaveLength(1)
-        expect(result.current.saves).toEqual([])
     })
 
-    it('reports other failures as an error', async () => {
-        const { wrapper } = setup(
+    it('reports other failures as an error, without retrying', async () => {
+        const { wrapper, requests } = setup(
             () =>
                 new FetchError({
                     type: 'network',
@@ -139,7 +156,9 @@ describe('useEventChangelog', () => {
             { wrapper }
         )
 
-        await expect.poll(() => result.current.status).toBe('error')
+        await expect.poll(() => result.current.isError).toBe(true)
+        expect(result.current.data).toBeUndefined()
+        expect(requests).toHaveLength(1)
     })
 
     it('labels data elements from the stage it is given', async () => {
@@ -161,10 +180,11 @@ describe('useEventChangelog', () => {
             { wrapper }
         )
 
-        await expect.poll(() => result.current.status).toBe('success')
-        expect(
-            result.current.saves[1]?.changes.map((change) => change.name)
-        ).toEqual(['dyYdfamSY2Z', 'Weight'])
+        const { saves } = await loaded(result)
+        expect(saves[1]?.changes.map((change) => change.name)).toEqual([
+            'dyYdfamSY2Z',
+            'Weight',
+        ])
     })
 
     it('stops at 500 rows and reports truncated', async () => {
@@ -181,11 +201,11 @@ describe('useEventChangelog', () => {
             { wrapper }
         )
 
-        await expect.poll(() => result.current.status).toBe('success')
-        expect(result.current.truncated).toBe(true)
-        expect(
-            result.current.saves.flatMap((save) => save.changes)
-        ).toHaveLength(500)
+        const changelog = await loaded(result)
+        expect(changelog.truncated).toBe(true)
+        expect(changelog.saves.flatMap((save) => save.changes)).toHaveLength(
+            500
+        )
         expect(requests.map((r) => r.page)).toEqual(
             requests.map((_, i) => i + 1)
         )

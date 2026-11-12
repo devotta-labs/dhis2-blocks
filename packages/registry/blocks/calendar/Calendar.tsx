@@ -52,7 +52,7 @@ export const CalendarProvider = ({
         }))
     )
     const selectedDay =
-        weeks.flat().find((day) => day.date === state.selectedDay?.date) ?? null
+        weeks.flat().find((day) => day.date === state.selectedDate) ?? null
     return (
         <CalendarContext.Provider
             value={{

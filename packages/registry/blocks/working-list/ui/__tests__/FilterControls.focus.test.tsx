@@ -2,7 +2,6 @@ import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
-import type { WorkingListClient } from '../../api/client'
 import type { TrackerProgram } from '../../api/schemas'
 import type { WorkingListField } from '../../domain/model'
 import {
@@ -10,7 +9,6 @@ import {
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const field: WorkingListField = {
     id: 'followUp',
@@ -19,12 +17,6 @@ const field: WorkingListField = {
     scope: 'trackedEntity',
     valueType: 'BOOLEAN',
     filterable: true,
-}
-
-const unusedClient: WorkingListClient = {
-    query: () => Promise.reject(new Error('Unexpected query in focus test')),
-    mutate: () =>
-        Promise.reject(new Error('Unexpected mutation in focus test')),
 }
 
 describe('MoreFilters keyboard focus', () => {
@@ -96,7 +88,6 @@ describe('MoreFilters keyboard focus', () => {
                     )}
                     {selectedStage && selectedEventField && (
                         <FilterButton
-                            client={unusedClient}
                             field={selectedEventField}
                             prefix={`${selectedStage.displayName} / ${selectedEventField.displayName}`}
                             capabilities={resolveWorkingListCapabilities({
@@ -116,11 +107,7 @@ describe('MoreFilters keyboard focus', () => {
             )
         }
 
-        const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <StageFilterHarness />
-            </WorkingListTextProvider>
-        )
+        const screen = await render(<StageFilterHarness />)
         const menuItem = (dataTest: string) =>
             page.elementLocator(
                 document.querySelector<HTMLElement>(
@@ -218,7 +205,7 @@ describe('MoreFilters keyboard focus', () => {
 
         const clearStage = screen
             .getByTestId('filter-programStage')
-            .getByRole('button', { name: 'Clear {{filter}} filter' })
+            .getByRole('button', { name: 'Clear Program stage filter' })
         await expect
             .element(clearStage)
             .toHaveAttribute('data-test', 'filter-programStage-select-clear')
@@ -252,15 +239,13 @@ describe('MoreFilters keyboard focus', () => {
             ],
         }
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <MoreFilters
-                    fields={[field, second]}
-                    visibleFilterIds={[]}
-                    scope="tracked-entity"
-                    program={program}
-                    onAdd={vi.fn()}
-                />
-            </WorkingListTextProvider>
+            <MoreFilters
+                fields={[field, second]}
+                visibleFilterIds={[]}
+                scope="tracked-entity"
+                program={program}
+                onAdd={vi.fn()}
+            />
         )
 
         screen.getByRole('button', { name: 'Filter' }).element().focus()

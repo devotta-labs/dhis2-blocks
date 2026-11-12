@@ -1,9 +1,9 @@
+import i18n from '@dhis2/d2-i18n'
 import { CalendarInput } from '@dhis2/ui'
 import { IconCross16 } from '@dhis2/ui-icons'
 import React, { useState } from 'react'
 import type { z } from 'zod'
 import { toMultiCalendarIdentifier } from '../../registry/transformers'
-import { useWorkingListText } from '../WorkingListText'
 import {
     CalendarSelectionSchema,
     type CalendarValidationFeedback,
@@ -27,7 +27,6 @@ export const CalendarRangeFields = ({
     calendarContext: FilterCalendarContext
     onChange: (start: string | undefined, end: string | undefined) => void
 }) => {
-    const translate = useWorkingListText()
     const calendar = toMultiCalendarIdentifier(calendarContext.calendar)
     const [startValidation, setStartValidation] =
         useState<CalendarValidationFeedback>()
@@ -70,8 +69,8 @@ export const CalendarRangeFields = ({
                         : ''
                 }`}
                 data-test={`date-range-${position}-clear`}
-                aria-label={translate('Clear')}
-                title={translate('Clear')}
+                aria-label={i18n.t('Clear')}
+                title={i18n.t('Clear')}
                 onClick={() =>
                     handleSelection(
                         null,

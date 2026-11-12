@@ -1,6 +1,7 @@
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
+import { useTrackedEntityHeader } from '../hooks'
 import { useHeaderContext } from '../provider/context'
 import { AttributeFact } from './FactPair'
 import { useLoggedProblem } from './useAttributeValue'
@@ -16,10 +17,11 @@ const MISSING_PROGRAM =
 export function TrackedEntityEnrollment({
     className,
 }: TrackedEntityEnrollmentProps) {
-    const { state, program, display } = useHeaderContext()
+    const { program, display } = useHeaderContext()
+    const header = useTrackedEntityHeader()
     const problem = program ? undefined : MISSING_PROGRAM
     useLoggedProblem(problem)
-    if (state.status !== 'ready') {
+    if (header.status !== 'ready') {
         return null
     }
     if (problem) {
@@ -29,7 +31,7 @@ export function TrackedEntityEnrollment({
             />
         )
     }
-    const enrollment = state.trackedEntity.enrollment
+    const enrollment = header.trackedEntity.enrollment
     const when = (iso?: string) =>
         iso ? formatDhis2Value(iso, { valueType: 'DATE' }, display) : undefined
     const completedOn = when(enrollment?.completedAt)

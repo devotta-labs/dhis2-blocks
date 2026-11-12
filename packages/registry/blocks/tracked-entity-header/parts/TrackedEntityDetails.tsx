@@ -6,6 +6,7 @@ import React, {
     useState,
     type ReactNode,
 } from 'react'
+import { useTrackedEntityHeader } from '../hooks'
 import { useHeaderContext } from '../provider/context'
 import { InFrameContext } from '../provider/frame'
 import { DisclosureToggle } from './DisclosureToggle'
@@ -24,6 +25,7 @@ export function TrackedEntityDetails({
     className,
 }: TrackedEntityDetailsProps) {
     const context = useHeaderContext()
+    const header = useTrackedEntityHeader()
     // In a banner the toggle and panel join the banner's own rows.
     const inFrame = useContext(InFrameContext)
     const [open, setOpen] = useState(false)
@@ -31,11 +33,11 @@ export function TrackedEntityDetails({
     // Parts place their attributes in layout effects; the list waits for that pass.
     const [settled, setSettled] = useState(false)
     useLayoutEffect(() => setSettled(true), [])
-    const { state, placed } = context
-    if (!settled || state.status !== 'ready') {
+    if (!settled || header.status !== 'ready') {
         return null
     }
-    const { metadata } = state
+    const { placed } = context
+    const { metadata } = header
     const left = [
         ...[...metadata.attributes.values()].map(({ id, sortOrder }) => ({
             id,
@@ -85,7 +87,7 @@ export function TrackedEntityDetails({
                             <AttributeFact
                                 key={uid}
                                 row
-                                state={resolveAttribute(uid, context)}
+                                state={resolveAttribute(uid, header, context)}
                             />
                         ))}
                     </dl>

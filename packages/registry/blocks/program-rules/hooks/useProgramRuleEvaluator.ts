@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useMemo } from 'react'
 import {
@@ -9,10 +8,8 @@ import {
     type RuleEnrollmentInput,
     type RuleEventInput,
 } from '../lib'
-import { shouldRetryProgramRulesRequest } from './client'
-import { fetchRuleEnrollment } from './enrollment'
 import { eventContentKey, supplementContentKey } from './inputKey'
-import { programRulesQueryKeys } from './queryKeys'
+import { useRuleEnrollmentQuery } from './queries'
 import {
     asError,
     neededFailure,
@@ -71,7 +68,6 @@ export const useProgramRuleEvaluator = ({
     enabled = true,
 }: UseProgramRuleEvaluatorOptions): UseProgramRuleEvaluatorResult => {
     const {
-        client,
         engine,
         context,
         error: contextError,
@@ -84,22 +80,11 @@ export const useProgramRuleEvaluator = ({
         needs !== undefined && needs.otherEvents && otherEvents === undefined
     const fetchEnrollment =
         enrollmentId !== undefined && (needsEnrollment || needsEvents)
-    const enrollmentQuery = useQuery({
-        queryKey: programRulesQueryKeys.enrollment(
-            enrollmentId ?? '',
-            needsEvents
-        ),
-        queryFn: ({ signal }) =>
-            fetchRuleEnrollment(
-                client,
-                enrollmentId ?? '',
-                needsEvents,
-                signal
-            ),
-        enabled: enabled && fetchEnrollment,
-        staleTime: 60_000,
-        retry: shouldRetryProgramRulesRequest,
-    })
+    const enrollmentQuery = useRuleEnrollmentQuery(
+        enrollmentId ?? '',
+        needsEvents,
+        enabled && fetchEnrollment
+    )
     const fetched = fetchEnrollment ? enrollmentQuery.data : undefined
     const waiting = fetchEnrollment && fetched === undefined
 

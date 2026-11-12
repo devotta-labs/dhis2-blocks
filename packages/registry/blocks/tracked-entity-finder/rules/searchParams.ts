@@ -21,7 +21,7 @@ export const serializeFilter = ({
         ]),
     ].join(':')
 
-/** Takes only a sealed search, so an unchecked one cannot be sent. */
+/** The query parameters of one page of a search. */
 export const toSearchParams = (
     model: ProgramModel,
     search: ValidatedSearch,

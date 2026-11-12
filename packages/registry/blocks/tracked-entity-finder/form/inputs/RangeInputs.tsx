@@ -9,7 +9,7 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import { CalendarDateInput } from '../../calendar/CalendarDateInput'
-import { useFinderContext } from '../../provider/context'
+import { useSystemInfo } from '../../api/queries'
 import type { FieldInputProps } from './types'
 
 /** The labelled group around a From–To pair. */
@@ -124,7 +124,7 @@ export const DateRangeInput = ({
     placeholder: _placeholder,
     ...frame
 }: FieldInputProps) => {
-    const { meta } = useFinderContext()
+    const { data: info } = useSystemInfo()
     const range: { from?: string; to?: string } =
         value?.kind === 'dateRange' ? value : {}
     const { from, to } = range
@@ -137,7 +137,7 @@ export const DateRangeInput = ({
         (next: string) => setValue({ kind: 'dateRange', from, to: next }),
         [setValue, from]
     )
-    if (!meta.info) {
+    if (!info) {
         return null
     }
     const invalid = frame.error !== undefined
@@ -145,14 +145,14 @@ export const DateRangeInput = ({
         <RangeFrame {...frame}>
             <CalendarDateInput
                 label={i18n.t('From')}
-                info={meta.info}
+                info={info}
                 invalid={invalid}
                 value={from ?? ''}
                 onChange={setFrom}
             />
             <CalendarDateInput
                 label={i18n.t('To')}
-                info={meta.info}
+                info={info}
                 invalid={invalid}
                 value={to ?? ''}
                 onChange={setTo}

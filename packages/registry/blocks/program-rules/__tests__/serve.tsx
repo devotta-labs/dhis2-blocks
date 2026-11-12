@@ -1,6 +1,11 @@
-import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
+import {
+    CustomDataProvider,
+    FetchError,
+    useDataEngine,
+} from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { type ReactNode } from 'react'
+import React, { type ComponentProps, type ReactNode } from 'react'
+import { renderHook } from 'vitest-browser-react'
 import { z } from 'zod'
 import { RMNCH, rmnchEnrollmentResponse, type rmnchResponses } from './rmnch'
 
@@ -35,6 +40,18 @@ type RequestedParam =
 interface RequestedResource {
     id?: string
     params?: Record<string, RequestedParam>
+}
+
+/** The engine app-runtime builds over `data`, for tests that call a fetcher outside a hook. */
+export const engineOver = async (
+    data: ComponentProps<typeof CustomDataProvider>['data']
+) => {
+    const { result } = await renderHook(() => useDataEngine(), {
+        wrapper: ({ children }: { children: ReactNode }) => (
+            <CustomDataProvider data={data}>{children}</CustomDataProvider>
+        ),
+    })
+    return result.current
 }
 
 /** A second person the fake server knows, with the RMNCH data. */

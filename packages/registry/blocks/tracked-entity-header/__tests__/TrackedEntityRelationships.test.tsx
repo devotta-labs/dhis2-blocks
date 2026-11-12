@@ -1,7 +1,6 @@
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import type { DataEngineValue } from '../api/client'
 import {
     TrackedEntityBanner,
     TrackedEntityDetails,
@@ -25,14 +24,13 @@ const setup = async (
     banner = false
 ) => {
     const server = createFakeServer(options)
-    const Wrapper = createWrapper()
+    const Wrapper = createWrapper(server.data)
     const part = <TrackedEntityRelationships {...props} />
     await render(
         <Wrapper>
             <TrackedEntityHeaderProvider
                 trackedEntity={FOCUS_RECORD}
                 program={RMNCH}
-                client={server.client}
             >
                 {banner ? (
                     <TrackedEntityBanner>
@@ -52,24 +50,21 @@ const setup = async (
 }
 
 const manyLinks = (count: number) => ({
-    relationships: Array.from(
-        { length: count },
-        (_, index): DataEngineValue => ({
-            relationship: `rel${index}`,
-            relationshipType: FOCUS_TYPE,
-            bidirectional: false,
-            from: { trackedEntity: { trackedEntity: FOCUS_RECORD } },
-            to: {
-                trackedEntity: {
-                    trackedEntity: `te${String(index).padStart(9, '0')}`,
-                    trackedEntityType: 'Zy2SEgA61ys',
-                    attributes: [
-                        { attribute: 'aW66s2QSosT', value: `Name ${index}` },
-                    ],
-                },
+    relationships: Array.from({ length: count }, (_, index) => ({
+        relationship: `rel${index}`,
+        relationshipType: FOCUS_TYPE,
+        bidirectional: false,
+        from: { trackedEntity: { trackedEntity: FOCUS_RECORD } },
+        to: {
+            trackedEntity: {
+                trackedEntity: `te${String(index).padStart(9, '0')}`,
+                trackedEntityType: 'Zy2SEgA61ys',
+                attributes: [
+                    { attribute: 'aW66s2QSosT', value: `Name ${index}` },
+                ],
             },
-        })
-    ),
+        },
+    })),
 })
 
 describe('TrackedEntityRelationships', () => {
@@ -197,13 +192,12 @@ describe('TrackedEntityRelationships', () => {
 
         it('lines its toggle up with Details below the facts', async () => {
             const server = createFakeServer({ links: 'focus' })
-            const Wrapper = createWrapper()
+            const Wrapper = createWrapper(server.data)
             await render(
                 <Wrapper>
                     <TrackedEntityHeaderProvider
                         trackedEntity={FOCUS_RECORD}
                         program={RMNCH}
-                        client={server.client}
                     >
                         <TrackedEntityBanner>
                             <TrackedEntityName attributes={[FIRST, LAST]} />

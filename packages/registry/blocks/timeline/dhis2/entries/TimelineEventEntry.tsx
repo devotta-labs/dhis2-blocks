@@ -423,52 +423,47 @@ export const TimelineEventNotes = ({
     )
 }
 
+const CHANGES_NOTE = 'm-0 text-sm text-dhis2-muted-foreground'
+
 const ChangesBody = ({ entry }: { entry: TimelineEntry<EventEntryData> }) => {
-    const { status, saves, truncated } = useEventChangelog(
-        entry.data.event.event,
-        { enabled: true, stage: entry.data.stage }
-    )
-    switch (status) {
-        case 'idle':
-        case 'loading':
-        case 'unsupported':
-            return (
-                <p
-                    role="status"
-                    className="m-0 text-sm text-dhis2-muted-foreground"
-                >
-                    {status === 'unsupported'
-                        ? i18n.t(
-                              "Changes aren't available on this DHIS2 version."
-                          )
-                        : i18n.t('Loading changes')}
-                </p>
-            )
-        case 'error':
-            return (
-                <p role="alert" className="m-0 text-sm text-dhis2-destructive">
-                    {i18n.t("Couldn't load changes.")}
-                </p>
-            )
-        case 'success':
-            return saves.length === 0 ? (
-                <p className="m-0 text-sm text-dhis2-muted-foreground">
-                    {i18n.t('No changes')}
-                </p>
-            ) : (
-                <>
-                    <TimelineSaves
-                        saves={saves}
-                        orgUnitNames={entry.data.orgUnitNames}
-                    />
-                    {truncated ? (
-                        <p className="m-0 mt-2 text-sm text-dhis2-muted-foreground">
-                            {i18n.t("Older changes aren't shown.")}
-                        </p>
-                    ) : null}
-                </>
-            )
+    const { data, isError } = useEventChangelog(entry.data.event.event, {
+        enabled: true,
+        stage: entry.data.stage,
+    })
+    if (data === undefined) {
+        return isError ? (
+            <p role="alert" className="m-0 text-sm text-dhis2-destructive">
+                {i18n.t("Couldn't load changes.")}
+            </p>
+        ) : (
+            <p role="status" className={CHANGES_NOTE}>
+                {i18n.t('Loading changes')}
+            </p>
+        )
     }
+    if (data.unsupported) {
+        return (
+            <p role="status" className={CHANGES_NOTE}>
+                {i18n.t("Changes aren't available on this DHIS2 version.")}
+            </p>
+        )
+    }
+    if (data.saves.length === 0) {
+        return <p className={CHANGES_NOTE}>{i18n.t('No changes')}</p>
+    }
+    return (
+        <>
+            <TimelineSaves
+                saves={data.saves}
+                orgUnitNames={entry.data.orgUnitNames}
+            />
+            {data.truncated ? (
+                <p className="m-0 mt-2 text-sm text-dhis2-muted-foreground">
+                    {i18n.t("Older changes aren't shown.")}
+                </p>
+            ) : null}
+        </>
+    )
 }
 
 /**

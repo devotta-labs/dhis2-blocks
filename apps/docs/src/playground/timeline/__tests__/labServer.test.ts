@@ -1,11 +1,11 @@
 import {
     ChangeLogPageSchema,
+    EVENT_FIELDS,
     EventsPageSchema,
     OrgUnitNamesSchema,
     ProgramTimelineMetadataSchema,
     TrackedEntitySchema,
 } from '@/components/timeline/dhis2/schemas'
-import { EVENT_FIELDS } from '@/components/timeline/dhis2/queries'
 import { describe, expect, it } from 'vitest'
 import {
     generateLabData,

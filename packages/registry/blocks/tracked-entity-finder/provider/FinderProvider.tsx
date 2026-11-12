@@ -1,8 +1,14 @@
-import React, { Children, useEffect, type ReactNode } from 'react'
+import React, {
+    Children,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
+} from 'react'
 import type { FinderPerson } from '../api/search'
-import { FinderContext } from './context'
+import { FinderContext, type FinderSubmission } from './context'
 import { isProduction } from './env'
-import { useFinderController } from './useFinderController'
+import { ResultCountAnnouncer } from './ResultCountAnnouncer'
 
 export interface FinderProviderProps {
     /** The program to search in. Changing it resets forms and results. */
@@ -13,7 +19,11 @@ export interface FinderProviderProps {
 }
 
 const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
-    const value = useFinderController({ program, onSelect })
+    const [submission, setSubmission] = useState<FinderSubmission>()
+    const value = useMemo(
+        () => ({ program, onSelect, submission, setSubmission }),
+        [program, onSelect, submission]
+    )
     const empty = Children.count(children) === 0
 
     useEffect(() => {
@@ -26,14 +36,15 @@ const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
 
     return (
         <FinderContext.Provider value={value}>
+            <ResultCountAnnouncer />
             {children}
         </FinderContext.Provider>
     )
 }
 
 /**
- * Holds the finder's state and enforces the program's search rules. It
- * renders only its children, so any UI inside it can use the finder hooks.
+ * Holds the search the user ran, shared by the forms and results inside it.
+ * It renders only its children, so any UI inside it can use the finder hooks.
  */
 export function FinderProvider(props: FinderProviderProps) {
     // A new program starts from nothing: values, forms and results.

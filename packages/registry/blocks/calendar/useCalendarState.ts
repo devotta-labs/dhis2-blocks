@@ -1,7 +1,6 @@
 import { getNowInCalendar, useDatePicker } from '@dhis2/multi-calendar-dates'
 import { useCallback, useMemo, useState } from 'react'
 import type {
-    CalendarDisplay,
     CalendarDisplayProps,
     CalendarSelectionProps,
     CalendarState,
@@ -46,6 +45,24 @@ const isOutside = (day: string, bounds: { start?: string; end?: string }) =>
         (bounds.start && day < bounds.start) || (bounds.end && day > bounds.end)
     )
 
+/** A value the caller owns when it passes one, and this hook keeps otherwise. */
+const useControllableState = <T>(
+    value: T | undefined,
+    defaultValue: T,
+    onChange?: (next: T) => void
+): [T, (next: T) => void] => {
+    const [ownValue, setOwnValue] = useState(defaultValue)
+    const isControlled = value !== undefined
+    const setValue = useCallback(
+        (next: T) => {
+            if (!isControlled) setOwnValue(next)
+            onChange?.(next)
+        },
+        [isControlled, onChange]
+    )
+    return [isControlled ? value : ownValue, setValue]
+}
+
 export type CalendarOptions = CalendarSelectionProps &
     CalendarDisplayProps & {
         calendar?: CalendarSystem
@@ -63,38 +80,22 @@ export const useCalendarState = ({
     locale = 'en',
     start,
     end,
-    selectedDay: controlledSelectedDay,
+    selectedDay,
     defaultSelectedDay = null,
     onSelectedDayChange,
     display: controlledDisplay,
     defaultDisplay = 'counts',
     onDisplayChange,
 }: CalendarOptions = {}): CalendarState => {
-    const [uncontrolledSelectedDay, setUncontrolledSelectedDay] =
-        useState(defaultSelectedDay)
-    const selectedDate =
-        controlledSelectedDay === undefined
-            ? uncontrolledSelectedDay
-            : controlledSelectedDay
-    const selectDay = useCallback(
-        (date: string | null) => {
-            if (controlledSelectedDay === undefined) {
-                setUncontrolledSelectedDay(date)
-            }
-            onSelectedDayChange?.(date)
-        },
-        [controlledSelectedDay, onSelectedDayChange]
+    const [selectedDate, selectDay] = useControllableState(
+        selectedDay,
+        defaultSelectedDay,
+        onSelectedDayChange
     )
-
-    const [uncontrolledDisplay, setUncontrolledDisplay] =
-        useState(defaultDisplay)
-    const display = controlledDisplay ?? uncontrolledDisplay
-    const setDisplay = useCallback(
-        (next: CalendarDisplay) => {
-            if (controlledDisplay === undefined) setUncontrolledDisplay(next)
-            onDisplayChange?.(next)
-        },
-        [controlledDisplay, onDisplayChange]
+    const [display, setDisplay] = useControllableState(
+        controlledDisplay,
+        defaultDisplay,
+        onDisplayChange
     )
 
     // The picker opens on `date` and moves when it changes. Clearing the
@@ -115,22 +116,8 @@ export const useCalendarState = ({
             selectDay(payload?.calendarDateString ?? null),
     })
 
-    const monthDays = picker.calendarWeekDays
-        .flat()
-        .filter((day) => day.isInCurrentMonth)
     const gridDays = picker.calendarWeekDays.flat()
-    const weeks = picker.calendarWeekDays.map((week) =>
-        week.map((day) => ({
-            date: day.dateValue,
-            label: day.label,
-            isToday: day.isToday,
-            isInCurrentMonth: day.isInCurrentMonth,
-            isDisabled: isOutside(day.dateValue, { start, end }),
-            records: [],
-        }))
-    )
-    const selectedDay =
-        weeks.flat().find((day) => day.date === selectedDate) ?? null
+    const monthDays = gridDays.filter((day) => day.isInCurrentMonth)
     // Picker days are written YYYY-MM-DD in the system calendar.
     const monthOf = (date: string) => Number(date.slice(5, 7))
     const yearOf = (date: string) => Number(date.slice(0, 4))
@@ -142,7 +129,15 @@ export const useCalendarState = ({
     const firstDay = monthDays[0]?.dateValue
     const lastDay = monthDays.at(-1)?.dateValue
     return {
-        weeks,
+        weeks: picker.calendarWeekDays.map((week) =>
+            week.map((day) => ({
+                date: day.dateValue,
+                label: day.label,
+                isToday: day.isToday,
+                isInCurrentMonth: day.isInCurrentMonth,
+                isDisabled: isOutside(day.dateValue, { start, end }),
+            }))
+        ),
         visibleRange: {
             start: gridDays[0]?.dateValue ?? anchor,
             end: gridDays.at(-1)?.dateValue ?? anchor,
@@ -150,7 +145,7 @@ export const useCalendarState = ({
         visibleMonth: firstDay ? monthOf(firstDay) : 1,
         weekDayLabels: picker.weekDayLabels,
         navigation: picker,
-        selectedDay,
+        selectedDate,
         selectDay,
         display,
         setDisplay,

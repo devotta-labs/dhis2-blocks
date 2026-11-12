@@ -3,12 +3,7 @@ import React, { useId, useMemo, type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { Dhis2Calendar } from '@/components/dhis2-value-display/calendar'
 import { groupTimeline } from '../core/group'
-import type {
-    GroupBy,
-    TimelineEntry,
-    TimelineOrder,
-    TimelineStatus,
-} from '../core/types'
+import type { GroupBy, TimelineEntry, TimelineOrder } from '../core/types'
 import {
     TimelineContextProvider,
     TimelineMetaProvider,
@@ -21,8 +16,6 @@ export interface TimelineProps<TData> extends Omit<
     'children'
 > {
     entries: ReadonlyArray<TimelineEntry<TData>>
-    /** Where the data behind `entries` stands; defaults to `'success'`. */
-    status?: TimelineStatus
     order?: TimelineOrder
     /**
      * How entries are grouped. A function is part of what the groups depend
@@ -39,12 +32,10 @@ export interface TimelineProps<TData> extends Omit<
 
 const TimelineLayout = <TData,>({
     entries,
-    status,
     groupBy,
     children,
 }: {
     entries: ReadonlyArray<TimelineEntry<TData>>
-    status: TimelineStatus
     groupBy: GroupBy<TData>
     children: React.ReactNode
 }) => {
@@ -64,10 +55,10 @@ const TimelineLayout = <TData,>({
             },
         })
         return {
-            state: { entries, groups, nowIndex, status },
+            state: { entries, groups, nowIndex },
             meta: { ...meta, id },
         }
-    }, [id, entries, status, meta, groupBy])
+    }, [id, entries, meta, groupBy])
     return (
         <TimelineContextProvider value={value}>
             {children}
@@ -78,11 +69,12 @@ const TimelineLayout = <TData,>({
 /**
  * Lays `entries` out by day around "now" and shares them, with calendar,
  * locale and today, with the parts inside it. It never fetches: pass whatever
- * array you have, filtered and merged however you like.
+ * array you have, filtered and merged however you like. While that array is
+ * loading or failed to load, render `TimelineLoading` or `TimelineError`
+ * instead.
  */
 export const Timeline = <TData,>({
     entries,
-    status = 'success',
     order = 'desc',
     groupBy = 'day',
     calendar,
@@ -98,7 +90,7 @@ export const Timeline = <TData,>({
         order={order}
         now={now}
     >
-        <TimelineLayout entries={entries} status={status} groupBy={groupBy}>
+        <TimelineLayout entries={entries} groupBy={groupBy}>
             <div
                 {...props}
                 data-slot="timeline"

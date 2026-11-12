@@ -1,76 +1,66 @@
+import i18n from '@dhis2/d2-i18n'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListField } from './model'
-
-type FilterPolicyTranslate = (message: string) => string
-
-const identityTranslate: FilterPolicyTranslate = (message) => message
 
 export const usesMultipleOptionSelection = (
     field: WorkingListField,
     capabilities: WorkingListCapabilities
 ) => capabilities.multipleOptionValues && field.source !== 'system'
 
-export const fieldDisplayName = (
-    field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
-) => {
+export const fieldDisplayName = (field: WorkingListField) => {
     if (field.displayNameIsMetadata) {
         return field.displayName
     }
     const labels = new Map([
-        ['enrollmentStatus', translate('Enrollment status')],
-        ['enrolledAt', translate('Enrollment date')],
-        ['enrollmentOccurredAt', translate('Incident date')],
-        ['followUp', translate('Follow up')],
-        ['assignedUser', translate('Assigned to')],
-        ['eventOccurredAt', translate('Report date')],
-        ['eventStatus', translate('Event status')],
-        ['eventScheduledAt', translate('Scheduled date')],
-        ['eventAssignedUser', translate('Assigned to')],
-        ['programStage', translate('Program stage')],
-        ['createdAt', translate('Registration date')],
-        ['programOwnerId', translate('Owner organisation unit')],
-        ['eventOrgUnit', translate('Event organisation unit')],
+        ['enrollmentStatus', i18n.t('Enrollment status')],
+        ['enrolledAt', i18n.t('Enrollment date')],
+        ['enrollmentOccurredAt', i18n.t('Incident date')],
+        ['followUp', i18n.t('Follow up')],
+        ['assignedUser', i18n.t('Assigned to')],
+        ['eventOccurredAt', i18n.t('Report date')],
+        ['eventStatus', i18n.t('Event status')],
+        ['eventScheduledAt', i18n.t('Scheduled date')],
+        ['eventAssignedUser', i18n.t('Assigned to')],
+        ['programStage', i18n.t('Program stage')],
+        ['createdAt', i18n.t('Registration date')],
+        ['programOwnerId', i18n.t('Owner organisation unit')],
+        ['eventOrgUnit', i18n.t('Event organisation unit')],
     ])
     return labels.get(field.id) ?? field.displayName
 }
 
 export const optionDisplayName = (
     field: WorkingListField,
-    option: { code: string; displayName: string },
-    translate: FilterPolicyTranslate = identityTranslate
+    option: { code: string; displayName: string }
 ) => {
     if (field.source !== 'system') {
         return option.displayName
     }
     switch (option.code) {
         case 'ACTIVE':
-            return translate('Active')
+            return i18n.t('Active')
         case 'COMPLETED':
-            return translate('Completed')
+            return i18n.t('Completed')
         case 'CANCELLED':
-            return translate('Cancelled')
+            return i18n.t('Cancelled')
         case 'SCHEDULE':
-            return translate('Scheduled')
+            return i18n.t('Scheduled')
         case 'OVERDUE':
-            return translate('Overdue')
+            return i18n.t('Overdue')
         case 'SKIPPED':
-            return translate('Skipped')
+            return i18n.t('Skipped')
         case 'VISITED':
-            return translate('Visited')
+            return i18n.t('Visited')
         default:
             return option.displayName
     }
 }
 
-export const localizedField = (
-    field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
-): WorkingListField => ({
+export const localizedField = (field: WorkingListField): WorkingListField => ({
     ...field,
-    displayName: fieldDisplayName(field, translate),
+    displayName: fieldDisplayName(field),
     options: field.options?.map((option) => ({
         ...option,
-        displayName: optionDisplayName(field, option, translate),
+        displayName: optionDisplayName(field, option),
     })),
 })

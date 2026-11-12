@@ -4,7 +4,7 @@ import type { FinderPerson } from '../api/search'
 import { FinderField } from '../form/FinderField'
 import { FinderForm } from '../form/FinderForm'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { FinderTestProvider as FinderProvider } from './finderTestSupport'
+import { FinderProvider } from '../provider/FinderProvider'
 import { FinderResults } from '../results/FinderResults'
 import {
     createFakeServer,
@@ -60,12 +60,11 @@ interface Setup {
 }
 
 export const ui = (
-    server: FakeServer,
     program: string,
     onSelect: (person: FinderPerson) => void,
     results: ReactNode
 ) => (
-    <FinderProvider program={program} server={server} onSelect={onSelect}>
+    <FinderProvider program={program} onSelect={onSelect}>
         <SearchForm />
         {results}
     </FinderProvider>
@@ -78,7 +77,8 @@ export const renderFinder = async ({
 }: Setup = {}) => {
     const server = createFakeServer(options)
     const screen = await renderWithQueries(
-        ui(server, 'hivProgram', onSelect, results)
+        ui('hivProgram', onSelect, results),
+        server
     )
     return { server, screen, onSelect }
 }

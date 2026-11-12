@@ -14,8 +14,8 @@ import {
     getWorkingListRecordStatus,
     useWorkingListDateBounds,
     useWorkingListDateRange,
-    useWorkingListMeta,
-    useWorkingListState,
+    useWorkingListView,
+    type WorkingListConfiguration,
     type WorkingListDateBounds,
     type WorkingListDateFieldId,
     type WorkingListDisplayRow,
@@ -51,6 +51,7 @@ const TONES = {
 } satisfies Record<WorkingListRecordStatus['id'], CalendarTone>
 
 const ReadyCalendar = ({
+    configuration: { columns },
     dateField,
     bounds,
     limit,
@@ -60,10 +61,10 @@ const ReadyCalendar = ({
     children,
     ...options
 }: ListCalendarProps & {
+    configuration: WorkingListConfiguration
     dateField: WorkingListDateFieldId
     bounds: WorkingListDateBounds
 }) => {
-    const columns = useWorkingListState((state) => state.configuration.columns)
     const state = useCalendarState({ ...options, ...bounds })
     const results = useWorkingListDateRange({
         fieldId: dateField,
@@ -130,10 +131,11 @@ const ReadyCalendar = ({
     )
 }
 
-const DatedCalendar = (props: ListCalendarProps) => {
-    const mode = useWorkingListState((state) => state.configuration.mode)
+const DatedCalendar = (
+    props: ListCalendarProps & { configuration: WorkingListConfiguration }
+) => {
     const fields: WorkingListDateFieldId[] =
-        mode === 'event'
+        props.configuration.mode === 'event'
             ? ['eventOccurredAt', 'eventScheduledAt']
             : ['enrolledAt', 'enrollmentOccurredAt']
     const dateField =
@@ -148,21 +150,21 @@ const DatedCalendar = (props: ListCalendarProps) => {
 
 /** App-owned composition: copy this recipe and choose your own labels and colours. */
 export const ListCalendar = ({ className, ...props }: ListCalendarProps) => {
-    const readiness = useWorkingListMeta((meta) => {
-        if (meta.selection.status === 'error') return 'error'
-        return meta.activeConfiguration.status === 'ready' ? 'ready' : 'pending'
-    })
+    const view = useWorkingListView()
     return (
         <section
             aria-label={i18n.t('Calendar')}
-            aria-busy={readiness === 'pending'}
+            aria-busy={view.isPending}
             className={`@container ${className ?? ''}`}
         >
-            {readiness === 'ready' && <DatedCalendar {...props} />}
-            {readiness === 'pending' && (
-                <p>{i18n.t('Loading the working list…')}</p>
+            {view.isError && <WorkingListSelectionError />}
+            {view.isPending && <p>{i18n.t('Loading the working list…')}</p>}
+            {view.data && (
+                <DatedCalendar
+                    {...props}
+                    configuration={view.data.configuration}
+                />
             )}
-            {readiness === 'error' && <WorkingListSelectionError />}
         </section>
     )
 }

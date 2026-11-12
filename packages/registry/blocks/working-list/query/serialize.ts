@@ -1,5 +1,5 @@
 import type { WorkingListCapabilities } from '../api/capabilities'
-import type { DataEngineQueryParameters, ResourceRequest } from '../api/client'
+import type { DataEngineQueryParameters, ResourceRequest } from '../api/request'
 import type { TrackerEvent } from '../api/schemas'
 import type {
     FieldCatalog,

@@ -5,15 +5,11 @@ import { FinderForm } from '../form/FinderForm'
 import { FinderHint } from '../form/FinderHint'
 import { FinderRangeField } from '../form/FinderRangeField'
 import { FinderSubmit } from '../form/FinderSubmit'
-import { FinderTestProvider as FinderProvider } from './finderTestSupport'
+import { FinderProvider } from '../provider/FinderProvider'
 import { describeMetadataError } from '../rules/describeMetadataError'
 import { buildProgramModel } from '../rules/programModel'
 import { hivProgram } from './fixtures/program'
-import {
-    createFakeServer,
-    renderInFinder,
-    renderWithQueries,
-} from './finderTestSupport'
+import { renderInFinder, renderWithQueries } from './finderTestSupport'
 
 // The fake server is DHIS2 2.43, which searches MULTI_TEXT.
 const model = buildProgramModel(hivProgram, { multiTextSearch: true })
@@ -125,33 +121,20 @@ describe('metadata errors', () => {
 
     it('throws when a field is outside a form or a part is outside the provider', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
-        const server = createFakeServer()
         await renderWithQueries(
             <>
                 <Catch>
-                    <FinderProvider
-                        program="hivProgram"
-                        server={server}
-                        onSelect={vi.fn()}
-                    >
+                    <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                         <FinderField attribute="firstName" />
                     </FinderProvider>
                 </Catch>
                 <Catch>
-                    <FinderProvider
-                        program="hivProgram"
-                        server={server}
-                        onSelect={vi.fn()}
-                    >
+                    <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                         <FinderHint />
                     </FinderProvider>
                 </Catch>
                 <Catch>
-                    <FinderProvider
-                        program="hivProgram"
-                        server={server}
-                        onSelect={vi.fn()}
-                    >
+                    <FinderProvider program="hivProgram" onSelect={vi.fn()}>
                         <FinderSubmit />
                     </FinderProvider>
                 </Catch>

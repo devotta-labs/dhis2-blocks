@@ -22,12 +22,15 @@ you can delete the installed `dhis2/` folder.
 ## A person's history
 
 `useTrackedEntityHistory` covers every program the tracked entity is enrolled
-in, or only the ones you pass as `programs`. It returns `entries`, a `status`,
-`notices` and `refetch`, and is a plain TanStack Query hook: your
-`QueryClient` defaults apply, and invalidating `timelineKeys.root` refreshes it
-after your app saves something. Events and enrollments show together; attribute
-changes join them when they arrive, since the changelog is often the slowest
-request.
+in, or only the ones you pass as `programs`. It returns `entries`,
+`isPending`, `isError`, `notices` and `refetch`, and is built on TanStack
+Query: invalidating `timelineKeys.root` refreshes it after your app saves
+something. Events and enrollments show together; attribute changes join them
+when they arrive, since the changelog is often the slowest request.
+
+The host decides what shows while the history loads: render `TimelineLoading`
+while `isPending` and `TimelineError` when `isError`, and the `Timeline`
+otherwise. Once the history has shown, a refetch or a retry never empties it.
 
 `timeField` has no default. It decides where a past event sits (`occurredAt`,
 `completedAt` and so on), and programs differ in which date they treat as the
@@ -57,14 +60,17 @@ export function PatientHistory({ trackedEntity }: { trackedEntity: string }) {
         timeField: 'occurredAt',
     })
 
+    if (history.isPending) {
+        return <TimelineLoading />
+    }
+    if (history.isError) {
+        return <TimelineError onRetry={history.refetch} />
+    }
     return (
         <Timeline<HistoryEntryData>
             entries={history.entries}
-            status={history.status}
             calendar={calendar}
         >
-            <TimelineLoading />
-            <TimelineError onRetry={history.refetch} />
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
             <TimelineFeed<HistoryEntryData>>

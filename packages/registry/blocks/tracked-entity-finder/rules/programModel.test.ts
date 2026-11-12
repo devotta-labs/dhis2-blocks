@@ -97,14 +97,9 @@ describe('buildProgramModel', () => {
         expect(attributeOf(model, 'nope')).toBeUndefined()
     })
 
-    it('freezes the model all the way down', () => {
-        expect(Object.isFrozen(model)).toBe(true)
-        expect(Object.isFrozen(model.attributes)).toBe(true)
-        expect(Object.isFrozen(attr('sex'))).toBe(true)
-        expect(Object.isFrozen(attr('sex').options)).toBe(true)
-        expect(Object.isFrozen(attr('sex').options?.[0])).toBe(true)
-        expect('add' in attr('nickname').blocked).toBe(false)
-        expect(attr('nickname').blocked.has('like')).toBe(true)
+    it('reads the search operators an attribute blocks', () => {
+        expect([...attr('nickname').blocked]).toEqual(['like', 'sw', 'eq'])
+        expect(attr('firstName').blocked.size).toBe(0)
     })
 })
 

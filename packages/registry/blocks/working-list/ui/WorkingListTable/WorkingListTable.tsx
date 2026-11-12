@@ -1,4 +1,4 @@
-import { IconWarningFilled16 } from '@dhis2/ui-icons'
+import i18n from '@dhis2/d2-i18n'
 import {
     columnOrderingFeature,
     columnVisibilityFeature,
@@ -13,31 +13,30 @@ import {
     type SortingState,
 } from '@tanstack/react-table'
 import React, { useMemo } from 'react'
-import { z } from 'zod'
 import type { WorkingListField, WorkingListSort } from '../../domain/model'
 import type {
     WorkingListDisplayRow,
     WorkingListPageSize,
 } from '../../provider/contracts'
-import type { WorkingListCellValue } from '../../query/normalizeRows'
 import { DEFAULT_WORKING_LIST_SORT } from '../../query/serialize'
 import {
     getCellDisplayValue,
-    type CellDisplayValue,
     type CellFormattingContext,
 } from '../../registry/valueTypes'
 import { fieldDisplayName, localizedField } from '../FilterControls'
 import type { WorkingListDataQualityMode } from '../types'
+import { cn } from '@/components/dhis2/ui/cn'
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from '@/components/dhis2/ui/tooltip'
-import { useWorkingListText } from '../WorkingListText'
-import {
-    WorkingListTableView,
-    type WorkingListTableViewModel,
-} from './WorkingListTableView'
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/dhis2/ui/table'
+import { CellValue, invalidCellText, RowIssuesMarker } from './cells'
+import { WorkingListPagination } from './WorkingListPagination'
+import { SkeletonRows, tableScrollClassName } from './WorkingListTableSkeleton'
 
 const tableFeatureSet = tableFeatures({
     columnOrderingFeature,
@@ -60,113 +59,53 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
 
-/**
- * Best-effort rendering for a value that failed validation: the raw scalar
- * verbatim, an empty cell for a missing value, a dash when unrenderable.
- */
-const InvalidCellScalarSchema = z.union([z.string(), z.number(), z.boolean()])
+/** The column header's sort button. */
+export const SORT_BUTTON_CLASS =
+    'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring disabled:cursor-default'
 
-const invalidCellText = (
-    cellValue: Extract<WorkingListCellValue, { valid: false }>
-) => {
-    const raw = cellValue.raw
-    if (raw === undefined || raw === null || raw === '') {
-        return ''
-    }
-    const scalar = InvalidCellScalarSchema.safeParse(raw)
-    return scalar.success ? String(scalar.data) : '-'
-}
+const ariaSortByDirection = {
+    asc: 'ascending',
+    desc: 'descending',
+} as const
 
-const RowIssuesMarker = ({ row }: { row: WorkingListDisplayRow }) => {
-    const t = useWorkingListText()
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <span
-                        className="inline-flex items-center text-dhis2-destructive"
-                        role="img"
-                        data-testid={`row-issues-${row.id}`}
-                        aria-label={t('Row has {{count}} data quality issues', {
-                            count: row.issues.length,
-                        })}
-                    />
-                }
-            >
-                <IconWarningFilled16 />
-            </TooltipTrigger>
-            <TooltipContent>
-                <ul className="m-0 pl-4">
-                    {row.issues.map((issue) => (
-                        <li key={`${issue.fieldId}-${issue.message}`}>
-                            {`${issue.fieldName}: ${issue.message}`}
-                        </li>
-                    ))}
-                </ul>
-            </TooltipContent>
-        </Tooltip>
+const isInteractiveTarget = (target: EventTarget | null) =>
+    target instanceof Element &&
+    Boolean(
+        target.closest(
+            'a, button, input, select, textarea, summary, [role="button"], [role="link"]'
+        )
     )
-}
 
-const CellValue = ({ display }: { display: CellDisplayValue }) => {
-    const t = useWorkingListText()
-    switch (display.kind) {
-        case 'empty':
-            return null
-        case 'link':
-            return (
-                <a
-                    className="text-dhis2-primary underline-offset-2"
-                    href={display.href}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                >
-                    {display.text}
-                </a>
-            )
-        case 'file':
-            return (
-                <a
-                    className="text-dhis2-primary underline-offset-2"
-                    href={display.href}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                >
-                    {display.text}
-                </a>
-            )
-        case 'image':
-            return (
-                <a
-                    className="text-dhis2-primary underline-offset-2"
-                    href={display.href}
-                    rel="noreferrer noopener"
-                    target="_blank"
-                >
-                    <img
-                        alt={display.alt || t('Image attachment')}
-                        className="block h-10 w-14 rounded-[3px] border border-dhis2-border-strong bg-dhis2-accent object-cover"
-                        loading="lazy"
-                        src={display.previewHref}
-                    />
-                </a>
-            )
-        case 'coordinate':
-            return (
-                <span
-                    title={t('Latitude {{latitude}}, longitude {{longitude}}', {
-                        latitude: display.latitude,
-                        longitude: display.longitude,
-                    })}
-                >
-                    {display.text}
-                </span>
-            )
-        case 'reference':
-        case 'text':
-            return <>{display.text}</>
-    }
-}
+/** The sort indicator @dhis2/ui DataTableColumnHeader draws. */
+const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
+    <span
+        aria-hidden="true"
+        data-slot="sort-indicator"
+        data-direction={sorted || 'none'}
+        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-accent-strong group-focus-visible/sort:bg-dhis2-accent-strong group-disabled/sort:bg-transparent"
+    >
+        <svg viewBox="0 0 16 16" className="size-4">
+            {/* DHIS2 names these "top" and "bottom" by stacking order, not
+                by direction: ascending highlights the down-pointing one. */}
+            <polygon
+                points="4 9 12 9 8 14"
+                className={
+                    sorted === 'asc'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
+                }
+            />
+            <polygon
+                points="4 7 12 7 8 2"
+                className={
+                    sorted === 'desc'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
+                }
+            />
+        </svg>
+    </span>
+)
 
 interface WorkingListDataTableProps {
     allFields: WorkingListField[]
@@ -180,7 +119,8 @@ interface WorkingListDataTableProps {
     isInitialLoading: boolean
     isUpdating: boolean
     configurationDisabled?: boolean
-    formattingContext: CellFormattingContext
+    /** Absent until the first page is in; nothing is formatted before that. */
+    formattingContext?: CellFormattingContext
     onColumnConfigurationChange: (columnIds: string[]) => void
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
@@ -207,13 +147,12 @@ export const WorkingListDataTable = ({
     onRowOpen,
     onSortChange,
 }: WorkingListDataTableProps) => {
-    const translate = useWorkingListText()
     const showIssuesColumn = dataQualityMode === 'highlighted'
     const columns = useMemo(() => {
         const fieldColumns = allFields.map((field) =>
             columnHelper.accessor((row) => row.values[field.id], {
                 id: field.id,
-                header: fieldDisplayName(field, translate),
+                header: fieldDisplayName(field),
                 enableSorting: true,
                 cell: (context) => {
                     const cellValue = context.row.original.values[field.id]
@@ -224,7 +163,7 @@ export const WorkingListDataTable = ({
                         <CellValue
                             display={getCellDisplayValue(
                                 cellValue?.value,
-                                localizedField(field, translate),
+                                localizedField(field),
                                 formattingContext
                             )}
                         />
@@ -240,7 +179,7 @@ export const WorkingListDataTable = ({
             columnHelper.display({
                 id: DATA_QUALITY_COLUMN_ID,
                 header: () => (
-                    <span className="sr-only">{translate('Data quality')}</span>
+                    <span className="sr-only">{i18n.t('Data quality')}</span>
                 ),
                 enableSorting: false,
                 cell: (context) =>
@@ -249,7 +188,7 @@ export const WorkingListDataTable = ({
                     ) : null,
             }),
         ])
-    }, [allFields, formattingContext, showIssuesColumn, translate])
+    }, [allFields, formattingContext, showIssuesColumn])
 
     const columnOrder = useMemo(
         () =>
@@ -334,47 +273,205 @@ export const WorkingListDataTable = ({
         })
     )
 
-    const model: WorkingListTableViewModel = {
-        headerGroups: table.getHeaderGroups().map((group) => ({
-            id: group.id,
-            headers: group.headers.map((header) => ({
-                id: header.id,
-                fieldId: header.column.id,
-                content: <table.FlexRender header={header} />,
-                canSort: header.column.getCanSort(),
-                isDataQuality: header.column.id === DATA_QUALITY_COLUMN_ID,
-                sorted: header.column.getIsSorted(),
-                onToggleSorting: (event) =>
-                    header.column.getToggleSortingHandler()?.(event),
-            })),
-        })),
-        rows: table.getRowModel().rows.map((row) => ({
-            id: row.id,
-            displayIndex: row.getDisplayIndex(),
-            original: row.original,
-            cells: row.getVisibleCells().map((cell) => ({
-                id: cell.id,
-                fieldId: cell.column.id,
-                content: <table.FlexRender cell={cell} />,
-                isDataQuality: cell.column.id === DATA_QUALITY_COLUMN_ID,
-            })),
-        })),
-    }
+    const interactive = Boolean(onRowOpen)
+    const columnCount =
+        Math.max(visibleColumnIds.length, 1) + (showIssuesColumn ? 1 : 0)
+    const tableRows = table.getRowModel().rows
 
     return (
-        <WorkingListTableView
-            model={model}
-            visibleColumnCount={visibleColumnIds.length}
-            dataQualityMode={dataQualityMode}
-            page={page}
-            pageSize={pageSize}
-            hasNextPage={hasNextPage}
-            isInitialLoading={isInitialLoading}
-            isUpdating={isUpdating}
-            configurationDisabled={configurationDisabled}
-            onPageChange={onPageChange}
-            onPageSizeChange={onPageSizeChange}
-            onRowOpen={onRowOpen}
-        />
+        <div
+            className="w-full min-w-0 max-w-full"
+            data-testid="working-list-results"
+        >
+            <div className={tableScrollClassName}>
+                <div className="min-w-[680px]" data-testid="working-list-table">
+                    <Table data-test="working-list-data-table">
+                        <TableHeader>
+                            {table.getHeaderGroups().map((group) => (
+                                <TableRow key={group.id}>
+                                    {group.headers.map((header) => {
+                                        const { column } = header
+                                        if (
+                                            column.id === DATA_QUALITY_COLUMN_ID
+                                        ) {
+                                            return (
+                                                <TableHead
+                                                    key={header.id}
+                                                    scope="col"
+                                                    className="w-px min-w-0 text-center whitespace-nowrap"
+                                                >
+                                                    <table.FlexRender
+                                                        header={header}
+                                                    />
+                                                </TableHead>
+                                            )
+                                        }
+                                        const sorted = column.getIsSorted()
+                                        return (
+                                            <TableHead
+                                                key={header.id}
+                                                scope="col"
+                                                className="py-1.5 whitespace-nowrap"
+                                                aria-sort={
+                                                    sorted
+                                                        ? ariaSortByDirection[
+                                                              sorted
+                                                          ]
+                                                        : 'none'
+                                                }
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        SORT_BUTTON_CLASS
+                                                    }
+                                                    data-testid={`sort-${column.id}`}
+                                                    disabled={
+                                                        !column.getCanSort() ||
+                                                        configurationDisabled
+                                                    }
+                                                    onClick={column.getToggleSortingHandler()}
+                                                >
+                                                    <table.FlexRender
+                                                        header={header}
+                                                    />
+                                                    <SortIndicator
+                                                        sorted={sorted}
+                                                    />
+                                                </button>
+                                            </TableHead>
+                                        )
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody aria-busy={isInitialLoading || isUpdating}>
+                            {isInitialLoading && (
+                                <SkeletonRows
+                                    columnCount={columnCount}
+                                    rowCount={pageSize}
+                                />
+                            )}
+                            {!isInitialLoading && tableRows.length === 0 && (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columnCount}
+                                        className="min-w-[140px] py-10 text-center"
+                                    >
+                                        <strong className="mb-1 block font-medium">
+                                            {i18n.t('No items to display')}
+                                        </strong>
+                                        <span className="block">
+                                            {i18n.t(
+                                                'Try adjusting the filters or organisation unit.'
+                                            )}
+                                        </span>
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {tableRows.map((row) => {
+                                const highlightIssues =
+                                    showIssuesColumn &&
+                                    row.original.issues.length > 0
+                                const openRowFromCell = (
+                                    event: React.MouseEvent<HTMLTableCellElement>
+                                ) => {
+                                    if (!isInteractiveTarget(event.target)) {
+                                        onRowOpen?.(row.original)
+                                    }
+                                }
+                                return (
+                                    <TableRow
+                                        key={row.id}
+                                        className={
+                                            interactive
+                                                ? // The open button is hidden, so its row shows where focus is.
+                                                  'cursor-pointer has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-dhis2-ring has-[button:focus-visible]:outline-solid'
+                                                : undefined
+                                        }
+                                        data-test={`working-list-row-${row.id}`}
+                                        data-testid={`working-list-row-${row.id}`}
+                                        data-invalid={
+                                            highlightIssues ? 'true' : undefined
+                                        }
+                                    >
+                                        {row
+                                            .getVisibleCells()
+                                            .map((cell, index) => {
+                                                const issuesCellId =
+                                                    cell.column.id ===
+                                                    DATA_QUALITY_COLUMN_ID
+                                                        ? `working-list-issues-cell-${row.id}`
+                                                        : undefined
+                                                return (
+                                                    <TableCell
+                                                        key={cell.id}
+                                                        className={cn(
+                                                            issuesCellId
+                                                                ? 'w-px min-w-0 text-center whitespace-nowrap'
+                                                                : 'min-w-[140px]',
+                                                            // A fixed background
+                                                            // turns off the hover
+                                                            // and press states, as
+                                                            // in DataTable.
+                                                            highlightIssues &&
+                                                                'bg-dhis2-destructive-subtle group-hover/table-row:bg-dhis2-destructive-subtle group-active/table-row:bg-dhis2-destructive-subtle'
+                                                        )}
+                                                        data-test={issuesCellId}
+                                                        data-testid={
+                                                            issuesCellId
+                                                        }
+                                                        onClick={
+                                                            interactive
+                                                                ? openRowFromCell
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        {index === 0 &&
+                                                            interactive && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="sr-only"
+                                                                    data-testid={`row-open-${row.id}`}
+                                                                    onClick={() =>
+                                                                        onRowOpen?.(
+                                                                            row.original
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {i18n.t(
+                                                                        'Open row {{number}}',
+                                                                        {
+                                                                            number:
+                                                                                row.getDisplayIndex() +
+                                                                                1,
+                                                                        }
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                        <table.FlexRender
+                                                            cell={cell}
+                                                        />
+                                                    </TableCell>
+                                                )
+                                            })}
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+            <div className="flex min-h-14 w-full min-w-0 max-w-full items-center px-3 py-2">
+                <WorkingListPagination
+                    page={page}
+                    pageSize={pageSize}
+                    hasNextPage={hasNextPage}
+                    disabled={isInitialLoading}
+                    onPageChange={onPageChange}
+                    onPageSizeChange={onPageSizeChange}
+                />
+            </div>
+        </div>
     )
 }

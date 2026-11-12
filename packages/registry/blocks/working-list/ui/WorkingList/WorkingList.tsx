@@ -1,7 +1,6 @@
+import i18n from '@dhis2/d2-i18n'
 import React, {
-    useCallback,
     useId,
-    useState,
     type ComponentPropsWithoutRef,
     type ReactNode,
 } from 'react'
@@ -14,9 +13,6 @@ import { WorkingListFilterControls } from '../Filters'
 import { WorkingListTable, type WorkingListTableProps } from '../Results'
 import { WorkingListSavedViews } from '../SavedViews'
 import { WorkingListToolbar } from '../Toolbar'
-import { useWorkingListText } from '../WorkingListText'
-
-const DEFAULT_PAGINATION: WorkingListPagination = { page: 1, pageSize: 15 }
 
 type ControlledViewProps = {
     viewId: string | null
@@ -49,94 +45,45 @@ interface WorkingListBaseProps extends Omit<
     children: ReactNode
     programId: string
     orgUnitId: string
+    /**
+     * Called with whether the configuration on screen differs from the saved
+     * list: once on mount, then each time that changes.
+     */
+    onDirtyChange?(dirty: boolean): void
 }
 
 export type WorkingListProps = WorkingListBaseProps &
     (ControlledViewProps | UncontrolledViewProps) &
     (ControlledPaginationProps | UncontrolledPaginationProps)
 
-const WorkingListRootInstance = (props: WorkingListProps) => {
-    const {
-        children,
-        programId,
-        orgUnitId,
-        defaultViewId,
-        defaultPagination,
-        onPaginationChange,
-        ...rest
-    } = props
-    const [localViewId, setLocalViewId] = useState<string | null>(
-        defaultViewId ?? null
-    )
-    const [localPagination, setLocalPagination] =
-        useState<WorkingListPagination>(defaultPagination ?? DEFAULT_PAGINATION)
-    const viewControlled = 'viewId' in props
-    const paginationControlled = 'pagination' in props
-    if (viewControlled && !props.onViewChange) {
-        throw new Error(
-            'WorkingList requires onViewChange when viewId is controlled.'
-        )
-    }
-    if (paginationControlled && !onPaginationChange) {
-        throw new Error(
-            'WorkingList requires onPaginationChange when pagination is controlled.'
-        )
-    }
-    const selectedViewId: string | null = viewControlled
-        ? (props.viewId ?? null)
-        : localViewId
-    const pagination: WorkingListPagination = paginationControlled
-        ? (props.pagination ?? localPagination)
-        : localPagination
-    const handleViewChange = useCallback(
-        (id: string) => {
-            if (viewControlled) {
-                props.onViewChange?.(id)
-                return
-            }
-            setLocalViewId(id)
-            props.onViewChange?.(id)
-        },
-        [props, viewControlled]
-    )
-    const handlePaginationChange = useCallback(
-        (next: WorkingListPagination) => {
-            if (!paginationControlled) setLocalPagination(next)
-            onPaginationChange?.(next)
-        },
-        [onPaginationChange, paginationControlled]
-    )
-
-    // SAFETY: Every state-only key is optional in this widened view and is removed before forwarding the remaining native article props.
-    const {
-        viewId: _viewId,
-        onViewChange: _onViewChange,
-        pagination: _pagination,
-        ...containerProps
-    } = rest as typeof rest & {
-        viewId?: string | null
-        onViewChange?: (id: string) => void
-        pagination?: WorkingListPagination
-    }
-
-    return (
-        <WorkingListProvider
-            programId={programId}
-            orgUnitId={orgUnitId}
-            selectedSavedListId={selectedViewId}
-            onSelectedSavedListChange={handleViewChange}
-            pagination={pagination}
-            onPaginationChange={handlePaginationChange}
-        >
-            <WorkingListContainer {...containerProps}>
-                {children}
-            </WorkingListContainer>
-        </WorkingListProvider>
-    )
-}
-
-const WorkingListRoot = (props: WorkingListProps) => (
-    <WorkingListRootInstance key={props.programId} {...props} />
+const WorkingListRoot = ({
+    children,
+    programId,
+    orgUnitId,
+    viewId,
+    defaultViewId,
+    onViewChange,
+    pagination,
+    defaultPagination,
+    onPaginationChange,
+    onDirtyChange,
+    ...containerProps
+}: WorkingListProps) => (
+    <WorkingListProvider
+        programId={programId}
+        orgUnitId={orgUnitId}
+        viewId={viewId}
+        defaultViewId={defaultViewId}
+        onViewChange={onViewChange}
+        pagination={pagination}
+        defaultPagination={defaultPagination}
+        onPaginationChange={onPaginationChange}
+        onDirtyChange={onDirtyChange}
+    >
+        <WorkingListContainer {...containerProps}>
+            {children}
+        </WorkingListContainer>
+    </WorkingListProvider>
 )
 
 export interface WorkingListViewSwitcherProps extends Omit<
@@ -153,10 +100,8 @@ export const WorkingListViewSwitcher = ({
     'aria-labelledby': ariaLabelledBy,
     ...props
 }: WorkingListViewSwitcherProps) => {
-    const translate = useWorkingListText()
     const headingId = useId()
-    const accessibleHeading =
-        heading ?? translate('Saved views in this program')
+    const accessibleHeading = heading ?? i18n.t('Saved views in this program')
 
     return (
         <section

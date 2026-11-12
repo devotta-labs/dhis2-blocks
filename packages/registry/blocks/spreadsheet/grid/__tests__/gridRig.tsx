@@ -1,11 +1,11 @@
 import { announce as sharedAnnounce } from '@/components/dhis2/ui/announcer'
 import type { Politeness } from '@/components/dhis2/ui/announcer'
-import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
+import { Runtime } from '../../cells/__tests__/harness'
 import type { CellOverrides } from '../../cells/cellProps'
 import type {
     AnnotationsState,
@@ -283,9 +283,9 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         )
     }
     await render(
-        <CustomDataProvider data={{}}>
+        <Runtime>
             <Harness />
-        </CustomDataProvider>
+        </Runtime>
     )
     return {
         store,

@@ -176,14 +176,10 @@ describe('ObservationInline', () => {
 describe('ObservationInline with a provider', () => {
     it('beside a card for the same element, still one events request', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
+                <ObservationsProvider trackedEntity="te1" program="prog1">
                     <ObservationCard dataElement={WEIGHT} />
                     <ObservationInline dataElement={WEIGHT} unit="kg" />
                 </ObservationsProvider>
@@ -196,20 +192,12 @@ describe('ObservationInline with a provider', () => {
 
     it('a nested provider for another program shows its own value beside the outer one', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const { container } = await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
+                <ObservationsProvider trackedEntity="te1" program="prog1">
                     <ObservationInline dataElement={WEIGHT} label="Outer" />
-                    <ObservationsProvider
-                        trackedEntity="te1"
-                        program="prog2"
-                        client={server.client}
-                    >
+                    <ObservationsProvider trackedEntity="te1" program="prog2">
                         <ObservationInline dataElement={WEIGHT} label="Inner" />
                     </ObservationsProvider>
                 </ObservationsProvider>

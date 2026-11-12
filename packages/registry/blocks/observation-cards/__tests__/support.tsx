@@ -1,22 +1,17 @@
-import { Provider } from '@dhis2/app-runtime'
-import React, { type ReactNode } from 'react'
+import { CustomDataProvider, FetchError, Provider } from '@dhis2/app-runtime'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React, { type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
-import type {
-    DataElementMetadata,
-    ObservationLegendBand,
-    ObservationOption,
-    ProgramMetadata,
-    StageMetadata,
-    TrackerEventRecord,
-} from '../api/types'
-import {
-    ObservationsContext,
-    type ObservationsContextValue,
-} from '../provider/context'
+import { z } from 'zod'
+import type { ObservationLegendBand, ObservationOption } from '../api/types'
+import { ObservationsProvider } from '../provider/ObservationsProvider'
+
+type CustomData = ComponentProps<typeof CustomDataProvider>['data']
 
 /** The data element every test card asks for. */
 export const DE = 'hbDE0000001'
 export const PROGRAM = 'prog1'
+const TRACKED_ENTITY = 'te1'
 
 export interface Reading {
     value: string
@@ -45,7 +40,8 @@ export type FakeStatus =
 const DEFAULT_STAGE = 'Antenatal visit'
 const stageId = (name: string) => `stage-${name}`
 
-const metadataFor = (observation: FakeObservation): ProgramMetadata => {
+/** `programs/<id>` as the server sends it. */
+const programResponse = (observation: FakeObservation) => {
     const {
         label = 'Haemoglobin',
         valueType = 'NUMBER',
@@ -54,118 +50,98 @@ const metadataFor = (observation: FakeObservation): ProgramMetadata => {
         options,
         partial = false,
     } = observation
+    const base = { id: DE, displayName: label, valueType }
+    const withLegends = legends ? { ...base, legendSets: [{ legends }] } : base
+    const dataElement = options
+        ? {
+              ...withLegends,
+              optionSet: {
+                  options: options.map(({ code, name, color }) =>
+                      color ? { code, name, style: { color } } : { code, name }
+                  ),
+              },
+          }
+        : withLegends
     const names = new Set([
         DEFAULT_STAGE,
         ...readings.map(({ stage = DEFAULT_STAGE }) => stage),
     ])
-    const stages: StageMetadata[] = [...names].map((name) => ({
-        id: stageId(name),
-        displayName: name,
-        canReadData: true,
-        dataElementIds: [DE],
-    }))
-    if (partial) {
-        stages.push({
-            id: 'stage-hidden',
-            displayName: 'Hidden visit',
-            canReadData: false,
-            dataElementIds: [DE],
-        })
-    }
-    const element: DataElementMetadata = {
-        id: DE,
-        displayName: label,
-        valueType,
-        legendSets: legends ? [{ legends }] : undefined,
-        optionSet: options
-            ? {
-                  options: options.map(({ code, name, color }) => ({
-                      code,
-                      name,
-                      style: color ? { color } : undefined,
-                  })),
-              }
-            : undefined,
-    }
+    const stage = (id: string, displayName: string, read: boolean) => ({
+        id,
+        displayName,
+        access: { data: { read } },
+        programStageDataElements: [{ dataElement }],
+    })
     return {
-        stages,
-        dataElements: new Map([[DE, element]]),
-        invalidDataElements: new Map(),
+        programStages: [
+            ...[...names].map((name) => stage(stageId(name), name, true)),
+            ...(partial ? [stage('stage-hidden', 'Hidden visit', false)] : []),
+        ],
     }
 }
 
-const eventsFor = ({ readings = [] }: FakeObservation): TrackerEventRecord[] =>
-    readings.map(({ value, day, stage = DEFAULT_STAGE }, index) => ({
+/** `tracker/events` as the server sends it. */
+const eventsResponse = ({ readings = [] }: FakeObservation) => ({
+    events: readings.map(({ value, day, stage = DEFAULT_STAGE }, index) => ({
         event: `ev${String(index).padStart(3, '0')}`,
+        trackedEntity: TRACKED_ENTITY,
         programStage: stageId(stage),
         status: 'COMPLETED',
         occurredAt: `${day}T00:00:00.000`,
         dataValues: [{ dataElement: DE, value }],
-    }))
+    })),
+})
 
-const contextFor = (
+const never = () => new Promise<never>(() => {})
+
+/** What the server answers, for each state a card can be in. */
+const serverFor = (
     observation: FakeObservation,
     status: FakeStatus
-): ObservationsContextValue => {
-    const base = { program: PROGRAM, logProblem: () => {} }
-    switch (status) {
-        case 'pending':
-            return base
-        case 'error':
-            // A failed person request after the program's metadata loaded.
-            return {
-                ...base,
-                metadata: metadataFor(observation),
-                error: new Error('boom'),
-            }
-        case 'failed-early':
+): CustomData => ({
+    programs: async () => {
+        if (status === 'pending') {
+            return never()
+        }
+        if (status === 'failed-early') {
             // A failed request before the program's metadata loaded: no name to show.
-            return { ...base, error: new Error('boom') }
-        case 'misconfigured':
-            return {
-                ...base,
-                metadata: {
-                    stages: [],
-                    dataElements: new Map(),
-                    invalidDataElements: new Map(),
-                },
-                events: [],
-            }
-        default:
-            return {
-                ...base,
-                metadata: metadataFor(observation),
-                events: eventsFor(observation),
-            }
-    }
-}
+            throw new FetchError({
+                type: 'unknown',
+                message: 'boom',
+                details: { httpStatusCode: 400 },
+            })
+        }
+        return status === 'misconfigured'
+            ? { programStages: [] }
+            : z.json().parse(programResponse(observation))
+    },
+    'tracker/enrollments': async () => ({
+        enrollments: [{ enrollment: 'enr1' }],
+    }),
+    'tracker/events': async () => {
+        if (status === 'error') {
+            // A failed person request after the program's metadata loaded.
+            throw new FetchError({
+                type: 'unknown',
+                message: 'boom',
+                details: { httpStatusCode: 400 },
+            })
+        }
+        return eventsResponse(observation)
+    },
+})
 
 /**
- * Feeds the provider's context directly, so a card sees the data a real
- * provider would have loaded, with no requests.
+ * app-runtime's own provider, so cards read the system calendar as in an app,
+ * with the fake server behind its data engine.
  */
-function FakeObservations({
-    observation = {},
-    status = 'ready',
-    children,
-}: {
-    observation?: FakeObservation
-    status?: FakeStatus
-    children: ReactNode
-}) {
-    return (
-        <ObservationsContext.Provider value={contextFor(observation, status)}>
-            {children}
-        </ObservationsContext.Provider>
-    )
-}
-
-/** app-runtime's own provider, so cards read the system calendar as in an app. */
 function Runtime({
     calendar,
+    data,
     children,
 }: {
     calendar: string
+    data: CustomData
     children: ReactNode
 }) {
     const systemInfo = {
@@ -182,24 +158,44 @@ function Runtime({
             parentAlertsAdd={undefined}
             showAlertsInPlugin={false}
         >
-            {children}
+            <CustomDataProvider data={data}>{children}</CustomDataProvider>
         </Provider>
     )
 }
 
-export const renderWith = (
+/**
+ * Renders cards for one person through the real provider and queries, and
+ * resolves once every card has left its loading state (never, for `pending`).
+ */
+export const renderWith = async (
     ui: ReactNode,
     observation: FakeObservation = {},
     status: FakeStatus = 'ready',
     calendar = 'gregorian'
-) =>
-    render(
-        <Runtime calendar={calendar}>
-            <FakeObservations observation={observation} status={status}>
-                {ui}
-            </FakeObservations>
-        </Runtime>
-    )
+) => {
+    const queryClient = new QueryClient()
+    const data = serverFor(observation, status)
+    const screen = await render(ui, {
+        wrapper: ({ children }) => (
+            <Runtime calendar={calendar} data={data}>
+                <QueryClientProvider client={queryClient}>
+                    <ObservationsProvider
+                        trackedEntity={TRACKED_ENTITY}
+                        program={PROGRAM}
+                    >
+                        {children}
+                    </ObservationsProvider>
+                </QueryClientProvider>
+            </Runtime>
+        ),
+    })
+    if (status !== 'pending') {
+        await expect
+            .poll(() => screen.container.querySelector('[aria-busy="true"]'))
+            .toBeNull()
+    }
+    return screen
+}
 
 /** Readings on consecutive days of March 2026, from the 1st. */
 export const march = (...values: number[]): Reading[] =>

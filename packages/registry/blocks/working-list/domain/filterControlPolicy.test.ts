@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { resolveWorkingListCapabilities } from '../api/capabilities'
 import type { WorkingListField } from './model'
 import {
@@ -38,24 +39,20 @@ describe('filter control policy', () => {
     })
 
     it('localizes generated system labels but preserves metadata display names', () => {
-        const translate = (message: string) => `translated:${message}`
-        const system = localizedField(optionField('system'), translate)
-        const metadata = localizedField(
-            optionField('trackedEntityAttribute'),
-            translate
-        )
-        const metadataSystem = localizedField(
-            {
-                ...optionField('system'),
-                displayName: 'TB visit date',
-                displayNameIsMetadata: true,
-            },
-            translate
-        )
+        i18n.addResources('en', 'translation', {
+            'Event status': 'translated:Event status',
+            Active: 'translated:Active',
+        })
+        onTestFinished(() => i18n.removeResourceBundle('en', 'translation'))
+        const system = localizedField(optionField('system'))
+        const metadata = localizedField(optionField('trackedEntityAttribute'))
+        const metadataSystem = localizedField({
+            ...optionField('system'),
+            displayName: 'TB visit date',
+            displayNameIsMetadata: true,
+        })
 
-        expect(fieldDisplayName(system, translate)).toBe(
-            'translated:Event status'
-        )
+        expect(fieldDisplayName(system)).toBe('translated:Event status')
         expect(system.options?.[0]?.displayName).toBe('translated:Active')
         expect(metadata.displayName).toBe('Gender')
         expect(metadata.options?.[0]?.displayName).toBe('Active')

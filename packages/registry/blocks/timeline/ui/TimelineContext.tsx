@@ -1,12 +1,7 @@
 import React, { createContext, useMemo } from 'react'
 import type { Dhis2Calendar } from '@/components/dhis2-value-display/calendar'
 import { localDay } from '../core/today'
-import type {
-    TimelineEntry,
-    TimelineGroup,
-    TimelineOrder,
-    TimelineStatus,
-} from '../core/types'
+import type { TimelineEntry, TimelineGroup, TimelineOrder } from '../core/types'
 
 export interface TimelineMeta {
     order: TimelineOrder
@@ -25,7 +20,6 @@ export interface TimelineState<TData = unknown> {
     groups: TimelineGroup<TData>[]
     /** The now marker sits before `groups[nowIndex]`. */
     nowIndex: number
-    status: TimelineStatus
 }
 
 /**

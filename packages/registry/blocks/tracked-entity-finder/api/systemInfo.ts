@@ -1,7 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import { shouldRetryFinderRequest, toRequestError } from './requestErrors'
-import { finderKeys, METADATA_CACHE_TIME, type FinderEngine } from './queries'
 
 const FINDER_CALENDARS = [
     'coptic',
@@ -24,7 +21,7 @@ export interface FinderSystemInfo {
 }
 
 /** The system info the finder reads: its calendar, and what search allows. */
-interface FinderServerInfo extends FinderSystemInfo {
+export interface FinderServerInfo extends FinderSystemInfo {
     /**
      * Whether the server matches each code of a MULTI_TEXT value (DHIS2 2.43
      * and later). Older servers compare the whole stored list.
@@ -54,7 +51,7 @@ const DateFormatSchema = z
         value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
     )
 
-const FinderSystemInfoSchema = z
+export const FinderSystemInfoSchema = z
     .object({
         calendar: z.enum(FINDER_CALENDARS),
         dateFormat: DateFormatSchema,
@@ -65,31 +62,3 @@ const FinderSystemInfoSchema = z
         dateFormat,
         multiTextSearch: searchesMultiText(version),
     }))
-
-const SYSTEM_INFO_FIELDS = 'calendar,dateFormat,version'
-
-export const systemInfoQueryOptions = (engine: FinderEngine, server: string) =>
-    queryOptions({
-        queryKey: finderKeys.systemInfo(server),
-        queryFn: async ({ signal }) => {
-            try {
-                const response = await engine.query(
-                    {
-                        trackedEntityFinderResource: {
-                            resource: 'system/info',
-                            params: { fields: SYSTEM_INFO_FIELDS },
-                        },
-                    },
-                    { signal }
-                )
-                return FinderSystemInfoSchema.parse(
-                    response.trackedEntityFinderResource
-                )
-            } catch (cause) {
-                throw toRequestError(cause)
-            }
-        },
-        staleTime: METADATA_CACHE_TIME,
-        gcTime: METADATA_CACHE_TIME,
-        retry: shouldRetryFinderRequest,
-    })

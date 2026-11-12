@@ -1,14 +1,8 @@
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
-import { useQuery } from '@tanstack/react-query'
-import { Result } from 'better-result'
 import React from 'react'
-import { shouldRetryTrackedEntityHeaderRequest } from '../api/client'
-import { fetchOrgUnitName } from '../api/queries'
-import {
-    METADATA_STALE_TIME,
-    trackedEntityHeaderQueryKeys,
-} from '../api/queryKeys'
+import { useOrgUnitName } from '../api/queries'
+import { useTrackedEntityHeader } from '../hooks'
 import { useHeaderContext } from '../provider/context'
 import { AttributeFact } from './FactPair'
 import { useLoggedProblem } from './useAttributeValue'
@@ -31,24 +25,7 @@ const OwnerName = ({
     label?: string
     className?: string
 }) => {
-    const { resourceClient, clientId } = useHeaderContext()
-    const query = useQuery({
-        queryKey: trackedEntityHeaderQueryKeys.orgUnit(clientId, orgUnit ?? ''),
-        queryFn: async ({ signal }) => {
-            const result = await fetchOrgUnitName(
-                resourceClient,
-                orgUnit ?? '',
-                signal
-            )
-            if (Result.isError(result)) {
-                throw result.error
-            }
-            return result.value
-        },
-        enabled: orgUnit !== undefined,
-        retry: shouldRetryTrackedEntityHeaderRequest,
-        staleTime: METADATA_STALE_TIME,
-    })
+    const query = useOrgUnitName(orgUnit)
     if (orgUnit === undefined) {
         return (
             <AttributeFact
@@ -98,10 +75,11 @@ export function TrackedEntityOwner({
     label,
     className,
 }: TrackedEntityOwnerProps) {
-    const { state, program } = useHeaderContext()
+    const { program } = useHeaderContext()
+    const header = useTrackedEntityHeader()
     const problem = program ? undefined : MISSING_PROGRAM
     useLoggedProblem(problem)
-    if (state.status !== 'ready') {
+    if (header.status !== 'ready') {
         return null
     }
     if (problem) {
@@ -113,7 +91,7 @@ export function TrackedEntityOwner({
     }
     return (
         <OwnerName
-            orgUnit={state.trackedEntity.ownerOrgUnit}
+            orgUnit={header.trackedEntity.ownerOrgUnit}
             label={label}
             className={className}
         />

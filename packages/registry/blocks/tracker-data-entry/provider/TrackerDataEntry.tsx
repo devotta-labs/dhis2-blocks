@@ -16,7 +16,7 @@ import { summarise } from '../logic/summary'
 import { recordIdOf, recordsOf, trackerKeyOf } from '../model/types'
 import type { TrackerColumn } from '../model/types'
 import { ENROLLMENT, PERSON } from '../register/compileLayout'
-import type { TrackerDataEntrySource, LoadedForm } from '../sources/types'
+import type { TrackerDataEntrySource } from '../sources/types'
 import { usePages } from './appendPage'
 import { EventStatusBadge } from './EventStatusBadge'
 import { fileUrlOf } from './fileUrl'
@@ -32,8 +32,8 @@ import type { OpenForm } from './openForm'
 import { emptyForm, lockedForm } from './standInForms'
 import { ShowMoreEvents, ShowMorePeople } from './ShowMore'
 import { TrackerRowLabel } from './TrackerRowLabel'
+import { useLatestEngine } from './useLatestEngine'
 import { useLeaveWarning } from './useLeaveWarning'
-import { useServerEngine } from './useServerEngine'
 import { useRuleEffects } from './useRuleEffects'
 
 const ACCOUNT_QUERY = {
@@ -78,44 +78,36 @@ export const TrackerDataEntry = ({
     const { baseUrl } = useConfig()
     // Absolute, so the outbox is named for the server however the app reaches it.
     const serverUrl = new URL(baseUrl, window.location.href).href
-    const engine = useServerEngine(serverUrl)
+    const engine = useLatestEngine()
     const account = useQuery({
         queryKey: ['data-entry', 'account', serverUrl],
         queryFn: async ({ signal }) =>
             accountSchema.parse(await engine.query(ACCOUNT_QUERY, { signal })),
     })
+    // This mount's own id: every DOM id of the form starts with it, so two forms on one page never share one, and its
+    // queries are keyed by it, so no mount is handed the form another one loaded.
+    const id = useId()
+    const idScope = `data-entry-${id.replaceAll(':', '')}`
     const cacheKey = source.cacheKey ?? source.key
-    const [loaded, setLoaded] = useState<{ form?: LoadedForm; error?: string }>(
-        {}
-    )
-    useEffect(() => {
-        let live = true
-        // Fetched once per mount and not watched: loading again, as an app-wide invalidation would, replaces the cells
-        // under the person's edits.
-        queryClient
-            .fetchQuery({
-                queryKey: ['data-entry', 'form', cacheKey],
-                queryFn: async ({ signal }) => {
-                    const fetched = await source.load(engine, signal)
-                    // The engine loads while the rules' metadata does; a program without rules never asks for it.
-                    if (fetched.rules?.hasRules) {
-                        preloadRuleEngine()
-                    }
-                    return fetched
-                },
-                gcTime: 0,
-            })
-            .then(
-                (form) => live && setLoaded({ form }),
-                (error) => live && setLoaded({ error: reasonOf(error) })
-            )
-        return () => {
-            live = false
-            setLoaded({})
-        }
+    const loaded = useQuery({
         // A source with the same keys is the same form.
-    }, [queryClient, cacheKey, engine])
-    const form = loaded.form
+        queryKey: ['data-entry', 'form', serverUrl, cacheKey, id],
+        queryFn: async ({ signal }) => {
+            const fetched = await source.load(engine, signal)
+            // The engine loads while the rules' metadata does; a program without rules never asks for it.
+            if (fetched.rules?.hasRules) {
+                preloadRuleEngine()
+            }
+            return fetched
+        },
+        // Asked once per mount, then switched off: loading again, as an app-wide invalidation would, replaces the
+        // cells under the person's edits.
+        enabled: (query) => query.state.status === 'pending',
+        gcTime: 0,
+        retry: false,
+    })
+    const pagesKey = ['data-entry', 'pages', serverUrl, cacheKey, id]
+    const form = loaded.data
     const orgUnitNames = useMemo(
         () =>
             createStore<{ names: ReadonlyMap<string, string> }>()(() => ({
@@ -155,9 +147,6 @@ export const TrackerDataEntry = ({
         [calendar, dateFormat]
     )
 
-    // Every DOM id of the form starts with it, so two forms on one page never share one.
-    const id = useId()
-    const idScope = `data-entry-${id.replaceAll(':', '')}`
     const [start] = useState(() => performance.now())
     const measured = useRef(false)
     const [placeholder] = useState(emptyForm)
@@ -186,6 +175,8 @@ export const TrackerDataEntry = ({
         if (form === undefined || openedFor === undefined || locked) {
             return
         }
+        // A form opened again starts from its first page, as its cells do.
+        void queryClient.resetQueries({ queryKey: pagesKey })
         let cancelled = false
         let open: OpenForm | undefined
         openForm({
@@ -239,6 +230,7 @@ export const TrackerDataEntry = ({
 
     // Every page loaded stays when the form locks.
     const paged = usePages({
+        queryKey: pagesKey,
         open: opened,
         form,
         source,
@@ -257,7 +249,7 @@ export const TrackerDataEntry = ({
     )
     const active = lockedView ?? opened ?? placeholder
     const error =
-        loaded.error ??
+        (loaded.isError ? reasonOf(loaded.error) : undefined) ??
         (account.isLoadingError ? reasonOf(account.error) : undefined) ??
         failed
     const progress = active === placeholder ? 'loading' : 'ready'

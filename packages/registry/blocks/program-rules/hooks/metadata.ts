@@ -1,4 +1,4 @@
-import type { ProgramRulesClient } from './client'
+import type { useDataEngine } from '@dhis2/app-runtime'
 import type {
     ProgramRuleActionMetadata,
     ProgramRuleMetadata,
@@ -8,6 +8,8 @@ import type {
     RuleOrgUnitGroupMetadata,
 } from '../lib'
 import { z } from 'zod'
+
+type DataEngine = ReturnType<typeof useDataEngine>
 
 const RefSchema = z.object({ id: z.string() })
 
@@ -168,47 +170,46 @@ const ACTION_FIELDS =
 const SOURCE_FIELD = 'id,valueType,optionSet[id,options[code,name]]'
 
 export const fetchProgramRulesMetadata = async (
-    client: ProgramRulesClient,
+    engine: DataEngine,
     programId: string,
     signal?: AbortSignal
-): Promise<ProgramRulesMetadata> =>
-    toProgramRulesMetadata(
-        await client.query(
-            {
-                rules: {
-                    resource: 'programRules',
-                    params: {
-                        filter: `program.id:eq:${programId}`,
-                        paging: false,
-                        fields: `id,name,displayName,condition,priority,programStage[id],programRuleActions[${ACTION_FIELDS}]`,
-                    },
-                },
-                variables: {
-                    resource: 'programRuleVariables',
-                    params: {
-                        filter: `program.id:eq:${programId}`,
-                        paging: false,
-                        fields: `id,name,programRuleVariableSourceType,useCodeForOptionSet,valueType,programStage[id],dataElement[${SOURCE_FIELD}],trackedEntityAttribute[${SOURCE_FIELD}]`,
-                    },
-                },
-                constants: {
-                    resource: 'constants',
-                    params: { paging: false, fields: 'id,value' },
-                },
-                program: {
-                    resource: 'programs',
-                    id: programId,
-                    params: { fields: 'id,name,programStages[id,name]' },
-                },
-                me: {
-                    resource: 'me',
-                    params: { fields: 'userRoles[id],userGroups[id]' },
+): Promise<ProgramRulesMetadata> => {
+    const response = await engine.query(
+        {
+            rules: {
+                resource: 'programRules',
+                params: {
+                    filter: `program.id:eq:${programId}`,
+                    paging: false,
+                    fields: `id,name,displayName,condition,priority,programStage[id],programRuleActions[${ACTION_FIELDS}]`,
                 },
             },
-            ProgramRulesResponseSchema,
-            signal
-        )
+            variables: {
+                resource: 'programRuleVariables',
+                params: {
+                    filter: `program.id:eq:${programId}`,
+                    paging: false,
+                    fields: `id,name,programRuleVariableSourceType,useCodeForOptionSet,valueType,programStage[id],dataElement[${SOURCE_FIELD}],trackedEntityAttribute[${SOURCE_FIELD}]`,
+                },
+            },
+            constants: {
+                resource: 'constants',
+                params: { paging: false, fields: 'id,value' },
+            },
+            program: {
+                resource: 'programs',
+                id: programId,
+                params: { fields: 'id,name,programStages[id,name]' },
+            },
+            me: {
+                resource: 'me',
+                params: { fields: 'userRoles[id],userGroups[id]' },
+            },
+        },
+        { signal }
     )
+    return toProgramRulesMetadata(ProgramRulesResponseSchema.parse(response))
+}
 
 const OrgUnitGroupsResponseSchema = z.object({
     groups: z.object({
@@ -224,25 +225,26 @@ const OrgUnitGroupsResponseSchema = z.object({
 
 /** The groups `d2:inOrgUnitGroup` names (by id or code), with their members. */
 export const fetchOrgUnitGroups = async (
-    client: ProgramRulesClient,
+    engine: DataEngine,
     groups: ReadonlyArray<string>,
     signal?: AbortSignal
 ): Promise<RuleOrgUnitGroupMetadata[]> => {
     const list = `[${groups.join(',')}]`
-    const response = await client.query(
-        {
-            groups: {
-                resource: 'organisationUnitGroups',
-                params: {
-                    paging: false,
-                    rootJunction: 'OR',
-                    filter: [`id:in:${list}`, `code:in:${list}`],
-                    fields: 'id,code,organisationUnits[id]',
+    const response = OrgUnitGroupsResponseSchema.parse(
+        await engine.query(
+            {
+                groups: {
+                    resource: 'organisationUnitGroups',
+                    params: {
+                        paging: false,
+                        rootJunction: 'OR',
+                        filter: [`id:in:${list}`, `code:in:${list}`],
+                        fields: 'id,code,organisationUnits[id]',
+                    },
                 },
             },
-        },
-        OrgUnitGroupsResponseSchema,
-        signal
+            { signal }
+        )
     )
     return response.groups.organisationUnitGroups.map((group) => ({
         id: group.id,

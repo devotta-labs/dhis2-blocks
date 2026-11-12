@@ -1,6 +1,7 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React, { useContext, useId, useLayoutEffect } from 'react'
+import { useTrackedEntityHeader } from '../hooks'
 import { useHeaderContext } from '../provider/context'
 import { LabelledRegionContext } from '../provider/labelledRegion'
 import {
@@ -24,11 +25,12 @@ export function TrackedEntityName({
     className,
 }: TrackedEntityNameProps) {
     const context = useHeaderContext()
+    const header = useTrackedEntityHeader()
     const { placeAttribute } = context
     const setRegionLabel = useContext(LabelledRegionContext)
     const generated = useId()
     const headingId = id ?? generated
-    const ready = context.state.status === 'ready'
+    const ready = header.status === 'ready'
     const key = attributes.join(',')
 
     useLayoutEffect(() => {
@@ -44,7 +46,9 @@ export function TrackedEntityName({
         return () => setRegionLabel(undefined)
     }, [ready, headingId, setRegionLabel])
 
-    const parts = attributes.map((uid) => resolveAttribute(uid, context))
+    const parts = attributes.map((uid) =>
+        resolveAttribute(uid, header, context)
+    )
     const problem = parts.find((part) => part.kind === 'misconfigured')
     useLoggedProblem(problem?.message)
 

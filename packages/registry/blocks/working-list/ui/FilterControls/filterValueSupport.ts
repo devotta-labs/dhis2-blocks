@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import type {
     WorkingListCalendar,
@@ -15,39 +16,35 @@ import {
     optionDisplayName,
 } from '../../domain/filterControlPolicy'
 import type { FilterEditorKind } from '../../registry/valueTypes'
-import type { WorkingListTranslate } from '../WorkingListText'
 
 export { fieldDisplayName, localizedField, optionDisplayName }
 
-export const translatedOperator = (
-    operator: FilterOperator,
-    translate: WorkingListTranslate
-) => {
+export const translatedOperator = (operator: FilterOperator) => {
     switch (operator) {
         case 'like':
-            return translate('Contains')
+            return i18n.t('Contains')
         case 'startsWith':
-            return translate('Starts with')
+            return i18n.t('Starts with')
         case 'endsWith':
-            return translate('Ends with')
+            return i18n.t('Ends with')
         case 'equals':
-            return translate('Equals')
+            return i18n.t('Equals')
         case 'range':
-            return translate('Between')
+            return i18n.t('Between')
         case 'greaterThan':
-            return translate('Greater than')
+            return i18n.t('Greater than')
         case 'greaterThanOrEqual':
-            return translate('At least')
+            return i18n.t('At least')
         case 'lessThan':
-            return translate('Less than')
+            return i18n.t('Less than')
         case 'lessThanOrEqual':
-            return translate('At most')
+            return i18n.t('At most')
         case 'in':
-            return translate('Is one of')
+            return i18n.t('Is one of')
         case 'empty':
-            return translate('Is empty')
+            return i18n.t('Is empty')
         case 'notEmpty':
-            return translate('Is not empty')
+            return i18n.t('Is not empty')
     }
 }
 
@@ -133,11 +130,7 @@ export const defaultValue = (
     }
 }
 
-export const summaryForFilter = (
-    filter: AppliedFilter | undefined,
-    translate: WorkingListTranslate
-) => {
-    const i18n = { t: translate }
+export const summaryForFilter = (filter: AppliedFilter | undefined) => {
     if (!filter) {
         return undefined
     }
@@ -156,7 +149,7 @@ export const summaryForFilter = (
                         (candidate) => candidate.code === code
                     )
                     return option
-                        ? optionDisplayName(filter.field, option, translate)
+                        ? optionDisplayName(filter.field, option)
                         : code
                 })()
             )

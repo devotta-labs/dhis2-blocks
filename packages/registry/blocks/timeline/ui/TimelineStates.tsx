@@ -5,50 +5,44 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import type { TimelineNotice } from '../core/types'
-import { useOptionalTimeline, useTimeline } from '../hooks/useTimeline'
+import { useTimeline } from '../hooks/useTimeline'
 
-/** Placeholder rows while the timeline's status is `'pending'`. */
+/** Placeholder rows, for while the entries load. */
 export const TimelineLoading = ({
     className,
     ...props
-}: ComponentPropsWithoutRef<'div'>) => {
-    const { state } = useTimeline()
-    if (state.status !== 'pending') {
-        return null
-    }
-    return (
-        <div
-            {...props}
-            role="status"
-            data-slot="timeline-loading"
-            className={cn('flex flex-col gap-3', className)}
-        >
-            <span className="sr-only">{i18n.t('Loading')}</span>
-            {/* The feed's own shape: a day heading, then entries on the line. */}
-            <div aria-hidden="true" className="flex flex-col gap-4">
-                <Skeleton className="h-3 w-20" />
-                {[0, 1, 2].map((row) => (
-                    <div key={row} className="flex gap-3.5">
-                        <Skeleton className="mt-1 size-2.5 rounded-full" />
-                        <div className="flex flex-1 flex-col gap-2">
-                            <Skeleton className="h-4 w-48" />
-                            <Skeleton className="h-3.5 w-32" />
-                        </div>
+}: ComponentPropsWithoutRef<'div'>) => (
+    <div
+        {...props}
+        role="status"
+        data-slot="timeline-loading"
+        className={cn('flex flex-col gap-3', className)}
+    >
+        <span className="sr-only">{i18n.t('Loading')}</span>
+        {/* The feed's own shape: a day heading, then entries on the line. */}
+        <div aria-hidden="true" className="flex flex-col gap-4">
+            <Skeleton className="h-3 w-20" />
+            {[0, 1, 2].map((row) => (
+                <div key={row} className="flex gap-3.5">
+                    <Skeleton className="mt-1 size-2.5 rounded-full" />
+                    <div className="flex flex-1 flex-col gap-2">
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-3.5 w-32" />
                     </div>
-                ))}
-            </div>
+                </div>
+            ))}
         </div>
-    )
-}
+    </div>
+)
 
-/** Shown when the status is `'success'` and there is nothing to list. */
+/** "No history yet", when the timeline has no entries. */
 export const TimelineEmpty = ({
     className,
     children,
     ...props
 }: ComponentPropsWithoutRef<'p'>) => {
     const { state } = useTimeline()
-    if (state.status !== 'success' || state.entries.length > 0) {
+    if (state.entries.length > 0) {
         return null
     }
     return (
@@ -62,39 +56,33 @@ export const TimelineEmpty = ({
     )
 }
 
-/** Shown when the status is `'error'`, with a Retry when `onRetry` is given. */
+/** For when the entries couldn't load, with a Retry when `onRetry` is given. */
 export const TimelineError = ({
     onRetry,
     children,
     ...props
 }: Omit<ComponentPropsWithoutRef<'div'>, 'title'> & {
     onRetry?: () => void
-}) => {
-    const { state } = useTimeline()
-    if (state.status !== 'error') {
-        return null
-    }
-    return (
-        <ErrorAlert
-            {...props}
-            data-slot="timeline-error"
-            title={children ?? i18n.t("Couldn't load the history")}
-        >
-            {onRetry === undefined ? null : (
-                <div>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={onRetry}
-                    >
-                        {i18n.t('Retry')}
-                    </Button>
-                </div>
-            )}
-        </ErrorAlert>
-    )
-}
+}) => (
+    <ErrorAlert
+        {...props}
+        data-slot="timeline-error"
+        title={children ?? i18n.t("Couldn't load the history")}
+    >
+        {onRetry === undefined ? null : (
+            <div>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={onRetry}
+                >
+                    {i18n.t('Retry')}
+                </Button>
+            </div>
+        )}
+    </ErrorAlert>
+)
 
 const VARIANT = {
     info: 'default',
@@ -104,22 +92,15 @@ const VARIANT = {
 
 /**
  * One alert per notice: a part that failed (with its Retry), data capped, a
- * feature the server lacks. Inside a `Timeline` whose status is `'error'`,
- * failures are left to `TimelineError`, which says so once. Works outside a
- * `Timeline` too.
+ * feature the server lacks.
  */
 export const TimelineNotices = ({
-    notices: given,
+    notices,
     className,
     ...props
 }: ComponentPropsWithoutRef<'ul'> & {
     notices: ReadonlyArray<TimelineNotice>
 }) => {
-    const timeline = useOptionalTimeline()
-    const notices =
-        timeline?.state.status === 'error'
-            ? given.filter((notice) => notice.tone !== 'error')
-            : given
     if (notices.length === 0) {
         return null
     }

@@ -13,13 +13,6 @@ export type FieldKind =
 
 export type SearchOperator = 'eq' | 'like' | 'sw' | 'gt' | 'ge' | 'lt' | 'le'
 
-/** Operators an attribute blocks; it can be read but not changed. */
-export type BlockedOperators = Pick<
-    ReadonlySet<SearchOperator>,
-    'has' | 'size' | typeof Symbol.iterator
->
-
-/** Read-only all the way down; the built model is frozen too. */
 export interface FinderAttribute {
     readonly id: string
     readonly label: string
@@ -34,13 +27,13 @@ export interface FinderAttribute {
     }>
     /** Text kind only. */
     readonly textOperator?: 'like' | 'sw' | 'eq'
-    readonly blocked: BlockedOperators
+    /** The search operators the attribute's metadata blocks. */
+    readonly blocked: ReadonlySet<SearchOperator>
     readonly minCharacters: number
     /** Searchable, a supported kind, and an operator it would send is allowed. */
     readonly usable: boolean
 }
 
-/** Read-only all the way down; the built model is frozen too. */
 export interface ProgramModel {
     readonly program: string
     readonly name: string
@@ -106,15 +99,15 @@ export interface SearchFilter {
     readonly conditions: ReadonlyArray<SearchCondition>
 }
 
-declare const validatedSearch: unique symbol
-
-/** A frozen search only `rules/seal` can create; never build one by hand. */
+/**
+ * The filters of a search the program's rules allow. `evaluateForm` builds
+ * it from a form's values; nothing else should.
+ */
 export interface ValidatedSearch {
-    readonly [validatedSearch]: true
     readonly filters: ReadonlyArray<SearchFilter>
 }
 
-/** Frozen. `search` is present iff `reason === 'ready'`. */
+/** `search` is present iff `reason === 'ready'`. */
 export interface FormVerdict {
     readonly metadataErrors: ReadonlyArray<MetadataError>
     /** Each attribute whose value cannot be searched as is. */

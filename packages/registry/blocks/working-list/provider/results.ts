@@ -5,14 +5,11 @@ import {
     getCellDisplayValue,
     type CellFormattingContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,
-    WorkingListPaginationMeta,
     WorkingListResultTarget,
 } from './contracts'
-import { WORKING_LIST_PAGE_SIZES } from './contracts'
 
 export const toDisplayRows = (
     pageData: WorkingListPage | undefined
@@ -37,26 +34,6 @@ export const toDisplayRows = (
             ...record.event.issues,
         ],
     }))
-}
-
-export const toPaginationMeta = (
-    pageData: WorkingListPage,
-    displayedCount: number
-): WorkingListPaginationMeta => {
-    const pageSize = WORKING_LIST_PAGE_SIZES.find(
-        (candidate) => candidate === pageData.pageSize
-    )
-    if (pageSize === undefined) {
-        throw new Error(
-            `Unexpected working-list page size ${pageData.pageSize}`
-        )
-    }
-    return {
-        page: pageData.page,
-        pageSize,
-        displayedCount,
-        hasNextPage: pageData.hasNextPage,
-    }
 }
 
 export const toResultTargets = ({
@@ -118,7 +95,6 @@ interface VisibleRowsCsvOptions {
     columns: readonly string[]
     fields: FieldCatalog
     formattingContext: CellFormattingContext
-    translate: WorkingListTranslate
 }
 
 export const visibleRowsAsCsv = ({
@@ -126,16 +102,13 @@ export const visibleRowsAsCsv = ({
     columns,
     fields,
     formattingContext,
-    translate,
 }: VisibleRowsCsvOptions) => {
     const visibleFields = columns
         .map((id) => fields.get(id))
         .filter((field): field is WorkingListField => Boolean(field))
     const escape = (value: string) => `"${value.replaceAll('"', '""')}"`
     return [
-        visibleFields
-            .map((field) => escape(fieldDisplayName(field, translate)))
-            .join(','),
+        visibleFields.map((field) => escape(fieldDisplayName(field))).join(','),
         ...rows.map((row) =>
             visibleFields
                 .map((field) => escape(cellText(row, field, formattingContext)))

@@ -17,7 +17,7 @@ import {
  * The parts are presentational: they render from the entry and the calendar,
  * so they work wherever `TimelineMetaProvider` is. The event and program
  * below are placeholders shaped like DHIS2's answers; in your app they come
- * from `useEventEntries` or your own requests.
+ * from `useTrackedEntityHistory` or your own requests.
  */
 const program: ProgramInfo = {
     id: 'placeholderProgram',

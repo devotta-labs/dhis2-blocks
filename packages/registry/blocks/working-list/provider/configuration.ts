@@ -10,6 +10,7 @@ import type {
 } from '../domain/model'
 import { WorkingListConfigurationSchema } from '../domain/schemas'
 import { validateConfigurationReferences } from '../domain/staleReferences'
+import { DEFAULT_WORKING_LIST_SORT } from '../query/serialize'
 import { validateAppliedFilter } from '../registry/valueTypes'
 import type { FilterSerializationContext } from '../registry/valueTypes'
 import {
@@ -25,18 +26,6 @@ export const publicConfigurationFingerprint = (
 ) =>
     JSON.stringify(canonicalizeValue(CanonicalValueSchema.parse(configuration)))
 
-export const internalConfigurationFingerprint = (
-    configuration: InternalConfiguration
-) =>
-    JSON.stringify(
-        canonicalizeValue(WorkingListConfigurationSchema.parse(configuration))
-    )
-
-export const shouldBeginControlledSelection = (
-    previousId: string | undefined,
-    nextId: string
-) => previousId !== nextId
-
 export const resolveSelectedSavedListId = (
     selectedSavedListId: string | null,
     defaultListId: string
@@ -44,27 +33,6 @@ export const resolveSelectedSavedListId = (
     selectedSavedListId && selectedSavedListId.trim().length > 0
         ? selectedSavedListId
         : defaultListId
-
-export const isCurrentSelection = (
-    currentId: string | undefined,
-    expectedId: string
-) => currentId === expectedId
-
-export const canCommitMutationBaseline = ({
-    currentSelectedId,
-    currentConfiguration,
-    submittedSelectedId,
-    submittedConfiguration,
-}: {
-    currentSelectedId: string | undefined
-    currentConfiguration: WorkingListConfiguration | undefined
-    submittedSelectedId: string
-    submittedConfiguration: WorkingListConfiguration
-}) =>
-    currentSelectedId === submittedSelectedId &&
-    currentConfiguration !== undefined &&
-    publicConfigurationFingerprint(currentConfiguration) ===
-        publicConfigurationFingerprint(submittedConfiguration)
 
 export const toPublicConfiguration = (
     configuration: InternalConfiguration
@@ -86,6 +54,70 @@ export const toPublicConfiguration = (
           }
         : { mode: 'trackedEntity', ...base }
 }
+
+/** `configuration` with `filter` in place of the field's earlier filter. */
+export const withFilter = (
+    configuration: WorkingListConfiguration,
+    filter: AppliedFilter
+): WorkingListConfiguration => ({
+    ...configuration,
+    filters: configuration.filters.some(
+        (item) => item.fieldId === filter.fieldId
+    )
+        ? configuration.filters.map((item) =>
+              item.fieldId === filter.fieldId ? filter : item
+          )
+        : [...configuration.filters, filter],
+})
+
+export const withoutFilter = (
+    configuration: WorkingListConfiguration,
+    fieldId: string
+): WorkingListConfiguration => ({
+    ...configuration,
+    filters: configuration.filters.filter(
+        (filter) => filter.fieldId !== fieldId
+    ),
+})
+
+/**
+ * `configuration` listing the events of `programStageId`, or tracked
+ * entities again without one. Only tracked-entity filters carry over, and
+ * the columns and sort start from the defaults: the old ones may name fields
+ * the new list does not have.
+ */
+export const withProgramStage = (
+    configuration: WorkingListConfiguration,
+    metadata: ProgramFieldCatalog,
+    programStageId: string | undefined
+): WorkingListConfiguration => {
+    const base = {
+        filters: configuration.filters.filter((filter) => {
+            const field = metadata.fields.get(filter.fieldId)
+            return (
+                field?.scope === 'trackedEntity' &&
+                (!programStageId || field.id !== 'assignedUser')
+            )
+        }),
+        columns: [
+            ...((programStageId
+                ? metadata.defaultEventColumnsByStage.get(programStageId)
+                : undefined) ?? metadata.defaultTrackedEntityColumns),
+        ],
+        sort: { ...DEFAULT_WORKING_LIST_SORT },
+    }
+    return programStageId
+        ? { mode: 'event', programStageId, ...base }
+        : { mode: 'trackedEntity', ...base }
+}
+
+/** Whether two configurations ask the server for different rows. */
+export const selectsDifferentRows = (
+    left: WorkingListConfiguration,
+    right: WorkingListConfiguration
+) =>
+    publicConfigurationFingerprint({ ...left, columns: [] }) !==
+    publicConfigurationFingerprint({ ...right, columns: [] })
 
 const resolveFilter = (
     filter: AppliedFilter,

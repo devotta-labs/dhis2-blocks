@@ -9,6 +9,7 @@ import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {
     BLOCKED,
     cleanUp,
+    freshServer,
     KEY,
     later,
     leaving,
@@ -36,6 +37,14 @@ test('the app re-rendering above the data provider neither reloads the form nor 
     await later(100)
     expect(memory.loads()).toBe(1)
     expect(control(CHILDREN)).toHaveValue('5')
+})
+
+test('the app moving to another server loads the form again, for that server', async () => {
+    const memory = memorySource(visitForm())
+    const { rerender, view } = await mount(memory.source)
+    await rerender(freshServer())
+    await expect.poll(() => memory.loads()).toBe(2)
+    await expect.poll(() => view().status).toBe('ready')
 })
 
 test('a typed value is saved on this device, then saved', async () => {

@@ -1,6 +1,6 @@
 # Timeline
 
-A read-only timeline. Pass it an array of entries and it lays them out by day in the system calendar, with a dated "Today" marker for now, an "Overdue" group and future entries above now. It never fetches: the DHIS2 layer gives you ordinary TanStack Query hooks that return entries, and you can filter, merge or replace that array however you like before it reaches the timeline.
+A read-only timeline. Pass it an array of entries and it lays them out by day in the system calendar, with a dated "Today" marker for now, an "Overdue" group and future entries above now. It never fetches: the DHIS2 layer has a TanStack Query hook that returns a person's history as entries, and you can filter, merge or replace that array however you like before it reaches the timeline.
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/timeline
@@ -68,14 +68,14 @@ export const PatientHistory = ({
         timeField: 'occurredAt',
     })
     const { entries, hasMore, showMore } = useShowMore(history.entries)
+    if (history.isPending) {
+        return <TimelineLoading />
+    }
+    if (history.isError) {
+        return <TimelineError onRetry={history.refetch} />
+    }
     return (
-        <Timeline<HistoryEntryData>
-            entries={entries}
-            status={history.status}
-            calendar={calendar}
-        >
-            <TimelineLoading />
-            <TimelineError onRetry={history.refetch} />
+        <Timeline<HistoryEntryData> entries={entries} calendar={calendar}>
             <TimelineNotices notices={history.notices} />
             <TimelineEmpty />
             <TimelineFeed<HistoryEntryData>>
@@ -96,37 +96,31 @@ export const PatientHistory = ({
 }
 ```
 
+`TimelineLoading` and `TimelineError` render whenever you render them, inside a `Timeline` or not, so the host decides when: branch on `isPending` and `isError` as above. `TimelineEmpty` ("No history yet") sits inside the `Timeline` and shows when it has no entries.
+
 To limit it to some programs, pass `programs: ['IpHINAT79UW', 'ur1Edk5Oe2n']`. Without it, the history covers every program in the tracked entity's enrollments.
 
-### What the hooks fetch
+### What the hook returns
 
-| Hook                        | Requests                                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| `useEventEntries`           | `tracker/events` once per program (2.43 requires `program`), every status, `cap + 1` rows   |
-| `useEnrollmentEntries`      | `tracker/trackedEntities/{uid}` once, with every enrollment and its notes                   |
-| `useAttributeChangeEntries` | `tracker/trackedEntities/{uid}/changeLogs` once per program, 100 rows a page, up to 500     |
-| all three                   | `programs/{id}` once per program (cached for the session), and one `organisationUnits` call |
+`useTrackedEntityHistory` returns `{ entries, isPending, isError, notices, isFetching, refetch }`.
+
+- `isPending` is true until the enrollments, every program's events and metadata, and the org unit names have answered once, so entries never jump around on the first load. Attribute changes don't hold the rest back: a changelog is read a page at a time and is often the slowest request, so its entries join the history when they arrive.
+- Once the history has shown it never empties again: a retry, a refetch or a newly enrolled program fills in while what is on screen stays. `isFetching` says a request is on its way.
+- A request that fails becomes a notice with a Retry, and the rest of the history still shows. `isError` is true only when neither the enrollments nor any program's events could be loaded.
+
+### What it fetches
+
+| Request                                    | How often                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
+| `tracker/trackedEntities/{uid}`            | once, with every enrollment and its notes                                |
+| `tracker/events`                           | once per program (2.43 requires `program`), every status, `cap + 1` rows |
+| `tracker/trackedEntities/{uid}/changeLogs` | once per program, 100 rows a page, up to 500                             |
+| `programs/{id}`                            | once per program, cached for the session                                 |
+| `organisationUnits`                        | once, for the names of the events' org units                             |
 
 With N programs that is 3N + 2 requests, plus a request for each further changelog page, so the count grows with every program the person is enrolled in. Pass `programs` to keep it down.
 
-`useTrackedEntityHistory` is those three hooks put together. Events and enrollments show together; attribute changes don't hold them back, since a changelog is read a page at a time and is often the slowest request. They join the history when they arrive. Compose the hooks yourself to leave a kind out, or to change what waits for what:
-
-```ts
-const events = useEventEntries({ trackedEntity, timeField: 'occurredAt' })
-const enrollments = useEnrollmentEntries({ trackedEntity })
-const changes = useAttributeChangeEntries({ trackedEntity })
-
-// Show events and enrollments together, without changes.
-const history = mergeHistory<HistoryEntryData>(events, enrollments)
-// Or wait for all three before showing anything.
-const everything = mergeHistory<HistoryEntryData>(events, enrollments, changes)
-// Or show events first and add the rest as each arrives.
-const eventsFirst = addWhenReady<HistoryEntryData>(events, enrollments, changes)
-```
-
-`mergeHistory` makes a new `entries` array on every render. Wrap it in `useMemo` on the parts' `entries` (as `useTrackedEntityHistory` does) if the timeline regrouping each render shows up in a profile.
-
-Every hook returns `{ entries, status, notices, isFetching, refetch }`. A hook's `status` stays `pending` until every one of its requests has answered once, so its entries never jump around on the first load. After that it never goes back: a retry, a refetch or a newly enrolled program fills in while what is on screen stays. A part that fails becomes a notice with a Retry, and the rest of the history still shows. `status` is `error` only when everything failed.
+The hook is one module (`dhis2/hooks/useTrackedEntityHistory.ts`) that runs the requests, and one pure function (`dhis2/buildHistory.ts`) that decides what shows when. To change what waits for what, edit `buildHistory`; to build entries from requests of your own, use `eventEntry`, `milestoneEntries`, `noteEntries` and `changeEntries`.
 
 ### Choosing what matters
 
@@ -205,7 +199,7 @@ To merge it with a DHIS2 history, concatenate the arrays. Keep ids unique across
 
 ## A headless layout
 
-Skip `TimelineFeed` and lay the groups out yourself with `useTimeline()`, which returns `{ state, meta }` (entries, groups and status; calendar, locale, today and the timeline's id), or call `groupTimeline(entries, options)` without any React at all.
+Skip `TimelineFeed` and lay the groups out yourself with `useTimeline()`, which returns `{ state, meta }` (entries, groups and where "now" sits; calendar, locale, today and the timeline's id), or call `groupTimeline(entries, options)` without any React at all.
 
 ```tsx
 import React from 'react'
@@ -230,7 +224,7 @@ const GroupedList = () => {
 
 ## Server paging
 
-One source that pages on the server needs nothing special. Use `useInfiniteQuery`, flatten the pages into entries, and point `TimelineShowMore` at the next page. For tracker events, use `useProgramInfo`, `useOrgUnitNames` and `eventEntry` to name the events:
+One source that pages on the server needs nothing special. Use `useInfiniteQuery`, flatten the pages into entries, and point `TimelineShowMore` at the next page. For tracker events, use `useProgramInfo(program)`, `useOrgUnitNames(ids)` (both plain `useQuery` results) and `eventEntry` to name the events. Pass `loading` while the page is fetched: the button says so, and focus moves to the first entry of the page when it arrives.
 
 ```tsx
 <TimelineShowMore
@@ -240,11 +234,11 @@ One source that pages on the server needs nothing special. Use `useInfiniteQuery
 />
 ```
 
-Merging several sources that each page on the server is not built in. The history hooks fetch each person's data in full, up to a cap, instead.
+Merging several sources that each page on the server is not built in. `useTrackedEntityHistory` fetches each person's data in full, up to a cap, instead.
 
 ## Notes
 
-**`timeField` has no default.** `useEventEntries` and `useTrackedEntityHistory` need `timeField` (`occurredAt`, `scheduledAt`, `completedAt`, `createdAt` or `updatedAt`): the field that orders and places events. Programs differ in which date they treat as the visit date, and a wrong default would reorder their history without any error, so you choose. Scheduled, overdue and skipped events always sit at their `scheduledAt`.
+**`timeField` has no default.** `useTrackedEntityHistory` needs `timeField` (`occurredAt`, `scheduledAt`, `completedAt`, `createdAt` or `updatedAt`): the field that orders and places events. Programs differ in which date they treat as the visit date, and a wrong default would reorder their history without any error, so you choose. Scheduled, overdue and skipped events always sit at their `scheduledAt`.
 
 **The cap.** Each program's events are read in one request of up to `cap` (default 500). When there are more, a notice says "Showing the most recent 500 events in {{program}}." Scheduled events that have no `occurredAt` sort first on `occurredAt:desc`, so a capped history still keeps the upcoming visits.
 
@@ -256,7 +250,7 @@ Merging several sources that each page on the server is not built in. The histor
 
 **Dates in other calendars.** Day headings and dates follow the system calendar. Gregorian and ISO 8601 read as "Oct 14, 2026" in the user's locale. Ethiopian, Coptic, Nepali, Islamic, Persian and Thai have no month names in `Intl`, so they show as `YYYY-MM-DD` in that calendar. `Timeline` needs `calendar` even for data that isn't from DHIS2: use `'iso8601'`.
 
-**Refreshing.** The hooks are plain TanStack Query hooks, so your `QueryClient` defaults apply. After your app edits data elsewhere, call `refetch()` or invalidate every timeline query:
+**Refreshing.** The hooks are plain TanStack Query hooks, so your `QueryClient` defaults for stale time and refetching apply. Retries are set per request: a server or network failure is retried twice, a client error or a malformed answer is not, and a changelog is never retried, so its notice and Retry show at once. After your app edits data elsewhere, call `refetch()` or invalidate every timeline query:
 
 ```ts
 import { timelineKeys } from '@/components/timeline/dhis2'

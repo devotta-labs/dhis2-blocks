@@ -1,6 +1,8 @@
+import type { useDataEngine } from '@dhis2/app-runtime'
 import type { RuleEnrollmentData, RuleEventInput } from '../lib'
 import { z } from 'zod'
-import type { ProgramRulesClient } from './client'
+
+type DataEngine = ReturnType<typeof useDataEngine>
 
 const ValueSchema = z.string().optional()
 
@@ -87,25 +89,36 @@ const EVENT_FIELDS =
 const enrollmentFields = (withEvents: boolean): string =>
     `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
 
+const EnrollmentResponseSchema = z.object({
+    enrollment: RuleEnrollmentResponseSchema,
+})
+
 export const fetchRuleEnrollment = async (
-    client: ProgramRulesClient,
+    engine: DataEngine,
     enrollmentId: string,
     withEvents: boolean,
     signal?: AbortSignal
 ): Promise<RuleEnrollmentData> => {
-    const response = await client.query(
-        {
-            enrollment: {
-                resource: 'tracker/enrollments',
-                id: enrollmentId,
-                params: { fields: enrollmentFields(withEvents) },
+    const response = EnrollmentResponseSchema.parse(
+        await engine.query(
+            {
+                enrollment: {
+                    resource: 'tracker/enrollments',
+                    id: enrollmentId,
+                    params: { fields: enrollmentFields(withEvents) },
+                },
             },
-        },
-        z.object({ enrollment: RuleEnrollmentResponseSchema }),
-        signal
+            { signal }
+        )
     )
     return toRuleEnrollmentData(response.enrollment)
 }
+
+const EnrollmentsResponseSchema = z.object({
+    enrollments: z.object({
+        enrollments: z.array(RuleEnrollmentResponseSchema),
+    }),
+})
 
 /** The enrollment ids a single request may carry, to keep the URL short. */
 export const ENROLLMENT_BATCH_SIZE = 100
@@ -115,7 +128,7 @@ export const ENROLLMENT_BATCH_SIZE = 100
  * no access) are absent from the result.
  */
 export const fetchRuleEnrollments = async (
-    client: ProgramRulesClient,
+    engine: DataEngine,
     programId: string,
     enrollmentIds: ReadonlyArray<string>,
     withEvents: boolean,
@@ -131,26 +144,23 @@ export const fetchRuleEnrollments = async (
             )
     )
     const responses = await Promise.all(
-        batches.map((ids) =>
-            client.query(
-                {
-                    enrollments: {
-                        resource: 'tracker/enrollments',
-                        params: {
-                            // DHIS2 2.43 refuses a list of enrollments without its program.
-                            program: programId,
-                            enrollments: ids.join(','),
-                            pageSize: ids.length,
-                            fields,
+        batches.map(async (ids) =>
+            EnrollmentsResponseSchema.parse(
+                await engine.query(
+                    {
+                        enrollments: {
+                            resource: 'tracker/enrollments',
+                            params: {
+                                // DHIS2 2.43 refuses a list of enrollments without its program.
+                                program: programId,
+                                enrollments: ids.join(','),
+                                pageSize: ids.length,
+                                fields,
+                            },
                         },
                     },
-                },
-                z.object({
-                    enrollments: z.object({
-                        enrollments: z.array(RuleEnrollmentResponseSchema),
-                    }),
-                }),
-                signal
+                    { signal }
+                )
             )
         )
     )

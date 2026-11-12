@@ -35,11 +35,22 @@ const idsOf = (filter: string | number | boolean | undefined) =>
         .replace(/^id:in:\[|\]$/g, '')
         .split(',')
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
+/**
+ * An HTTP failure, shaped like the ones app-runtime throws. A class, so the lab
+ * can tell it apart and rethrow app-runtime's own error: importing that here
+ * would keep this server out of a node test.
+ */
+export class LabHttpError extends Error {
+    readonly details: { httpStatusCode: number; message: string }
+
+    constructor(status: number, message: string) {
+        super(message)
+        this.details = { httpStatusCode: status, message }
+    }
+}
+
 const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
+    new LabHttpError(status, message)
 
 /** What the lab's DHIS2 answers; how slowly, or whether at all, is the lab network's call. */
 export const answer = (

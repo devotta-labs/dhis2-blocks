@@ -2,11 +2,13 @@ import { formatDhis2Value } from '@/components/dhis2-value-display'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import { ageOf, formatAge, todayIso } from '../format/age'
-import { useHeaderContext, type HeaderContextValue } from '../provider/context'
+import { useTrackedEntityHeader, type TrackedEntityHeaderState } from '../hooks'
+import { useHeaderContext } from '../provider/context'
 import { AttributeFact } from './FactPair'
 import {
     useAttributeValue,
     useLoggedProblem,
+    type AttributeScope,
     type AttributeValueState,
 } from './useAttributeValue'
 
@@ -33,7 +35,7 @@ export type TrackedEntityDateProps =
 const withAge = (
     state: AttributeValueState,
     raw: string | undefined,
-    { display }: HeaderContextValue
+    { display }: AttributeScope
 ): AttributeValueState => {
     const ageNow = raw ? ageOf(raw, todayIso(), display.calendar) : undefined
     return state.kind === 'value' && ageNow
@@ -50,9 +52,10 @@ const withAge = (
 
 const resolveEnrollmentDate = (
     enrollmentDate: 'occurredAt' | 'enrolledAt',
-    { state, program, display }: HeaderContextValue
+    header: TrackedEntityHeaderState,
+    { program, display }: AttributeScope
 ): AttributeValueState => {
-    if (state.status !== 'ready') {
+    if (header.status !== 'ready') {
         return { kind: 'hidden' }
     }
     if (!program) {
@@ -61,7 +64,7 @@ const resolveEnrollmentDate = (
             message: `A tracked entity date part with enrollmentDate "${enrollmentDate}" needs the program prop: the date comes from the enrollment in a program`,
         }
     }
-    const { metadata, trackedEntity } = state
+    const { metadata, trackedEntity } = header
     const label =
         enrollmentDate === 'occurredAt'
             ? (metadata.incidentDateLabel ?? i18n.t('Incident date'))
@@ -81,12 +84,13 @@ const FromEnrollment = ({
     className,
 }: DateBase & { enrollmentDate: 'occurredAt' | 'enrolledAt' }) => {
     const context = useHeaderContext()
-    const resolved = resolveEnrollmentDate(enrollmentDate, context)
+    const header = useTrackedEntityHeader()
+    const resolved = resolveEnrollmentDate(enrollmentDate, header, context)
     const result =
-        age && context.state.status === 'ready'
+        age && header.status === 'ready'
             ? withAge(
                   resolved,
-                  context.state.trackedEntity.enrollment?.[enrollmentDate],
+                  header.trackedEntity.enrollment?.[enrollmentDate],
                   context
               )
             : resolved
@@ -109,12 +113,13 @@ const FromAttribute = ({
     className,
 }: DateBase & { attribute: string }) => {
     const context = useHeaderContext()
+    const header = useTrackedEntityHeader()
     const state = useAttributeValue(attribute)
     const shown =
-        age && context.state.status === 'ready'
+        age && header.status === 'ready'
             ? withAge(
                   state,
-                  context.state.trackedEntity.values.get(attribute),
+                  header.trackedEntity.values.get(attribute),
                   context
               )
             : state

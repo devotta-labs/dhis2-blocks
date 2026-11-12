@@ -7,7 +7,7 @@ import { errorText } from './errorText'
 /** A finder form's values: one `FieldValue` per attribute uid. */
 export type FinderValues = Record<string, FieldValue | undefined>
 
-const NO_VALUES: FinderValues = Object.freeze({})
+const NO_VALUES: FinderValues = {}
 
 /** Internal: the TanStack form behind one `FinderForm`. */
 export const useFinderFormApi = (onSubmit: (values: FinderValues) => void) =>

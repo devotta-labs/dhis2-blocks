@@ -3,8 +3,9 @@
 Composable cards for DHIS2 React 18 applications that show one person's
 readings in one program: how measured values are trending and what each
 important thing was last recorded as. Read-only, and coloured only from the
-data element's legend set or option colours. The provider loads the program's
-metadata and the person's events once for every card inside it.
+data element's legend set or option colours. The provider names the person
+and the program; the cards under it share one request for the program's
+metadata and one for the person's events.
 
 ```tsx
 <ObservationsProvider trackedEntity={personId} program={programId}>
@@ -34,9 +35,8 @@ takes a `className`. The card shows the loading, error, never recorded and
 unsupported states itself, and adds the recorded date, stale and partial
 access notes when a composed card leaves `ObservationRecorded` out.
 
-`useObservation(dataElement)` returns a card's state and series, for custom
-layouts. `createObservationsClient` wraps a custom data engine; by default
-the block uses the DHIS2 app-runtime.
+The cards fetch through the DHIS2 app-runtime's data engine and TanStack
+Query, so they need the app's `QueryClientProvider` above them.
 
 To list the data elements a program's stages capture:
 

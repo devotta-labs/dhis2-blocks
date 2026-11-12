@@ -6,7 +6,7 @@ import {
     systemFilterRegistry,
 } from '../registry/systemFilters'
 import type { WorkingListCapabilities } from './capabilities'
-import { shouldRetryWorkingListRequest, type WorkingListClient } from './client'
+import { shouldRetryWorkingListRequest, type DataEngine } from './request'
 import {
     TrackerProgramSchema,
     TrackerProgramsResponseSchema,
@@ -35,8 +35,8 @@ export const getProgramMetadataFields = (apiVersion: number) =>
 export const PROGRAM_SUMMARY_FIELDS =
     'id,displayName,programType,access,style[color,icon],organisationUnits[id,displayName,path]'
 
-export const fetchTrackerProgram = (
-    client: WorkingListClient,
+export const fetchTrackerProgram = async (
+    engine: DataEngine,
     {
         programId,
         signal,
@@ -46,50 +46,56 @@ export const fetchTrackerProgram = (
         signal?: AbortSignal
         apiVersion: number
     }
-) =>
-    client.query(
+) => {
+    const { program } = await engine.query(
         {
-            resource: 'programs',
-            id: programId,
-            params: { fields: getProgramMetadataFields(apiVersion) },
-        },
-        TrackerProgramSchema,
-        signal
-    )
-
-export const fetchTrackerPrograms = (
-    client: WorkingListClient,
-    signal?: AbortSignal
-) =>
-    client.query(
-        {
-            resource: 'programs',
-            params: {
-                fields: PROGRAM_SUMMARY_FIELDS,
-                paging: false,
-                filter: 'programType:eq:WITH_REGISTRATION',
+            program: {
+                resource: 'programs',
+                id: programId,
+                params: { fields: getProgramMetadataFields(apiVersion) },
             },
         },
-        TrackerProgramsResponseSchema,
-        signal
+        { signal }
     )
+    return TrackerProgramSchema.parse(program)
+}
+
+export const fetchTrackerPrograms = async (
+    engine: DataEngine,
+    signal?: AbortSignal
+) => {
+    const { programs } = await engine.query(
+        {
+            programs: {
+                resource: 'programs',
+                params: {
+                    fields: PROGRAM_SUMMARY_FIELDS,
+                    paging: false,
+                    filter: 'programType:eq:WITH_REGISTRATION',
+                },
+            },
+        },
+        { signal }
+    )
+    return TrackerProgramsResponseSchema.parse(programs)
+}
 
 export const trackerProgramQueryOptions = (
-    client: WorkingListClient,
+    engine: DataEngine,
     programId: string,
     apiVersion: number
 ) =>
     queryOptions({
         queryKey: workingListQueryKeys.programMetadata(programId, apiVersion),
         queryFn: ({ signal }) =>
-            fetchTrackerProgram(client, { programId, signal, apiVersion }),
+            fetchTrackerProgram(engine, { programId, signal, apiVersion }),
         staleTime: 60 * 60_000,
         gcTime: 4 * 60 * 60_000,
         retry: shouldRetryWorkingListRequest,
     })
 
 export const trackerProgramsQueryOptions = (
-    client: WorkingListClient,
+    engine: DataEngine,
     apiVersion: number
 ) =>
     queryOptions({
@@ -99,7 +105,7 @@ export const trackerProgramsQueryOptions = (
             'programs',
             apiVersion,
         ] as const,
-        queryFn: ({ signal }) => fetchTrackerPrograms(client, signal),
+        queryFn: ({ signal }) => fetchTrackerPrograms(engine, signal),
         staleTime: 60 * 60_000,
         gcTime: 4 * 60 * 60_000,
         retry: shouldRetryWorkingListRequest,

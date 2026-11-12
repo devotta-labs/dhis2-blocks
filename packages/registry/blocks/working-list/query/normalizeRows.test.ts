@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import type { TrackedEntity, TrackerEvent } from '../api/schemas'
 import type { FieldCatalog, WorkingListField } from '../domain/model'
 import {
@@ -149,19 +150,19 @@ describe('metadata-aware row normalization', () => {
         })
     })
 
-    it('localizes issue messages through the injected translator', () => {
+    it('localizes issue messages through d2-i18n', () => {
+        i18n.addResources('en', 'translation', {
+            'Expected a finite {{valueType}} value':
+                '#{{valueType}} must be finite',
+        })
+        onTestFinished(() => i18n.removeResourceBundle('en', 'translation'))
         const normalized = normalizeTrackedEntityValues(
             record([{ attribute: integerField.id, value: 'abc' }]),
-            fields,
-            {
-                translate: (message, values) =>
-                    `#${message}|${JSON.stringify(values ?? null)}`,
-            }
+            fields
         )
         expect(normalized.values[integerField.id]).toMatchObject({
             valid: false,
-            message:
-                '#Expected a finite {{valueType}} value|{"valueType":"INTEGER_POSITIVE"}',
+            message: '#INTEGER_POSITIVE must be finite',
         })
     })
 

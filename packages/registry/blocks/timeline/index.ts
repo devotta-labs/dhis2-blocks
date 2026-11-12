@@ -13,7 +13,6 @@ export type {
     TimelineNotice,
     TimelineOrder,
     TimelinePhase,
-    TimelineStatus,
 } from './core/types'
 export { Timeline, type TimelineProps } from './ui/Timeline'
 export {

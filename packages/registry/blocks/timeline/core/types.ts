@@ -31,9 +31,6 @@ export interface TimelineGroup<TData = unknown> {
     entries: TimelineEntry<TData>[]
 }
 
-/** Where the data behind the entries stands; the timeline never fetches. */
-export type TimelineStatus = 'pending' | 'error' | 'success'
-
 /** Something the viewer should know about the history: a failure, a cap, a missing feature. */
 export interface TimelineNotice {
     id: string

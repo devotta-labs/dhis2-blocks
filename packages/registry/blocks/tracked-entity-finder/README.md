@@ -48,11 +48,12 @@ form; `useFinderField` returns the attribute's TanStack `field`, its `error`
 and any `metadataError`, so a custom input counts toward the search like
 the built-in ones.
 
-The block reads DHIS2 app-runtime's `useDataEngine` and runs every request in
-a TanStack Query `queryFn`. Tests can use app-runtime's `CustomDataProvider`.
+The finder fetches through the DHIS2 app-runtime's data engine and TanStack
+Query, so it needs the app's `QueryClientProvider` above it. Tests can fake
+the server with app-runtime's `CustomDataProvider`.
 
 Program metadata and system info stay fresh for 3 hours. Search results stay
-fresh for 5 minutes, keyed by server URL, program, filters and page, including
+fresh for 5 minutes, keyed by server URL, program and filters, including
 across repeated submissions and finder remounts within the same QueryClient.
 Different server URLs never share cached metadata or results. The host app must
 discard/reset its QueryClient on logout/login; that lifecycle isolates users,
@@ -66,8 +67,8 @@ GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTra
 
 The block reads the literal `process.env.NODE_ENV`, which your bundler
 replaces at build time, to choose between the full development metadata-error
-messages and the short production ones (the full message is logged instead).
-Where nothing replaces it, the full messages show.
+messages and the short production ones (the built-in parts log the full
+message instead). Where nothing replaces it, the full messages show.
 
 See the docs page at `/blocks/tracked-entity-finder` for every part, hook and
 example.

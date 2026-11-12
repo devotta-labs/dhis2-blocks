@@ -48,8 +48,11 @@ export type CalendarResults =
 type DatePicker = ReturnType<typeof useDatePicker>
 
 export interface CalendarState {
-    /** Full weeks, including the neighbouring months' days. */
-    weeks: ReadonlyArray<ReadonlyArray<CalendarDay>>
+    /**
+     * Full weeks, including the neighbouring months' days. CalendarProvider
+     * places the records on them.
+     */
+    weeks: ReadonlyArray<ReadonlyArray<Omit<CalendarDay, 'records'>>>
     /** Inclusive dates to request from a data source, in the chosen calendar. */
     visibleRange: { start: string; end: string }
     visibleMonth: number
@@ -65,7 +68,7 @@ export interface CalendarState {
         | 'navigateToMonth'
         | 'navigateToYear'
     >
-    selectedDay: CalendarDay | null
+    selectedDate: string | null
     selectDay(date: string | null): void
     display: CalendarDisplay
     setDisplay(display: CalendarDisplay): void
@@ -78,14 +81,13 @@ export interface CalendarState {
 export interface CalendarContextValue {
     state: Pick<
         CalendarState,
-        | 'weeks'
-        | 'visibleRange'
-        | 'visibleMonth'
-        | 'selectedDay'
-        | 'display'
-        | 'atStart'
-        | 'atEnd'
-    > & { results: CalendarResults }
+        'visibleRange' | 'visibleMonth' | 'display' | 'atStart' | 'atEnd'
+    > & {
+        /** The visible weeks with each day's records. */
+        weeks: ReadonlyArray<ReadonlyArray<CalendarDay>>
+        selectedDay: CalendarDay | null
+        results: CalendarResults
+    }
     actions: Pick<CalendarState, 'selectDay' | 'setDisplay'> &
         Pick<
             DatePicker,

@@ -1,9 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
-import {
-    shouldRetryWorkingListRequest,
-    type WorkingListClient,
-} from '../api/client'
+import { shouldRetryWorkingListRequest, type DataEngine } from '../api/request'
 import type { FieldCatalog } from '../domain/model'
 import type { WorkingListPage } from './fetchers'
 import { workingListQueryKeys } from './keys'
@@ -81,33 +78,32 @@ export const collectOrganisationUnitIds = (
     return [...result].sort()
 }
 
-const fetchOrganisationUnitLabels = async ({
-    client,
-    ids,
-    signal,
-}: {
-    client: WorkingListClient
-    ids: string[]
-    signal?: AbortSignal
-}): Promise<ReadonlyMap<string, OrganisationUnitLabel>> => {
+const fetchOrganisationUnitLabels = async (
+    engine: DataEngine,
+    ids: string[],
+    signal: AbortSignal
+): Promise<ReadonlyMap<string, OrganisationUnitLabel>> => {
     const uniqueIds = [...new Set(ids)].sort()
     if (!uniqueIds.length) {
         return new Map()
     }
-    const response = await client.query(
+    const { labels } = await engine.query(
         {
-            resource: 'organisationUnits',
-            params: {
-                fields: 'id,displayName,path',
-                filter: `id:in:[${uniqueIds.join(',')}]`,
-                paging: false,
+            labels: {
+                resource: 'organisationUnits',
+                params: {
+                    fields: 'id,displayName,path',
+                    filter: `id:in:[${uniqueIds.join(',')}]`,
+                    paging: false,
+                },
             },
         },
-        OrganisationUnitLabelsResponseSchema,
-        signal
+        { signal }
     )
     return new Map(
-        response.organisationUnits.map((organisationUnit) => [
+        OrganisationUnitLabelsResponseSchema.parse(
+            labels
+        ).organisationUnits.map((organisationUnit) => [
             organisationUnit.id,
             organisationUnit,
         ])
@@ -115,13 +111,13 @@ const fetchOrganisationUnitLabels = async ({
 }
 
 export const organisationUnitLabelsQueryOptions = (
-    client: WorkingListClient,
+    engine: DataEngine,
     ids: string[]
 ) =>
     queryOptions({
         queryKey: workingListQueryKeys.organisationUnitLabels(ids),
         queryFn: ({ signal }) =>
-            fetchOrganisationUnitLabels({ client, ids, signal }),
+            fetchOrganisationUnitLabels(engine, ids, signal),
         staleTime: 60 * 60_000,
         gcTime: 4 * 60 * 60_000,
         retry: shouldRetryWorkingListRequest,

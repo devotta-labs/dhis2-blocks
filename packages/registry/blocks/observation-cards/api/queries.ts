@@ -1,5 +1,5 @@
-import { Result } from 'better-result'
-import type { ObservationsResourceClient } from './client'
+import { FetchError, useDataEngine } from '@dhis2/app-runtime'
+import { useQuery } from '@tanstack/react-query'
 import {
     EnrollmentsResponseSchema,
     EventsResponseSchema,
@@ -7,71 +7,83 @@ import {
 } from './schemas'
 import type { ProgramMetadata, TrackerEventRecord } from './types'
 
+type DataEngine = ReturnType<typeof useDataEngine>
+
 export const EVENTS_PAGE_SIZE = 200
 /** More pages than this is an error rather than a silently shortened history. */
 export const EVENTS_MAX_PAGES = 50
 
-const NO_ENROLLMENT_MESSAGE =
-    'This person has no visible enrollment in this program'
-
 interface Subject {
-    trackedEntityId: string
-    programId: string
+    trackedEntity: string
+    program: string
 }
 
 const DATA_ELEMENT_FIELDS =
     'id,displayName,displayFormName,valueType,legendSets[legends[displayName~rename(name),color,startValue,endValue]],optionSet[options[code,displayName~rename(name),style[color]]]'
 
 /**
- * Every stage of the program with the data elements it captures, in one
- * request, so the provider never needs to know which elements its cards
- * show.
+ * Only a failed request is retried, twice, and only when the server or the
+ * network failed. A malformed response, a client error and the data rules'
+ * own errors (no enrollment, too many events) would fail the same way again.
  */
-export const fetchProgramMetadata = (
-    client: ObservationsResourceClient,
-    programId: string,
-    signal?: AbortSignal
-): Promise<Result<ProgramMetadata, Error>> =>
-    client.query(
-        {
-            resource: 'programs',
-            id: programId,
-            params: {
-                fields: `programStages[id,displayName,access[data[read]],programStageDataElements[dataElement[${DATA_ELEMENT_FIELDS}]]]`,
-            },
-        },
-        ProgramMetadataResponseSchema,
-        signal
-    )
+export const shouldRetryRequest = (failureCount: number, error: Error) =>
+    failureCount < 2 &&
+    error instanceof FetchError &&
+    error.type !== 'access' &&
+    (error.details.httpStatusCode === undefined ||
+        error.details.httpStatusCode >= 500)
 
 /**
- * One enrollment of the person in the program. None at all means the user
- * cannot see the person there (ownership, sharing, never enrolled), which must
- * not read as "never recorded", so it is an error.
+ * Every stage of the program with the data elements it captures, in one
+ * request, so no card has to say which elements it shows.
  */
-export const fetchEnrollment = async (
-    client: ObservationsResourceClient,
-    { trackedEntityId, programId }: Subject,
-    signal?: AbortSignal
-): Promise<Result<string, Error>> => {
-    const result = await client.query(
+const fetchProgramMetadata = async (
+    engine: DataEngine,
+    program: string,
+    signal: AbortSignal
+): Promise<ProgramMetadata> => {
+    const { metadata } = await engine.query(
         {
-            resource: 'tracker/enrollments',
-            params: {
-                trackedEntity: trackedEntityId,
-                program: programId,
-                fields: 'enrollment',
-                pageSize: 1,
+            metadata: {
+                resource: 'programs',
+                id: program,
+                params: {
+                    fields: `programStages[id,displayName,access[data[read]],programStageDataElements[dataElement[${DATA_ELEMENT_FIELDS}]]]`,
+                },
             },
         },
-        EnrollmentsResponseSchema,
-        signal
+        { signal }
     )
-    return result.andThen(([first]) =>
-        first === undefined
-            ? Result.err(new Error(NO_ENROLLMENT_MESSAGE))
-            : Result.ok(first.enrollment)
+    return ProgramMetadataResponseSchema.parse(metadata)
+}
+
+/**
+ * No enrollment at all means the user cannot see the person in the program
+ * (ownership, sharing, never enrolled), which must not read as "never
+ * recorded", so it is an error.
+ */
+const requireEnrollment = async (
+    engine: DataEngine,
+    { trackedEntity, program }: Subject,
+    signal: AbortSignal
+): Promise<void> => {
+    const { enrollments } = await engine.query(
+        {
+            enrollments: {
+                resource: 'tracker/enrollments',
+                params: {
+                    trackedEntity,
+                    program,
+                    fields: 'enrollment',
+                    pageSize: 1,
+                },
+            },
+        },
+        { signal }
     )
+    if (EnrollmentsResponseSchema.parse(enrollments).length === 0) {
+        throw new Error('This person has no visible enrollment in this program')
+    }
 }
 
 /**
@@ -81,50 +93,77 @@ export const fetchEnrollment = async (
  * EVENTS_MAX_PAGES pages, one more page is asked for only to learn whether
  * the history ends there; any event on it is an error.
  */
-export const fetchEvents = async (
-    client: ObservationsResourceClient,
-    { trackedEntityId, programId }: Subject,
-    signal?: AbortSignal
-): Promise<Result<TrackerEventRecord[], Error>> => {
+const fetchEvents = async (
+    engine: DataEngine,
+    { trackedEntity, program }: Subject,
+    signal: AbortSignal
+): Promise<TrackerEventRecord[]> => {
     const events = new Map<string, TrackerEventRecord>()
     for (let page = 1; page <= EVENTS_MAX_PAGES + 1; page++) {
-        const result = await client.query(
+        const response = await engine.query(
             {
-                resource: 'tracker/events',
-                params: {
-                    trackedEntity: trackedEntityId,
-                    program: programId,
-                    fields: 'event,trackedEntity,programStage,status,occurredAt,createdAt,dataValues[dataElement,value]',
-                    order: 'occurredAt:asc,createdAt:asc',
-                    pageSize: EVENTS_PAGE_SIZE,
-                    page,
+                events: {
+                    resource: 'tracker/events',
+                    params: {
+                        trackedEntity,
+                        program,
+                        fields: 'event,trackedEntity,programStage,status,occurredAt,createdAt,dataValues[dataElement,value]',
+                        order: 'occurredAt:asc,createdAt:asc',
+                        pageSize: EVENTS_PAGE_SIZE,
+                        page,
+                    },
                 },
             },
-            EventsResponseSchema,
-            signal
+            { signal }
         )
-        if (Result.isError(result)) {
-            return Result.err(result.error)
-        }
-        if (page > EVENTS_MAX_PAGES && result.value.length > 0) {
+        const received = EventsResponseSchema.parse(response.events)
+        if (page > EVENTS_MAX_PAGES && received.length > 0) {
             break
         }
-        for (const event of result.value) {
+        for (const event of received) {
             const owner = event.trackedEntity
             if (
-                (owner === undefined || owner === trackedEntityId) &&
+                (owner === undefined || owner === trackedEntity) &&
                 !events.has(event.event)
             ) {
                 events.set(event.event, event)
             }
         }
-        if (result.value.length < EVENTS_PAGE_SIZE) {
-            return Result.ok([...events.values()])
+        if (received.length < EVENTS_PAGE_SIZE) {
+            return [...events.values()]
         }
     }
-    return Result.err(
-        new Error(
-            `Too many events: tracked entity ${trackedEntityId} has at least ${EVENTS_MAX_PAGES} full pages of ${EVENTS_PAGE_SIZE} events in program ${programId}`
-        )
+    throw new Error(
+        `Too many events: tracked entity ${trackedEntity} has at least ${EVENTS_MAX_PAGES} full pages of ${EVENTS_PAGE_SIZE} events in program ${program}`
     )
+}
+
+/** The program's stages and data elements, shared by every card of the program. */
+export const useProgramMetadata = (program: string) => {
+    const engine = useDataEngine()
+    return useQuery({
+        queryKey: ['observation-cards', 'programMetadata', program],
+        queryFn: ({ signal }) => fetchProgramMetadata(engine, program, signal),
+        // Nothing to ask for yet, so the cards stay pending.
+        enabled: program !== '',
+        retry: shouldRetryRequest,
+    })
+}
+
+/** Every event of the person in the program, shared by every card of the person. */
+export const usePersonEvents = ({ trackedEntity, program }: Subject) => {
+    const engine = useDataEngine()
+    return useQuery({
+        queryKey: ['observation-cards', 'events', trackedEntity, program],
+        queryFn: async ({ signal }) => {
+            const subject = { trackedEntity, program }
+            const [events] = await Promise.all([
+                fetchEvents(engine, subject, signal),
+                requireEnrollment(engine, subject, signal),
+            ])
+            return events
+        },
+        enabled: trackedEntity !== '' && program !== '',
+        retry: shouldRetryRequest,
+    })
 }

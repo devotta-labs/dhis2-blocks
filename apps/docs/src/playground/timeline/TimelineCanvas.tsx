@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
     Timeline,
     TimelineEmpty,
@@ -25,6 +26,23 @@ interface Props {
     locale: string
 }
 
+/** The block draws on a white page; the lab's canvas follows the docs' theme. */
+const Page = ({
+    locale,
+    children,
+}: {
+    locale: string
+    children: ReactNode
+}) => (
+    <div
+        dir={locale === 'ar' ? 'rtl' : 'ltr'}
+        lang={locale}
+        className="w-full max-w-2xl rounded-lg bg-dhis2-background p-4 md:p-6"
+    >
+        {children}
+    </div>
+)
+
 /** The README's composition: a person's history, a step of past entries at a time. */
 export const TimelineCanvas = ({
     trackedEntity,
@@ -42,21 +60,27 @@ export const TimelineCanvas = ({
     const { entries, hasMore, showMore } = useShowMore(history.entries, {
         step,
     })
+    if (history.isPending) {
+        return (
+            <Page locale={locale}>
+                <TimelineLoading />
+            </Page>
+        )
+    }
+    if (history.isError) {
+        return (
+            <Page locale={locale}>
+                <TimelineError onRetry={history.refetch} />
+            </Page>
+        )
+    }
     return (
-        // The block draws on a white page; the lab's canvas follows the docs' theme.
-        <div
-            dir={locale === 'ar' ? 'rtl' : 'ltr'}
-            lang={locale}
-            className="w-full max-w-2xl rounded-lg bg-dhis2-background p-4 md:p-6"
-        >
+        <Page locale={locale}>
             <Timeline<HistoryEntryData>
                 entries={entries}
-                status={history.status}
                 calendar={calendar}
                 locale={locale}
             >
-                <TimelineLoading />
-                <TimelineError onRetry={history.refetch} />
                 <TimelineNotices notices={history.notices} />
                 <TimelineEmpty />
                 <TimelineFeed<HistoryEntryData>>
@@ -68,6 +92,6 @@ export const TimelineCanvas = ({
                     complete={history.notices.length === 0}
                 />
             </Timeline>
-        </div>
+        </Page>
     )
 }

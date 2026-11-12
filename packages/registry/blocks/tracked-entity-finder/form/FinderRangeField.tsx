@@ -14,9 +14,10 @@ export function FinderRangeField(props: FinderRangeFieldProps) {
     const part = useFieldPart(props, 'range')
     if (part.state === 'metadata-error') {
         return (
-            <MetadataErrorNotice className={props.className}>
-                {part.message}
-            </MetadataErrorNotice>
+            <MetadataErrorNotice
+                message={part.message}
+                className={props.className}
+            />
         )
     }
     if (part.state === 'pending') {

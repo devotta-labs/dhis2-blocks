@@ -514,30 +514,6 @@ describe('evaluateForm', () => {
             'weight',
         ])
     })
-
-    it('freezes the verdict and the search all the way down', () => {
-        const verdict = evaluateForm(
-            model,
-            exact('firstName', 'visit', 'nope'),
-            {
-                firstName: text('Am'),
-                visit: date('2024-03-05'),
-            }
-        )
-        const search = verdict.search
-        expect(search).toBeDefined()
-        expect(Object.isFrozen(verdict)).toBe(true)
-        expect(Object.isFrozen(verdict.metadataErrors)).toBe(true)
-        expect(verdict.metadataErrors.every(Object.isFrozen)).toBe(true)
-        expect(Object.isFrozen(verdict.errors)).toBe(true)
-        expect(Object.isFrozen(search)).toBe(true)
-        expect(Object.isFrozen(search?.filters)).toBe(true)
-        for (const filter of search?.filters ?? []) {
-            expect(Object.isFrozen(filter)).toBe(true)
-            expect(Object.isFrozen(filter.conditions)).toBe(true)
-            expect(filter.conditions.every(Object.isFrozen)).toBe(true)
-        }
-    })
 })
 
 describe('integer values', () => {

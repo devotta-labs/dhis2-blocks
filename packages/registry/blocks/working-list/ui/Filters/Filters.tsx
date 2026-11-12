@@ -1,17 +1,24 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import { IconFilter16 } from '@dhis2/ui-icons'
-import { Result } from 'better-result'
 import React, { useState, type ComponentPropsWithoutRef } from 'react'
 import { fieldsForConfiguration } from '../../api/metadata'
 import { visibleEventFiltersAfterStageChange } from '../../domain/visibleEventFilters'
 import type { AppliedFilter as ResolvedAppliedFilter } from '../../domain/model'
 import type { WorkingListField } from '../../domain/model'
 import {
-    useWorkingListActions,
-    useWorkingListMeta,
-    useWorkingListState,
-} from '../../provider/WorkingListContext'
-import { useWorkingListPrivateUi } from '../../provider/WorkingListPrivateContext'
+    withFilter,
+    withoutFilter,
+    withProgramStage,
+} from '../../provider/configuration'
+import { useIsSavingList } from '../../provider/mutations'
+import {
+    useWorkingListMetadata,
+    useWorkingListView,
+    type WorkingListMetadata,
+    type WorkingListSelectedView,
+} from '../../provider/queries'
+import { useWorkingList } from '../../provider/WorkingListContext'
 import type {
     AppliedFilter,
     WorkingListConfiguration,
@@ -22,7 +29,6 @@ import {
     MoreFilters,
     ProgramStageControl,
 } from '../FilterControls'
-import { useWorkingListText } from '../WorkingListText'
 
 const visibleFiltersForConfiguration = (
     configuration: WorkingListConfiguration,
@@ -61,27 +67,23 @@ const withAppliedFilterIds = (
     return ids
 }
 
-const FiltersControl = () => {
-    const translate = useWorkingListText()
-    const configuration = useWorkingListState((state) => state.configuration)
-    const actions = useWorkingListActions()
-    const {
-        client,
+const FiltersControl = ({
+    metadata: {
         program,
-        metadata,
+        fieldCatalog,
         capabilities,
         calendarContext,
         serializationContext,
-        mutationBusy,
-    } = useWorkingListPrivateUi()
+    },
+    view: { configuration },
+}: {
+    metadata: WorkingListMetadata
+    view: WorkingListSelectedView
+}) => {
+    const { setDraft } = useWorkingList()
+    const mutationBusy = useIsSavingList()
 
-    if (!program || !metadata || !calendarContext) {
-        throw new Error(
-            'WorkingListFilterControls requires resolved program metadata.'
-        )
-    }
-
-    const activeFields = fieldsForConfiguration(metadata, configuration)
+    const activeFields = fieldsForConfiguration(fieldCatalog, configuration)
 
     const initialVisible = visibleFiltersForConfiguration(
         configuration,
@@ -144,23 +146,12 @@ const FiltersControl = () => {
         )
         return filter ? { ...filter, field } : undefined
     }
-    const applyFilter = (filter: ResolvedAppliedFilter) => {
-        const result = actions.setFilter(compactFilter(filter))
-        if (Result.isError(result)) {
-            throw result.error
-        }
-    }
-    const resetFilter = (fieldId: string) => {
-        const result = actions.removeFilter(fieldId)
-        if (Result.isError(result)) {
-            throw result.error
-        }
-    }
+    const applyFilter = (filter: ResolvedAppliedFilter) =>
+        setDraft(withFilter(configuration, compactFilter(filter)))
+    const resetFilter = (fieldId: string) =>
+        setDraft(withoutFilter(configuration, fieldId))
     const enterStage = (stageId?: string, addedFilterId?: string) => {
-        const result = actions.setProgramStage(stageId)
-        if (Result.isError(result)) {
-            throw result.error
-        }
+        setDraft(withProgramStage(configuration, fieldCatalog, stageId))
         setVisibleEventFilterIds((visibleFilterIds) =>
             visibleEventFiltersAfterStageChange({
                 configuration,
@@ -208,7 +199,6 @@ const FiltersControl = () => {
                     return (
                         <FilterButton
                             key={field.id}
-                            client={client}
                             field={field}
                             filter={resolvedFilter(field)}
                             capabilities={capabilities}
@@ -245,9 +235,8 @@ const FiltersControl = () => {
                         return (
                             <FilterButton
                                 key={field.id}
-                                client={client}
                                 field={field}
-                                prefix={`${currentStage?.displayName ?? ''} / ${fieldDisplayName(field, translate)}`}
+                                prefix={`${currentStage?.displayName ?? ''} / ${fieldDisplayName(field)}`}
                                 filter={resolvedFilter(field)}
                                 capabilities={capabilities}
                                 validationContext={serializationContext}
@@ -280,10 +269,9 @@ export const WorkingListFilterControls = ({
     className,
     ...props
 }: WorkingListFilterControlsProps) => {
-    const translate = useWorkingListText()
-    const ready = useWorkingListMeta(
-        (meta) => meta.activeConfiguration.status === 'ready'
-    )
+    const { viewId } = useWorkingList()
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return (
         <div
@@ -291,8 +279,9 @@ export const WorkingListFilterControls = ({
             className={`flex min-w-0 flex-[1_1_0%] flex-wrap items-center gap-1${className ? ` ${className}` : ''}`}
             data-testid="working-list-filters"
         >
-            {ready ? (
-                <FiltersControl />
+            {metadata && view ? (
+                // Which filter chips show starts over with each view.
+                <FiltersControl key={viewId} metadata={metadata} view={view} />
             ) : (
                 <Button
                     variant="secondary"
@@ -301,7 +290,7 @@ export const WorkingListFilterControls = ({
                     disabled
                 >
                     <IconFilter16 />
-                    {translate('Filter')}
+                    {i18n.t('Filter')}
                 </Button>
             )}
         </div>

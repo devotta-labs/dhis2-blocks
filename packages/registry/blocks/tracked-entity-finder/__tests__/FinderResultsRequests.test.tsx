@@ -1,8 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
-import { createFakeServer, renderWithQueries } from './finderTestSupport'
+import {
+    createFakeServer,
+    FakeServerProvider,
+    renderWithQueries,
+    requestFailure,
+    type FakeServer,
+} from './finderTestSupport'
 import { hivProgram } from './fixtures/program'
 import {
     amina,
@@ -105,9 +111,7 @@ describe('FinderResults paging and requests', () => {
                 program: { ...hivProgram, maxTeiCountToReturn: 0 },
                 answerSearch: (request) => {
                     if (Number(request.params?.page ?? 1) > 1) {
-                        throw Object.assign(new Error('Search failed'), {
-                            httpStatusCode: 400,
-                        })
+                        throw requestFailure('Search failed')
                     }
                     return answer(
                         Array.from({ length: 10 }, (_, index) =>
@@ -170,12 +174,8 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer({ deferSearches: true })
         const screen = await renderWithQueries(
-            ui(
-                server,
-                'hivProgram',
-                onSelect,
-                <FinderResults data-testid="results" />
-            )
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />),
+            server
         )
 
         await searchFor('A1')
@@ -185,7 +185,6 @@ describe('FinderResults paging and requests', () => {
 
         await screen.rerender(
             ui(
-                server,
                 'otherProgram',
                 onSelect,
                 <FinderResults data-testid="results" />
@@ -241,12 +240,8 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer()
         const screen = await renderWithQueries(
-            ui(
-                server,
-                'hivProgram',
-                onSelect,
-                <FinderResults data-testid="results" />
-            )
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />),
+            server
         )
 
         await searchFor('A1')
@@ -257,12 +252,7 @@ describe('FinderResults paging and requests', () => {
 
         await screen.rerender(<></>)
         await screen.rerender(
-            ui(
-                server,
-                'hivProgram',
-                onSelect,
-                <FinderResults data-testid="results" />
-            )
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />)
         )
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
@@ -293,23 +283,26 @@ describe('FinderResults paging and requests', () => {
     })
 
     it('never reuses metadata or people from another server sharing the query cache', async () => {
-        const { server, screen, onSelect } = await renderFinder({
-            options: { searchResponse: answer([amina]) },
-        })
-        await searchFor('A1')
-        await expect.element(page.getByText('Amina')).toBeVisible()
+        const onSelect = vi.fn()
+        const server = createFakeServer({ searchResponse: answer([amina]) })
         const other = createFakeServer({
             baseUrl: 'https://other.dhis2.test',
             deferSearches: true,
         })
-        await screen.rerender(
-            ui(
-                other,
-                'hivProgram',
-                onSelect,
-                <FinderResults data-testid="results" />
-            )
+        // The same finder and QueryClient, with one server or the other behind.
+        const finder = (behind: FakeServer) => (
+            <FakeServerProvider server={behind}>
+                {ui(
+                    'hivProgram',
+                    onSelect,
+                    <FinderResults data-testid="results" />
+                )}
+            </FakeServerProvider>
         )
+        const screen = await renderWithQueries(finder(server))
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await screen.rerender(finder(other))
         await expect.poll(() => other.pendingSearches.length).toBe(1)
         expect(page.getByText('Amina').query()).toBeNull()
         expect(
@@ -322,14 +315,7 @@ describe('FinderResults paging and requests', () => {
             answer([entity('other', { firstName: 'Zainab' })])
         )
         await expect.element(page.getByText('Zainab')).toBeVisible()
-        await screen.rerender(
-            ui(
-                server,
-                'hivProgram',
-                onSelect,
-                <FinderResults data-testid="results" />
-            )
-        )
+        await screen.rerender(finder(server))
         await expect.element(page.getByText('Amina')).toBeVisible()
         await settle()
         expect(searchRequests(server)).toHaveLength(1)
@@ -436,9 +422,7 @@ describe('FinderResults paging and requests', () => {
             options: {
                 answerSearch: () => {
                     if (fails) {
-                        throw Object.assign(new Error('Search failed'), {
-                            httpStatusCode: 400,
-                        })
+                        throw requestFailure('Search failed')
                     }
                     return answer([amina])
                 },
@@ -452,6 +436,39 @@ describe('FinderResults paging and requests', () => {
         await searchFor('A1')
         await expect.element(page.getByText('Amina')).toBeVisible()
         expect(searchRequests(server)).toHaveLength(2)
+    })
+
+    it('keeps cached data when request logging rerenders the runtime provider', async () => {
+        // A host that shows its request log renders app-runtime's provider
+        // again on every request, which hands the finder a new data engine.
+        const LoggedFinder = () => {
+            const [logs, setLogs] = useState(0)
+            const [server] = useState(() =>
+                createFakeServer({
+                    onRequest: () => setLogs((count) => count + 1),
+                })
+            )
+            return (
+                <FakeServerProvider server={server}>
+                    {ui('hivProgram', vi.fn(), <FinderResults />)}
+                    <output data-testid="requests">{logs}</output>
+                </FakeServerProvider>
+            )
+        }
+        await renderWithQueries(<LoggedFinder />)
+        await expect
+            .element(page.getByRole('textbox', { name: 'ART number' }))
+            .toBeEnabled()
+        await expect
+            .element(page.getByTestId('requests'))
+            .toHaveTextContent('2')
+        await searchFor('A1')
+        await expect.element(page.getByText('No one found')).toBeVisible()
+        await searchFor('A1')
+        await settle()
+        await expect
+            .element(page.getByTestId('requests'))
+            .toHaveTextContent('3')
     })
 
     it('ignores next and previous when there is no such page', async () => {

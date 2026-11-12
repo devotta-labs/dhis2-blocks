@@ -236,7 +236,6 @@ test('announces custom JSX and independent child updates without duplicate speec
         ])
     await screen.rerender(
         ui(
-            server,
             'hivProgram',
             onSelect,
             React.cloneElement(results, { className: 'rerendered' })
@@ -270,14 +269,13 @@ test('announces a status mounted in StrictMode only once', async () => {
         const { status } = useFinderResults()
         return <output data-testid="state">{status}</output>
     }
-    const { server, screen, onSelect } = await renderFinder({
+    const { screen, onSelect } = await renderFinder({
         results: <ResultState />,
     })
     await searchFor('A1')
     await expect.element(page.getByTestId('state')).toHaveTextContent('empty')
     await screen.rerender(
         ui(
-            server,
             'hivProgram',
             onSelect,
             <StrictMode>
@@ -298,7 +296,7 @@ test('respects hidden content and accessible labels in custom messages', async (
             <FinderEmpty>{children}</FinderEmpty>
         </FinderResults>
     )
-    const { server, screen, onSelect } = await renderFinder({
+    const { screen, onSelect } = await renderFinder({
         results: results(
             <>
                 <span aria-hidden="true">Decorative icon</span>
@@ -316,23 +314,22 @@ test('respects hidden content and accessible labels in custom messages', async (
         </svg>
     )
     await screen.rerender(
-        ui(server, 'hivProgram', onSelect, results(icon('Nobody matched')))
+        ui('hivProgram', onSelect, results(icon('Nobody matched')))
     )
     await expect.poll(() => said).toEqual(['No matches', 'Nobody matched'])
     await screen.rerender(
-        ui(server, 'hivProgram', onSelect, results(icon('Try another detail')))
+        ui('hivProgram', onSelect, results(icon('Try another detail')))
     )
     await expect
         .poll(() => said)
         .toEqual(['No matches', 'Nobody matched', 'Try another detail'])
 
     await screen.rerender(
-        ui(server, 'hivProgram', onSelect, results(<img alt="No one found" />))
+        ui('hivProgram', onSelect, results(<img alt="No one found" />))
     )
     await expect.poll(() => said.at(-1)).toBe('No one found')
     await screen.rerender(
         ui(
-            server,
             'hivProgram',
             onSelect,
             results(<img alt="No one found" aria-hidden="true" />)
@@ -342,7 +339,6 @@ test('respects hidden content and accessible labels in custom messages', async (
     expect(said).toHaveLength(4)
     await screen.rerender(
         ui(
-            server,
             'hivProgram',
             onSelect,
             results(

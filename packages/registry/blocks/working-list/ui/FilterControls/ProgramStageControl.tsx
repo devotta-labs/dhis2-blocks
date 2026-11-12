@@ -1,7 +1,7 @@
+import i18n from '@dhis2/d2-i18n'
 import { Button } from '@/components/dhis2/ui/button'
 import React, { useMemo, useState } from 'react'
 import type { TrackerProgram } from '../../api/schemas'
-import { useWorkingListText } from '../WorkingListText'
 import { PopoverTitle } from '@/components/dhis2/ui/popover'
 import { FilterChip } from './FilterControlPrimitives'
 import { SelectField } from './FilterSelectFields'
@@ -23,8 +23,6 @@ export const ProgramStageControl = ({
     onChange,
     onRemove,
 }: ProgramStageControlProps) => {
-    const t = useWorkingListText()
-    const i18n = { t }
     const [open, setOpen] = useState(defaultOpen ?? false)
     const [draft, setDraft] = useState(selectedStageId ?? '')
     const stages = useMemo(

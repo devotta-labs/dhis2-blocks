@@ -5,16 +5,8 @@ export class UnknownFieldError extends TaggedError('UnknownFieldError')<{
     message: string
 }> {}
 
-export class UnknownProgramStageError extends TaggedError(
-    'UnknownProgramStageError'
-)<{ programStageId: string; message: string }> {}
-
 export class InvalidConfigurationError extends TaggedError(
     'InvalidConfigurationError'
-)<{ message: string }> {}
-
-export class InvalidPaginationError extends TaggedError(
-    'InvalidPaginationError'
 )<{ message: string }> {}
 
 export class SavedListNotFoundError extends TaggedError(
@@ -53,18 +45,9 @@ export class WorkingListResultsError extends TaggedError(
     'WorkingListResultsError'
 )<{ message: string; cause?: unknown }> {}
 
-export class DownloadVisibleRowsError extends TaggedError(
-    'DownloadVisibleRowsError'
-)<{ message: string; cause?: unknown }> {}
-
 export type ConfigurationCommandError =
     | UnknownFieldError
-    | UnknownProgramStageError
     | InvalidConfigurationError
-
-export type PaginationCommandError = InvalidPaginationError
-
-export type SelectViewError = InvalidConfigurationError
 
 export type CreateViewError =
     | InvalidConfigurationError
@@ -75,8 +58,6 @@ export type CreateViewError =
 export type UpdateSelectedViewError =
     | InvalidConfigurationError
     | NoSelectedSavedListError
-    | SavedListNotFoundError
-    | IncompatibleSavedListError
     | SavedListPermissionError
     | OfflineMutationError
     | WorkingListNetworkError
@@ -84,6 +65,13 @@ export type UpdateSelectedViewError =
 
 export type DeleteViewError =
     | SavedListNotFoundError
+    | SavedListPermissionError
+    | OfflineMutationError
+    | WorkingListNetworkError
+    | WorkingListInvalidResponseError
+
+export type RepairSavedListError =
+    | IncompatibleSavedListError
     | SavedListPermissionError
     | OfflineMutationError
     | WorkingListNetworkError

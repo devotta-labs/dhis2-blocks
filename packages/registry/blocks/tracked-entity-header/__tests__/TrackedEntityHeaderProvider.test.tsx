@@ -17,14 +17,13 @@ const state = () => page.getByTestId('state')
 describe('TrackedEntityHeaderProvider', () => {
     it('one person and one metadata request for any number of consumers', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Probe />
                     <Probe />
@@ -43,14 +42,11 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it("without a program, the person type's metadata is fetched after the person", async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <TrackedEntityHeaderProvider
-                    trackedEntity="te1"
-                    client={server.client}
-                >
+                <TrackedEntityHeaderProvider trackedEntity="te1">
                     <Probe />
                 </TrackedEntityHeaderProvider>
             </Wrapper>
@@ -65,15 +61,11 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it('a blank program is no program', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <TrackedEntityHeaderProvider
-                    trackedEntity="te1"
-                    program="  "
-                    client={server.client}
-                >
+                <TrackedEntityHeaderProvider trackedEntity="te1" program="  ">
                     <Probe />
                 </TrackedEntityHeaderProvider>
             </Wrapper>
@@ -86,14 +78,13 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it('a 403 is restricted', async () => {
         const server = createFakeServer({ forbidden: true })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Probe />
                 </TrackedEntityHeaderProvider>
@@ -105,14 +96,13 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it('another failure is failed, and retry refetches until the server recovers', async () => {
         const server = createFakeServer({ fail: 400 })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Probe />
                 </TrackedEntityHeaderProvider>
@@ -134,14 +124,13 @@ describe('TrackedEntityHeaderProvider', () => {
                 .spyOn(console, 'error')
                 .mockImplementation(() => {})
             const server = createFakeServer()
-            const Wrapper = createWrapper()
+            const Wrapper = createWrapper(server.data)
 
             await render(
                 <Wrapper>
                     <TrackedEntityHeaderProvider
                         trackedEntity={id}
                         program={RMNCH}
-                        client={server.client}
                     >
                         <Probe />
                     </TrackedEntityHeaderProvider>
@@ -165,14 +154,13 @@ describe('TrackedEntityHeaderProvider', () => {
         'a refetch that fails with %i after loading shows %s',
         async (status, shown) => {
             const server = createFakeServer()
-            const Wrapper = createWrapper()
+            const Wrapper = createWrapper(server.data)
 
             await render(
                 <Wrapper>
                     <TrackedEntityHeaderProvider
                         trackedEntity="te1"
                         program={RMNCH}
-                        client={server.client}
                     >
                         <Probe />
                     </TrackedEntityHeaderProvider>
@@ -199,14 +187,13 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it('a record that does not exist is not-found', async () => {
         const server = createFakeServer({ fail: 404 })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="gone"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Probe />
                 </TrackedEntityHeaderProvider>
@@ -216,16 +203,12 @@ describe('TrackedEntityHeaderProvider', () => {
         await expect.element(state()).toHaveTextContent('not-found')
     })
 
-    it('keeps the program metadata for later records, asking for it once', async () => {
+    it('keeps the program metadata for later records, asking for it once, and asks for each record fresh', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const Header = ({ id }: { id: string }) => (
             <Wrapper>
-                <TrackedEntityHeaderProvider
-                    trackedEntity={id}
-                    program={RMNCH}
-                    client={server.client}
-                >
+                <TrackedEntityHeaderProvider trackedEntity={id} program={RMNCH}>
                     <Probe />
                 </TrackedEntityHeaderProvider>
             </Wrapper>
@@ -239,18 +222,19 @@ describe('TrackedEntityHeaderProvider', () => {
         await expect.element(state()).toHaveTextContent('ready te1')
 
         expect(server.countOf('programs')).toBe(1)
+        // Back at te1, nothing of the first visit was kept.
+        expect(server.countOf('tracker/trackedEntities')).toBe(3)
     })
 
     it('switching trackedEntity shows loading until the new person arrives', async () => {
         const server = createFakeServer({ deferFor: 'te2' })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const seen: string[] = []
         const ui = (trackedEntity: string) => (
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={trackedEntity}
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Probe seen={seen} />
                 </TrackedEntityHeaderProvider>
@@ -285,14 +269,13 @@ describe('TrackedEntityHeaderProvider', () => {
 
     it("switching program for the same person shows loading, never the old program's values", async () => {
         const server = createFakeServer({ deferFor: CHILD })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const seen: string[] = []
         const ui = (program: string) => (
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={program}
-                    client={server.client}
                 >
                     <Probe seen={seen} />
                 </TrackedEntityHeaderProvider>

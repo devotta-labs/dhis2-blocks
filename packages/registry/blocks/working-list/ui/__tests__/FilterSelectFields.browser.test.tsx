@@ -2,16 +2,9 @@ import React, { useState } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { resolveWorkingListCapabilities } from '../../api/capabilities'
-import type { WorkingListClient } from '../../api/client'
 import type { AppliedFilter, WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
 import { ComboboxField } from '../FilterControls/FilterSelectFields'
-import { WorkingListTextProvider } from '../WorkingListText'
-
-const unusedClient: WorkingListClient = {
-    query: () => Promise.reject(new Error('Unexpected query')),
-    mutate: () => Promise.reject(new Error('Unexpected mutation')),
-}
 
 const resultField: WorkingListField = {
     id: 'result',
@@ -46,7 +39,7 @@ const ControlledCombobox = ({
 }) => {
     const [values, setValues] = useState<string[]>(initialValues)
     return (
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <ComboboxField
                 multiple={multiple}
                 label="Values"
@@ -59,7 +52,7 @@ const ControlledCombobox = ({
                 onChange={setValues}
             />
             <output data-testid="values">{values.join(',')}</output>
-        </WorkingListTextProvider>
+        </>
     )
 }
 
@@ -67,23 +60,20 @@ describe('filter select fields', () => {
     it('picks and removes option values inside a filter editor without closing it', async () => {
         const onApply = vi.fn<(filter: AppliedFilter) => void>()
         await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <FilterButton
-                    client={unusedClient}
-                    field={resultField}
-                    capabilities={resolveWorkingListCapabilities({
-                        apiVersion: 43,
-                    })}
-                    calendarContext={{
-                        calendar: 'gregorian',
-                        dateFormat: 'YYYY-MM-DD',
-                        locale: 'en',
-                        timeZone: 'Etc/UTC',
-                    }}
-                    onApply={onApply}
-                    onReset={() => undefined}
-                />
-            </WorkingListTextProvider>
+            <FilterButton
+                field={resultField}
+                capabilities={resolveWorkingListCapabilities({
+                    apiVersion: 43,
+                })}
+                calendarContext={{
+                    calendar: 'gregorian',
+                    dateFormat: 'YYYY-MM-DD',
+                    locale: 'en',
+                    timeZone: 'Etc/UTC',
+                }}
+                onApply={onApply}
+                onReset={() => undefined}
+            />
         )
         await page.getByTestId('filter-result').getByRole('combobox').click()
         const editor = page.getByTestId('filter-editor-result')
@@ -101,7 +91,7 @@ describe('filter select fields', () => {
         await expect.element(editor).toHaveTextContent(/Positive.*Negative/)
 
         await editor
-            .getByRole('button', { name: 'Remove {{label}}' })
+            .getByRole('button', { name: 'Remove Positive' })
             .first()
             .click()
         await expect.element(editor).not.toHaveTextContent('Positive')

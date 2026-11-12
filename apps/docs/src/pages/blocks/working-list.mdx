@@ -64,3 +64,42 @@ For the calendar view, also install [Calendar](/blocks/calendar):
 Each example's **Code** tab contains its complete source. The calendar
 example includes two files; copy both and choose the program and organisation
 unit from your own DHIS2 instance.
+
+## Build your own parts
+
+`WorkingList` keeps only what the person has chosen: the view, the changes
+they have not saved, and the page. Leave `viewId` and `pagination` out and it
+keeps them itself, or pass each with its `onViewChange` or
+`onPaginationChange` to keep them in your app, in the URL for example. A page
+you pass is the page the list opens on. After that, a new view or
+organisation unit starts on page 1 and tells `onPaginationChange`.
+`onDirtyChange` tells you when there are unsaved changes, so you can warn
+before the person leaves.
+
+Anything rendered inside `WorkingList` can read and change that state, and
+load what the server holds for it:
+
+- `useWorkingList()` returns `programId`, `orgUnitId`, `viewId`, `draft` and
+  `pagination`, with `selectView`, `setDraft` and `setPagination` to change
+  them.
+- `useWorkingListMetadata()` loads the program and its fields.
+- `useSavedLists()` loads the program's saved lists.
+- `useWorkingListView()` returns the selected view: its saved list, the
+  configuration on screen and `isDirty`.
+- `useWorkingListRecords()` loads the page of records on screen.
+- `useCreateSavedList()`, `useUpdateSavedList()`, `useDeleteSavedList()` and
+  `useRepairSavedList()` save changes. Each is a TanStack Query mutation, and
+  reloads the saved lists when it is done.
+
+The loading hooks return `isPending`, `isError` and `data`, so a component
+handles its own loading and error states:
+
+```tsx
+const UnsavedChanges = () => {
+    const view = useWorkingListView()
+
+    if (view.isPending) return <Skeleton />
+    if (view.isError) return <WorkingListSelectionError />
+    return view.data.isDirty ? <p>Unsaved changes</p> : null
+}
+```

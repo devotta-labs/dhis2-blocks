@@ -46,11 +46,11 @@ export function RecordHeader({ trackedEntityId }: { trackedEntityId: string }) {
 }
 ```
 
-The provider loads the tracked entity and the program's attribute metadata once, for
-every part inside it. Values are shown as DHIS2 shows them: option names
-rather than codes, and dates in the system's calendar. A value the record
-doesn't have says "Not recorded", and one that can't be read says
-"Unavailable". The banner draws its own loading, failed, restricted and not
+The parts load the tracked entity and the program's attribute metadata through
+the DHIS2 app runtime, once for every part inside the provider. Values are
+shown as DHIS2 shows them: option names rather than codes, and dates in the
+system's calendar. A value the record doesn't have says "Not recorded", and
+one that can't be read says "Unavailable". The banner draws its own loading, failed, restricted and not
 found states, and never shows the previous record while the next one loads. A
 record that has loaded stays on screen if a later refresh fails, unless access
 has been withdrawn. Program metadata and organisation unit names are kept for
@@ -298,8 +298,9 @@ Whatever you do, every value part renders nothing until `status` is
 `'ready'`, so a restricted record never shows a name or a misleading "Not
 recorded". Outside a banner `TrackedEntityActions` renders in every state, so
 a "Request access" button still shows. Label your own container, such as a dialog or popover, with
-`aria-labelledby` pointing at `TrackedEntityName`, which takes an `id`. The
-provider fetches when it mounts, so a popover loads the record when it opens.
+`aria-labelledby` pointing at `TrackedEntityName`, which takes an `id`. Nothing
+is asked for until a part or `useTrackedEntityHeader()` mounts under the
+provider, so a popover loads the record when it opens.
 
 ## Finding attribute uids
 
@@ -317,9 +318,6 @@ GET /api/programs/<program>?fields=programTrackedEntityAttributes[displayInList,
 - `trackedEntity: string` — **required.** The tracked entity the banner shows.
 - `program?: string` — the program whose attributes, enrollment and owner are
   shown. Changing either prop starts from nothing.
-- `client?: TrackedEntityHeaderClient` — a custom data engine, from
-  `createTrackedEntityHeaderClient`. Defaults to the DHIS2 app runtime. Create
-  it once, outside render.
 - `children?: ReactNode` — the banner and any of your own UI that uses
   `useTrackedEntityHeader`.
 

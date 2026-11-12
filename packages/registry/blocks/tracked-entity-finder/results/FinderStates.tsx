@@ -6,7 +6,7 @@ import { announce } from '@/components/dhis2/ui/announcer'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useFinderResults } from '../hooks'
-import { useFinderContext } from '../provider/context'
+import { useFinderModel } from '../provider/useFinderModel'
 
 export type FinderSearchingProps = ComponentPropsWithoutRef<'div'>
 export type FinderEmptyProps = ComponentPropsWithoutRef<'div'>
@@ -142,15 +142,14 @@ export function FinderError({
     children,
     ...props
 }: FinderErrorProps) {
-    const { state } = useFinderContext()
+    const setup = useFinderModel()
     const { status } = useFinderResults()
     if (status !== 'error') {
         return null
     }
-    const text =
-        state.status === 'error'
-            ? i18n.t("The search couldn't be loaded")
-            : i18n.t("The search couldn't be completed")
+    const text = setup.isError
+        ? i18n.t("The search couldn't be loaded")
+        : i18n.t("The search couldn't be completed")
     return (
         <Alert
             variant="destructive"

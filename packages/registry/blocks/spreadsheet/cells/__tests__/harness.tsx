@@ -1,4 +1,6 @@
 import { CustomDataProvider } from '@dhis2/app-runtime'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { onTestFinished } from 'vitest'
 import type { Locator } from 'vitest/browser'
@@ -21,6 +23,24 @@ type ServerData = ComponentProps<typeof CustomDataProvider>['data']
 export type ServerRequest = Parameters<
     Extract<ServerData[string], (...args: never) => void>
 >[1]
+
+/** What `Spreadsheet` needs above it: DHIS2, here a fake server answering with `data`, and a query client of its own. */
+export const Runtime = ({
+    data = {},
+    children,
+}: {
+    data?: ServerData
+    children: ReactNode
+}) => {
+    const [client] = useState(() => new QueryClient())
+    return (
+        <CustomDataProvider data={data}>
+            <QueryClientProvider client={client}>
+                {children}
+            </QueryClientProvider>
+        </CustomDataProvider>
+    )
+}
 
 export const CELL: CellKey = cellKey('r1', 'c1')
 /** The id of the header that names the cell. */
@@ -108,7 +128,7 @@ export const rig = (
         },
         /** What the grid would put around a cell: the header that names it. */
         ui: (cell: ReactNode) => (
-            <CustomDataProvider data={data}>
+            <Runtime data={data}>
                 <Spreadsheet
                     cells={store}
                     annotations={effectsStore}
@@ -124,7 +144,7 @@ export const rig = (
                     <span id={HEADER}>Age (years)</span>
                     {cell}
                 </Spreadsheet>
-            </CustomDataProvider>
+            </Runtime>
         ),
         stored: () => store.getState().cells[CELL],
     }

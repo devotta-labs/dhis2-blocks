@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { workingListQueryKeys } from '../query/keys'
-import { shouldRetryWorkingListRequest, type WorkingListClient } from './client'
+import { shouldRetryWorkingListRequest, type DataEngine } from './request'
 
 const WORKING_LIST_CALENDARS = [
     'coptic',
@@ -57,23 +57,26 @@ export type WorkingListSystemInfo = z.infer<typeof WorkingListSystemInfoSchema>
 
 const WORKING_LIST_SYSTEM_INFO_FIELDS = 'calendar,dateFormat,serverTimeZoneId'
 
-const fetchWorkingListSystemInfo = (
-    client: WorkingListClient,
-    signal?: AbortSignal
-) =>
-    client.query(
+const fetchWorkingListSystemInfo = async (
+    engine: DataEngine,
+    signal: AbortSignal
+) => {
+    const { systemInfo } = await engine.query(
         {
-            resource: 'system/info',
-            params: { fields: WORKING_LIST_SYSTEM_INFO_FIELDS },
+            systemInfo: {
+                resource: 'system/info',
+                params: { fields: WORKING_LIST_SYSTEM_INFO_FIELDS },
+            },
         },
-        WorkingListSystemInfoSchema,
-        signal
+        { signal }
     )
+    return WorkingListSystemInfoSchema.parse(systemInfo)
+}
 
-export const workingListSystemInfoQueryOptions = (client: WorkingListClient) =>
+export const workingListSystemInfoQueryOptions = (engine: DataEngine) =>
     queryOptions({
         queryKey: workingListQueryKeys.systemInfo(),
-        queryFn: ({ signal }) => fetchWorkingListSystemInfo(client, signal),
+        queryFn: ({ signal }) => fetchWorkingListSystemInfo(engine, signal),
         staleTime: Number.POSITIVE_INFINITY,
         gcTime: Number.POSITIVE_INFINITY,
         retry: shouldRetryWorkingListRequest,

@@ -53,7 +53,8 @@ export const getSharing = (
     userGroupAccesses: resource.userGroupAccesses,
 })
 
-const findField = (fields: FieldCatalog, idOrApiName: string) =>
+/** A saved list may name a field by its id or by its API name. */
+export const findField = (fields: FieldCatalog, idOrApiName: string) =>
     fields.get(idOrApiName) ??
     [...fields.values()].find((field) => field.apiName === idOrApiName)
 

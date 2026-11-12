@@ -21,7 +21,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/dhis2/ui/dialog'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const options = [
     { value: 'a', label: 'Alpha' },
@@ -36,34 +35,32 @@ const FormDialog = ({
     const [single, setSingle] = useState<string>('a')
     const [multiple, setMultiple] = useState<string[]>([])
     return (
-        <WorkingListTextProvider translate={(message) => message}>
-            <Dialog open onOpenChange={onOpenChange}>
-                <DialogContent size="sm" position="middle">
-                    <DialogHeader>
-                        <DialogTitle>Edit</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex flex-col gap-3">
-                        <SelectField
-                            label="Single"
-                            value={single}
-                            options={options}
-                            onChange={setSingle}
-                        />
-                        <ComboboxField
-                            multiple
-                            label="Multiple"
-                            values={multiple}
-                            options={options}
-                            noMatchText="No match"
-                            onChange={setMultiple}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button>Save</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </WorkingListTextProvider>
+        <Dialog open onOpenChange={onOpenChange}>
+            <DialogContent size="sm" position="middle">
+                <DialogHeader>
+                    <DialogTitle>Edit</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-3">
+                    <SelectField
+                        label="Single"
+                        value={single}
+                        options={options}
+                        onChange={setSingle}
+                    />
+                    <ComboboxField
+                        multiple
+                        label="Multiple"
+                        values={multiple}
+                        options={options}
+                        noMatchText="No match"
+                        onChange={setMultiple}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 

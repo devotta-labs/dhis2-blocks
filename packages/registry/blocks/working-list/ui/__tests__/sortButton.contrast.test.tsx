@@ -1,7 +1,7 @@
 import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { SORT_BUTTON_CLASS } from '../WorkingListTable/WorkingListTableView'
+import { SORT_BUTTON_CLASS } from '../WorkingListTable/WorkingListTable'
 import { roleColour } from '../../../../test/roleColour'
 
 describe('sort button with more contrast', () => {

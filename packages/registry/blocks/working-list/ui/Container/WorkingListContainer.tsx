@@ -1,7 +1,8 @@
+import { useOnlineStatus } from '@dhis2/app-runtime'
+import i18n from '@dhis2/d2-i18n'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import React, { type ComponentPropsWithoutRef } from 'react'
-import { useWorkingListMeta } from '../../provider/WorkingListContext'
-import { useWorkingListText } from '../WorkingListText'
+import { useWorkingListMetadata } from '../../provider/queries'
 
 export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
 
@@ -16,13 +17,10 @@ export const WorkingListContainer = ({
     className,
     ...props
 }: WorkingListContainerProps) => {
-    const translate = useWorkingListText()
-    const lifecycle = useWorkingListMeta((meta) => meta.lifecycle)
-    const online = useWorkingListMeta((meta) => meta.online)
-    // While initializing, the composed parts stay visible and render their
-    // own skeletons in place, so loading never swaps the layout out.
-    const pending = lifecycle.status === 'pending'
-    const failed = lifecycle.status === 'error'
+    const { online } = useOnlineStatus()
+    // While the program loads, the composed parts stay visible and render
+    // their own skeletons in place, so loading never swaps the layout out.
+    const { isPending: pending, isError: failed } = useWorkingListMetadata()
 
     return (
         <div className="w-full min-w-0" data-testid="working-list-main">
@@ -32,7 +30,7 @@ export const WorkingListContainer = ({
                     data-testid="offline-notice"
                     role="status"
                 >
-                    {translate(
+                    {i18n.t(
                         'You are offline. Cached results remain available; server actions are disabled.'
                     )}
                 </div>
@@ -44,15 +42,15 @@ export const WorkingListContainer = ({
                     role="status"
                     aria-live="polite"
                 >
-                    {translate('Loading the working list…')}
+                    {i18n.t('Loading the working list…')}
                 </span>
             )}
             {failed && (
                 <div className="p-4" data-testid="working-list-lifecycle-error">
                     <ErrorAlert
-                        title={translate('Could not load the working list')}
+                        title={i18n.t('Could not load the working list')}
                     >
-                        {translate(
+                        {i18n.t(
                             'The working list could not be initialized for this program.'
                         )}
                     </ErrorAlert>

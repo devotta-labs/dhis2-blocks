@@ -2,14 +2,15 @@ import React, { type ComponentPropsWithoutRef } from 'react'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useFinderPerson } from '../hooks'
 import { useFinderContext } from '../provider/context'
+import { useFinderModel } from '../provider/useFinderModel'
 import { FinderValue } from './FinderValue'
 
 export type FinderItemProps = Omit<ComponentPropsWithoutRef<'button'>, 'type'>
 
 /** The program's displayInList attributes, in metadata order. */
 const ListedValues = () => {
-    const { state } = useFinderContext()
-    const listed = state.model?.attributes.filter(
+    const { model } = useFinderModel()
+    const listed = model?.attributes.filter(
         ({ displayInList }) => displayInList
     )
     return (
@@ -40,7 +41,7 @@ export function FinderItem({
     ...props
 }: FinderItemProps) {
     const person = useFinderPerson()
-    const { actions } = useFinderContext()
+    const { onSelect } = useFinderContext()
     return (
         <button
             {...props}
@@ -53,7 +54,7 @@ export function FinderItem({
             onClick={(event) => {
                 onClick?.(event)
                 if (!event.defaultPrevented) {
-                    actions.select(person)
+                    onSelect(person)
                 }
             }}
         >

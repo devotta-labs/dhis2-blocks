@@ -7,7 +7,6 @@ import {
     createFakeServer,
     createWrapper,
     HEIGHT,
-    Probe,
     TEMP,
     WEIGHT,
 } from './observationsTestSupport'
@@ -34,121 +33,73 @@ class Catch extends React.Component<{ children: ReactNode }, Caught> {
     }
 }
 
+const card = (name: string) => page.getByRole('group', { name, exact: true })
+
+const valueOf = (name: string) =>
+    card(name).element().querySelector('[data-slot="observation-value"]')
+        ?.textContent
+
 describe('ObservationsProvider', () => {
     it('one metadata, one enrollment and one events request for any number of cards', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} />
-                    <Probe id="temp" dataElement={TEMP} />
-                    <Probe id="height" dataElement={HEIGHT} />
+                <ObservationsProvider trackedEntity="te1" program="prog1">
+                    <ObservationCard dataElement={WEIGHT} />
+                    <ObservationCard dataElement={TEMP} />
+                    <ObservationCard dataElement={HEIGHT} />
                 </ObservationsProvider>
             </Wrapper>
         )
 
+        await expect.poll(() => valueOf('Weight')).toBe('70')
         await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 70')
-        await expect
-            .element(page.getByTestId('temp'))
-            .toHaveTextContent('ready none')
-        await expect
-            .element(page.getByTestId('height'))
-            .toHaveTextContent('ready none')
+            .element(card('Temperature'))
+            .toHaveTextContent('Never recorded')
+        await expect.element(card('Height')).toHaveTextContent('Never recorded')
         expect(server.countOf('programs')).toBe(1)
         expect(server.countOf('tracker/enrollments')).toBe(1)
         expect(server.countOf('tracker/events')).toBe(1)
         expect(server.requests).toHaveLength(3)
     })
 
-    it("switching trackedEntity shows pending before the new person's series", async () => {
-        const server = createFakeServer({ deferEventsFor: 'te2' })
-        const Wrapper = createWrapper()
-        const seen: string[] = []
-        const ui = (trackedEntity: string) => (
-            <Wrapper>
-                <ObservationsProvider
-                    trackedEntity={trackedEntity}
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} seen={seen} />
-                </ObservationsProvider>
-            </Wrapper>
-        )
+    it.each([
+        { change: 'trackedEntity', next: ['te2', 'prog1'], weight: '82' },
+        { change: 'program', next: ['te1', 'prog2'], weight: '64' },
+    ])(
+        'switching $change shows a loading card before the new series',
+        async ({ next: [trackedEntity = '', program = ''], weight }) => {
+            const server = createFakeServer({
+                deferEventsFor: trackedEntity === 'te1' ? program : 'te2',
+            })
+            const Wrapper = createWrapper(server.data)
+            const ui = (ids: { trackedEntity: string; program: string }) => (
+                <Wrapper>
+                    <ObservationsProvider {...ids}>
+                        <ObservationCard dataElement={WEIGHT} label="Weight" />
+                    </ObservationsProvider>
+                </Wrapper>
+            )
 
-        const screen = await render(ui('te1'))
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 70')
+            const screen = await render(
+                ui({ trackedEntity: 'te1', program: 'prog1' })
+            )
+            await expect.poll(() => valueOf('Weight')).toBe('70')
 
-        const before = seen.length
-        await screen.rerender(ui('te2'))
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('pending')
-        await expect.poll(() => server.countOf('tracker/events')).toBe(2)
+            await screen.rerender(ui({ trackedEntity, program }))
+            // The very next frame: the previous person's value is gone.
+            expect(card('Weight').element().getAttribute('aria-busy')).toBe(
+                'true'
+            )
+            expect(valueOf('Weight')).toBeUndefined()
+            await expect.poll(() => server.countOf('tracker/events')).toBe(2)
 
-        // Every render since the switch, not only the last one.
-        expect(seen.slice(before)).not.toContain('ready 70')
-        expect(seen.slice(before).every((state) => state === 'pending')).toBe(
-            true
-        )
-
-        server.release()
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 82')
-        expect(seen.slice(before)).not.toContain('ready 70')
-    })
-
-    it("switching program shows pending before the new program's series", async () => {
-        const server = createFakeServer({ deferEventsFor: 'prog2' })
-        const Wrapper = createWrapper()
-        const seen: string[] = []
-        const ui = (program: string) => (
-            <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program={program}
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} seen={seen} />
-                </ObservationsProvider>
-            </Wrapper>
-        )
-
-        const screen = await render(ui('prog1'))
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 70')
-
-        const before = seen.length
-        await screen.rerender(ui('prog2'))
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('pending')
-        await expect.poll(() => server.countOf('tracker/events')).toBe(2)
-
-        // Every render since the switch, not only the last one.
-        expect(seen.slice(before)).not.toContain('ready 70')
-        expect(seen.slice(before).every((state) => state === 'pending')).toBe(
-            true
-        )
-
-        server.release()
-        await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 64')
-        expect(seen.slice(before)).not.toContain('ready 70')
-    })
+            server.release()
+            await expect.poll(() => valueOf('Weight')).toBe(weight)
+        }
+    )
 
     it("one element's bad metadata errors only its own card", async () => {
         const server = createFakeServer({
@@ -179,201 +130,109 @@ describe('ObservationsProvider', () => {
                 },
             ],
         })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
-        const { container } = await render(
+        await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} />
-                    <Probe id="nocolour" dataElement="nocolour001" />
-                    <Probe id="badlegend" dataElement="badlegend01" />
-                    <Probe id="broken" dataElement="broken00001" />
+                <ObservationsProvider trackedEntity="te1" program="prog1">
+                    <ObservationCard dataElement={WEIGHT} />
+                    <ObservationCard dataElement="nocolour001" />
+                    <ObservationCard dataElement="badlegend01" />
                     <ObservationCard dataElement="broken00001" />
                 </ObservationsProvider>
             </Wrapper>
         )
 
+        await expect.poll(() => valueOf('Weight')).toBe('70')
         await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('ready 70')
+            .element(card('No colour'))
+            .toHaveTextContent('Never recorded')
         await expect
-            .element(page.getByTestId('nocolour'))
-            .toHaveTextContent('ready none')
-        await expect
-            .element(page.getByTestId('badlegend'))
-            .toHaveTextContent('ready none')
-        await expect
-            .element(page.getByTestId('broken'))
-            .toHaveTextContent(
-                "error Data element broken00001 has metadata this card can't read"
-            )
+            .element(card('Bad legend'))
+            .toHaveTextContent('Never recorded')
         // The card shows the error state, named from the metadata.
         await expect
-            .element(page.getByText("Couldn't load this value"))
-            .toBeVisible()
-        expect(
-            container
-                .querySelector('[data-slot="observation-card"]')
-                ?.getAttribute('aria-label')
-        ).toBe('Broken')
+            .element(card('Broken'))
+            .toHaveTextContent("Couldn't load this value")
     })
 
     it('two providers keep their series apart', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="first" dataElement={WEIGHT} />
+                <ObservationsProvider trackedEntity="te1" program="prog1">
+                    <ObservationCard dataElement={WEIGHT} label="First" />
                 </ObservationsProvider>
-                <ObservationsProvider
-                    trackedEntity="te2"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="second" dataElement={WEIGHT} />
+                <ObservationsProvider trackedEntity="te2" program="prog1">
+                    <ObservationCard dataElement={WEIGHT} label="Second" />
                 </ObservationsProvider>
             </Wrapper>
         )
 
-        await expect
-            .element(page.getByTestId('first'))
-            .toHaveTextContent('ready 70')
-        await expect
-            .element(page.getByTestId('second'))
-            .toHaveTextContent('ready 82')
+        await expect.poll(() => valueOf('First')).toBe('70')
+        await expect.poll(() => valueOf('Second')).toBe('82')
         // The program's metadata is shared; each person's records are not.
         expect(server.countOf('programs')).toBe(1)
         expect(server.countOf('tracker/events')).toBe(2)
     })
 
-    it('two clients for the same person keep their series apart', async () => {
-        const production = createFakeServer()
-        const staging = createFakeServer({ weight: '99' })
-        const Wrapper = createWrapper()
-
-        await render(
-            <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={production.client}
-                >
-                    <Probe id="production" dataElement={WEIGHT} />
-                </ObservationsProvider>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={staging.client}
-                >
-                    <Probe id="staging" dataElement={WEIGHT} />
-                </ObservationsProvider>
-            </Wrapper>
-        )
-
-        await expect
-            .element(page.getByTestId('production'))
-            .toHaveTextContent('ready 70')
-        await expect
-            .element(page.getByTestId('staging'))
-            .toHaveTextContent('ready 99')
-        expect(staging.countOf('tracker/events')).toBe(1)
-    })
-
     it('a data element outside the program is misconfigured, not empty', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="typo" dataElement="typoDE0001" />
+                <ObservationsProvider trackedEntity="te1" program="prog1">
+                    <ObservationCard dataElement="typoDE0001" label="Typo" />
                 </ObservationsProvider>
             </Wrapper>
         )
 
         await expect
-            .element(page.getByTestId('typo'))
+            .element(page.getByRole('alert'))
             .toHaveTextContent(
-                `misconfigured Data element typoDE0001 is not captured by any stage of program prog1. Captured data elements: ${WEIGHT} (Weight), ${TEMP} (Temperature), ${HEIGHT} (Height)`
+                `Data element typoDE0001 is not captured by any stage of program prog1. Captured data elements: ${WEIGHT} (Weight), ${TEMP} (Temperature), ${HEIGHT} (Height)`
             )
     })
 
-    it('no visible enrollment is an error for every card', async () => {
-        const server = createFakeServer({ noEnrollment: true })
-        const Wrapper = createWrapper()
+    it.each([
+        { failure: 'no visible enrollment', options: { noEnrollment: true } },
+        { failure: 'a failed events request', options: { eventsFail: true } },
+    ])('$failure is an error for every card', async ({ options }) => {
+        const server = createFakeServer(options)
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} />
-                    <Probe id="temp" dataElement={TEMP} />
+                <ObservationsProvider trackedEntity="te1" program="prog1">
+                    <ObservationCard dataElement={WEIGHT} />
+                    <ObservationCard dataElement={TEMP} />
                 </ObservationsProvider>
             </Wrapper>
         )
 
-        for (const id of ['weight', 'temp']) {
+        for (const name of ['Weight', 'Temperature']) {
             await expect
-                .element(page.getByTestId(id))
-                .toHaveTextContent(
-                    'error This person has no visible enrollment in this program'
-                )
+                .element(card(name))
+                .toHaveTextContent("Couldn't load this value")
         }
-    })
-
-    it('a failed events request is an error for every card', async () => {
-        const server = createFakeServer({ eventsFail: true })
-        const Wrapper = createWrapper()
-
-        await render(
-            <Wrapper>
-                <ObservationsProvider
-                    trackedEntity="te1"
-                    program="prog1"
-                    client={server.client}
-                >
-                    <Probe id="weight" dataElement={WEIGHT} />
-                    <Probe id="temp" dataElement={TEMP} />
-                </ObservationsProvider>
-            </Wrapper>
-        )
-
-        for (const id of ['weight', 'temp']) {
-            await expect
-                .element(page.getByTestId(id))
-                .toHaveTextContent(/^error .*boom/)
-        }
+        // Neither failure is the server's or the network's, so neither is retried.
+        expect(server.countOf('tracker/events')).toBe(1)
     })
 
     it.each([
         { trackedEntity: '', program: 'prog1' },
-        { trackedEntity: '   ', program: 'prog1' },
         { trackedEntity: 'te1', program: '' },
-    ])('makes no request and stays pending for %o', async (ids) => {
+    ])('makes no request and stays loading for %o', async (ids) => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
 
         await render(
             <Wrapper>
-                <ObservationsProvider {...ids} client={server.client}>
-                    <Probe id="weight" dataElement={WEIGHT} />
+                <ObservationsProvider {...ids}>
+                    <ObservationCard dataElement={WEIGHT} label="Weight" />
                 </ObservationsProvider>
             </Wrapper>
         )
@@ -381,18 +240,20 @@ describe('ObservationsProvider', () => {
         // Long enough for an enabled query to have started.
         await new Promise((resolve) => setTimeout(resolve, 50))
 
-        expect(server.requests).toEqual([])
+        expect(
+            server.requests.filter((resource) => resource !== 'programs')
+        ).toEqual([])
         await expect
-            .element(page.getByTestId('weight'))
-            .toHaveTextContent('pending')
+            .element(card('Weight'))
+            .toHaveAttribute('aria-busy', 'true')
     })
 
-    it('useObservation outside the provider throws', async () => {
+    it('a card outside the provider throws', async () => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
 
         await render(
             <Catch>
-                <Probe id="weight" dataElement={WEIGHT} />
+                <ObservationCard dataElement={WEIGHT} />
             </Catch>
         )
 

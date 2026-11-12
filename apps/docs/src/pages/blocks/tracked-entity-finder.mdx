@@ -208,7 +208,9 @@ program's minimum, shows the message for the whole form.
 In development, the message says what is wrong and lists the program's
 searchable attributes with their uids and its minimum, so you, or your coding
 agent, can fix the field. In production builds, users see "This search isn't
-set up correctly" and the full message is logged to the console.
+set up correctly" and the built-in parts log the full message to the console.
+A custom field's `metadataError` is the same text: the full message in
+development, the short one in production.
 
 ## API reference
 
@@ -221,8 +223,13 @@ set up correctly" and the full message is logged to the console.
   the hooks. The provider renders only its children.
 
 The finder uses `useDataEngine` from the DHIS2 app-runtime provider, with
-TanStack Query managing requests and caching. Use app-runtime's
-`CustomDataProvider` for fake data in tests.
+TanStack Query managing requests and caching, so it needs the app's
+`QueryClientProvider` above it. Use app-runtime's `CustomDataProvider` for
+fake data in tests.
+
+Program metadata and system info stay fresh for 3 hours. An identical search
+(same server, program and details) is answered from the cache for 5 minutes;
+after that, pressing Search asks the server again.
 
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and

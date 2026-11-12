@@ -2,7 +2,7 @@ import { Badge } from '@/components/dhis2/ui/badge'
 import { cn } from '@/components/dhis2/ui/cn'
 import i18n from '@dhis2/d2-i18n'
 import React from 'react'
-import { useHeaderContext } from '../provider/context'
+import { useTrackedEntityHeader } from '../hooks'
 
 export interface TrackedEntityStatusProps {
     className?: string
@@ -10,11 +10,11 @@ export interface TrackedEntityStatusProps {
 
 /** Words for the tracked entity's flags: Inactive, Possible duplicate. Nothing when neither applies. */
 export function TrackedEntityStatus({ className }: TrackedEntityStatusProps) {
-    const { state } = useHeaderContext()
-    if (state.status !== 'ready') {
+    const header = useTrackedEntityHeader()
+    if (header.status !== 'ready') {
         return null
     }
-    const { inactive, potentialDuplicate } = state.trackedEntity
+    const { inactive, potentialDuplicate } = header.trackedEntity
     if (!inactive && !potentialDuplicate) {
         return null
     }

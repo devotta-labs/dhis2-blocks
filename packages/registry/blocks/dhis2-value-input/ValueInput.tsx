@@ -22,7 +22,7 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import { Textarea } from '@/components/dhis2/ui/textarea'
-import { DownloadLink } from './editors/FileEditor'
+import { DownloadLink, previewUrl } from './editors/FileEditor'
 import { formEditorFor } from './editors/popupEditors'
 import type { EditorProblem } from './editors/popupEditors'
 import { focusInto } from './focusInto'
@@ -151,7 +151,7 @@ const StoredFile = ({
         <div className="flex flex-col items-start gap-1">
             {image && url !== unloadable ? (
                 <img
-                    src={`${url}?dimension=MEDIUM`}
+                    src={previewUrl(url)}
                     alt={name}
                     onError={() => setUnloadable(url)}
                     className="max-h-48 max-w-full rounded-dhis2-sm object-contain"
@@ -196,16 +196,13 @@ export const ValueInput = ({
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
     // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
     const options = field.options
-    const offered = useMemo(
-        () =>
-            options === undefined || hiddenOptions === undefined
-                ? field
-                : {
-                      ...field,
-                      options: offeredOptions(options, hiddenOptions, value),
-                  },
-        [field, options, hiddenOptions, value]
+    const offeredList = useMemo(
+        () => options && offeredOptions(options, hiddenOptions, value),
+        [options, hiddenOptions, value]
     )
+    // The same list for the same options, so the draft's key is built once: a host may build `field` on every render.
+    const offered =
+        offeredList === options ? field : { ...field, options: offeredList }
     const draft = useDraft({
         field: offered,
         settings,
@@ -224,10 +221,21 @@ export const ValueInput = ({
     const radios =
         (kind === 'boolean' || kind === 'option') &&
         asRadios(field, hiddenOptions)
+    const fieldKey = useMemo(
+        () => keyOf(field, settings),
+        // oxlint-disable-next-line react-hooks/exhaustive-deps -- the parts `keyOf` reads; a host may build `field` and `settings` anew on every render
+        [
+            field.valueType,
+            field.fieldMask,
+            options,
+            settings.calendar,
+            settings.dateFormat,
+        ]
+    )
     const commits = useEditorCommits(
         value,
         onChange,
-        keyOf(field, settings),
+        fieldKey,
         reason !== undefined
     )
     const problem = draft.problem ?? (editor ? commits.problem : undefined)
@@ -237,21 +245,27 @@ export const ValueInput = ({
     // A rule's error or warning that appears once the field is on the page is said, an error at once (as the house
     // announcer asks); those it opens with are read with the field. Information is not said: a rule may update it on
     // every commit.
-    const sayable = messages
-        .filter(({ tone }) => tone !== 'info')
-        .map(({ tone, text }) => `${tone}:${TONES[tone].say(text)}`)
-        .join('\n')
-    const said = useRef(new Set(sayable.split('\n')))
+    // Written out, so the effect runs when what is said changes, not for each array a host builds.
+    const sayable = JSON.stringify(
+        messages
+            .filter(({ tone }) => tone !== 'info')
+            .map(({ tone, text }) => [tone, TONES[tone].say(text)])
+    )
+    const said = useRef(new Set<string>())
+    const opened = useRef(true)
     useEffect(() => {
-        const now = sayable.split('\n')
-        const fresh = now.filter(
-            (each) => each !== '' && !said.current.has(each)
-        )
-        said.current = new Set(now)
+        // SAFETY: written just above, as pairs of a tone and its text.
+        const now = JSON.parse(sayable) as Array<[Tone, string]>
+        const keys = now.map((each) => JSON.stringify(each))
+        const fresh = opened.current
+            ? []
+            : now.filter((_, index) => !said.current.has(keys[index]))
+        opened.current = false
+        said.current = new Set(keys)
         for (const tone of ['error', 'warning'] as const) {
             const texts = fresh
-                .filter((each) => each.startsWith(`${tone}:`))
-                .map((each) => each.slice(tone.length + 1))
+                .filter(([each]) => each === tone)
+                .map(([, text]) => text)
             if (texts.length > 0) {
                 announce(
                     texts.join(' '),

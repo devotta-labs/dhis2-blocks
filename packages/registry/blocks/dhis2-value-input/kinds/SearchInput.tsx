@@ -14,6 +14,7 @@ import {
 import { matchCount, useAnnounced } from '../announce'
 import { composing } from '../composing'
 import { MIN_LENGTH, searchFor, useServerSearch } from '../search/serverSearch'
+import { useReported } from '../useReported'
 
 /** How a stored id whose name is not known is shown. */
 export const unknownName = (id: string) =>
@@ -22,7 +23,7 @@ export const unknownName = (id: string) =>
 /**
  * An org unit or username searched on the server, from two characters on: a pick is reported at once, and the field
  * shows its name. Typing highlights the top result, which Enter or Tab picks; while the search for the typed text is
- * still to answer, Enter and Tab wait for it, as in the data entry grid. Emptied and left, or Enter, it reports no
+ * still to answer, Enter waits for it and Tab leaves the field with its value. Emptied and left, or Enter, it reports no
  * value; other typing is dropped when the field is left. Unless required, a value has a clear button in the input.
  * Offline it says it needs a connection, and does not search.
  */
@@ -46,17 +47,12 @@ export const SearchInput = ({
     // What has been typed since the field showed its value; null shows the value.
     const [typed, setTyped] = useState<string | null>(null)
     // A value from the host that is not the one last reported (a rule assigned it) replaces what was typed.
-    const [given, setGiven] = useState(value)
-    const reported = useRef<string | null>()
-    if (value !== given) {
-        setGiven(value)
-        if ((value ?? null) !== reported.current) {
-            setTyped(null)
-        }
-        reported.current = undefined
+    const echo = useReported(value)
+    if (echo.isNew) {
+        setTyped(null)
     }
     const report = (next: string | null) => {
-        reported.current = next
+        echo.report(next)
         onChange(next)
     }
     // A value picked here keeps the name it was listed under.
@@ -146,10 +142,12 @@ export const SearchInput = ({
                             return
                         }
                         if (waiting) {
-                            // Nothing to pick yet: what was typed is not dropped, nor a form submitted without it,
-                            // and the list stays open for the answer.
-                            event.preventDefault()
-                            event.preventBaseUIHandler()
+                            // Nothing to pick yet. Enter waits: what was typed is not dropped, nor a form submitted
+                            // without it, and the list stays open for the answer. Tab leaves, as it always may.
+                            if (event.key === 'Enter') {
+                                event.preventDefault()
+                                event.preventBaseUIHandler()
+                            }
                             return
                         }
                         const result =

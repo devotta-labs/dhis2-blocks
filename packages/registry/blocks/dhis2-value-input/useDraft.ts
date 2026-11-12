@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import type { EditorProblem } from './editors/popupEditors'
+import { useReported } from './useReported'
 
 interface DraftOptions {
     field: Field
@@ -15,12 +16,7 @@ interface DraftOptions {
 interface DraftState {
     /** What makes the field another field, or its text another text, so a host may build both anew on every render. */
     fieldKey: string
-    /** The `value` the host gave at the last render. */
-    given: string | undefined
-    /**
-     * The value the host holds, as far as the control knows: the one it gave, or the one last reported (`undefined` for
-     * `null`). The host giving it back, however late, is not a new value.
-     */
+    /** The value the host holds, as far as the control knows: the one it gave, or the one last reported (`undefined` for `null`). */
     value: string | undefined
     text: string
     /** Typed since the text was last set from a value or reported. */
@@ -47,10 +43,10 @@ export const keyOf = (
 const fresh = (
     field: Field,
     value: string | undefined,
-    settings: ValueSettings
+    settings: ValueSettings,
+    fieldKey: string
 ): DraftState => ({
-    fieldKey: keyOf(field, settings),
-    given: value,
+    fieldKey,
     value,
     text: value === undefined ? '' : typedText(field, value, settings),
     edited: false,
@@ -76,18 +72,31 @@ export const useDraft = ({
     onChange,
     readOnly,
 }: DraftOptions) => {
-    const [state, setState] = useState(() => fresh(field, value, settings))
+    // Built once for a field and settings a host keeps, not on every render: a long option set is long to write out.
+    const fieldKey = useMemo(
+        () => keyOf(field, settings),
+        // oxlint-disable-next-line react-hooks/exhaustive-deps -- the parts `keyOf` reads; a host may build `field` and `settings` anew on every render
+        [
+            field.valueType,
+            field.fieldMask,
+            field.options,
+            settings.calendar,
+            settings.dateFormat,
+        ]
+    )
+    const [state, setState] = useState(() =>
+        fresh(field, value, settings, fieldKey)
+    )
+    const echo = useReported(value)
     let draft = state
     if (
-        keyOf(field, settings) !== state.fieldKey ||
-        (value !== state.given && value !== state.value) ||
+        fieldKey !== state.fieldKey ||
+        echo.isNew ||
         (readOnly && (state.edited || state.reported !== undefined))
     ) {
-        draft = fresh(field, value, settings)
+        draft = fresh(field, value, settings, fieldKey)
         setState(draft)
-    } else if (value !== state.given) {
-        draft = { ...state, given: value }
-        setState(draft)
+        echo.forget()
     }
     // A commit's result, before React renders it: a blur that a handler further up the same Enter causes runs the
     // commit of the render before, and must see that it is done.
@@ -106,14 +115,12 @@ export const useDraft = ({
         }
         const typed = parseTyped(field, current.text, settings)
         if (typed.ok) {
-            update({
-                ...fresh(field, typed.value, settings),
-                given: current.given,
-            })
+            update(fresh(field, typed.value, settings, current.fieldKey))
             if (
                 typed.value !== current.value ||
                 current.reported !== undefined
             ) {
+                echo.report(typed.value ?? null)
                 onChange(typed.value ?? null)
             }
             return
@@ -127,6 +134,7 @@ export const useDraft = ({
             fixed: false,
         })
         if (!sameProblem(current.reported, next)) {
+            echo.report(null)
             onChange(null, next)
         }
     }

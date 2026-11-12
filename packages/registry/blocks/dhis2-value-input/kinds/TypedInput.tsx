@@ -44,7 +44,14 @@ export const TypedInput = ({
             aria-required={required || undefined}
             value={draft.text}
             onChange={(event) => draft.change(event.target.value)}
-            onBlur={draft.commit}
+            onBlur={(event) => {
+                // A calendar the input opens is drawn outside it, and is still the field.
+                if (
+                    !event.relatedTarget?.closest('[data-slot=popover-content]')
+                ) {
+                    draft.commit()
+                }
+            }}
             onKeyDown={(event) => {
                 // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed.
                 if (event.key === 'Enter' && !composing(event)) {

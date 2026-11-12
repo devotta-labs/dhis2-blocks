@@ -24,6 +24,10 @@ export const DownloadLink = ({ url }: { url: string }) => (
     </a>
 )
 
+/** The address of a stored image at the size a preview shows, whether or not `url` has a query of its own. */
+export const previewUrl = (url: string) =>
+    `${url}${url.includes('?') ? '&' : '?'}dimension=MEDIUM`
+
 /** The uploads, what they say, and a change made here, which wins over an upload still running. */
 const useFile = ({
     field,
@@ -94,7 +98,7 @@ const FileShown = ({
         <>
             {url !== undefined && image && url !== unloadable ? (
                 <img
-                    src={`${url}?dimension=MEDIUM`}
+                    src={previewUrl(url)}
                     alt={name ?? ''}
                     onError={() => setUnloadable(url)}
                     className="max-h-48 max-w-full self-start rounded-dhis2-sm object-contain"

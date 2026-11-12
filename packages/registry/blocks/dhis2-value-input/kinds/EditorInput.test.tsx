@@ -230,7 +230,7 @@ test('a chosen file is reported as still uploading at once, then as its id', asy
     await expect.element(page.getByText('scan.txt')).toBeVisible()
 })
 
-test('a field that leaves the page mid-upload stops the upload and reports nothing more', async () => {
+test('a field that leaves the page mid-upload stops the upload and reports what it held', async () => {
     const { onChange, uploads, unmount } = await mount({
         valueType: 'FILE_RESOURCE',
     })
@@ -247,9 +247,11 @@ test('a field that leaves the page mid-upload stops the upload and reports nothi
 
     await unmount()
     expect(uploads[0].signal?.aborted).toBe(true)
+    // No file came of it: the host gets back what the field held, without the upload's problem.
+    expect(onChange.mock.calls[1]).toEqual([null, undefined])
     uploads[0].release()
     await later(50)
-    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(onChange).toHaveBeenCalledTimes(2)
 })
 
 test('Enter in an age field reports it before a surrounding form submits, while focus stays', async () => {

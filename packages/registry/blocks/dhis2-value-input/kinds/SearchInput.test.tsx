@@ -214,10 +214,10 @@ test('Enter picks the highlighted result', async () => {
     await expect.element(box).toHaveValue('Ngelehun CHC')
 })
 
-test('Tab and Enter wait while the search for what was typed is still to answer', async () => {
+test('Enter waits while the search for what was typed is still to answer', async () => {
     const { onChange, box } = await mount()
     await userEvent.tab()
-    await userEvent.keyboard('Ng{Tab}{Enter}')
+    await userEvent.keyboard('Ng{Enter}')
     await expect.element(box).toHaveFocus()
     await expect.element(box).toHaveValue('Ng')
     expect(onChange).not.toHaveBeenCalled()
@@ -227,6 +227,15 @@ test('Tab and Enter wait while the search for what was typed is still to answer'
         .toHaveAttribute('data-highlighted')
     await userEvent.keyboard('{Tab}')
     expect(onChange.mock.calls).toEqual([[CHC, undefined]])
+})
+
+test('Tab leaves the field while the search is still to answer, and picks nothing', async () => {
+    const { onChange, box } = await mount()
+    await userEvent.tab()
+    await userEvent.keyboard('Ng{Tab}')
+    await expect.element(box).not.toHaveFocus()
+    await expect.element(box).toHaveValue('')
+    expect(onChange).not.toHaveBeenCalled()
 })
 
 test('a username field searches users and shows the name of the one picked', async () => {

@@ -76,6 +76,8 @@ export const DatePickerButton = ({
             <PopoverTrigger
                 render={<InputGroupButton variant="ghost" size="icon-xs" />}
                 aria-label={i18n.t('Choose date')}
+                // A press opens the calendar without taking focus from the input, whose text is not committed half typed.
+                onMouseDown={(event) => event.preventDefault()}
             >
                 <IconCalendar16 />
             </PopoverTrigger>
@@ -130,7 +132,11 @@ export const DateInput = ({
     const input = useRef<HTMLInputElement>(null)
     const typed = parseTyped(field, draft.text, settings)
     const stored = typed.ok ? typed.value : undefined
-    const time = stored === undefined ? undefined : storedTime(stored)
+    // The time typed, also beside a date that is not one yet, or with no date at all.
+    const time =
+        stored === undefined
+            ? draft.text.match(/\b\d{1,2}:\d{2}\b/)?.[0]
+            : storedTime(stored)
     const withTime = field.valueType === 'DATETIME'
     if (readOnly) {
         return (

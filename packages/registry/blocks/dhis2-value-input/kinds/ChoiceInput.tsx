@@ -107,15 +107,6 @@ export const ChoiceInput = ({
         () => offeredOptions(options, hiddenOptions, value),
         [options, hiddenOptions, value]
     )
-    const meta: ValueMeta = {
-        valueType: field.valueType,
-        optionSet: {
-            options: options.map(({ code, name }) => ({
-                code,
-                displayName: name,
-            })),
-        },
-    }
     const known = options.some(({ code }) => code === value)
 
     if (kind === 'trueOnly') {
@@ -128,6 +119,11 @@ export const ChoiceInput = ({
                 onCheckedChange={(checked) => onChange(checked ? 'true' : null)}
             />
         )
+    }
+    // Shown only for a value the options lack, which has no name among them: it is shown as stored.
+    const meta: ValueMeta = {
+        valueType: field.valueType,
+        optionSet: { options: [] },
     }
     const shown = formatDhis2Value(value, meta, {
         calendar: settings.calendar,

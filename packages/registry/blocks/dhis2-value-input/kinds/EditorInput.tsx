@@ -7,6 +7,7 @@ import type { FileUploads } from '../editors/fileUploads'
 import { formEditorFor } from '../editors/popupEditors'
 import type { EditorProblem } from '../editors/popupEditors'
 import { composing } from '../composing'
+import { useReported } from '../useReported'
 import { unknownName } from './SearchInput'
 
 type OnChange = (value: string | null, problem?: EditorProblem) => void
@@ -24,34 +25,33 @@ export const useEditorCommits = (
     readOnly: boolean
 ) => {
     const [state, setState] = useState<{
-        given: string | undefined
         fieldKey: string
         readOnly: boolean
         version: number
         problem?: EditorProblem
-    }>({ given: value, fieldKey, readOnly, version: 0 })
-    const reported = useRef<string | null>()
+    }>({ fieldKey, readOnly, version: 0 })
+    const echo = useReported(value)
     let current = state
     if (
-        value !== state.given ||
+        echo.isNew ||
         fieldKey !== state.fieldKey ||
         readOnly !== state.readOnly
     ) {
         const again =
+            echo.isNew ||
             fieldKey !== state.fieldKey ||
-            (readOnly && !state.readOnly) ||
-            (value !== state.given && (value ?? null) !== reported.current)
+            (readOnly && !state.readOnly)
         current = again
-            ? { given: value, fieldKey, readOnly, version: state.version + 1 }
-            : { ...state, given: value, readOnly }
+            ? { fieldKey, readOnly, version: state.version + 1 }
+            : { ...state, readOnly }
         if (again) {
             // What the person committed is history: the host saying it again is a new value too.
-            reported.current = undefined
+            echo.forget()
         }
         setState(current)
     }
     const send: OnChange = (next, problem) => {
-        reported.current = next
+        echo.report(next)
         onChange(next, problem)
     }
     return {
@@ -75,7 +75,7 @@ export const useEditorCommits = (
 /**
  * A pop-up value type's editor drawn in the form. Its changes are reported when focus leaves it, its saves (a file
  * uploaded, Remove) at once. A running upload is reported as a problem, so the host cannot save the field without its
- * file, and stops if the field leaves the page.
+ * file; if the field leaves the page it stops, and what the field held is reported again.
  */
 export const EditorInput = ({
     labelId,
@@ -109,10 +109,24 @@ export const EditorInput = ({
     const pending = useRef<Parameters<OnChange>>()
     // A value from the host starts the editor again, without what was typed in it.
     const version = useRef(commits.version)
+    // What the field held before the upload now running, which reported no value in its place.
+    const replaced = useRef<{ before: string | null }>()
     if (version.current !== commits.version) {
         version.current = commits.version
         pending.current = undefined
+        replaced.current = undefined
     }
+    // An upload the field leaving the page stops is no file: the host gets back what the field held.
+    const send = useRef(commits.send)
+    send.current = commits.send
+    useEffect(
+        () => () => {
+            if (replaced.current !== undefined) {
+                send.current(replaced.current.before)
+            }
+        },
+        []
+    )
     // A file uploaded here keeps the name it was chosen under.
     const [learned, setLearned] = useState<{ id: string; name: string }>()
     const local = useLocalFileUploads(
@@ -130,10 +144,12 @@ export const EditorInput = ({
                 file,
                 image,
                 (id) => {
+                    replaced.current = undefined
                     setLearned({ id, name: file.name })
                     done(id)
                 },
                 (reason) => {
+                    replaced.current = undefined
                     failed(reason)
                     // No file came of it: the field holds what it held. A file refused before upload changed nothing.
                     if (started) {
@@ -144,6 +160,7 @@ export const EditorInput = ({
             started = local.running() !== undefined
             if (started) {
                 pending.current = undefined
+                replaced.current = { before }
                 commits.send(null, {
                     message: i18n.t('Still uploading'),
                     text: file.name,
@@ -167,7 +184,11 @@ export const EditorInput = ({
         <div
             className="flex flex-col gap-2"
             onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) {
+                // A calendar the editor opens is drawn outside it, and is still the editor.
+                if (
+                    !event.currentTarget.contains(event.relatedTarget) &&
+                    !event.relatedTarget?.closest('[data-slot=popover-content]')
+                ) {
                     flush()
                 }
             }}

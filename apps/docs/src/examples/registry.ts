@@ -4,6 +4,8 @@ import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
+import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
+import { PersonBannerPlaceholder } from './tracked-entity-header/TrackedEntityHeaderPlaceholders'
 import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
@@ -40,6 +42,13 @@ import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
 import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
 import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
 import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
+import spreadsheetTargetsSource from './spreadsheet/TargetsGrid.tsx?raw'
+import trackerDataEntryCohortAncSource from './tracker-data-entry/CohortAncRegister.tsx?raw'
+import trackerDataEntryEventProgramSource from './tracker-data-entry/EventProgramGrid.tsx?raw'
+import trackerDataEntryImmunisationSource from './tracker-data-entry/ImmunisationRegister.tsx?raw'
+import trackerDataEntryPersonEventsSource from './tracker-data-entry/PersonEventsGrid.tsx?raw'
+import trackerDataEntryTrackerRegisterSource from './tracker-data-entry/TrackerRegisterGrid.tsx?raw'
+import trackerDataEntryValueTypesSource from './tracker-data-entry/ValueTypesGrid.tsx?raw'
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
@@ -144,6 +153,15 @@ const examples = [
         Placeholder: PersonVitalsPlaceholder,
     },
     {
+        slug: 'tracked-entity-header/person-banner',
+        title: 'Person banner',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-header/PersonBanner')),
+        source: personBannerSource,
+        minHeight: 200,
+        Placeholder: PersonBannerPlaceholder,
+    },
+    {
         slug: 'timeline/case-history',
         title: 'Case history',
         live: true,
@@ -187,6 +205,66 @@ const examples = [
         ),
         source: contextSelectorStatesSource,
         minHeight: 340,
+    },
+    {
+        slug: 'spreadsheet/targets',
+        title: 'Yearly targets for a few organisation units',
+        live: true,
+        Component: lazy(() => import('./spreadsheet/TargetsGrid')),
+        source: spreadsheetTargetsSource,
+        minHeight: 300,
+    },
+    {
+        slug: 'tracker-data-entry/event-program',
+        title: 'Inpatient morbidity and mortality at Ngelehun CHC',
+        live: true,
+        Component: lazy(() => import('./tracker-data-entry/EventProgramGrid')),
+        source: trackerDataEntryEventProgramSource,
+        minHeight: 680,
+    },
+    {
+        slug: 'tracker-data-entry/tracker-register',
+        title: 'RMNCH first visits across Sierra Leone',
+        live: true,
+        Component: lazy(
+            () => import('./tracker-data-entry/TrackerRegisterGrid')
+        ),
+        source: trackerDataEntryTrackerRegisterSource,
+        minHeight: 640,
+    },
+    {
+        slug: 'tracker-data-entry/person-events',
+        title: 'One RMNCH woman',
+        live: true,
+        Component: lazy(() => import('./tracker-data-entry/PersonEventsGrid')),
+        source: trackerDataEntryPersonEventsSource,
+        minHeight: 680,
+    },
+    {
+        slug: 'tracker-data-entry/immunisation-register',
+        title: 'A child immunisation register',
+        live: true,
+        Component: lazy(
+            () => import('./tracker-data-entry/ImmunisationRegister')
+        ),
+        source: trackerDataEntryImmunisationSource,
+        minHeight: 560,
+    },
+    {
+        slug: 'tracker-data-entry/cohort-anc-register',
+        title: 'An antenatal care cohort register',
+        live: true,
+        Component: lazy(() => import('./tracker-data-entry/CohortAncRegister')),
+        source: trackerDataEntryCohortAncSource,
+        minHeight: 560,
+    },
+    {
+        slug: 'tracker-data-entry/value-types',
+        title: 'Every value type, from a source of your own',
+        live: true,
+        Component: lazy(() => import('./tracker-data-entry/ValueTypesGrid')),
+        source: trackerDataEntryValueTypesSource,
+        minHeight: 360,
     },
     {
         slug: 'tracked-entity-finder/find-person',

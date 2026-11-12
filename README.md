@@ -17,6 +17,7 @@ packages/
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
       sidebar/          Composable modeling-app navigation with a collapse rail
+      data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
@@ -114,6 +115,62 @@ Collapsing preserves the open groups and selected page.
 
 See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
 examples.
+
+## Spreadsheet and Tracker Data Entry blocks
+
+Two blocks enter DHIS2 data in a grid, typed in like a spreadsheet.
+
+`spreadsheet` is the grid: DHIS2-typed cells, Excel-style keys, paste and undo,
+and the state of each cell, for any data your app saves. It knows nothing about
+events, people or rules. You give it a cell store, the tables to show and a
+store of what your logic says about each cell.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/spreadsheet
+```
+
+`tracker-data-entry` fills the grid with the events of an event or tracker
+program, or a paper register of people. Every change is kept on the device
+before it is sent, so nothing typed is lost to a dropped connection, a reload
+or a crash, and program rules run for the rows whose stage the grid shows, as
+Capture runs them.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/tracker-data-entry
+```
+
+The install also pulls in `spreadsheet`, `dhis2-value-types` (what each value
+type accepts), `dhis2-value-display` (the calendar) and `program-rules`. Import
+from `@/components/tracker-data-entry` and `@/components/spreadsheet`, and
+render `TrackerDataEntry` beneath the DHIS2 app-runtime provider and a TanStack
+`QueryClientProvider`:
+
+```tsx
+import { SpreadsheetGrid } from '@/components/spreadsheet'
+import {
+    TrackerDataEntry,
+    TrackerDataEntrySummary,
+    eventSource,
+} from '@/components/tracker-data-entry'
+
+// Made once: a source with new keys loads the form again.
+const inpatient = eventSource({
+    programId: 'eBAyeGv0exc',
+    orgUnitId: 'DiszpKrYNg8',
+})
+
+export const InpatientGrid = () => (
+    <TrackerDataEntry source={inpatient}>
+        <SpreadsheetGrid />
+        <TrackerDataEntrySummary />
+    </TrackerDataEntry>
+)
+```
+
+`eventSource` takes the events of a program, of one stage, or of one person
+(`enrollmentId`). See `/blocks/tracker-data-entry` for live examples of each,
+registers, program rules and how changes are saved, and `/blocks/spreadsheet`
+for the keyboard, the cell store and replacing a control.
 
 ## Timeline block
 
@@ -337,15 +394,17 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
 `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `label`, `popover`, `portal-root`, `select`, `separator`,
+`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
 `spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
 `tooltip`. Items that import siblings (for example `combobox` imports `select`
 and `input-group`) install them too.
 
-Every design token is namespaced (`--color-dhis2-*`, `--radius-dhis2-*`,
-`--shadow-dhis2-*`, `--font-dhis2`), so utilities such as `bg-dhis2-primary` or
-`text-dhis2-grey-700` coexist with the host application's own Tailwind theme
-and never replace it. Run `pnpm registry:check` to verify the published items
+Every design token is namespaced (`--dhis2-*`, `--color-dhis2-*`,
+`--radius-dhis2-*`, `--shadow-dhis2-*`, `--font-dhis2`), so utilities such as
+`bg-dhis2-primary` or `text-dhis2-muted-foreground` coexist with the host
+application's own Tailwind theme and never replace it. The theme ships semantic
+roles only, no palette, so everything coloured with it follows the contrast
+setting. Run `pnpm registry:check` to verify the published items
 install and build in a throwaway consumer app.
 
 ## Documentation site
@@ -445,6 +504,26 @@ tasks to retain dependency-aware caching without serializing package checks.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
 
+`anti-slop/require-standalone-hook-calls` keeps hook calls out of conditions,
+JSX, arguments and other composed expressions, and bans reading a property or
+calling a method directly on a hook's result. Store or destructure the result
+first:
+
+```tsx
+const { status } = useFinderResults()
+if (status !== 'searching') {
+    return null
+}
+```
+
+Direct variable initializers, standalone effects and direct returns are allowed
+at function-body level (including concise hook-forwarding arrows). Parentheses
+and TypeScript-only wrappers do not hide chained access. Hook names follow
+`use` + uppercase letter/digit, including PascalCase namespaces such as
+`React.useState`; lowercase utility objects such as `vi.useFakeTimers` are not
+hooks. This is an expression-placement rule, not a replacement for React's
+Rules of Hooks control-flow checks.
+
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes
 do not start the web app's E2E stack). Feature branches compare against their
@@ -469,6 +548,40 @@ the formatter checks Markdown and workflow files too.
 `pnpm dead-code:audit` runs the complete Knip configuration and fails on any
 finding, including circular imports. Use `pnpm audit:exports` for a focused
 interactive export report.
+
+## Accessibility
+
+Blocks and primitives target WCAG 2.2 AA, the level Section 508, ADA Title II,
+EN 301 549 and most donor and UN procurement rules ask for. They don't meet it
+yet: some blocks still show states by colour alone, have mouse-only details, or
+don't announce changes such as result counts and rule effects. Three checks
+hold what is in place:
+
+- `pnpm lint` runs the `jsx-a11y` rules. A rule turned off for one line says
+  why beside it.
+- `pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts` scans every docs
+  example with axe, in the default and the more-contrast theme, and presses Tab
+  through each one to check every stop shows where focus is. CI runs it in the
+  `docs-e2e` job of `verify` when the docs or the registry change. The job
+  reports but doesn't yet block `validation`.
+- Contrast, forced-colours and reduced-motion browser tests
+  (`*.contrast.test.tsx`, `*.forced.test.tsx`, `*.motion.test.tsx`) check what
+  axe can't see.
+
+Axe finds about a third of WCAG problems. Every new block and primitive also:
+
+- announces outcomes that happen away from focus with `announce(text)` from
+  `@/components/dhis2/ui/announcer`, and errors with
+  `announce(text, 'assertive')`
+- puts focus somewhere sensible after async work, after a dialog closes, and
+  when the control that had it unmounts
+- keeps focus on a control it disables, with `focusableWhenDisabled`
+- never shows a state with colour alone: add a word, an icon or a shape
+- keeps targets at least 24 by 24 pixels
+- gives every hover-only detail a keyboard path
+- uses `Field` for every labelled control, so its label, hint and error reach
+  screen readers
+- has a docs example, which puts it under the scan
 
 ## Real-DHIS2 browser tests
 

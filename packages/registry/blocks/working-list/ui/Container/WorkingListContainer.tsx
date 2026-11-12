@@ -6,6 +6,9 @@ import { useWorkingListMetadata } from '../../provider/queries'
 
 export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
 
+export const LIST_CLASS =
+    'w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card contrast-more:shadow-none'
+
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
@@ -23,7 +26,7 @@ export const WorkingListContainer = ({
         <div className="w-full min-w-0" data-testid="working-list-main">
             {!online && (
                 <div
-                    className="border border-[var(--colors-yellow300)] bg-[var(--colors-yellow100)] px-3 py-2 text-[var(--colors-yellow900)] [border-radius:4px_4px_0_0]"
+                    className="border border-dhis2-warning-border bg-dhis2-warning-subtle px-3 py-2 text-dhis2-warning-strong [border-radius:4px_4px_0_0]"
                     data-testid="offline-notice"
                     role="status"
                 >
@@ -55,7 +58,7 @@ export const WorkingListContainer = ({
             )}
             <article
                 {...props}
-                className={`w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]${failed ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
+                className={`${LIST_CLASS}${failed ? ' hidden' : ''}${className ? ` ${className}` : ''}`}
                 data-testid="working-list"
                 aria-busy={pending || undefined}
                 hidden={failed}

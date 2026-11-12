@@ -64,6 +64,30 @@ describe('FinderForm', () => {
             .toBeVisible()
     })
 
+    it('loads the program and system info through app-runtime', async () => {
+        const server = createFakeServer()
+        await renderWithQueries(
+            <FinderProvider program="hivProgram" onSelect={vi.fn()}>
+                <FinderForm>
+                    <FinderField attribute="artNumber" />
+                </FinderForm>
+            </FinderProvider>,
+            server
+        )
+        await expect
+            .element(page.getByRole('textbox', { name: 'ART number' }))
+            .toBeEnabled()
+        expect(server.requests).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    resource: 'programs',
+                    id: 'hivProgram',
+                }),
+                expect.objectContaining({ resource: 'system/info' }),
+            ])
+        )
+    })
+
     it('renders From and To for a range field', async () => {
         await renderFinder(
             <FinderForm>
@@ -511,12 +535,14 @@ describe('FinderForm', () => {
     })
 
     it('tells field hooks the kind of value an attribute takes', async () => {
-        const Kind = ({ attribute }: { attribute: string }) => (
-            <li>{`${attribute} ${useFinderField(attribute).attribute?.kind};`}</li>
-        )
-        const Range = () => (
-            <li>{`range ${useFinderRangeField('visit').attribute?.kind};`}</li>
-        )
+        const Kind = ({ attribute }: { attribute: string }) => {
+            const { attribute: field } = useFinderField(attribute)
+            return <li>{`${attribute} ${field?.kind};`}</li>
+        }
+        const Range = () => {
+            const { attribute } = useFinderRangeField('visit')
+            return <li>{`range ${attribute?.kind};`}</li>
+        }
         await renderFinder(
             <FinderForm>
                 <ul data-testid="kinds">

@@ -1,4 +1,9 @@
-import { createContext, useContext } from 'react'
+import {
+    createContext,
+    useContext,
+    type Dispatch,
+    type SetStateAction,
+} from 'react'
 import type { FinderPerson } from '../api/search'
 import type { FinderFormApi } from '../form/finderFormApi'
 import type { FormField, FormVerdict, ValidatedSearch } from '../rules/types'
@@ -6,8 +11,8 @@ import type { FormField, FormVerdict, ValidatedSearch } from '../rules/types'
 /** A search the user ran, and the page of its results on screen. */
 export interface FinderSubmission {
     search: ValidatedSearch
-    /** When Search was pressed, so the same search can run again. */
-    submittedAt: number
+    /** Grows with every Search, so each one is announced once. */
+    id: number
     page: number
 }
 
@@ -17,7 +22,7 @@ export interface FinderContextValue {
     onSelect: (person: FinderPerson) => void
     /** The last submitted search, of whichever form ran it. */
     submission?: FinderSubmission
-    setSubmission: (submission: FinderSubmission) => void
+    setSubmission: Dispatch<SetStateAction<FinderSubmission | undefined>>
 }
 
 /** Internal: never exported from the block, so it cannot be swapped out. */

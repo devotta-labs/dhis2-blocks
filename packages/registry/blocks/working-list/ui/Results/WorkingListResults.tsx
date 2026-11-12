@@ -49,7 +49,7 @@ export interface WorkingListTableProps extends Omit<
 const ViewLoading = () => {
     const { pagination } = useWorkingList()
     // While the program loads, the container already announces loading.
-    const initializing = useWorkingListMetadata().isPending
+    const { isPending: initializing } = useWorkingListMetadata()
 
     return (
         <div data-testid="working-list-selection-loading">
@@ -228,7 +228,6 @@ const IncompatibleSelection = ({
                             >
                                 {repairPending && (
                                     <Spinner
-                                        aria-label={i18n.t('Loading')}
                                         data-icon="inline-start"
                                         className="size-4"
                                     />
@@ -284,8 +283,8 @@ const IncompatibleSelection = ({
  */
 export const WorkingListSelectionError = () => {
     const { viewId, selectView } = useWorkingList()
-    const metadata = useWorkingListMetadata().data
-    const savedLists = useSavedLists().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: savedLists } = useSavedLists()
     const view = useWorkingListView()
 
     if (!view.isError || !metadata) return null
@@ -317,7 +316,7 @@ const WorkingListResultsContent = ({
     onRowClick,
     dataQualityMode = 'hidden',
 }: Pick<WorkingListTableProps, 'onRowClick' | 'dataQualityMode'>) => {
-    const metadata = useWorkingListMetadata().data
+    const { data: metadata } = useWorkingListMetadata()
     const view = useWorkingListView()
 
     if (view.isError) return <WorkingListSelectionError />

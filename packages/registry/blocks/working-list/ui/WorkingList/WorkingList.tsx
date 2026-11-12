@@ -115,7 +115,7 @@ export const WorkingListViewSwitcher = ({
         >
             <h2
                 id={headingId}
-                className="m-0 p-2 text-xs font-normal leading-4 text-[var(--colors-grey700)]"
+                className="m-0 p-2 text-xs font-normal leading-4 text-dhis2-muted-foreground"
             >
                 {accessibleHeading}
             </h2>

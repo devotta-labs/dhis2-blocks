@@ -44,7 +44,7 @@ const ProgramAvailabilityNotice = ({
 >) => {
     if (!programOptions.some((option) => !option.excludeFromMenu)) {
         return (
-            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
+            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-dhis2-muted-foreground">
                 <span>{i18n.t('No programs available.')}</span>
                 <Button
                     variant="secondary"
@@ -63,7 +63,7 @@ const ProgramAvailabilityNotice = ({
     return (
         <>
             <Separator className="my-2" />
-            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-[#4a5768]">
+            <div className="flex items-center gap-[8px] px-[12px] py-[4px] text-[14px] text-dhis2-muted-foreground">
                 <span>
                     {i18n.t(
                         'Some programs are being filtered by the chosen organisation unit'

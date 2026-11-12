@@ -220,8 +220,10 @@ export const useProgramMetadata = (programId: string) => {
 }
 
 /** The metadata of the program this list shows. */
-export const useWorkingListMetadata = () =>
-    useProgramMetadata(useWorkingList().programId)
+export const useWorkingListMetadata = () => {
+    const { programId } = useWorkingList()
+    return useProgramMetadata(programId)
+}
 
 /**
  * The program's saved lists. A program with none of its own shows the
@@ -229,8 +231,15 @@ export const useWorkingListMetadata = () =>
  */
 const useProgramSavedLists = (programId: string) => {
     const engine = useDataEngine()
-    const metadata = useProgramMetadata(programId).data
+    const { data: metadata } = useProgramMetadata(programId)
     const generatedLists = metadata?.generatedLists
+    const select = useCallback(
+        (lists: NormalizedSavedWorkingList[]) =>
+            lists.length === 0
+                ? { lists: generatedLists ?? [], generated: true }
+                : { lists, generated: false },
+        [generatedLists]
+    )
     return useQuery({
         queryKey: workingListQueryKeys.savedLists(programId),
         queryFn: ({ signal }) => {
@@ -243,13 +252,7 @@ const useProgramSavedLists = (programId: string) => {
                 signal,
             })
         },
-        select: useCallback(
-            (lists: NormalizedSavedWorkingList[]) =>
-                lists.length === 0
-                    ? { lists: generatedLists ?? [], generated: true }
-                    : { lists, generated: false },
-            [generatedLists]
-        ),
+        select,
         staleTime: 30_000,
         gcTime: 5 * 60_000,
         retry: shouldRetryWorkingListRequest,
@@ -258,8 +261,10 @@ const useProgramSavedLists = (programId: string) => {
 }
 
 /** The saved lists of the program this list shows. */
-export const useSavedLists = () =>
-    useProgramSavedLists(useWorkingList().programId)
+export const useSavedLists = () => {
+    const { programId } = useWorkingList()
+    return useProgramSavedLists(programId)
+}
 
 export const canUpdateSavedList = (list: NormalizedSavedWorkingList) =>
     list.sharing.access?.write === true && list.sharing.access.update === true
@@ -307,7 +312,7 @@ export const useSelectedView = ({
     viewId,
     draft,
 }: SelectedViewOptions) => {
-    const metadata = useProgramMetadata(programId).data
+    const { data: metadata } = useProgramMetadata(programId)
     const savedLists = useProgramSavedLists(programId)
     const loaded = savedLists.data
     const reloading = savedLists.isFetching
@@ -416,8 +421,8 @@ export const useWorkingListRecords = (): Loaded<
     const engine = useDataEngine()
     const { online } = useOnlineStatus()
     const { programId, orgUnitId, pagination } = useWorkingList()
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
     const request =
         metadata && view
             ? {

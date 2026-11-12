@@ -27,6 +27,7 @@ export function FinderPagination({
                 variant="secondary"
                 size="sm"
                 disabled={!hasPrevious || refreshing}
+                focusableWhenDisabled
                 onClick={previous}
             >
                 {i18n.t('Previous')}
@@ -36,6 +37,7 @@ export function FinderPagination({
                 variant="secondary"
                 size="sm"
                 disabled={!hasNext || refreshing}
+                focusableWhenDisabled
                 onClick={next}
             >
                 {i18n.t('Next')}

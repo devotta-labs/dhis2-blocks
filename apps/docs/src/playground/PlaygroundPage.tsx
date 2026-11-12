@@ -32,6 +32,18 @@ const LABS = {
             default: FinderLab,
         }))
     ),
+    'tracked-entity-header': lazy(() =>
+        import('./tracked-entity-header/TrackedEntityHeaderLab').then(
+            ({ TrackedEntityHeaderLab }) => ({
+                default: TrackedEntityHeaderLab,
+            })
+        )
+    ),
+    'tracker-data-entry': lazy(() =>
+        import('./tracker-data-entry/TrackerDataEntryLab').then(
+            ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
+        )
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

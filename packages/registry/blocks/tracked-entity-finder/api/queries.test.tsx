@@ -1,11 +1,11 @@
-import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
+import { CustomDataProvider, FetchError, Provider } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
 import { z, ZodError } from 'zod'
 import { hivProgram } from '../__tests__/fixtures/program'
-import type { FinderSubmission } from '../provider/context'
 import { buildProgramModel } from '../rules/programModel'
+import type { ValidatedSearch } from '../rules/types'
 import {
     shouldRetryRequest,
     useProgramMetadata,
@@ -31,6 +31,10 @@ interface Server {
     systemInfo?: Respond
     search?: Respond
 }
+
+const SERVER = 'https://dhis2.test'
+const THREE_HOURS = 3 * 60 * 60_000
+const FIVE_MINUTES = 5 * 60_000
 
 const failure = (httpStatusCode: number, message = `HTTP ${httpStatusCode}`) =>
     new FetchError({
@@ -86,15 +90,40 @@ const setup = ({
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retryDelay: 0 } },
     })
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <CustomDataProvider data={data}>
+    /** The same QueryClient and resources, behind the server at `baseUrl`. */
+    const wrapperFor =
+        (baseUrl: string) =>
+        ({ children }: { children: ReactNode }) => (
             <QueryClientProvider client={queryClient}>
-                {children}
+                <Provider
+                    config={{ baseUrl, apiVersion: 43 }}
+                    userInfo={undefined}
+                    plugin={false}
+                    parentAlertsAdd={undefined}
+                    showAlertsInPlugin={false}
+                >
+                    <CustomDataProvider data={data}>
+                        {children}
+                    </CustomDataProvider>
+                </Provider>
             </QueryClientProvider>
-        </CustomDataProvider>
-    )
-    return { wrapper, requests }
+        )
+    /** What the finder holds in the cache: each entry's key and how long it is kept. */
+    const cached = () =>
+        queryClient
+            .getQueryCache()
+            .getAll()
+            .map(({ queryKey, gcTime }) => ({ queryKey, gcTime }))
+    return {
+        wrapper: wrapperFor(SERVER),
+        wrapperFor,
+        requests,
+        cached,
+    }
 }
+
+/** Lets a refetch on mount go out, if there is one. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 100))
 
 describe('shouldRetryRequest', () => {
     it.each([
@@ -113,6 +142,11 @@ describe('shouldRetryRequest', () => {
         {
             name: 'a malformed response',
             error: new ZodError([]),
+            retried: false,
+        },
+        {
+            name: 'an aborted request',
+            error: new DOMException('Aborted', 'AbortError'),
             retried: false,
         },
     ])('$name: retried is $retried', ({ error, retried }) => {
@@ -144,37 +178,65 @@ describe('useProgramMetadata', () => {
         expect(fields).toContain('blockedSearchOperators')
     })
 
-    it('reloads program rules after their freshness window expires', async () => {
+    it('reuses program rules for three hours, then reloads them', async () => {
         let minimum = 1
-        const { wrapper, requests } = setup({
+        const { wrapper, requests, cached } = setup({
             programs: async () => programBody(minimum),
         })
         const mount = () =>
             renderHook(() => useProgramMetadata('prog'), { wrapper })
         const rules = (hook: Awaited<ReturnType<typeof mount>>) =>
             hook.result.current.data?.minAttributesRequiredToSearch
-
-        const first = await mount()
-        await expect.poll(() => rules(first)).toBe(1)
-        await first.unmount()
-
-        minimum = 2
-        const second = await mount()
-        expect(rules(second)).toBe(1)
-        await second.unmount()
-        expect(requests).toHaveLength(1)
-
-        const now = Date.now.bind(Date)
-        const clock = vi
-            .spyOn(Date, 'now')
-            .mockImplementation(() => now() + 60 * 60_000 + 1)
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
         try {
+            const first = await mount()
+            await expect.poll(() => rules(first)).toBe(1)
+            // Kept while no finder is mounted, for as long as it is fresh.
+            expect(cached()).toEqual([
+                {
+                    queryKey: [
+                        'tracked-entity-finder',
+                        'program',
+                        SERVER,
+                        'prog',
+                    ],
+                    gcTime: THREE_HOURS,
+                },
+            ])
+            await first.unmount()
+
+            minimum = 2
+            clock.mockReturnValue(now + THREE_HOURS - 1)
+            const second = await mount()
+            expect(rules(second)).toBe(1)
+            await settle()
+            expect(rules(second)).toBe(1)
+            expect(requests).toHaveLength(1)
+            await second.unmount()
+
+            clock.mockReturnValue(now + THREE_HOURS)
             const third = await mount()
             await expect.poll(() => rules(third)).toBe(2)
             expect(requests).toHaveLength(2)
         } finally {
             clock.mockRestore()
         }
+    })
+
+    it('never shares program rules between two servers', async () => {
+        const { wrapper, wrapperFor, requests } = setup()
+        const here = await renderHook(() => useProgramMetadata('prog'), {
+            wrapper,
+        })
+        await expect.poll(() => here.result.current.isSuccess).toBe(true)
+
+        const there = await renderHook(() => useProgramMetadata('prog'), {
+            wrapper: wrapperFor('https://other.dhis2.test'),
+        })
+        expect(there.result.current.data).toBeUndefined()
+        await expect.poll(() => there.result.current.isSuccess).toBe(true)
+        expect(requests).toHaveLength(2)
     })
 })
 
@@ -204,18 +266,139 @@ describe('useSystemInfo', () => {
             },
         ])
     })
+
+    it('reuses system info for three hours, then reloads it', async () => {
+        let calendar = 'gregorian'
+        const { wrapper, requests, cached } = setup({
+            systemInfo: async () => ({
+                calendar,
+                dateFormat: 'yyyy-MM-dd',
+                version: '2.43.0',
+            }),
+        })
+        const mount = () => renderHook(() => useSystemInfo(), { wrapper })
+        const shown = (hook: Awaited<ReturnType<typeof mount>>) =>
+            hook.result.current.data?.calendar
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            const first = await mount()
+            await expect.poll(() => shown(first)).toBe('gregorian')
+            expect(cached()).toEqual([
+                {
+                    queryKey: ['tracked-entity-finder', 'system-info', SERVER],
+                    gcTime: THREE_HOURS,
+                },
+            ])
+            await first.unmount()
+
+            calendar = 'ethiopian'
+            clock.mockReturnValue(now + THREE_HOURS - 1)
+            const second = await mount()
+            await settle()
+            expect(shown(second)).toBe('gregorian')
+            expect(requests).toHaveLength(1)
+            await second.unmount()
+
+            clock.mockReturnValue(now + THREE_HOURS)
+            const third = await mount()
+            await expect.poll(() => shown(third)).toBe('ethiopian')
+            expect(requests).toHaveLength(2)
+        } finally {
+            clock.mockRestore()
+        }
+    })
 })
 
 describe('useSearchPages', () => {
     const model = buildProgramModel(hivProgram)
-    const submit = (value: string, submittedAt: number): FinderSubmission => ({
-        search: {
-            filters: [
-                { attribute: 'artNumber', conditions: [{ op: 'eq', value }] },
-            ],
-        },
-        submittedAt,
-        page: 1,
+    const searchFor = (value: string): ValidatedSearch => ({
+        filters: [
+            { attribute: 'artNumber', conditions: [{ op: 'eq', value }] },
+        ],
+    })
+    const byNumberAndName: ValidatedSearch = {
+        filters: [
+            {
+                attribute: 'artNumber',
+                conditions: [{ op: 'eq', value: 'A1' }],
+            },
+            {
+                attribute: 'firstName',
+                conditions: [{ op: 'like', value: 'Amina' }],
+            },
+        ],
+    }
+
+    it('keys a search by server, program and filters in any order', async () => {
+        const { wrapper, wrapperFor, requests, cached } = setup()
+        const run = async (
+            search: ValidatedSearch,
+            program = model,
+            server = wrapper
+        ) => {
+            const hook = await renderHook(
+                () => useSearchPages(program, search),
+                { wrapper: server }
+            )
+            await expect.poll(() => hook.result.current.isSuccess).toBe(true)
+            await hook.unmount()
+        }
+
+        await run(byNumberAndName)
+        expect(cached()).toEqual([
+            {
+                queryKey: [
+                    'tracked-entity-finder',
+                    'search',
+                    SERVER,
+                    'hivProgram',
+                    ['artNumber:eq:A1', 'firstName:like:Amina'],
+                ],
+                gcTime: FIVE_MINUTES,
+            },
+        ])
+        // The same details, filled in the other order, are the same search.
+        await run({ filters: [...byNumberAndName.filters].reverse() })
+        expect(requests).toHaveLength(1)
+
+        await run(searchFor('A1'))
+        expect(requests).toHaveLength(2)
+        await run(byNumberAndName, { ...model, program: 'otherProgram' })
+        expect(requests).toHaveLength(3)
+        await run(
+            byNumberAndName,
+            model,
+            wrapperFor('https://other.dhis2.test')
+        )
+        expect(requests).toHaveLength(4)
+        expect(cached()).toHaveLength(4)
+    })
+
+    it('reuses results for five minutes, then reloads them', async () => {
+        const { wrapper, requests } = setup()
+        const mount = async () => {
+            const hook = await renderHook(
+                () => useSearchPages(model, searchFor('A1')),
+                { wrapper }
+            )
+            await expect.poll(() => hook.result.current.isSuccess).toBe(true)
+            await settle()
+            await hook.unmount()
+        }
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            await mount()
+            clock.mockReturnValue(now + FIVE_MINUTES - 1)
+            await mount()
+            expect(requests).toHaveLength(1)
+            clock.mockReturnValue(now + FIVE_MINUTES)
+            await mount()
+            expect(requests).toHaveLength(2)
+        } finally {
+            clock.mockRestore()
+        }
     })
 
     it('asks nothing until a search is submitted', async () => {
@@ -242,7 +425,7 @@ describe('useSearchPages', () => {
             const { wrapper } = setup({ search: () => Promise.reject(error) })
 
             const { result } = await renderHook(
-                () => useSearchPages(model, submit('A1', 1)),
+                () => useSearchPages(model, searchFor('A1')),
                 { wrapper }
             )
 
@@ -258,7 +441,7 @@ describe('useSearchPages', () => {
         })
 
         const { result } = await renderHook(
-            () => useSearchPages(model, submit('A1', 1)),
+            () => useSearchPages(model, searchFor('A1')),
             { wrapper }
         )
 
@@ -272,7 +455,7 @@ describe('useSearchPages', () => {
         })
 
         const { result } = await renderHook(
-            () => useSearchPages(model, submit('A1', 1)),
+            () => useSearchPages(model, searchFor('A1')),
             { wrapper }
         )
 
@@ -294,13 +477,12 @@ describe('useSearchPages', () => {
                       }),
         })
         const { result, rerender } = await renderHook(
-            (submission?: FinderSubmission) =>
-                useSearchPages(model, submission),
-            { wrapper, initialProps: submit('A1', 1) }
+            (search?: ValidatedSearch) => useSearchPages(model, search),
+            { wrapper, initialProps: searchFor('A1') }
         )
         await expect.poll(() => requests).toHaveLength(1)
 
-        await rerender(submit('B2', 2))
+        await rerender(searchFor('B2'))
         await expect
             .poll(() => result.current.data?.pages)
             .toMatchObject([{ kind: 'results', page: 1, hasNext: false }])

@@ -49,7 +49,7 @@ export const TimelineEmpty = ({
         <p
             {...props}
             data-slot="timeline-empty"
-            className={cn('text-sm text-dhis2-grey-700', className)}
+            className={cn('text-sm text-dhis2-muted-foreground', className)}
         >
             {children ?? i18n.t('No history yet')}
         </p>

@@ -24,5 +24,9 @@ export const programInfoQuery = (engine: DataEngine, program: string) => ({
 })
 
 /** One program's stages, data elements and attributes, keyed by id. */
-export const useProgramInfo = (program: string): UseQueryResult<ProgramInfo> =>
-    useQuery(programInfoQuery(useDataEngine(), program))
+export const useProgramInfo = (
+    program: string
+): UseQueryResult<ProgramInfo> => {
+    const engine = useDataEngine()
+    return useQuery(programInfoQuery(engine, program))
+}

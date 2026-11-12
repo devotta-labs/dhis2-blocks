@@ -117,6 +117,14 @@ const router = createBrowserRouter([
                         './pages/blocks/context-selector.mdx'
                     ),
                     docRoute(
+                        '/blocks/spreadsheet',
+                        './pages/blocks/spreadsheet.mdx'
+                    ),
+                    docRoute(
+                        '/blocks/tracker-data-entry',
+                        './pages/blocks/tracker-data-entry.mdx'
+                    ),
+                    docRoute(
                         '/blocks/observation-cards',
                         './pages/blocks/observation-cards.mdx'
                     ),
@@ -124,6 +132,10 @@ const router = createBrowserRouter([
                     docRoute(
                         '/blocks/tracked-entity-finder',
                         './pages/blocks/tracked-entity-finder.mdx'
+                    ),
+                    docRoute(
+                        '/blocks/tracked-entity-header',
+                        './pages/blocks/tracked-entity-header.mdx'
                     ),
                 ],
             },

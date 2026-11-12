@@ -39,6 +39,13 @@ test.describe('playground Canvas / Code', () => {
             'program',
             '"labProgram1"',
         ],
+        [
+            'tracked-entity-header',
+            'BannerCanvas',
+            'TrackedEntityBanner',
+            'trackedEntity',
+            '"labPerson01"',
+        ],
     ]) {
         test(`shows the actual ${composition} source`, async ({ page }) => {
             await page.goto(`/playground/${path}`)

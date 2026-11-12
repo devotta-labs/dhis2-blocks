@@ -138,8 +138,8 @@ const datedRecords = (
 const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
     const engine = useDataEngine()
     const { programId, orgUnitId } = useWorkingList()
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
     return useMemo(() => {
         const toApiDate = metadata?.serializationContext.toApiDate
         if (!view || !metadata || !toApiDate) return undefined
@@ -173,7 +173,7 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
 export const useWorkingListDateBounds = (
     fieldId: WorkingListDateFieldId
 ): WorkingListDateBounds | undefined => {
-    const metadata = useWorkingListMetadata().data
+    const { data: metadata } = useWorkingListMetadata()
     const request = useDateFieldRequest(fieldId)
     return useMemo(() => {
         const fromApiDate = metadata?.parsingContext.fromApiDate
@@ -202,8 +202,9 @@ export const useWorkingListDateRange = ({
     limit = 1000,
 }: WorkingListDateRangeOptions): WorkingListDateRangeResults => {
     const { programId } = useWorkingList()
-    const metadata = useWorkingListMetadata().data
-    const configuration = useWorkingListView().data?.configuration
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
+    const configuration = view?.configuration
     const request = useDateFieldRequest(fieldId)
     const fromApiDate = metadata?.parsingContext.fromApiDate
 

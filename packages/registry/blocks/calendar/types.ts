@@ -73,6 +73,7 @@ export interface CalendarState {
     display: CalendarDisplay
     setDisplay(display: CalendarDisplay): void
     dayName(day: CalendarDay): string
+    monthName(day: CalendarDay): string
     atStart: boolean
     atEnd: boolean
 }
@@ -94,7 +95,7 @@ export interface CalendarContextValue {
         > & {
             onRecordClick?: (record: CalendarRecord) => void
         }
-    meta: Pick<CalendarState, 'weekDayLabels' | 'dayName'> &
+    meta: Pick<CalendarState, 'weekDayLabels' | 'dayName' | 'monthName'> &
         Pick<DatePicker, 'currMonth' | 'currYear' | 'months' | 'years'>
 }
 

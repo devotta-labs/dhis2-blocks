@@ -69,8 +69,8 @@ export const useCreateSavedList = () => {
     const reloadSavedLists = useReloadSavedLists()
     const { programId, selectView } = useWorkingList()
     const { online } = useOnlineStatus()
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return useMutation<string, CreateViewError, string>({
         mutationKey: workingListQueryKeys.savedListMutations(programId),
@@ -123,8 +123,8 @@ export const useUpdateSavedList = () => {
     const reloadSavedLists = useReloadSavedLists()
     const { programId } = useWorkingList()
     const { online } = useOnlineStatus()
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return useMutation<void, UpdateSelectedViewError, void>({
         mutationKey: workingListQueryKeys.savedListMutations(programId),
@@ -182,7 +182,7 @@ export const useDeleteSavedList = () => {
     const reloadSavedLists = useReloadSavedLists()
     const { programId, viewId: selectedViewId, selectView } = useWorkingList()
     const { online } = useOnlineStatus()
-    const savedLists = useSavedLists().data
+    const { data: savedLists } = useSavedLists()
 
     return useMutation<void, DeleteViewError, string>({
         mutationKey: workingListQueryKeys.savedListMutations(programId),
@@ -231,7 +231,7 @@ export const useRepairSavedList = () => {
     const reloadSavedLists = useReloadSavedLists()
     const { programId } = useWorkingList()
     const { online } = useOnlineStatus()
-    const metadata = useWorkingListMetadata().data
+    const { data: metadata } = useWorkingListMetadata()
 
     return useMutation<
         void,
@@ -291,9 +291,8 @@ export const useRepairSavedList = () => {
 /** A saved-list write is under way, so nothing that changes the list should run. */
 export const useIsSavingList = () => {
     const { programId } = useWorkingList()
-    return (
-        useIsMutating({
-            mutationKey: workingListQueryKeys.savedListMutations(programId),
-        }) > 0
-    )
+    const writes = useIsMutating({
+        mutationKey: workingListQueryKeys.savedListMutations(programId),
+    })
+    return writes > 0
 }

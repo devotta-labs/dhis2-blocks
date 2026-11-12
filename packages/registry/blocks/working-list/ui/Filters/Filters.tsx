@@ -270,8 +270,8 @@ export const WorkingListFilterControls = ({
     ...props
 }: WorkingListFilterControlsProps) => {
     const { viewId } = useWorkingList()
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return (
         <div

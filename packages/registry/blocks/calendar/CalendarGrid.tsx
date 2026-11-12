@@ -17,6 +17,10 @@ import type { CalendarResults } from './types'
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
 export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
+// Forced colours would repaint the circle as the page, so it takes system colours there.
+export const TODAY_CLASS =
+    'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] forced-colors:[forced-color-adjust:none]'
+
 const WEEKDAYS: readonly CalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
 
 // shortcut: arrows move in visual order only for left-to-right text; flip them
@@ -51,7 +55,7 @@ const recordCountName = (day: CalendarDay, name: string) => {
 
 const HiddenDaysNote = ({ count }: { count: number }) =>
     count > 0 ? (
-        <p className="m-0 text-sm text-dhis2-grey-700">
+        <p className="m-0 text-sm text-dhis2-muted-foreground">
             {count === 1
                 ? i18n.t('1 record falls on a hidden weekend day.')
                 : i18n.t('{{count}} records fall on hidden weekend days.', {
@@ -79,7 +83,7 @@ const ResultsStatus = ({
     }
     if (results.status === 'pending') {
         return (
-            <p className="m-0 flex items-center gap-2 text-sm text-dhis2-grey-700">
+            <p className="m-0 flex items-center gap-2 text-sm text-dhis2-muted-foreground">
                 <Spinner />
                 {i18n.t('Loading records…')}
             </p>
@@ -87,7 +91,7 @@ const ResultsStatus = ({
     }
     if (results.truncated) {
         return (
-            <p className="m-0 text-sm text-dhis2-grey-700">
+            <p className="m-0 text-sm text-dhis2-muted-foreground">
                 {i18n.t(
                     'Showing the first {{count}} records in these weeks. Narrow the date range to see the rest.',
                     { count: results.records.length }
@@ -97,7 +101,7 @@ const ResultsStatus = ({
     }
     if (isEmpty) {
         return (
-            <p className="m-0 text-sm text-dhis2-grey-700">
+            <p className="m-0 text-sm text-dhis2-muted-foreground">
                 {i18n.t('No records this month.')}
             </p>
         )
@@ -110,6 +114,8 @@ interface CalendarGridDayProps {
     isWeekend: boolean
     /** The day sits in a narrowed column and has room for little. */
     compact: boolean
+    /** Name the month beside the number: the first day shown and each day where the month changes. */
+    showMonth: boolean
     /** The one day of the grid that Tab lands on. */
     isTabStop: boolean
     onFocus: () => void
@@ -122,6 +128,7 @@ const CalendarGridDay = ({
     day,
     isWeekend,
     compact,
+    showMonth,
     isTabStop,
     onFocus,
     onKeyDown,
@@ -130,13 +137,13 @@ const CalendarGridDay = ({
     const {
         state: { selectedDay },
         actions: { selectDay },
-        meta: { dayName },
+        meta: { dayName, monthName },
     } = useCalendar()
     const isSelected = day.date === selectedDay?.date
     return (
         <td
             // h-px lets the button fill the row's full height.
-            className="h-px border border-dhis2-grey-300 p-0 align-top"
+            className="h-px border border-dhis2-border p-0 align-top"
             aria-selected={isSelected}
         >
             <button
@@ -153,24 +160,22 @@ const CalendarGridDay = ({
                     if (!day.isDisabled) selectDay(day.date)
                 }}
                 className={cn(
-                    'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-white p-1.5 text-start hover:bg-dhis2-grey-050 focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
-                    isWeekend && 'bg-dhis2-grey-050',
-                    !day.isInCurrentMonth && 'bg-dhis2-grey-050',
+                    'flex h-full min-h-24 w-full cursor-pointer flex-col items-stretch gap-1 overflow-hidden bg-dhis2-background p-1.5 text-start hover:bg-dhis2-background-subtle focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
+                    isWeekend && 'bg-dhis2-background-subtle',
+                    !day.isInCurrentMonth && 'bg-dhis2-background-subtle',
                     day.isDisabled &&
-                        'cursor-default bg-dhis2-grey-100 hover:bg-dhis2-grey-100',
+                        'cursor-default bg-dhis2-muted hover:bg-dhis2-muted',
                     isSelected &&
-                        'bg-dhis2-blue-050 shadow-[inset_0_0_0_2px_var(--color-dhis2-blue-600)] hover:bg-dhis2-blue-050'
+                        'bg-dhis2-primary-subtle shadow-[inset_0_0_0_2px_var(--dhis2-primary)] hover:bg-dhis2-primary-subtle'
                 )}
             >
                 <span
                     className={cn(
-                        'text-[13px] leading-5 text-dhis2-grey-700',
-                        !day.isInCurrentMonth && 'text-dhis2-grey-600',
-                        day.isToday &&
-                            'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-blue-600 text-white'
+                        'truncate text-[13px] leading-5 text-dhis2-muted-foreground',
+                        day.isToday && TODAY_CLASS
                     )}
                 >
-                    {day.label}
+                    {showMonth ? `${day.label} ${monthName(day)}` : day.label}
                 </span>
                 <CalendarDayContext.Provider value={{ day, compact }}>
                     {children}
@@ -225,6 +230,15 @@ export const CalendarGrid = ({
         })
     )
     const days = rows.flat().map(({ day }) => day)
+    // The first day shown and each day where the month changes carry the month name, so neighbouring months don't rely on colour.
+    const monthStarts = new Set(
+        days
+            .filter(
+                (day, index) =>
+                    day.isInCurrentMonth !== days[index - 1]?.isInCurrentMonth
+            )
+            .map((day) => day.date)
+    )
     const hiddenCount =
         weekendColumns === 'hide'
             ? weeks
@@ -266,6 +280,7 @@ export const CalendarGrid = ({
             <HiddenDaysNote count={hiddenCount} />
             <table
                 ref={tableRef}
+                // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- the ARIA grid pattern on a table: arrow keys move between days
                 role="grid"
                 aria-busy={
                     results.status === 'pending' ||
@@ -292,8 +307,9 @@ export const CalendarGrid = ({
                                 key={weekday}
                                 scope="col"
                                 className={cn(
-                                    'truncate pb-1 text-xs font-normal text-dhis2-grey-700',
-                                    isWeekend(weekday) && 'text-dhis2-grey-600'
+                                    'truncate pb-1 text-xs font-normal text-dhis2-muted-foreground',
+                                    isWeekend(weekday) &&
+                                        'text-dhis2-subtle-foreground'
                                 )}
                             >
                                 {weekDayLabels[weekday - 1]}
@@ -313,6 +329,7 @@ export const CalendarGrid = ({
                                         weekendColumns === 'narrow' &&
                                         isWeekend(weekday)
                                     }
+                                    showMonth={monthStarts.has(day.date)}
                                     isTabStop={day.date === tabStop?.date}
                                     onFocus={() => setFocusedDate(day.date)}
                                     onKeyDown={(event) => onKeyDown(event, day)}

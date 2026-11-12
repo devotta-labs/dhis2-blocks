@@ -144,7 +144,10 @@ export const TimelineEnd = ({
         <p
             {...props}
             data-slot="timeline-end"
-            className={cn('m-0 ms-6 text-sm text-dhis2-grey-700', className)}
+            className={cn(
+                'm-0 ms-6 text-sm text-dhis2-muted-foreground',
+                className
+            )}
         >
             {children ?? i18n.t('Start of the record')}
         </p>

@@ -17,10 +17,12 @@ const ListedValues = () => {
         <span className="flex flex-wrap gap-x-4 gap-y-1">
             {listed?.map(({ id, label }) => (
                 <span key={id} className="flex flex-col">
-                    <span className="text-xs text-dhis2-grey-700">{label}</span>
+                    <span className="text-xs text-dhis2-muted-foreground">
+                        {label}
+                    </span>
                     <FinderValue
                         attribute={id}
-                        className="text-dhis2-grey-900"
+                        className="text-dhis2-foreground"
                     />
                 </span>
             ))}
@@ -46,7 +48,7 @@ export function FinderItem({
             type="button"
             data-slot="finder-item"
             className={cn(
-                'w-full cursor-pointer rounded-dhis2-sm border border-dhis2-grey-300 bg-white px-3 py-2 text-left text-sm hover:bg-dhis2-grey-100 focus-visible:outline-3 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
+                'w-full cursor-pointer rounded-dhis2-sm border border-dhis2-border bg-dhis2-background px-3 py-2 text-left text-sm hover:bg-dhis2-muted focus-visible:outline-3 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
                 className
             )}
             onClick={(event) => {

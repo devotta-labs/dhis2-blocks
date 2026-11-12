@@ -85,8 +85,8 @@ export function ObservationSparkline({
             label: series.label,
             // An out-of-date line greys with the rest of the card, so it never reads as current.
             color: stale
-                ? 'var(--color-dhis2-grey-500)'
-                : 'var(--color-dhis2-primary)',
+                ? 'var(--dhis2-neutral-indicator)'
+                : 'var(--dhis2-primary)',
         },
     }
     const data = plotted.map((point) => ({
@@ -204,7 +204,7 @@ export function ObservationSparkline({
                                             <span className="font-medium text-dhis2-foreground tabular-nums">
                                                 {entry.display}
                                             </span>
-                                            <span className="text-dhis2-grey-700">
+                                            <span className="text-dhis2-muted-foreground">
                                                 {' · '}
                                                 {entry.date}
                                             </span>

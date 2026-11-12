@@ -163,6 +163,7 @@ export const workingListTranslationCatalog = () => [
     i18n.t('Row actions'),
     i18n.t('Row has {{count}} data quality issues'),
     i18n.t('Save'),
+    i18n.t('Saving…'),
     i18n.t('Save changes to this view'),
     i18n.t(
         'Save this mode change as a new working list instead of replacing a different resource type.'

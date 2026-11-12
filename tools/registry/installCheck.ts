@@ -191,7 +191,11 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'calendar.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
+            join(registryOutput, 'program-rules.json'),
             join(registryOutput, 'dhis2-value-display.json'),
+            join(registryOutput, 'dhis2-value-types.json'),
+            join(registryOutput, 'spreadsheet.json'),
+            join(registryOutput, 'tracker-data-entry.json'),
             join(registryOutput, 'observation-cards.json'),
             join(registryOutput, 'timeline.json'),
             join(registryOutput, 'tracked-entity-finder.json'),
@@ -285,14 +289,41 @@ const checkInstall = (workDirectory: string): void => {
         themeDefault(appDirectory, '--radius-sm')
     )
     // Tailwind emits only the utilities the installed source uses, and the
-    // installed `@theme inline` block resolves the token to its value, so check
-    // a DHIS2 utility that the installed primitives really use.
+    // installed `@theme inline` block points each role at its runtime
+    // variable, so check a DHIS2 utility that the installed primitives use.
     assertUtilityValue(
         emitted,
         'text-dhis2-primary',
         '--color-dhis2-primary',
-        '#1565c0'
+        'var(--dhis2-primary)'
     )
+    // The role's value must reach :root too, or every colour is unset.
+    if (
+        !declarationValues(emitted, '--dhis2-primary').some(
+            (value) => normalizeCssValue(value) === '#1565c0'
+        )
+    ) {
+        fail(9, ':root does not set --dhis2-primary to #1565c0')
+    }
+    // Only roles ship: a palette step would keep its colour in every theme.
+    const palette = emitted.match(
+        /--(?:color-)?dhis2-(?:grey|blue|teal|red|yellow|green|purple)-\d{3}\b/
+    )
+    if (palette) {
+        fail(9, `the installed theme exposes the palette step ${palette[0]}`)
+    }
+
+    step('10. Emitted CSS carries the high-contrast block')
+    if (
+        !/@media\s*\(prefers-contrast:\s*more\)\s*\{\s*:root\s*\{[^}]*--dhis2-muted-foreground:\s*#404b5a/i.test(
+            emitted
+        )
+    ) {
+        fail(
+            10,
+            'no @media (prefers-contrast: more) rule sets --dhis2-muted-foreground'
+        )
+    }
 }
 
 const main = (): void => {
@@ -301,7 +332,7 @@ const main = (): void => {
     let failed = false
     try {
         checkInstall(workDirectory)
-        console.log('\nregistry:check passed: all 9 assertions hold')
+        console.log('\nregistry:check passed: all 10 assertions hold')
     } catch (error) {
         failed = true
         // An assertion's message says it all; anything else is a bug in the

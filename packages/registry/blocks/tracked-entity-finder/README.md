@@ -49,7 +49,15 @@ and any `metadataError`, so a custom input counts toward the search like
 the built-in ones.
 
 The finder fetches through the DHIS2 app-runtime's data engine and TanStack
-Query, so it needs the app's `QueryClientProvider` above it.
+Query, so it needs the app's `QueryClientProvider` above it. Tests can fake
+the server with app-runtime's `CustomDataProvider`.
+
+Program metadata and system info stay fresh for 3 hours. Search results stay
+fresh for 5 minutes, keyed by server URL, program and filters, including
+across repeated submissions and finder remounts within the same QueryClient.
+Different server URLs never share cached metadata or results. The host app must
+discard/reset its QueryClient on logout/login; that lifecycle isolates users,
+so the finder does not add a user ID to its query keys.
 
 To list a program's searchable attributes and their uids:
 

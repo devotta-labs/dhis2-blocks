@@ -35,7 +35,7 @@ const noop = () => {}
 
 const Bar = ({ className }: { className: string }) => (
     <span
-        className={`inline-block max-w-full animate-pulse bg-[#e8edf2] align-middle motion-reduce:animate-none ${className}`}
+        className={`inline-block max-w-full animate-pulse bg-dhis2-accent-strong align-middle motion-reduce:animate-none ${className}`}
     />
 )
 
@@ -78,13 +78,13 @@ const WorkingListPlaceholder = ({
             Loading the working list…
         </span>
         <div
-            className="w-full min-w-0 max-w-full rounded-[4px] border border-[#d5dde5] bg-white shadow-[0_1px_2px_rgb(33_41_52_/_8%)]"
+            className="w-full min-w-0 max-w-full rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card contrast-more:shadow-none"
             aria-hidden="true"
         >
-            <p className="m-0 p-2 text-xs leading-4 text-[var(--colors-grey700)]">
+            <p className="m-0 p-2 text-xs leading-4 text-dhis2-muted-foreground">
                 Saved views in this program
             </p>
-            <div className="flex min-w-0 flex-wrap items-center gap-1 border-b border-[#e8edf2] px-2 pt-0 pb-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-1 border-b border-dhis2-border px-2 pt-0 pb-2">
                 {viewPillWidths.map((width) => (
                     <Bar
                         key={width}
@@ -92,7 +92,7 @@ const WorkingListPlaceholder = ({
                     />
                 ))}
             </div>
-            <div className="flex min-w-0 max-w-full items-center gap-1 border-b border-[#e8edf2] px-2 py-3 [@media(max-width:560px)]:flex-col [@media(max-width:560px)]:items-stretch">
+            <div className="flex min-w-0 max-w-full items-center gap-1 border-b border-dhis2-border px-2 py-3 [@media(max-width:560px)]:flex-col [@media(max-width:560px)]:items-stretch">
                 {toolbarControls && <ToolbarControls />}
             </div>
             <div className="w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]">

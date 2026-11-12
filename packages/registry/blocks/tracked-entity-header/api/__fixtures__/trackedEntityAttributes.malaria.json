@@ -1,0 +1,34 @@
+{
+    "trackedEntityAttributes": [
+        {
+            "valueType": "TEXT",
+            "displayFormName": "Focus Name",
+            "id": "Kv4fmHVAzwX"
+        },
+        {
+            "valueType": "TEXT",
+            "displayFormName": "Last Name",
+            "id": "aW66s2QSosT"
+        },
+        {
+            "valueType": "TEXT",
+            "displayFormName": "Local Case ID",
+            "id": "h5FuguPFF2j"
+        },
+        {
+            "valueType": "TEXT",
+            "displayFormName": "Local Focus ID",
+            "id": "QRg7SZ6VOAV"
+        },
+        {
+            "valueType": "TEXT",
+            "displayFormName": "System Case ID",
+            "id": "flGbXLXCrEo"
+        },
+        {
+            "valueType": "TEXT",
+            "displayFormName": "System Focus ID",
+            "id": "coaSpbzZiTB"
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+{
+    "status": "OK",
+    "validationReport": {
+        "errorReports": [
+            {
+                "message": "enrollment `EnrClashB01` cannot be created because trackedEntity `PsnClashB01` referenced by it could not be created.",
+                "errorCode": "E5000",
+                "trackerType": "ENROLLMENT",
+                "uid": "EnrClashB01",
+                "args": [
+                    "enrollment",
+                    "EnrClashB01",
+                    "trackedEntity",
+                    "PsnClashB01"
+                ]
+            },
+            {
+                "message": "Non-unique attribute value `8350217748` for attribute `lZGmxYbs97q`.",
+                "errorCode": "E1064",
+                "trackerType": "TRACKED_ENTITY",
+                "uid": "PsnClashA01",
+                "args": [
+                    "8350217748",
+                    "TrackedEntityAttribute{description='null', formName='null', valueType=TEXT, inherit=false, optionSet=null, expression='null', displayOnVisitSchedule=false, sortOrderInVisitSchedule=null, displayInListNoProgram=false, sortOrderInListNoProgram=null, confidential=false, unique=true, generated=true, pattern='RANDOM(#######)', textPattern=org.hisp.dhis.textpattern.TextPattern@342b4089, style=null, orgunitScope=false, skipSynchronization=false}"
+                ]
+            },
+            {
+                "message": "enrollment `EnrClashA01` cannot be created because trackedEntity `PsnClashA01` referenced by it could not be created.",
+                "errorCode": "E5000",
+                "trackerType": "ENROLLMENT",
+                "uid": "EnrClashA01",
+                "args": [
+                    "enrollment",
+                    "EnrClashA01",
+                    "trackedEntity",
+                    "PsnClashA01"
+                ]
+            },
+            {
+                "message": "Non-unique attribute value `8350217748` for attribute `lZGmxYbs97q`.",
+                "errorCode": "E1064",
+                "trackerType": "TRACKED_ENTITY",
+                "uid": "PsnClashB01",
+                "args": [
+                    "8350217748",
+                    "TrackedEntityAttribute{description='null', formName='null', valueType=TEXT, inherit=false, optionSet=null, expression='null', displayOnVisitSchedule=false, sortOrderInVisitSchedule=null, displayInListNoProgram=false, sortOrderInListNoProgram=null, confidential=false, unique=true, generated=true, pattern='RANDOM(#######)', textPattern=org.hisp.dhis.textpattern.TextPattern@342b4089, style=null, orgunitScope=false, skipSynchronization=false}"
+                ]
+            }
+        ],
+        "warningReports": []
+    },
+    "stats": {
+        "created": 0,
+        "updated": 0,
+        "deleted": 0,
+        "ignored": 4,
+        "total": 4
+    },
+    "bundleReport": { "typeReportMap": {} }
+}

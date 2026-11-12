@@ -121,6 +121,10 @@ export const useCalendarState = ({
     // Picker days are written YYYY-MM-DD in the system calendar.
     const monthOf = (date: string) => Number(date.slice(5, 7))
     const yearOf = (date: string) => Number(date.slice(0, 4))
+    const monthName: CalendarState['monthName'] = (day) =>
+        picker.months.find(({ value }) => value === monthOf(day.date))?.label ??
+        picker.currMonth.label ??
+        ''
 
     const firstDay = monthDays[0]?.dateValue
     const lastDay = monthDays.at(-1)?.dateValue
@@ -145,10 +149,9 @@ export const useCalendarState = ({
         selectDay,
         display,
         setDisplay,
+        monthName,
         dayName: (day) => {
-            const month =
-                picker.months.find(({ value }) => value === monthOf(day.date))
-                    ?.label ?? picker.currMonth.label
+            const month = monthName(day)
             const year =
                 picker.years.find(({ value }) => value === yearOf(day.date))
                     ?.label ?? yearOf(day.date)

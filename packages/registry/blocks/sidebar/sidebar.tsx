@@ -63,7 +63,7 @@ export function Sidebar({ className, ...props }: SidebarProps) {
             data-slot="sidebar"
             data-state={state.collapsed ? 'collapsed' : 'expanded'}
             className={cn(
-                'relative flex min-h-13 w-full shrink-0 flex-col overflow-hidden bg-dhis2-grey-900 font-dhis2 text-dhis2-grey-300 transition-[width] duration-300 motion-reduce:transition-none md:w-60 md:data-[state=collapsed]:w-13',
+                'relative flex min-h-13 w-full shrink-0 flex-col overflow-hidden bg-dhis2-sidebar font-dhis2 text-dhis2-sidebar-foreground transition-[width] duration-300 motion-reduce:transition-none md:w-60 md:data-[state=collapsed]:w-13',
                 className
             )}
         />
@@ -127,7 +127,7 @@ export function SidebarFooter({
             {...props}
             data-slot="sidebar-footer"
             className={cn(
-                'mt-auto shrink-0 border-t border-dhis2-grey-700',
+                'mt-auto shrink-0 border-t border-dhis2-sidebar-border',
                 className
             )}
         />
@@ -157,7 +157,7 @@ export function SidebarToggle({
             aria-expanded={!state.collapsed}
             data-slot="sidebar-toggle"
             className={cn(
-                'absolute start-2 bottom-2 flex size-9 cursor-pointer items-center justify-center rounded-dhis2-md border-0 bg-dhis2-grey-800 text-dhis2-grey-050 hover:bg-dhis2-grey-700 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-grey-050 disabled:cursor-not-allowed disabled:opacity-50',
+                'absolute start-2 bottom-2 flex size-9 cursor-pointer items-center justify-center rounded-dhis2-md border-0 bg-dhis2-sidebar-accent text-dhis2-sidebar-accent-foreground hover:bg-[color-mix(in_srgb,var(--dhis2-sidebar-accent),var(--dhis2-sidebar-foreground)_12%)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring disabled:cursor-not-allowed disabled:opacity-50',
                 className
             )}
             onClick={(event) => {

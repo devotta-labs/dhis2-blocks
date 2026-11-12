@@ -8,6 +8,7 @@ import React, {
 import type { FinderPerson } from '../api/search'
 import { FinderContext, type FinderSubmission } from './context'
 import { isProduction } from './env'
+import { ResultCountAnnouncer } from './ResultCountAnnouncer'
 
 export interface FinderProviderProps {
     /** The program to search in. Changing it resets forms and results. */
@@ -35,6 +36,7 @@ const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
 
     return (
         <FinderContext.Provider value={value}>
+            <ResultCountAnnouncer />
             {children}
         </FinderContext.Provider>
     )

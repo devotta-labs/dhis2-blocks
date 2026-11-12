@@ -30,7 +30,12 @@ export interface FakeObservation {
     partial?: boolean
 }
 
-export type FakeStatus = 'ready' | 'pending' | 'error' | 'misconfigured'
+export type FakeStatus =
+    | 'ready'
+    | 'pending'
+    | 'error'
+    | 'failed-early'
+    | 'misconfigured'
 
 const DEFAULT_STAGE = 'Antenatal visit'
 const stageId = (name: string) => `stage-${name}`
@@ -97,6 +102,14 @@ const serverFor = (
     programs: async () => {
         if (status === 'pending') {
             return never()
+        }
+        if (status === 'failed-early') {
+            // A failed request before the program's metadata loaded: no name to show.
+            throw new FetchError({
+                type: 'unknown',
+                message: 'boom',
+                details: { httpStatusCode: 400 },
+            })
         }
         return status === 'misconfigured'
             ? { programStages: [] }

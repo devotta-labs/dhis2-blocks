@@ -37,10 +37,11 @@ const renderList = async (
 ) => {
     const hooks: ListHooks = {}
     const Probe = () => {
-        hooks.list = useWorkingList()
-        hooks.create = useCreateSavedList()
-        hooks.update = useUpdateSavedList()
-        hooks.remove = useDeleteSavedList()
+        const list = useWorkingList()
+        const create = useCreateSavedList()
+        const update = useUpdateSavedList()
+        const remove = useDeleteSavedList()
+        Object.assign(hooks, { list, create, update, remove })
         return null
     }
     const onViewChange = vi.fn()

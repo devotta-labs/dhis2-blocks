@@ -93,6 +93,8 @@ const renderCalendar = (
             weekDayLabels: ['M', 'T', 'W', 'T ', 'F', 'S', 'S '],
             dayName: (calendarDay) =>
                 `${calendarDay.label} ${calendarDay.date.startsWith('2026-10') ? 'October' : 'November'} 2026`,
+            monthName: (calendarDay) =>
+                calendarDay.date.startsWith('2026-10') ? 'October' : 'November',
             currMonth: { label: 'November' },
             currYear: { label: 2026, value: 2026 },
             months: [
@@ -256,6 +258,18 @@ describe('calendar parts', () => {
         expect(selectDay).toHaveBeenCalledWith('2026-10-31')
     })
 
+    it('names the month where the grid starts and where the month changes', async () => {
+        const { tree } = renderCalendar()
+        const screen = await render(tree)
+        const label = (name: string) =>
+            screen.getByRole('button', { name, exact: true }).element()
+                .firstElementChild?.textContent
+
+        expect(label('31 October 2026, 1 record')).toBe('31 October')
+        expect(label('1 November 2026, 5 records')).toBe('1 November')
+        expect(label('2 November 2026, no records')).toBe('2')
+    })
+
     it('jumps to a month or year from the selects', async () => {
         const { tree, navigateToMonth, navigateToYear } = renderCalendar()
         const screen = await render(tree)
@@ -383,7 +397,7 @@ describe('calendar parts', () => {
 
         // Kenema leads with two; Bo beats Kono and Makeni on the tie.
         expect(dayButton(screen.container, '2026-11-01')?.textContent).toBe(
-            '12Kenema1Bo+2 more'
+            '1 November2Kenema1Bo+2 more'
         )
     })
 })

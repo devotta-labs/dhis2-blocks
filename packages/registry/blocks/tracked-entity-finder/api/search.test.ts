@@ -37,7 +37,10 @@ describe('toSearchOutcome', () => {
     })
 
     it('treats cap 0 as no cap', () => {
-        expect(toSearchOutcome(uncapped, rows(10, 500), 1).kind).toBe('results')
+        expect(toSearchOutcome(uncapped, rows(10, 500), 1)).toMatchObject({
+            kind: 'results',
+            total: 500,
+        })
     })
 
     it.each([6, 10])(

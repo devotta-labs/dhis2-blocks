@@ -37,11 +37,11 @@ export const amina = entity('te1', {
 })
 
 export const answer = (
-    people: Array<ReturnType<typeof entity>>,
+    people: ReadonlyArray<ReturnType<typeof entity>>,
     total = people.length,
     current = 1
 ) => ({
-    trackedEntities: people,
+    trackedEntities: [...people],
     pager: { page: current, pageSize: 10, total },
 })
 

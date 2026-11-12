@@ -1,7 +1,8 @@
 import i18n from '@dhis2/d2-i18n'
-import React, { type ComponentPropsWithoutRef } from 'react'
+import React, { useEffect, useRef, type ComponentPropsWithoutRef } from 'react'
 import { IconErrorFilled24 } from '@dhis2/ui-icons'
 import { Alert, AlertTitle } from '@/components/dhis2/ui/alert'
+import { announce } from '@/components/dhis2/ui/announcer'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useFinderResults } from '../hooks'
@@ -12,7 +13,54 @@ export type FinderEmptyProps = ComponentPropsWithoutRef<'div'>
 export type FinderTooManyProps = ComponentPropsWithoutRef<'div'>
 export type FinderErrorProps = ComponentPropsWithoutRef<'div'>
 
-const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-grey-700'
+const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-muted-foreground'
+
+const announcementText = (node: Node): string => {
+    if (node instanceof Element) {
+        if (
+            node.getAttribute('aria-hidden') === 'true' ||
+            node.hasAttribute('hidden')
+        ) {
+            return ''
+        }
+        const label = node.getAttribute('aria-label')
+        if (label) return ` ${label} `
+        if (node instanceof HTMLImageElement && node.alt) return ` ${node.alt} `
+    }
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? ''
+    return Array.from(node.childNodes, announcementText).join('')
+}
+
+const useStatusAnnouncement = (active: boolean) => {
+    const ref = useRef<HTMLDivElement>(null)
+    const previous = useRef('')
+    useEffect(() => {
+        const element = ref.current
+        if (!active || !element) {
+            previous.current = ''
+            return
+        }
+        const say = () => {
+            const text = announcementText(element).replace(/\s+/g, ' ').trim()
+            if (text !== previous.current) {
+                previous.current = text
+                if (text) announce(text)
+            }
+        }
+        say()
+        // Custom children can update without re-rendering this part.
+        const observer = new MutationObserver(say)
+        observer.observe(element, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['aria-hidden', 'aria-label', 'hidden', 'alt'],
+        })
+        return () => observer.disconnect()
+    }, [active])
+    return ref
+}
 
 /** Shown while a search runs. Children replace "Searching…". */
 export function FinderSearching({
@@ -20,19 +68,20 @@ export function FinderSearching({
     children,
     ...props
 }: FinderSearchingProps) {
-    if (useFinderResults().status !== 'searching') {
-        return null
-    }
+    const { status } = useFinderResults()
+    const active = status === 'searching'
+    const ref = useStatusAnnouncement(active)
+    if (!active) return null
     return (
         <div
-            role="status"
+            ref={ref}
             {...props}
             data-slot="finder-searching"
             className={cn(STATE_TEXT, className)}
         >
             {children ?? (
                 <>
-                    <Spinner aria-hidden />
+                    <Spinner />
                     {i18n.t('Searching…')}
                 </>
             )}
@@ -46,12 +95,13 @@ export function FinderEmpty({
     children,
     ...props
 }: FinderEmptyProps) {
-    if (useFinderResults().status !== 'empty') {
-        return null
-    }
+    const { status } = useFinderResults()
+    const active = status === 'empty'
+    const ref = useStatusAnnouncement(active)
+    if (!active) return null
     return (
         <div
-            role="status"
+            ref={ref}
             {...props}
             data-slot="finder-empty"
             className={cn(STATE_TEXT, className)}
@@ -67,12 +117,13 @@ export function FinderTooMany({
     children,
     ...props
 }: FinderTooManyProps) {
-    if (useFinderResults().status !== 'too-many') {
-        return null
-    }
+    const { status } = useFinderResults()
+    const active = status === 'too-many'
+    const ref = useStatusAnnouncement(active)
+    if (!active) return null
     return (
         <div
-            role="status"
+            ref={ref}
             {...props}
             data-slot="finder-too-many"
             className={cn(STATE_TEXT, className)}
@@ -92,7 +143,8 @@ export function FinderError({
     ...props
 }: FinderErrorProps) {
     const setup = useFinderModel()
-    if (useFinderResults().status !== 'error') {
+    const { status } = useFinderResults()
+    if (status !== 'error') {
         return null
     }
     const text = setup.isError

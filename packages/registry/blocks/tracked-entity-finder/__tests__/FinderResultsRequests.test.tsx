@@ -1,11 +1,13 @@
-import React from 'react'
-import { page } from 'vitest/browser'
+import React, { useState } from 'react'
+import { page, userEvent } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
 import {
     createFakeServer,
+    FakeServerProvider,
     renderWithQueries,
     requestFailure,
+    type FakeServer,
 } from './finderTestSupport'
 import { hivProgram } from './fixtures/program'
 import {
@@ -20,6 +22,37 @@ import {
 } from './resultsTestSupport'
 
 describe('FinderResults paging and requests', () => {
+    it('keeps focus on Next while the page refreshes and on the last page', async () => {
+        const { server } = await renderFinder({
+            options: {
+                program: { ...hivProgram, maxTeiCountToReturn: 0 },
+                deferSearches: true,
+            },
+        })
+        await searchFor('A1')
+        server.pendingSearches[0].respond(
+            answer(
+                Array.from({ length: 10 }, (_, index) =>
+                    entity(`p1-${index}`, { firstName: `First${index}` })
+                ),
+                12
+            )
+        )
+        const next = page.getByRole('button', { name: 'Next' })
+        await expect.element(next).toBeEnabled()
+        next.element().focus()
+        await userEvent.keyboard('{Enter}')
+        // Refreshing: Next can't be pressed, but keeps focus.
+        await expect.element(next).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(next.element())
+        server.pendingSearches[1].respond(
+            answer([entity('p2-0', { firstName: 'Zainab' })], 12, 2)
+        )
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        await expect.element(next).toHaveAttribute('aria-disabled', 'true')
+        expect(document.activeElement).toBe(next.element())
+    })
+
     it('pages with previous and next', async () => {
         const { server } = await renderFinder({
             options: {
@@ -96,7 +129,7 @@ describe('FinderResults paging and requests', () => {
         await expect.element(page.getByText('First0')).toBeVisible()
         await page.getByRole('button', { name: 'Next' }).click()
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveTextContent("The search couldn't be completed")
 
         const previous = page.getByRole('button', { name: 'Previous' })
@@ -141,14 +174,22 @@ describe('FinderResults paging and requests', () => {
         const onSelect = vi.fn()
         const server = createFakeServer({ deferSearches: true })
         const screen = await renderWithQueries(
-            ui('hivProgram', onSelect, <FinderResults />),
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />),
             server
         )
 
         await searchFor('A1')
-        await expect.element(page.getByText('Searching…')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('Searching…'))
+            .toBeVisible()
 
-        await screen.rerender(ui('otherProgram', onSelect, <FinderResults />))
+        await screen.rerender(
+            ui(
+                'otherProgram',
+                onSelect,
+                <FinderResults data-testid="results" />
+            )
+        )
         server.pendingSearches[0].respond(answer([amina]))
 
         await expect
@@ -157,21 +198,25 @@ describe('FinderResults paging and requests', () => {
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toHaveValue('')
-        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('Searching…').query()
+        ).toBeNull()
         // Give the old answer a chance to land; it must not.
         await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Amina').query()).toBeNull()
-        expect(page.getByText('No one found').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
         expect(searchRequests(server)).toHaveLength(1)
     })
 
-    it('shows only the newest answer after a double submit', async () => {
+    it('shows only the newest answer after submitting different details', async () => {
         const { server } = await renderFinder({
             options: { deferSearches: true },
         })
 
         await searchFor('A1')
-        await page.getByRole('button', { name: 'Search' }).click()
+        await searchFor('A2')
         await expect.poll(() => server.pendingSearches.length).toBe(2)
 
         server.pendingSearches[0].respond(
@@ -179,7 +224,9 @@ describe('FinderResults paging and requests', () => {
         )
         await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Older').query()).toBeNull()
-        await expect.element(page.getByText('Searching…')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('Searching…'))
+            .toBeVisible()
 
         server.pendingSearches[1].respond(
             answer([entity('new', { firstName: 'Newest' })])
@@ -189,29 +236,239 @@ describe('FinderResults paging and requests', () => {
         expect(page.getByRole('listitem').all()).toHaveLength(1)
     })
 
-    it('asks the server again for the same search after the finder remounts', async () => {
+    it('reuses a fresh answer for the same search after the finder remounts', async () => {
         const onSelect = vi.fn()
         const server = createFakeServer()
         const screen = await renderWithQueries(
-            ui('hivProgram', onSelect, <FinderResults />),
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />),
             server
         )
 
         await searchFor('A1')
-        await expect.element(page.getByText('No one found')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('No one found'))
+            .toBeVisible()
         expect(searchRequests(server)).toHaveLength(1)
 
         await screen.rerender(<></>)
-        await screen.rerender(ui('hivProgram', onSelect, <FinderResults />))
+        await screen.rerender(
+            ui('hivProgram', onSelect, <FinderResults data-testid="results" />)
+        )
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
             .toBeEnabled()
-        expect(page.getByText('No one found').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
 
-        // Someone may have been registered since: never reuse the answer.
         await searchFor('A1')
-        await expect.poll(() => searchRequests(server)).toHaveLength(2)
+        await expect
+            .element(page.getByTestId('results').getByText('No one found'))
+            .toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+    })
+
+    it('deduplicates identical submissions while a search is in flight', async () => {
+        const { server } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        await searchFor('A1')
+        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        await page.getByRole('button', { name: 'Search' }).click()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+        server.pendingSearches[0].respond(answer([amina]))
+        await expect.element(page.getByText('Amina')).toBeVisible()
+    })
+
+    it('never reuses metadata or people from another server sharing the query cache', async () => {
+        const onSelect = vi.fn()
+        const server = createFakeServer({ searchResponse: answer([amina]) })
+        const other = createFakeServer({
+            baseUrl: 'https://other.dhis2.test',
+            deferSearches: true,
+        })
+        // The same finder and QueryClient, with one server or the other behind.
+        const finder = (behind: FakeServer) => (
+            <FakeServerProvider server={behind}>
+                {ui(
+                    'hivProgram',
+                    onSelect,
+                    <FinderResults data-testid="results" />
+                )}
+            </FakeServerProvider>
+        )
+        const screen = await renderWithQueries(finder(server))
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await screen.rerender(finder(other))
+        await expect.poll(() => other.pendingSearches.length).toBe(1)
+        expect(page.getByText('Amina').query()).toBeNull()
+        expect(
+            other.requests.filter(({ resource }) => resource === 'programs')
+        ).toHaveLength(1)
+        expect(
+            other.requests.filter(({ resource }) => resource === 'system/info')
+        ).toHaveLength(1)
+        other.pendingSearches[0].respond(
+            answer([entity('other', { firstName: 'Zainab' })])
+        )
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        await screen.rerender(finder(server))
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+    })
+
+    it('loads fresh metadata and people after the QueryClient is replaced', async () => {
+        const { server, screen } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        await searchFor('A1')
+        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        server.pendingSearches[0].respond(answer([amina]))
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await screen.unmount()
+        const { server: next } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        expect(next.baseUrl).toBe(server.baseUrl)
+        await searchFor('A1')
+        expect(page.getByText('Amina').query()).toBeNull()
+        await expect.poll(() => next.pendingSearches.length).toBe(1)
+        expect(
+            next.requests.filter(({ resource }) => resource === 'programs')
+        ).toHaveLength(1)
+        expect(
+            next.requests.filter(({ resource }) => resource === 'system/info')
+        ).toHaveLength(1)
+        next.pendingSearches[0].respond(
+            answer([entity('other', { firstName: 'Zainab' })])
+        )
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(1)
+        expect(searchRequests(next)).toHaveLength(1)
+    })
+
+    it('reuses repeated details and separates different searches', async () => {
+        const { server } = await renderFinder({
+            options: {
+                answerSearch: (request) =>
+                    answer([
+                        entity('person', {
+                            firstName: String(request.params?.filter).includes(
+                                'artNumber:eq:A1'
+                            )
+                                ? 'Amina'
+                                : 'Zainab',
+                        }),
+                    ]),
+            },
+        })
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await searchFor('A1')
+        await settle()
+        expect(searchRequests(server)).toHaveLength(1)
+        await searchFor('A2')
+        await expect.element(page.getByText('Zainab')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(2)
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        await settle()
+        expect(searchRequests(server)).toHaveLength(2)
+    })
+
+    it('refreshes an identical submission after five minutes without reloading metadata', async () => {
+        const { server } = await renderFinder({
+            options: { deferSearches: true },
+        })
+        const now = Date.now()
+        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        try {
+            await searchFor('A1')
+            server.pendingSearches[0].respond(answer([amina]))
+            await expect.element(page.getByText('Amina')).toBeVisible()
+            clock.mockReturnValue(now + 5 * 60_000 - 1)
+            await searchFor('A1')
+            await settle()
+            expect(searchRequests(server)).toHaveLength(1)
+            clock.mockReturnValue(now + 5 * 60_000)
+            await searchFor('A1')
+            await expect.poll(() => server.pendingSearches.length).toBe(2)
+            server.pendingSearches[1].respond(
+                answer([entity('new', { firstName: 'Zainab' })])
+            )
+            await expect.element(page.getByText('Zainab')).toBeVisible()
+            expect(
+                server.requests.filter(
+                    ({ resource }) => resource === 'programs'
+                )
+            ).toHaveLength(1)
+            expect(
+                server.requests.filter(
+                    ({ resource }) => resource === 'system/info'
+                )
+            ).toHaveLength(1)
+        } finally {
+            clock.mockRestore()
+        }
+    })
+
+    it('retries a failed search when the same details are submitted again', async () => {
+        let fails = true
+        const { server } = await renderFinder({
+            options: {
+                answerSearch: () => {
+                    if (fails) {
+                        throw requestFailure('Search failed')
+                    }
+                    return answer([amina])
+                },
+            },
+        })
+        await searchFor('A1')
+        await expect
+            .element(page.getByTestId('results').getByRole('alert'))
+            .toBeVisible()
+        fails = false
+        await searchFor('A1')
+        await expect.element(page.getByText('Amina')).toBeVisible()
+        expect(searchRequests(server)).toHaveLength(2)
+    })
+
+    it('keeps cached data when request logging rerenders the runtime provider', async () => {
+        // A host that shows its request log renders app-runtime's provider
+        // again on every request, which hands the finder a new data engine.
+        const LoggedFinder = () => {
+            const [logs, setLogs] = useState(0)
+            const [server] = useState(() =>
+                createFakeServer({
+                    onRequest: () => setLogs((count) => count + 1),
+                })
+            )
+            return (
+                <FakeServerProvider server={server}>
+                    {ui('hivProgram', vi.fn(), <FinderResults />)}
+                    <output data-testid="requests">{logs}</output>
+                </FakeServerProvider>
+            )
+        }
+        await renderWithQueries(<LoggedFinder />)
+        await expect
+            .element(page.getByRole('textbox', { name: 'ART number' }))
+            .toBeEnabled()
+        await expect
+            .element(page.getByTestId('requests'))
+            .toHaveTextContent('2')
+        await searchFor('A1')
         await expect.element(page.getByText('No one found')).toBeVisible()
+        await searchFor('A1')
+        await settle()
+        await expect
+            .element(page.getByTestId('requests'))
+            .toHaveTextContent('3')
     })
 
     it('ignores next and previous when there is no such page', async () => {

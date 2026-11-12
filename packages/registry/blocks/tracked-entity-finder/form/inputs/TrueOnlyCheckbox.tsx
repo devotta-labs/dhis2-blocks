@@ -22,12 +22,11 @@ export const TrueOnlyCheckbox = ({
     return (
         <Field
             orientation="horizontal"
-            data-invalid={error ? true : undefined}
+            invalid={error !== undefined}
             className={cn('flex-wrap', className)}
         >
             <Checkbox
                 id={id}
-                aria-invalid={error ? true : undefined}
                 checked={value?.kind === 'trueOnly' && value.checked}
                 onCheckedChange={(checked) =>
                     setValue({ kind: 'trueOnly', checked })

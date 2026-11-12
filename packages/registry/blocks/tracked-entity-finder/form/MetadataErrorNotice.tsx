@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { Alert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { isProduction } from '../provider/env'
 import { metadataErrorText } from './errorText'
@@ -22,15 +23,12 @@ export function MetadataErrorNotice({
         }
     }, [message])
     return (
-        <p
-            role="alert"
+        <Alert
+            variant="destructive"
             data-slot="finder-metadata-error"
-            className={cn(
-                'm-0 rounded-dhis2-sm border border-dhis2-red-500 bg-dhis2-red-050 px-3 py-2 text-sm text-dhis2-red-900',
-                className
-            )}
+            className={cn('px-3 py-2', className)}
         >
             {metadataErrorText(message)}
-        </p>
+        </Alert>
     )
 }

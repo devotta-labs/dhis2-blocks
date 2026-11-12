@@ -37,7 +37,7 @@ const Page = ({
     <div
         dir={locale === 'ar' ? 'rtl' : 'ltr'}
         lang={locale}
-        className="w-full max-w-2xl rounded-lg bg-white p-4 md:p-6"
+        className="w-full max-w-2xl rounded-lg bg-dhis2-background p-4 md:p-6"
     >
         {children}
     </div>

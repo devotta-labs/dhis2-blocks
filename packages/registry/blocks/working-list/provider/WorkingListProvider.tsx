@@ -121,8 +121,8 @@ const WorkingListProviderInstance = ({
     const [storedDraft, setStoredDraft] = useState<Draft>()
     const draft =
         storedDraft?.viewId === viewId ? storedDraft.configuration : undefined
-    const metadata = useProgramMetadata(programId).data
-    const view = useSelectedView({ programId, viewId, draft }).data
+    const { data: metadata } = useProgramMetadata(programId)
+    const { data: view } = useSelectedView({ programId, viewId, draft })
     // A draft ends when its view is left, and when the saved list says the
     // same: after it is saved, or when the change is undone by hand.
     if (

@@ -1,33 +1,23 @@
 import { Card } from '@/components/dhis2/ui/card'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
-import { parseDhis2Calendar } from '@/components/dhis2-value-display'
-import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode,
-} from 'react'
+import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { buildSeries } from '../api/buildSeries'
 import { usePersonEvents, useProgramMetadata } from '../api/queries'
 import type {
     DataElementMetadata,
     ObservationSeries,
-    ProgramMetadata,
     StageMetadata,
     TrackerEventRecord,
 } from '../api/types'
 import {
-    displayLocale,
     elementShowsTrend,
     isStale,
     isSupportedValueType,
     showsTrend,
-    type DisplayOptions,
 } from '../format/display'
+import { useDisplayOptions } from '../format/useDisplayOptions'
 import { ObservationChange } from '../parts/ObservationChange'
 import { ObservationLabel } from '../parts/ObservationLabel'
 import { ObservationLegend } from '../parts/ObservationLegend'
@@ -39,6 +29,10 @@ import { ObservationSparkline } from '../parts/ObservationSparkline'
 import { ObservationValue } from '../parts/ObservationValue'
 import { useObservationsSubject } from '../provider/context'
 import { isProduction } from '../provider/env'
+import {
+    describeMisconfigured,
+    useSetupErrorLog,
+} from '../provider/misconfigured'
 import { ObservationCardContext } from './context'
 import { CardHeading, CardNote, FOOTER_BAND } from './frame'
 
@@ -58,17 +52,6 @@ export interface ObservationCardProps {
     className?: string
     /** The parts to show; without children the card picks them by value type. */
     children?: ReactNode
-}
-
-/** The system calendar and the user's locale, for every date and number shown. */
-const useDisplayOptions = (): DisplayOptions => {
-    const { systemInfo } = useConfig()
-    // `calendar` is in every server's systemInfo, though app-runtime's type leaves it out.
-    const calendar = parseDhis2Calendar(
-        systemInfo && 'calendar' in systemInfo ? systemInfo.calendar : undefined
-    )
-    const locale = displayLocale()
-    return useMemo(() => ({ calendar, locale }), [calendar, locale])
 }
 
 function Frame({
@@ -93,8 +76,8 @@ function Frame({
             aria-busy={busy || undefined}
             data-tone={stale ? 'stale' : 'default'}
             className={cn(
-                'min-w-0 gap-2 border border-dhis2-grey-400 p-4 shadow-none',
-                stale && 'text-dhis2-grey-600',
+                'min-w-0 gap-2 border border-dhis2-border-strong p-4 shadow-none',
+                stale && 'text-dhis2-subtle-foreground',
                 className
             )}
         >
@@ -133,7 +116,7 @@ function LoadingContent({
 }
 
 const Notice = ({ children }: { children: ReactNode }) => (
-    <p className="text-sm text-dhis2-grey-700">{children}</p>
+    <p className="text-sm text-dhis2-muted-foreground">{children}</p>
 )
 
 /** No children: numeric readings get the trend, everything else the last recorded value. */
@@ -221,17 +204,6 @@ function ErrorCard({ name, className }: { name?: string; className?: string }) {
     )
 }
 
-const describeMisconfigured = (
-    dataElement: string,
-    program: string,
-    metadata: ProgramMetadata
-) => {
-    const captured = [...metadata.dataElements.values()]
-        .map(({ id, displayName }) => `${id} (${displayName})`)
-        .join(', ')
-    return `Data element ${dataElement} is not captured by any stage of program ${program}. Captured data elements: ${captured || 'none'}`
-}
-
 /**
  * A data element no stage of the program captures. Development shows the
  * full setup message on the card; production shows a short one and logs
@@ -246,18 +218,14 @@ function MisconfiguredCard({
     message: string
     className?: string
 }) {
-    useEffect(() => {
-        if (isProduction()) {
-            console.error(message)
-        }
-    }, [message])
+    useSetupErrorLog(message)
     return (
         <Frame name={name} className={className}>
             {name ? <CardHeading>{name}</CardHeading> : null}
             <p
                 role="alert"
                 data-slot="observation-config-error"
-                className="m-0 rounded-dhis2-sm border border-dhis2-red-500 bg-dhis2-red-050 px-3 py-2 text-sm break-words text-dhis2-red-900"
+                className="m-0 rounded-dhis2-sm border border-dhis2-destructive-border bg-dhis2-destructive-subtle px-3 py-2 text-sm break-words text-dhis2-destructive-strong"
             >
                 {isProduction()
                     ? i18n.t("This card isn't set up correctly")

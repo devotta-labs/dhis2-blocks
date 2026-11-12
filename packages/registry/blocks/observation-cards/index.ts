@@ -4,6 +4,10 @@ export {
     type ObservationCardProps,
 } from './card/ObservationCard'
 export {
+    ObservationInline,
+    type ObservationInlineProps,
+} from './inline/ObservationInline'
+export {
     ObservationChange,
     type ObservationChangeProps,
 } from './parts/ObservationChange'

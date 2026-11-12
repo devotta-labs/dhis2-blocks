@@ -17,11 +17,10 @@ const cases = [
 
 const config = {
     cases: { label: 'Cases' },
-    // DHIS2 blue-600, teal-400, yellow-500 and grey-500.
-    under5: { label: 'Under 5', color: '#147cd7' },
-    child: { label: '5 to 14', color: '#009688' },
-    adult: { label: '15 to 59', color: '#ff9302' },
-    older: { label: '60 and over', color: '#a0adba' },
+    under5: { label: 'Under 5', color: 'var(--dhis2-info-indicator)' },
+    child: { label: '5 to 14', color: 'var(--dhis2-success-indicator)' },
+    adult: { label: '15 to 59', color: 'var(--dhis2-warning-indicator)' },
+    older: { label: '60 and over', color: 'var(--dhis2-neutral-indicator)' },
 } satisfies ChartConfig
 
 /** Malaria cases by age group, as a donut: each slice's share of the total. */

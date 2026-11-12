@@ -24,23 +24,24 @@ export const useEventChangelog = (
     { enabled, stage }: { enabled: boolean; stage?: StageInfo }
 ): UseQueryResult<EventChangelog> => {
     const engine = useDataEngine()
+    const select = useCallback(
+        ({ rows, truncated, unsupported }: ChangeLogResult) => ({
+            saves: groupChangelogRows(rows, (field) =>
+                field.kind === 'dataElement'
+                    ? stage?.dataElements.get(field.id)
+                    : undefined
+            ),
+            truncated,
+            unsupported,
+        }),
+        [stage]
+    )
     return useQuery({
         queryKey: timelineKeys.eventChangeLog(event),
         enabled,
         // A failure shows its error at once; opening the changes again retries.
         retry: false,
         queryFn: ({ signal }) => fetchEventChangeLog(engine, { event }, signal),
-        select: useCallback(
-            ({ rows, truncated, unsupported }: ChangeLogResult) => ({
-                saves: groupChangelogRows(rows, (field) =>
-                    field.kind === 'dataElement'
-                        ? stage?.dataElements.get(field.id)
-                        : undefined
-                ),
-                truncated,
-                unsupported,
-            }),
-            [stage]
-        ),
+        select,
     })
 }

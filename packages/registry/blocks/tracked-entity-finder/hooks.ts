@@ -109,12 +109,16 @@ const toFieldState = ({
 })
 
 /** A field searched by exact value. Use inside `FinderForm`. */
-export const useFinderField = (attribute: string): FinderFieldState =>
-    toFieldState(useComposedField(attribute, 'exact'))
+export const useFinderField = (attribute: string): FinderFieldState => {
+    const field = useComposedField(attribute, 'exact')
+    return toFieldState(field)
+}
 
 /** A From–To field for a number or date attribute. Use inside `FinderForm`. */
-export const useFinderRangeField = (attribute: string): FinderFieldState =>
-    toFieldState(useComposedField(attribute, 'range'))
+export const useFinderRangeField = (attribute: string): FinderFieldState => {
+    const field = useComposedField(attribute, 'range')
+    return toFieldState(field)
+}
 
 export interface FinderSearchState {
     /** Whether the values make a search now. */
@@ -200,7 +204,7 @@ const NO_PEOPLE: FinderPerson[] = []
 export const useFinderResults = (): FinderResultsState => {
     const { submission, setSubmission, onSelect } = useFinderContext()
     const { model, isError: setupFailed } = useFinderModel()
-    const query = useSearchPages(model, submission)
+    const query = useSearchPages(model, submission?.search)
     const pages = query.data?.pages ?? []
     // A page past the loaded ones is on screen only while it loads, or
     // after it failed; otherwise the last loaded page is.
@@ -266,7 +270,10 @@ export const useFinderResults = (): FinderResultsState => {
  * `Subscribe` and `reset`. A field counts toward the search only through
  * `useFinderField`, `useFinderRangeField` or the field parts.
  */
-export const useFinderForm = (): FinderFormApi => useFinderFormContext().form
+export const useFinderForm = (): FinderFormApi => {
+    const { form } = useFinderFormContext()
+    return form
+}
 
 /** The person of the current `FinderList` item, for custom row content. */
 export const useFinderPerson = (): FinderPerson => {

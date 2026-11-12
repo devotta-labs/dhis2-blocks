@@ -158,7 +158,7 @@ export const OrganisationUnitFilterSelect = ({
 
     return (
         <div
-            className="max-h-[min(52vh,520px)] overflow-auto rounded-[3px] bg-[#fff] p-[8px] [border:1px_solid_#d5dde5] [&>*+*]:mt-[12px]"
+            className="max-h-[min(52vh,520px)] overflow-auto rounded-[3px] bg-dhis2-background p-[8px] border border-dhis2-border-strong [&>*+*]:mt-[12px]"
             data-testid="filter-organisation-unit-tree"
             aria-busy={rootsQuery.isPending || selectedQuery.isPending}
         >

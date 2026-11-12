@@ -69,8 +69,8 @@ export const WorkingListColumnSelector = ({
     className,
     ...props
 }: WorkingListColumnSelectorProps) => {
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return (
         <div

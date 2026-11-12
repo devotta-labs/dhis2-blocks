@@ -1,4 +1,4 @@
-import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
+import { CustomDataProvider, FetchError, Provider } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useContext, type ComponentProps, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
@@ -70,6 +70,8 @@ interface PendingSearch {
 }
 
 export interface FakeServer {
+    /** The server's URL, which keeps one server's cache from another's. */
+    baseUrl: string
     /** The DHIS2 resources the finder asks for, for `CustomDataProvider`. */
     data: CustomData
     /** Every request the finder made, in order. */
@@ -79,6 +81,9 @@ export interface FakeServer {
 }
 
 export interface FakeServerOptions {
+    baseUrl?: string
+    /** Called on every request, e.g. to show a request log. */
+    onRequest?: () => void
     program?: ProgramMetadata
     /** Never answers the program request, so the finder stays loading. */
     programPending?: boolean
@@ -111,6 +116,7 @@ export const createFakeServer = (
     const program = options.program ?? hivProgram
     const record = (request: FinderRequest) => {
         requests.push(request)
+        options.onRequest?.()
         return request
     }
     const data: CustomData = {
@@ -155,12 +161,36 @@ export const createFakeServer = (
             )
         },
     }
-    return { data, requests, pendingSearches }
+    return {
+        baseUrl: options.baseUrl ?? 'https://dhis2.test',
+        data,
+        requests,
+        pendingSearches,
+    }
 }
 
+/** App-runtime as a host sets it up, with the fake server behind it. */
+export const FakeServerProvider = ({
+    server,
+    children,
+}: {
+    server: FakeServer
+    children: ReactNode
+}) => (
+    <Provider
+        config={{ baseUrl: server.baseUrl, apiVersion: 43 }}
+        userInfo={undefined}
+        plugin={false}
+        parentAlertsAdd={undefined}
+        showAlertsInPlugin={false}
+    >
+        <CustomDataProvider data={server.data}>{children}</CustomDataProvider>
+    </Provider>
+)
+
 /**
- * Renders inside app-runtime's data provider, with the fake server behind
- * it, and a fresh QueryClient that retries without the wait between tries.
+ * Renders inside app-runtime's providers, with the fake server behind them,
+ * and a fresh QueryClient that retries without the wait between tries.
  */
 export const renderWithQueries = (
     ui: ReactNode,
@@ -172,11 +202,11 @@ export const renderWithQueries = (
     // A wrapper, so `rerender` keeps the same server and QueryClient.
     return render(ui, {
         wrapper: ({ children }) => (
-            <CustomDataProvider data={server.data}>
-                <QueryClientProvider client={queryClient}>
+            <QueryClientProvider client={queryClient}>
+                <FakeServerProvider server={server}>
                     {children}
-                </QueryClientProvider>
-            </CustomDataProvider>
+                </FakeServerProvider>
+            </QueryClientProvider>
         ),
     })
 }

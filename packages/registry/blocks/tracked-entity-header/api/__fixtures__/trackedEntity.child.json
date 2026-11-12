@@ -1,0 +1,50 @@
+{
+    "trackedEntity": "PQfMcpmXeFE",
+    "trackedEntityType": "nEenWmSyUEp",
+    "orgUnit": "DiszpKrYNg8",
+    "inactive": false,
+    "potentialDuplicate": false,
+    "attributes": [
+        {
+            "attribute": "VqEFza8wbwA",
+            "displayName": "Address",
+            "valueType": "TEXT",
+            "value": "Main street 2"
+        },
+        {
+            "attribute": "cejWyOfXge6",
+            "displayName": "Gender",
+            "valueType": "TEXT",
+            "value": "Male"
+        },
+        {
+            "attribute": "w75KJ2mc4zz",
+            "displayName": "First name",
+            "valueType": "TEXT",
+            "value": "John"
+        },
+        {
+            "attribute": "zDhUuAYrxNC",
+            "displayName": "Last name",
+            "valueType": "TEXT",
+            "value": "Kelly"
+        }
+    ],
+    "enrollments": [
+        {
+            "enrollment": "JMgRZyeLWOo",
+            "program": "IpHINAT79UW",
+            "status": "ACTIVE",
+            "orgUnit": "DiszpKrYNg8",
+            "enrolledAt": "2026-03-06T00:00:00.000",
+            "occurredAt": "2026-03-04T00:00:00.000",
+            "followUp": false
+        }
+    ],
+    "programOwners": [
+        {
+            "orgUnit": "DiszpKrYNg8",
+            "program": "IpHINAT79UW"
+        }
+    ]
+}

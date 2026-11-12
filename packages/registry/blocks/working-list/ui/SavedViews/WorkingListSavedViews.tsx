@@ -62,7 +62,8 @@ export const WorkingListSavedViews = () => {
     const { viewId, selectView } = useWorkingList()
     const { online } = useOnlineStatus()
     const savedLists = useSavedLists()
-    const dirty = useWorkingListView().data?.isDirty ?? false
+    const { data: view } = useWorkingListView()
+    const dirty = view?.isDirty ?? false
     const busy = useIsSavingList()
     const update = useUpdateSavedList()
     const remove = useDeleteSavedList()

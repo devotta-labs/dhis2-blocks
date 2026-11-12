@@ -222,6 +222,15 @@ development, the short one in production.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses
   the hooks. The provider renders only its children.
 
+The finder uses `useDataEngine` from the DHIS2 app-runtime provider, with
+TanStack Query managing requests and caching, so it needs the app's
+`QueryClientProvider` above it. Use app-runtime's `CustomDataProvider` for
+fake data in tests.
+
+Program metadata and system info stay fresh for 3 hours. An identical search
+(same server, program and details) is answered from the cache for 5 minutes;
+after that, pressing Search asks the server again.
+
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and
 the props of their HTML element.

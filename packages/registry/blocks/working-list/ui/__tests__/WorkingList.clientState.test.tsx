@@ -62,7 +62,8 @@ describe('WorkingList client state', () => {
         const onDirtyChange = vi.fn()
         let list: ReturnType<typeof useWorkingList> | undefined
         const Probe = () => {
-            list = useWorkingList()
+            const current = useWorkingList()
+            list = current
             return null
         }
         const screen = await render(
@@ -103,7 +104,8 @@ describe('WorkingList client state', () => {
         const server = serverWithList()
         let list: ReturnType<typeof useWorkingList> | undefined
         const Probe = () => {
-            list = useWorkingList()
+            const current = useWorkingList()
+            list = current
             return null
         }
         const screen = await render(

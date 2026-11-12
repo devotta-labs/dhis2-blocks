@@ -147,8 +147,8 @@ export const WorkingListToolbarActions = ({
     className,
     ...props
 }: WorkingListToolbarActionsProps) => {
-    const metadata = useWorkingListMetadata().data
-    const view = useWorkingListView().data
+    const { data: metadata } = useWorkingListMetadata()
+    const { data: view } = useWorkingListView()
 
     return (
         <div

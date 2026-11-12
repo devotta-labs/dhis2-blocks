@@ -10,6 +10,7 @@ import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import { useStore } from '@tanstack/react-form'
+import { useRunSearch } from '../api/queries'
 import { FinderFormContext, useFinderContext } from '../provider/context'
 import { useFinderModel } from '../provider/useFinderModel'
 import { describeMetadataError } from '../rules/describeMetadataError'
@@ -58,6 +59,7 @@ export function FinderForm({
     const { setSubmission } = useFinderContext()
     const { model, isPending, isError } = useFinderModel()
     const { fields, register } = useRegistrations()
+    const runSearch = useRunSearch()
     // TanStack calls this once the fields' Zod schemas pass; the search rules
     // still decide whether the values make a search.
     const form = useFinderFormApi((values) => {
@@ -66,7 +68,12 @@ export function FinderForm({
         }
         const { search } = evaluateForm(model, fields, values)
         if (search) {
-            setSubmission({ search, submittedAt: Date.now(), page: 1 })
+            runSearch(model, search)
+            setSubmission((current) => ({
+                search,
+                id: (current?.id ?? 0) + 1,
+                page: 1,
+            }))
         }
     })
     const values = useStore(form.store, (formState) => formState.values)
@@ -111,7 +118,7 @@ export function FinderForm({
                     void form.handleSubmit()
                 }}
             >
-                {isPending && <Spinner />}
+                {isPending && <Spinner label={i18n.t('Loading')} />}
                 {isError && (
                     <ErrorAlert
                         title={i18n.t("The search couldn't be loaded")}

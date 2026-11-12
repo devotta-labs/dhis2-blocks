@@ -63,7 +63,7 @@ export const CalendarRangeFields = ({
         return (
             <button
                 type="button"
-                className={`absolute [inset-block-start:25px] [inset-inline-end:6px] flex cursor-pointer items-center justify-center rounded-[3px] bg-transparent p-[4px] text-[#6c7785] [border:0] [&:hover]:bg-[#f3f5f7] [&:hover]:text-[#212934]${
+                className={`absolute [inset-block-start:25px] [inset-inline-end:6px] flex cursor-pointer items-center justify-center rounded-[3px] bg-transparent p-[4px] text-dhis2-subtle-foreground [border:0] hover:bg-dhis2-accent hover:text-dhis2-foreground${
                     validation?.error || validation?.warning
                         ? ' [inset-inline-end:36px]'
                         : ''

@@ -21,6 +21,8 @@ export type SearchOutcome =
     | {
           kind: 'results'
           people: FinderPerson[]
+          /** How many people matched in all, when the server says. */
+          total?: number
           page: number
           hasNext: boolean
       }
@@ -73,6 +75,7 @@ export const toSearchOutcome = (
     return {
         kind: 'results',
         people: rows.map((row) => toPerson(row, model.program)),
+        total,
         page,
         hasNext:
             total !== undefined

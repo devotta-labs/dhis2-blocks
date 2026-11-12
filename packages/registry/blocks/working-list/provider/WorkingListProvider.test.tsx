@@ -35,7 +35,8 @@ const setup = () => {
     })
     const observed: WorkingListContextValue[] = []
     const Probe = () => {
-        observed.push(useWorkingList())
+        const list = useWorkingList()
+        observed.push(list)
         return null
     }
     const element = (props: Omit<WorkingListProviderProps, 'children'>) => (

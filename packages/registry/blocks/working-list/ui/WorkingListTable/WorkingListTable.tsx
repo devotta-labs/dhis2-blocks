@@ -59,6 +59,10 @@ const EMPTY_ROWS: WorkingListDisplayRow[] = []
  */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
 
+/** The column header's sort button. */
+export const SORT_BUTTON_CLASS =
+    'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring disabled:cursor-default'
+
 const ariaSortByDirection = {
     asc: 'ascending',
     desc: 'descending',
@@ -78,7 +82,7 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
         aria-hidden="true"
         data-slot="sort-indicator"
         data-direction={sorted || 'none'}
-        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-grey-400 group-focus-visible/sort:bg-dhis2-grey-400 group-disabled/sort:bg-transparent"
+        className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-accent-strong group-focus-visible/sort:bg-dhis2-accent-strong group-disabled/sort:bg-transparent"
     >
         <svg viewBox="0 0 16 16" className="size-4">
             {/* DHIS2 names these "top" and "bottom" by stacking order, not
@@ -87,16 +91,16 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
                 points="4 9 12 9 8 14"
                 className={
                     sorted === 'asc'
-                        ? 'fill-dhis2-blue-700'
-                        : 'fill-dhis2-grey-500'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
                 }
             />
             <polygon
                 points="4 7 12 7 8 2"
                 className={
                     sorted === 'desc'
-                        ? 'fill-dhis2-blue-700'
-                        : 'fill-dhis2-grey-500'
+                        ? 'fill-dhis2-primary'
+                        : 'fill-dhis2-subtle-foreground'
                 }
             />
         </svg>
@@ -318,7 +322,9 @@ export const WorkingListDataTable = ({
                                             >
                                                 <button
                                                     type="button"
-                                                    className="group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-dhis2-ring/35 disabled:cursor-default"
+                                                    className={
+                                                        SORT_BUTTON_CLASS
+                                                    }
                                                     data-testid={`sort-${column.id}`}
                                                     disabled={
                                                         !column.getCanSort() ||
@@ -379,7 +385,8 @@ export const WorkingListDataTable = ({
                                         key={row.id}
                                         className={
                                             interactive
-                                                ? 'cursor-pointer'
+                                                ? // The open button is hidden, so its row shows where focus is.
+                                                  'cursor-pointer has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-dhis2-ring has-[button:focus-visible]:outline-solid'
                                                 : undefined
                                         }
                                         data-test={`working-list-row-${row.id}`}
@@ -408,7 +415,7 @@ export const WorkingListDataTable = ({
                                                             // and press states, as
                                                             // in DataTable.
                                                             highlightIssues &&
-                                                                'bg-dhis2-red-050 group-hover/table-row:bg-dhis2-red-050 group-active/table-row:bg-dhis2-red-050'
+                                                                'bg-dhis2-destructive-subtle group-hover/table-row:bg-dhis2-destructive-subtle group-active/table-row:bg-dhis2-destructive-subtle'
                                                         )}
                                                         data-test={issuesCellId}
                                                         data-testid={

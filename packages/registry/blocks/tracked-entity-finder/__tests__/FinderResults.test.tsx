@@ -41,8 +41,12 @@ describe('FinderResults', () => {
             page.getByTestId('results').element().hasAttribute('aria-live')
         ).toBe(false)
         expect(page.getByTestId('results').element().textContent).toBe('')
-        expect(page.getByText('No one found').query()).toBeNull()
-        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('Searching…').query()
+        ).toBeNull()
         expect(page.getByRole('listitem').query()).toBeNull()
     })
 
@@ -53,7 +57,9 @@ describe('FinderResults', () => {
 
         await searchFor('A1')
 
-        await expect.element(page.getByText('Searching…')).toBeVisible()
+        await expect
+            .element(page.getByTestId('results').getByText('Searching…'))
+            .toBeVisible()
         server.pendingSearches[0].respond(answer([amina]))
 
         const row = page.getByRole('button', { name: /Amina/ })
@@ -67,7 +73,9 @@ describe('FinderResults', () => {
         await expect.element(row).toHaveTextContent('Female')
         // Weight is not displayInList.
         expect(row.element().textContent).not.toContain('Weight')
-        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(
+            page.getByTestId('results').getByText('Searching…').query()
+        ).toBeNull()
     })
 
     it('says No one found', async () => {
@@ -76,7 +84,7 @@ describe('FinderResults', () => {
         await searchFor('A1')
 
         await expect
-            .element(page.getByRole('status'))
+            .element(page.getByTestId('results').getByText('No one found'))
             .toHaveTextContent('No one found')
         expect(page.getByRole('list').query()).toBeNull()
     })
@@ -89,7 +97,11 @@ describe('FinderResults', () => {
         await searchFor('A1')
 
         await expect
-            .element(page.getByText('Too many matches. Add another detail.'))
+            .element(
+                page
+                    .getByTestId('results')
+                    .getByText('Too many matches. Add another detail.')
+            )
             .toBeVisible()
         expect(page.getByRole('listitem').query()).toBeNull()
         expect(page.getByRole('navigation').query()).toBeNull()
@@ -101,7 +113,7 @@ describe('FinderResults', () => {
         await searchFor('A1')
 
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveTextContent("The search couldn't be completed")
     })
 
@@ -165,29 +177,37 @@ describe('FinderResults', () => {
         await expect
             .poll(() => page.getByTestId('custom').element().textContent)
             .toBe('')
-        expect(page.getByText('No one found').query()).toBeNull()
-        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(
+            page.getByTestId('custom').getByText('No one found').query()
+        ).toBeNull()
+        expect(
+            page.getByTestId('custom').getByText('Searching…').query()
+        ).toBeNull()
     })
 
     it('replaces default text with children', async () => {
         await renderFinder({
             results: (
-                <FinderResults>
+                <FinderResults data-testid="results">
                     <FinderEmpty>Nobody</FinderEmpty>
                 </FinderResults>
             ),
         })
 
         await searchFor('A1')
-        await expect.element(page.getByText('Nobody')).toBeVisible()
-        expect(page.getByText('No one found').query()).toBeNull()
+        await expect
+            .element(page.getByTestId('results').getByText('Nobody'))
+            .toBeVisible()
+        expect(
+            page.getByTestId('results').getByText('No one found').query()
+        ).toBeNull()
     })
 
     it('replaces the error text with children', async () => {
         await renderFinder({
             options: { searchFails: true },
             results: (
-                <FinderResults>
+                <FinderResults data-testid="results">
                     <FinderError className="custom-error" title="Details">
                         Try again later
                     </FinderError>
@@ -197,13 +217,13 @@ describe('FinderResults', () => {
 
         await searchFor('A1')
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveTextContent('Try again later')
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveClass('custom-error')
         await expect
-            .element(page.getByRole('alert'))
+            .element(page.getByTestId('results').getByRole('alert'))
             .toHaveAttribute('title', 'Details')
     })
 

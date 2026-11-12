@@ -68,9 +68,22 @@ export const docsNavigation: readonly NavigationSection[] = [
                         title: 'Tracked Entity Finder',
                         href: '/blocks/tracked-entity-finder',
                     },
+                    {
+                        title: 'Tracked Entity Header',
+                        href: '/blocks/tracked-entity-header',
+                    },
                 ],
             },
-            { title: 'Data entry', links: [] },
+            {
+                title: 'Data entry',
+                links: [
+                    { title: 'Spreadsheet', href: '/blocks/spreadsheet' },
+                    {
+                        title: 'Tracker Data Entry',
+                        href: '/blocks/tracker-data-entry',
+                    },
+                ],
+            },
         ],
     },
 ]

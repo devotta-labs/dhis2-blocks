@@ -8,92 +8,191 @@
             "type": "registry:theme",
             "cssVars": {
                 "theme": {
-                    "color-dhis2-grey-050": "#fbfcfd",
-                    "color-dhis2-grey-100": "#f8f9fa",
-                    "color-dhis2-grey-200": "#f3f5f7",
-                    "color-dhis2-grey-300": "#e8edf2",
-                    "color-dhis2-grey-400": "#d5dde5",
-                    "color-dhis2-grey-500": "#a0adba",
-                    "color-dhis2-grey-600": "#6c7787",
-                    "color-dhis2-grey-700": "#4a5768",
-                    "color-dhis2-grey-800": "#404b5a",
-                    "color-dhis2-grey-900": "#212934",
-                    "color-dhis2-blue-050": "#f5fbff",
-                    "color-dhis2-blue-100": "#e3f2fd",
-                    "color-dhis2-blue-200": "#c5e3fc",
-                    "color-dhis2-blue-300": "#90caf9",
-                    "color-dhis2-blue-400": "#42a5f5",
-                    "color-dhis2-blue-500": "#2196f3",
-                    "color-dhis2-blue-600": "#147cd7",
-                    "color-dhis2-blue-700": "#1565c0",
-                    "color-dhis2-blue-800": "#0d47a1",
-                    "color-dhis2-blue-900": "#093371",
-                    "color-dhis2-teal-050": "#f1f9f9",
-                    "color-dhis2-teal-100": "#e0f2f1",
-                    "color-dhis2-teal-200": "#b2dfdb",
-                    "color-dhis2-teal-300": "#4db6ac",
-                    "color-dhis2-teal-400": "#009688",
-                    "color-dhis2-teal-500": "#00897b",
-                    "color-dhis2-teal-600": "#00796b",
-                    "color-dhis2-teal-700": "#00695c",
-                    "color-dhis2-teal-800": "#004d40",
-                    "color-dhis2-teal-900": "#00332b",
-                    "color-dhis2-red-050": "#fff5f6",
-                    "color-dhis2-red-100": "#ffe5e8",
-                    "color-dhis2-red-200": "#ffcdd2",
-                    "color-dhis2-red-300": "#e57373",
-                    "color-dhis2-red-400": "#f44336",
-                    "color-dhis2-red-500": "#d32f2f",
-                    "color-dhis2-red-600": "#c62828",
-                    "color-dhis2-red-700": "#b71c1c",
-                    "color-dhis2-red-800": "#891515",
-                    "color-dhis2-red-900": "#330202",
-                    "color-dhis2-yellow-050": "#fff8e1",
-                    "color-dhis2-yellow-100": "#ffecb3",
-                    "color-dhis2-yellow-200": "#ffe082",
-                    "color-dhis2-yellow-300": "#ffc324",
-                    "color-dhis2-yellow-400": "#ffa902",
-                    "color-dhis2-yellow-500": "#ff9302",
-                    "color-dhis2-yellow-600": "#ff8302",
-                    "color-dhis2-yellow-700": "#e56408",
-                    "color-dhis2-yellow-800": "#bb460d",
-                    "color-dhis2-yellow-900": "#6f3205",
-                    "color-dhis2-green-050": "#f4fbf4",
-                    "color-dhis2-green-100": "#e8f5e9",
-                    "color-dhis2-green-200": "#c8e6c9",
-                    "color-dhis2-green-300": "#a5d6a7",
-                    "color-dhis2-green-400": "#4caf50",
-                    "color-dhis2-green-500": "#43a047",
-                    "color-dhis2-green-600": "#388e3c",
-                    "color-dhis2-green-700": "#2e7d32",
-                    "color-dhis2-green-800": "#1b5e20",
-                    "color-dhis2-green-900": "#103713",
-                    "color-dhis2-background": "#ffffff",
-                    "color-dhis2-foreground": "#212934",
-                    "color-dhis2-card": "#ffffff",
-                    "color-dhis2-card-foreground": "#212934",
-                    "color-dhis2-popover": "#ffffff",
-                    "color-dhis2-popover-foreground": "#212934",
-                    "color-dhis2-primary": "#1565c0",
-                    "color-dhis2-primary-foreground": "#ffffff",
-                    "color-dhis2-secondary": "#f3f5f7",
-                    "color-dhis2-secondary-foreground": "#212934",
-                    "color-dhis2-muted": "#f3f5f7",
-                    "color-dhis2-muted-foreground": "#4a5768",
-                    "color-dhis2-accent": "#f3f5f7",
-                    "color-dhis2-accent-foreground": "#212934",
-                    "color-dhis2-destructive": "#b71c1c",
-                    "color-dhis2-border": "#e8edf2",
-                    "color-dhis2-input": "#a0adba",
-                    "color-dhis2-ring": "#147cd7",
-                    "color-dhis2-overlay": "rgb(33 43 54 / 0.4)",
                     "radius-dhis2-sm": "3px",
                     "radius-dhis2-md": "4px",
                     "radius-dhis2-lg": "4px",
-                    "shadow-dhis2-popover": "0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05)",
-                    "shadow-dhis2-card": "0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
                     "font-dhis2": "Roboto, Helvetica, Arial, sans-serif",
-                    "dhis2-field-height-dense": "32px"
+                    "dhis2-field-height-dense": "32px",
+                    "color-dhis2-background": "var(--dhis2-background)",
+                    "color-dhis2-foreground": "var(--dhis2-foreground)",
+                    "color-dhis2-card": "var(--dhis2-card)",
+                    "color-dhis2-card-foreground": "var(--dhis2-card-foreground)",
+                    "color-dhis2-popover": "var(--dhis2-popover)",
+                    "color-dhis2-popover-foreground": "var(--dhis2-popover-foreground)",
+                    "color-dhis2-accent-foreground": "var(--dhis2-accent-foreground)",
+                    "color-dhis2-muted-foreground": "var(--dhis2-muted-foreground)",
+                    "color-dhis2-subtle-foreground": "var(--dhis2-subtle-foreground)",
+                    "color-dhis2-disabled-foreground": "var(--dhis2-disabled-foreground)",
+                    "color-dhis2-border": "var(--dhis2-border)",
+                    "color-dhis2-border-strong": "var(--dhis2-border-strong)",
+                    "color-dhis2-input": "var(--dhis2-input)",
+                    "color-dhis2-control": "var(--dhis2-control)",
+                    "color-dhis2-ring": "var(--dhis2-ring)",
+                    "color-dhis2-muted": "var(--dhis2-muted)",
+                    "color-dhis2-accent": "var(--dhis2-accent)",
+                    "color-dhis2-accent-strong": "var(--dhis2-accent-strong)",
+                    "color-dhis2-overlay": "var(--dhis2-overlay)",
+                    "color-dhis2-primary": "var(--dhis2-primary)",
+                    "color-dhis2-primary-strong": "var(--dhis2-primary-strong)",
+                    "color-dhis2-primary-subtle": "var(--dhis2-primary-subtle)",
+                    "color-dhis2-primary-foreground": "var(--dhis2-primary-foreground)",
+                    "color-dhis2-destructive-foreground": "var(--dhis2-destructive-foreground)",
+                    "color-dhis2-selected": "var(--dhis2-selected)",
+                    "color-dhis2-selected-strong": "var(--dhis2-selected-strong)",
+                    "color-dhis2-selected-foreground": "var(--dhis2-selected-foreground)",
+                    "color-dhis2-neutral": "var(--dhis2-neutral)",
+                    "color-dhis2-neutral-subtle": "var(--dhis2-neutral-subtle)",
+                    "color-dhis2-neutral-fill": "var(--dhis2-neutral-fill)",
+                    "color-dhis2-neutral-border": "var(--dhis2-neutral-border)",
+                    "color-dhis2-neutral-indicator": "var(--dhis2-neutral-indicator)",
+                    "color-dhis2-neutral-strong": "var(--dhis2-neutral-strong)",
+                    "color-dhis2-info": "var(--dhis2-info)",
+                    "color-dhis2-info-subtle": "var(--dhis2-info-subtle)",
+                    "color-dhis2-info-fill": "var(--dhis2-info-fill)",
+                    "color-dhis2-info-border": "var(--dhis2-info-border)",
+                    "color-dhis2-info-indicator": "var(--dhis2-info-indicator)",
+                    "color-dhis2-info-strong": "var(--dhis2-info-strong)",
+                    "color-dhis2-success": "var(--dhis2-success)",
+                    "color-dhis2-success-subtle": "var(--dhis2-success-subtle)",
+                    "color-dhis2-success-fill": "var(--dhis2-success-fill)",
+                    "color-dhis2-success-border": "var(--dhis2-success-border)",
+                    "color-dhis2-success-indicator": "var(--dhis2-success-indicator)",
+                    "color-dhis2-success-strong": "var(--dhis2-success-strong)",
+                    "color-dhis2-warning": "var(--dhis2-warning)",
+                    "color-dhis2-warning-subtle": "var(--dhis2-warning-subtle)",
+                    "color-dhis2-warning-fill": "var(--dhis2-warning-fill)",
+                    "color-dhis2-warning-border": "var(--dhis2-warning-border)",
+                    "color-dhis2-warning-indicator": "var(--dhis2-warning-indicator)",
+                    "color-dhis2-warning-strong": "var(--dhis2-warning-strong)",
+                    "color-dhis2-destructive": "var(--dhis2-destructive)",
+                    "color-dhis2-destructive-subtle": "var(--dhis2-destructive-subtle)",
+                    "color-dhis2-destructive-fill": "var(--dhis2-destructive-fill)",
+                    "color-dhis2-destructive-border": "var(--dhis2-destructive-border)",
+                    "color-dhis2-destructive-indicator": "var(--dhis2-destructive-indicator)",
+                    "color-dhis2-destructive-strong": "var(--dhis2-destructive-strong)",
+                    "color-dhis2-background-subtle": "var(--dhis2-background-subtle)",
+                    "color-dhis2-sidebar": "var(--dhis2-sidebar)",
+                    "color-dhis2-sidebar-foreground": "var(--dhis2-sidebar-foreground)",
+                    "color-dhis2-sidebar-accent": "var(--dhis2-sidebar-accent)",
+                    "color-dhis2-sidebar-accent-foreground": "var(--dhis2-sidebar-accent-foreground)",
+                    "color-dhis2-sidebar-border": "var(--dhis2-sidebar-border)",
+                    "color-dhis2-sidebar-primary": "var(--dhis2-sidebar-primary)",
+                    "color-dhis2-sidebar-ring": "var(--dhis2-sidebar-ring)",
+                    "shadow-dhis2-card": "var(--dhis2-shadow-card)",
+                    "shadow-dhis2-popover": "var(--dhis2-shadow-popover)"
+                },
+                "light": {
+                    "dhis2-background": "#ffffff",
+                    "dhis2-foreground": "#212934",
+                    "dhis2-card": "#ffffff",
+                    "dhis2-card-foreground": "#212934",
+                    "dhis2-popover": "#ffffff",
+                    "dhis2-popover-foreground": "#212934",
+                    "dhis2-accent-foreground": "#212934",
+                    "dhis2-muted-foreground": "#4a5768",
+                    "dhis2-subtle-foreground": "#6c7787",
+                    "dhis2-disabled-foreground": "#6c7787",
+                    "dhis2-border": "#e8edf2",
+                    "dhis2-border-strong": "#d5dde5",
+                    "dhis2-input": "#a0adba",
+                    "dhis2-control": "#404b5a",
+                    "dhis2-ring": "#147cd7",
+                    "dhis2-muted": "#f8f9fa",
+                    "dhis2-accent": "#f3f5f7",
+                    "dhis2-accent-strong": "#e8edf2",
+                    "dhis2-overlay": "rgb(33 43 54 / 0.4)",
+                    "dhis2-primary": "#1565c0",
+                    "dhis2-primary-strong": "#0d47a1",
+                    "dhis2-primary-subtle": "#f5fbff",
+                    "dhis2-primary-foreground": "#ffffff",
+                    "dhis2-destructive-foreground": "#ffffff",
+                    "dhis2-selected": "#e0f2f1",
+                    "dhis2-selected-strong": "#00897b",
+                    "dhis2-selected-foreground": "#00695c",
+                    "dhis2-neutral": "#4a5768",
+                    "dhis2-neutral-subtle": "#f8f9fa",
+                    "dhis2-neutral-fill": "#f3f5f7",
+                    "dhis2-neutral-border": "#e8edf2",
+                    "dhis2-neutral-indicator": "#6c7787",
+                    "dhis2-neutral-strong": "#212934",
+                    "dhis2-info": "#093371",
+                    "dhis2-info-subtle": "#f5fbff",
+                    "dhis2-info-fill": "#e3f2fd",
+                    "dhis2-info-border": "#c5e3fc",
+                    "dhis2-info-indicator": "#147cd7",
+                    "dhis2-info-strong": "#093371",
+                    "dhis2-success": "#2e7d32",
+                    "dhis2-success-subtle": "#f4fbf4",
+                    "dhis2-success-fill": "#e8f5e9",
+                    "dhis2-success-border": "#c8e6c9",
+                    "dhis2-success-indicator": "#388e3c",
+                    "dhis2-success-strong": "#103713",
+                    "dhis2-warning": "#bb460d",
+                    "dhis2-warning-subtle": "#fff8e1",
+                    "dhis2-warning-fill": "#ffecb3",
+                    "dhis2-warning-border": "#ffe082",
+                    "dhis2-warning-indicator": "#e56408",
+                    "dhis2-warning-strong": "#6f3205",
+                    "dhis2-destructive": "#b71c1c",
+                    "dhis2-destructive-subtle": "#fff5f6",
+                    "dhis2-destructive-fill": "#ffe5e8",
+                    "dhis2-destructive-border": "#d32f2f",
+                    "dhis2-destructive-indicator": "#c62828",
+                    "dhis2-destructive-strong": "#330202",
+                    "dhis2-background-subtle": "#fbfcfd",
+                    "dhis2-sidebar": "#212934",
+                    "dhis2-sidebar-foreground": "#e8edf2",
+                    "dhis2-sidebar-accent": "#404b5a",
+                    "dhis2-sidebar-accent-foreground": "#fbfcfd",
+                    "dhis2-sidebar-border": "#4a5768",
+                    "dhis2-sidebar-primary": "#009688",
+                    "dhis2-sidebar-ring": "#fbfcfd",
+                    "dhis2-shadow-card": "0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
+                    "dhis2-shadow-popover": "0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05)"
+                }
+            },
+            "css": {
+                "@media (prefers-contrast: more)": {
+                    ":root": {
+                        "--dhis2-muted-foreground": "#404b5a",
+                        "--dhis2-subtle-foreground": "#404b5a",
+                        "--dhis2-disabled-foreground": "#4a5768",
+                        "--dhis2-border": "#6c7787",
+                        "--dhis2-border-strong": "#404b5a",
+                        "--dhis2-input": "#404b5a",
+                        "--dhis2-control": "#212934",
+                        "--dhis2-ring": "#0d47a1",
+                        "--dhis2-muted": "#f3f5f7",
+                        "--dhis2-accent": "#e8edf2",
+                        "--dhis2-accent-strong": "#d5dde5",
+                        "--dhis2-overlay": "rgb(33 43 54 / 0.6)",
+                        "--dhis2-primary": "#0d47a1",
+                        "--dhis2-primary-strong": "#093371",
+                        "--dhis2-selected-strong": "#00695c",
+                        "--dhis2-selected-foreground": "#004d40",
+                        "--dhis2-neutral": "#404b5a",
+                        "--dhis2-neutral-border": "#6c7787",
+                        "--dhis2-neutral-indicator": "#404b5a",
+                        "--dhis2-info-border": "#0d47a1",
+                        "--dhis2-info-indicator": "#0d47a1",
+                        "--dhis2-success": "#1b5e20",
+                        "--dhis2-success-border": "#1b5e20",
+                        "--dhis2-success-indicator": "#1b5e20",
+                        "--dhis2-warning": "#6f3205",
+                        "--dhis2-warning-border": "#6f3205",
+                        "--dhis2-warning-indicator": "#bb460d",
+                        "--dhis2-destructive": "#891515",
+                        "--dhis2-destructive-border": "#891515",
+                        "--dhis2-destructive-indicator": "#891515",
+                        "--dhis2-background-subtle": "#f8f9fa",
+                        "--dhis2-sidebar-foreground": "#fbfcfd",
+                        "--dhis2-sidebar-accent-foreground": "#ffffff",
+                        "--dhis2-sidebar-border": "#a0adba",
+                        "--dhis2-sidebar-primary": "#b2dfdb",
+                        "--dhis2-sidebar-ring": "#ffffff",
+                        "--dhis2-shadow-card": "0 0 0 1px #404b5a, 0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
+                        "--dhis2-shadow-popover": "0 0 0 1px #404b5a, 0 4px 12px rgba(12, 14, 16, 0.15)"
+                    }
                 }
             }
         },
@@ -133,6 +232,18 @@
                     "path": "packages/registry/components/alert.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/alert.tsx"
+                }
+            ]
+        },
+        {
+            "name": "announcer",
+            "type": "registry:ui",
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/announcer.ts",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/announcer.ts"
                 }
             ]
         },
@@ -306,7 +417,10 @@
         {
             "name": "field",
             "type": "registry:ui",
-            "dependencies": ["class-variance-authority@^0.7.1"],
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme",
@@ -352,6 +466,21 @@
                     "path": "packages/registry/components/input.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/input.tsx"
+                }
+            ]
+        },
+        {
+            "name": "kbd",
+            "type": "registry:ui",
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/kbd.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/kbd.tsx"
                 }
             ]
         },
@@ -516,6 +645,7 @@
         {
             "name": "textarea",
             "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/cn",
                 "devotta-labs/dhis2-blocks/dhis2-theme"
@@ -756,6 +886,52 @@
             ]
         },
         {
+            "name": "dhis2-value-types",
+            "type": "registry:block",
+            "title": "DHIS2 Value Types",
+            "description": "How each DHIS2 value type is typed, checked, pasted and shown for editing, in the system calendar.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/dates.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/dates.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/fieldMask.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/fieldMask.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/optionSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/optionSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/dhis2-value-types/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/valueTypes.ts"
+                }
+            ]
+        },
+        {
             "name": "observation-cards",
             "type": "registry:block",
             "title": "DHIS2 Observation Cards",
@@ -821,9 +997,19 @@
                     "target": "@components/observation-cards/format/display.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/observation-cards/format/useDisplayOptions.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/format/useDisplayOptions.ts"
+                },
+                {
                     "path": "packages/registry/blocks/observation-cards/index.ts",
                     "type": "registry:file",
                     "target": "@components/observation-cards/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/inline/ObservationInline.tsx",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/inline/ObservationInline.tsx"
                 },
                 {
                     "path": "packages/registry/blocks/observation-cards/parts/ObservationChange.tsx",
@@ -869,9 +1055,136 @@
                     "path": "packages/registry/blocks/observation-cards/provider/env.ts",
                     "type": "registry:file",
                     "target": "@components/observation-cards/provider/env.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/observation-cards/provider/misconfigured.ts",
+                    "type": "registry:file",
+                    "target": "@components/observation-cards/provider/misconfigured.ts"
                 }
             ],
-            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; the cards inside share one request for the program's metadata and one for the person's events. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. See the observation cards docs page for examples."
+            "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; the cards inside share one request for the program's metadata and one for the person's events. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. ObservationInline shows one data element as a single line of label, value, legend and recorded time, for a banner's facts line; it reads the same provider and adds no requests. See the observation cards docs page for examples."
+        },
+        {
+            "name": "program-rules",
+            "type": "registry:block",
+            "title": "Program Rules",
+            "description": "DHIS2 program rules through the official rule engine: effects for one event or many, with attribution and dependency tracking.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/rule-engine@3.8.6",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/enrollment.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/enrollment.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/inputKey.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/inputKey.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/loadRuleEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/loadRuleEngine.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useEventsRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useEventsRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRuleEvaluator.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRuleEvaluator.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/hooks/useProgramRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/hooks/useProgramRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildContext.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildContext.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/buildInput.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/buildInput.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/dependencyGraph.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/dependencyGraph.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/evaluate.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/evaluate.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/manyEvents.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/manyEvents.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/scanExpression.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/scanExpression.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/stages.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/stages.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/valueTypes.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/valueTypes.ts"
+                }
+            ]
         },
         {
             "name": "sidebar",
@@ -911,6 +1224,241 @@
                 }
             ],
             "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
+        },
+        {
+            "name": "spreadsheet",
+            "type": "registry:block",
+            "title": "Spreadsheet",
+            "description": "DHIS2-typed grid entry: typed cells, Excel-style keys, paste and undo, and the state of each cell, for any data the app saves.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "@tanstack/react-virtual@^3.14.21",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/checkbox",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/kbd",
+                "devotta-labs/dhis2-blocks/label",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/Cell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/Cell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/CellStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/CellStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/ChoiceCells.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/ChoiceCells.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/OptionCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/OptionCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/OptionList.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/OptionList.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/PopupCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/PopupCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/TextCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/TextCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/cellProps.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/cellProps.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/AgeEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/AgeEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/CoordinateEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/CoordinateEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/EditorButtons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/EditorButtons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/FileEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/FileEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/LongTextEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/LongTextEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/MultiSelectEditor.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/MultiSelectEditor.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/editors/fileApi.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/editors/fileApi.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/popupEditors.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/popupEditors.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/serverSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/serverSearch.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/cells/useCellMode.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/cells/useCellMode.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/AddRowButton.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/AddRowButton.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/BulkMenu.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/BulkMenu.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/ColumnPopover.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/ColumnPopover.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/RowHeader.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/RowHeader.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/RowNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/RowNotes.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/SpreadsheetGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/SpreadsheetGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableBody.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableBody.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableRow.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableRow.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/bulk.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/bulk.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/fillDown.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/fillDown.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/headers.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/headers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/navGrid.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/navGrid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/navigation.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/navigation.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/paste.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/paste.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/useAddRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/useAddRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/model/annotations.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/model/annotations.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/provider/Spreadsheet.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/provider/Spreadsheet.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/store/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/store/store.ts"
+                }
+            ]
         },
         {
             "name": "timeline",
@@ -1149,6 +1697,7 @@
             ],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",
                 "devotta-labs/dhis2-blocks/checkbox",
                 "devotta-labs/dhis2-blocks/cn",
@@ -1306,6 +1855,11 @@
                     "target": "@components/tracked-entity-finder/provider/FinderProvider.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/tracked-entity-finder/provider/ResultCountAnnouncer.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/provider/ResultCountAnnouncer.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/tracked-entity-finder/provider/context.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/provider/context.ts"
@@ -1382,6 +1936,509 @@
                 }
             ],
             "docs": "Wrap the finder in FinderProvider with a program and an onSelect callback. Inside it compose a FinderForm containing FinderField (exact value) and FinderRangeField (number or date range) inputs, one per program attribute uid, plus an optional FinderHint and a FinderSubmit button. Show matches with FinderResults, which holds the state parts FinderSearching, FinderEmpty, FinderTooMany and FinderError, a FinderList of FinderItem rows with FinderValue cells, and FinderPagination. The program's search rules are enforced inside and cannot be loosened by props. Use the useFinder* hooks for custom layouts. See the tracked entity finder docs page for examples."
+        },
+        {
+            "name": "tracked-entity-header",
+            "type": "registry:block",
+            "title": "DHIS2 Tracked Entity Header",
+            "description": "A banner for one tracked entity, such as a person or a shipment: what it is and the facts that matter most, composed from attribute parts.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/relationshipSchemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/relationshipSchemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/relationships.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/relationships.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/api/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/api/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/banner/TrackedEntityBanner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/banner/TrackedEntityBanner.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/format/age.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/format/age.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/format/display.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/format/display.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/DisclosureToggle.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/DisclosureToggle.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/FactPair.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/FactPair.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityActions.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityAttribute.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityAttribute.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityDate.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityDate.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityDetails.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityDetails.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityEnrollment.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityEnrollment.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityFacts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityFacts.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityName.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityOwner.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityOwner.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityRelationship.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityRelationship.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityRelationships.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityRelationships.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/TrackedEntityStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/TrackedEntityStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/divided.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/divided.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/LinkedName.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/LinkedName.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/Names.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/Names.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/resolve.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/resolve.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/relationships/useRelationships.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/relationships/useRelationships.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/parts/useAttributeValue.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/parts/useAttributeValue.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/TrackedEntityHeaderProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/actionsSlot.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/actionsSlot.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/env.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/env.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/frame.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/frame.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-header/provider/labelledRegion.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-header/provider/labelledRegion.ts"
+                }
+            ],
+            "docs": "Wrap a banner in TrackedEntityHeaderProvider with a trackedEntity and, usually, a program; the parts inside load the tracked entity and the program's attribute metadata through the DHIS2 app-runtime, once between them. TrackedEntityBanner with no children shows the program's list attributes, its state tags and a details disclosure for the rest. To compose a banner, place the parts TrackedEntityName, TrackedEntityDate, TrackedEntityAttribute, TrackedEntityStatus, TrackedEntityOwner, TrackedEntityEnrollment, TrackedEntityFacts, TrackedEntityActions, TrackedEntityDetails, TrackedEntityRelationship and TrackedEntityRelationships inside it, and place TrackedEntityStatus yourself so an inactive record is never shown by colour alone. Event facts such as a latest reading come from ObservationInline in observation-cards, inside an ObservationsProvider. Every part works outside the banner under the provider; read status and retry from useTrackedEntityHeader to draw the loading, failed, restricted and not-found states yourself. A restricted record shows no values. TrackedEntityRelationship shows one relationship type by uid and TrackedEntityRelationships every link, as a Related disclosure in a banner; both take href or onSelect for the names and labels to replace relationship type names, and the block ships no peek. See the tracked entity header docs page for examples."
+        },
+        {
+            "name": "tracker-data-entry",
+            "type": "registry:block",
+            "title": "Tracker Data Entry",
+            "description": "Grid data entry for DHIS2 event and tracker programs: event lists and paper registers, program rules, and unsent changes kept on the device until DHIS2 has them.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@tanstack/react-query@^5.101.4",
+                "zod@^4.4.3",
+                "zustand@^5.0.15"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/program-rules",
+                "devotta-labs/dhis2-blocks/spreadsheet"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/effects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/effects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/ruleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/ruleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/slotOrder.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/slotOrder.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/logic/summary.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/logic/summary.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/model/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/model/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/download.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/download.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/failure.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/failure.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/outbox.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/outbox.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/outbox/sync.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/outbox/sync.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/EventStatusBadge.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/EventStatusBadge.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ShowMore.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ShowMore.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/TrackerDataEntry.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/TrackerDataEntry.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/TrackerRowLabel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/TrackerRowLabel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/addRow.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/addRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/afterPaint.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/afterPaint.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/appendPage.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/appendPage.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/completion.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/completion.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/connectRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/connectRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/discardFailed.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/discardFailed.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/fileUrl.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/fileUrl.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/formKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/formKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/formRows.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/formRows.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/openForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/signedIn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/slotOrderEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/slotOrderEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/standInForms.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/standInForms.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/unsentFile.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/unsentFile.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useLatestEngine.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useLatestEngine.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useLeaveWarning.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useLeaveWarning.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/useRuleEffects.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/useRuleEffects.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/compileLayout.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/compileLayout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/layout.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/layout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/newPerson.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/newPerson.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/registerLoad.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/registerLoad.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/registerSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/registerSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/restore.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/restore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/scheduled.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/scheduled.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/register/slots.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/register/slots.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventEdit.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventEdit.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventRestore.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventRestore.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventSchemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventSchemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/eventSource.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/eventSource.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/expiry.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/expiry.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/fieldOf.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/fieldOf.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/hasRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/hasRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerPayload.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerPayload.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerReasons.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerReasons.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerReport.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerReport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/trackerSave.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/trackerSave.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/sources/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/sources/uid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/summary/TrackerDataEntrySummary.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/summary/TrackerDataEntrySummary.tsx"
+                }
+            ]
         },
         {
             "name": "working-list",

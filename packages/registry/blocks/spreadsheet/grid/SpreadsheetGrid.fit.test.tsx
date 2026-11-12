@@ -1,9 +1,9 @@
 /// <reference types="@vitest/browser-playwright" />
-import { CustomDataProvider } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
 import type { Field } from '@/components/dhis2-value-types'
+import { Runtime } from '../cells/__tests__/harness'
 import type { AnnotationsState } from '../model/annotations'
 import { cellKey } from '../model/types'
 import type { GridTable } from '../model/types'
@@ -68,9 +68,9 @@ const mountAggregate = async (annotations: Partial<AnnotationsState> = {}) => {
         </Spreadsheet>
     )
     await render(
-        <CustomDataProvider data={{}}>
+        <Runtime>
             <Harness />
-        </CustomDataProvider>
+        </Runtime>
     )
     return { enqueue, cells, store }
 }

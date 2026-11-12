@@ -1,29 +1,12 @@
 import type { Dhis2Calendar } from '@/components/dhis2-value-display'
 import { createContext, useContext } from 'react'
-import type { TrackedEntityHeaderResourceClient } from '../api/client'
-import type { AttributeMetadata, TrackedEntityRecord } from '../api/types'
 
-export type TrackedEntityHeaderState =
-    | {
-          status: 'loading' | 'failed' | 'restricted' | 'not-found'
-          retry(): void
-      }
-    | {
-          status: 'ready'
-          retry(): void
-          trackedEntity: TrackedEntityRecord
-          metadata: AttributeMetadata
-      }
-
+/** Client state only: which record, how to display it, and what the mounted parts have claimed. The record itself comes from the query hooks. */
 export interface HeaderContextValue {
-    state: TrackedEntityHeaderState
-    /** The request runner and cache id the provider uses, for parts with a request of their own. */
-    resourceClient: TrackedEntityHeaderResourceClient
-    clientId: number
+    /** The trimmed tracked entity id; empty while the host has none. */
+    trackedEntity: string
     /** The trimmed program, when there is one. */
     program?: string
-    /** The program's name once its metadata loads, even when the tracked entity request is refused. */
-    programName?: string
     display: { calendar: Dhis2Calendar; locale?: string }
     /** Logs a config problem's full text, once per provider. */
     logProblem: (message: string) => void

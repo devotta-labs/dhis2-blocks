@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useMemo } from 'react'
 import {
@@ -9,14 +8,8 @@ import {
     type RuleEngineModule,
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
-import {
-    shouldRetryProgramRulesRequest,
-    useProgramRulesClient,
-    type ProgramRulesClient,
-} from './client'
 import { useRuleEngine } from './loadRuleEngine'
-import { fetchOrgUnitGroups, fetchProgramRulesMetadata } from './metadata'
-import { programRulesQueryKeys } from './queryKeys'
+import { useOrgUnitGroupsQuery, useRuleMetadataQuery } from './queries'
 
 export interface UseProgramRuleContextOptions {
     programId: string
@@ -33,7 +26,6 @@ export interface UseProgramRuleContextResult {
     error?: Error
 }
 
-const HOUR = 60 * 60_000
 const NO_GROUPS: string[] = []
 
 export const asError = (cause: unknown): Error =>
@@ -68,7 +60,6 @@ export const neededFailure = (
     needed && query.data === undefined ? (query.error ?? undefined) : undefined
 
 interface StageRuleContext {
-    client: ProgramRulesClient
     engine?: RuleEngineModule
     metadata?: ProgramRulesMetadata
     context?: RuleContext
@@ -81,17 +72,8 @@ export const useStageRuleContext = ({
     programStageId,
     enabled = true,
 }: UseProgramRuleContextOptions): StageRuleContext => {
-    const client = useProgramRulesClient()
-
     const ruleEngine = useRuleEngine(enabled)
-    const metadataQuery = useQuery({
-        queryKey: programRulesQueryKeys.metadata(programId),
-        queryFn: ({ signal }) =>
-            fetchProgramRulesMetadata(client, programId, signal),
-        enabled,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
+    const metadataQuery = useRuleMetadataQuery(programId, enabled)
     const engine = ruleEngine.engine
 
     const metadata = useMemo(
@@ -107,13 +89,7 @@ export const useStageRuleContext = ({
     )
     const groups =
         okContext(baseContext)?.requirements.orgUnitGroups ?? NO_GROUPS
-    const groupsQuery = useQuery({
-        queryKey: programRulesQueryKeys.orgUnitGroups(groups),
-        queryFn: ({ signal }) => fetchOrgUnitGroups(client, groups, signal),
-        enabled: enabled && groups.length > 0,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
+    const groupsQuery = useOrgUnitGroupsQuery(groups, enabled)
     const groupedContext = useMemo(
         () =>
             groupsQuery.data === undefined
@@ -130,7 +106,6 @@ export const useStageRuleContext = ({
         (builtContext?.isErr() ? builtContext.error : undefined)
 
     return {
-        client,
         engine,
         metadata,
         context: okContext(builtContext),

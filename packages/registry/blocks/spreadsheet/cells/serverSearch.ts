@@ -1,13 +1,14 @@
 import { FetchError, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { useEffect, useRef, useState } from 'react'
+import { skipToken, useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import type { DataEngine } from '../provider/context'
 
 // Fewer characters match too much to be worth asking the server.
 export const MIN_LENGTH = 2
 // A word typed in one go is searched once, when typing stops.
-const DEBOUNCE_MS = 250
+export const DEBOUNCE_MS = 250
 
 /** A result of a search: the value it saves, and how the list shows it. */
 interface SearchResult {
@@ -17,7 +18,7 @@ interface SearchResult {
     detail: string
 }
 
-interface SearchAnswer {
+export interface SearchAnswer {
     results: ReadonlyArray<SearchResult>
     /** How many match; more than the results when the server sent only some. */
     total: number
@@ -119,57 +120,38 @@ export const searchFor = (valueType: string): ServerSearch | undefined => {
     return undefined
 }
 
-/** The answer for a query, or why there is none. */
-export interface Found extends SearchAnswer {
-    query: string
-    problem?: string
+/** Why a search failed, for the person: no connection, or anything else. */
+export const searchProblem = (error: Error) =>
+    error instanceof FetchError && error.type === 'network'
+        ? i18n.t('You are offline')
+        : i18n.t('Could not search. Try again.')
+
+/** `value`, once it has stayed the same for `ms`. */
+export const useDebounced = (value: string, ms: number) => {
+    const [settled, setSettled] = useState(value)
+    useEffect(() => {
+        const timer = setTimeout(() => setSettled(value), ms)
+        return () => clearTimeout(timer)
+    }, [value, ms])
+    return settled
 }
 
 /**
- * The server's answer for `query`, from two characters on and once typing stops; a newer query aborts the search
- * before it. Undefined until the answer for this very query arrives, so nothing picks from an older one.
+ * What the server finds for `query`, from two characters on; a newer query aborts the search before it. A value type
+ * with no search asks nothing.
  */
-export const useServerSearch = (
-    search: Search | undefined,
-    query: string
-): Found | undefined => {
-    // The runtime hands out a new engine each render; a search in flight must not restart for it.
-    const dataEngine = useDataEngine()
-    const engine = useRef(dataEngine)
-    engine.current = dataEngine
-    const [found, setFound] = useState<Found>()
-    useEffect(() => {
-        if (search === undefined || query.length < MIN_LENGTH) {
-            return undefined
-        }
-        const controller = new AbortController()
-        const timer = setTimeout(() => {
-            search(engine.current, query, controller.signal).then(
-                (answer) => {
-                    if (!controller.signal.aborted) {
-                        setFound({ query, ...answer })
-                    }
-                },
-                (error: Error) => {
-                    if (!controller.signal.aborted) {
-                        setFound({
-                            query,
-                            results: [],
-                            total: 0,
-                            problem:
-                                error instanceof FetchError &&
-                                error.type === 'network'
-                                    ? i18n.t('You are offline')
-                                    : i18n.t('Could not search. Try again.'),
-                        })
-                    }
-                }
-            )
-        }, DEBOUNCE_MS)
-        return () => {
-            clearTimeout(timer)
-            controller.abort()
-        }
-    }, [search, query])
-    return found?.query === query ? found : undefined
+export const useServerSearch = (valueType: string, query: string) => {
+    const engine = useDataEngine()
+    const search = searchFor(valueType)?.search
+    return useQuery({
+        queryKey: ['spreadsheet', 'search', valueType, query],
+        queryFn:
+            search === undefined || query.length < MIN_LENGTH
+                ? skipToken
+                : ({ signal }) => search(engine, query, signal),
+        // Enter and Tab wait for the answer, so a failure is said at once; the next key searches again.
+        retry: false,
+        // Asked even when the browser says it is offline: the failure then says so, where a paused search says nothing.
+        networkMode: 'always',
+    })
 }

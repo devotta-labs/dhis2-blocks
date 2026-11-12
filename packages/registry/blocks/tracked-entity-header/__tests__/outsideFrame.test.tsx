@@ -128,13 +128,12 @@ describe('parts outside a frame', () => {
 
     it('status and retry drive the host view to ready', async () => {
         const server = createFakeServer({ fail: 500 })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <QuickLook />
                 </TrackedEntityHeaderProvider>

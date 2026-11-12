@@ -345,9 +345,9 @@ export const mount = async (
         tracker = trackerContext
         return null
     }
-    const tree = () => (
+    const tree = (baseUrl = server) => (
         <Provider
-            config={{ baseUrl: server, apiVersion: 42 }}
+            config={{ baseUrl, apiVersion: 42 }}
             userInfo={undefined}
             plugin={false}
             parentAlertsAdd={undefined}
@@ -389,8 +389,11 @@ export const mount = async (
     return {
         server,
         screen,
-        /** Renders the page again from its root, as an app's own state change does; the data provider makes a new engine. */
-        rerender: () => screen.rerender(tree()),
+        /**
+         * Renders the page again from its root, as an app's own state change does; the data provider makes a new
+         * engine. Given a server, the app is at that one from then on.
+         */
+        rerender: (baseUrl?: string) => screen.rerender(tree(baseUrl)),
         client,
         meSignals,
         context: () => got(context),

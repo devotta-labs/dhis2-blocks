@@ -1,4 +1,5 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useDataEngine } from '@dhis2/app-runtime'
+import { useQueries } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import { useEffect, useMemo, useRef } from 'react'
 import {
@@ -23,10 +24,13 @@ import {
     type RuleOrgUnitGroupMetadata,
 } from '../lib'
 import { indexRows, withLiveEvents } from '../lib/manyEvents'
-import { shouldRetryProgramRulesRequest, useProgramRulesClient } from './client'
 import { ENROLLMENT_BATCH_SIZE, fetchRuleEnrollments } from './enrollment'
 import { useRuleEngine } from './loadRuleEngine'
-import { fetchOrgUnitGroups, fetchProgramRulesMetadata } from './metadata'
+import {
+    shouldRetryProgramRulesRequest,
+    useOrgUnitGroupsQuery,
+    useRuleMetadataQuery,
+} from './queries'
 import { programRulesQueryKeys } from './queryKeys'
 import { asError, neededFailure } from './useProgramRuleContext'
 import type { ProgramRulesStatus } from './useProgramRuleEvaluator'
@@ -104,8 +108,6 @@ export interface UseEventsRulesResult {
     rules?: EventsRules
     error?: Error
 }
-
-const HOUR = 60 * 60_000
 
 /**
  * One chunk's people as cached: entries, since a persisted query cache restores a Map as an empty object, with null for
@@ -291,16 +293,7 @@ export const useEventsRules = ({
     enrollments = false,
     enabled = true,
 }: UseEventsRulesOptions): UseEventsRulesResult => {
-    const client = useProgramRulesClient()
-
-    const metadataQuery = useQuery({
-        queryKey: programRulesQueryKeys.metadata(programId),
-        queryFn: ({ signal }) =>
-            fetchProgramRulesMetadata(client, programId, signal),
-        enabled,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
+    const metadataQuery = useRuleMetadataQuery(programId, enabled)
     const metadata = metadataQuery.data
     const hasRules = metadata !== undefined && metadata.rules.length > 0
     const ruleEngine = useRuleEngine(enabled && hasRules)
@@ -325,13 +318,7 @@ export const useEventsRules = ({
     const groups = [
         ...new Set(requirements.flatMap((needs) => needs.orgUnitGroups)),
     ]
-    const groupsQuery = useQuery({
-        queryKey: programRulesQueryKeys.orgUnitGroups(groups),
-        queryFn: ({ signal }) => fetchOrgUnitGroups(client, groups, signal),
-        enabled: enabled && groups.length > 0,
-        staleTime: HOUR,
-        retry: shouldRetryProgramRulesRequest,
-    })
+    const groupsQuery = useOrgUnitGroupsQuery(groups, enabled)
     const groupedContexts = useMemo(
         () =>
             groupsQuery.data === undefined
@@ -363,12 +350,13 @@ export const useEventsRules = ({
     chunkMemory.current = chunks
     // Each chunk's last data: a chunk that gains ids keeps its people in use while it loads again.
     const lastData = useRef<ReadonlyArray<ChunkPersons | undefined>>([])
+    const dataEngine = useDataEngine()
     const personChunks = useQueries({
         queries: chunks.map((ids, index) => ({
             queryKey: programRulesQueryKeys.enrollments(ids, withEvents),
             queryFn: async ({ signal }): Promise<ChunkPersons> => {
                 const found = await fetchRuleEnrollments(
-                    client,
+                    dataEngine,
                     programId,
                     ids,
                     withEvents,

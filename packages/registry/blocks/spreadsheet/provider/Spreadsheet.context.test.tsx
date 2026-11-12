@@ -1,9 +1,9 @@
 /// <reference types="@vitest/browser-playwright" />
-import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useState } from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { createStore } from 'zustand/vanilla'
+import { Runtime } from '../cells/__tests__/harness'
 import type { AnnotationsState } from '../model/annotations'
 import { createCellStore } from '../store/store'
 import { Spreadsheet } from './Spreadsheet'
@@ -36,7 +36,7 @@ test('the context stays the same object when the app re-renders', async () => {
     const App = () => {
         const [count, setCount] = useState(0)
         return (
-            <CustomDataProvider data={{}}>
+            <Runtime>
                 <button type="button" onClick={() => setCount(count + 1)}>
                     Render {count}
                 </button>
@@ -49,7 +49,7 @@ test('the context stays the same object when the app re-renders', async () => {
                 >
                     <Probe />
                 </Spreadsheet>
-            </CustomDataProvider>
+            </Runtime>
         )
     }
     const screen = await render(<App />)

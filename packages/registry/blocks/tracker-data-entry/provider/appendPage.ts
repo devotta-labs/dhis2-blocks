@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
-import { useEffect, useState } from 'react'
+import { skipToken, useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { formatCount } from '@/components/spreadsheet'
 import type {
@@ -231,9 +232,21 @@ const merge = (names: Names, more: ReadonlyMap<string, string>) =>
         names: new Map([...known, ...more]),
     }))
 
-const NOTHING_MORE = async () => {}
+/** How many rows the open form shows, for the live region. */
+const shownText = (form: LoadedForm, open: OpenForm) => {
+    const shown = formatCount(
+        open.tables
+            .getState()
+            .tables.reduce((sum, { rows }) => sum + rows.length, 0)
+    )
+    return form.rowKind === 'person'
+        ? i18n.t('People shown: {{shown}}', { nsSeparator: '::', shown })
+        : i18n.t('Events shown: {{shown}}', { nsSeparator: '::', shown })
+}
 
 interface PagesOptions {
+    /** One per loaded form: the pages loaded after it are cached under it. */
+    queryKey: ReadonlyArray<string>
     open?: OpenForm
     form?: LoadedForm
     source: TrackerDataEntrySource
@@ -251,6 +264,7 @@ interface PagesOptions {
  * Returns the form as DHIS2 had it with every page loaded, for the form to show when it locks.
  */
 export const usePages = ({
+    queryKey,
     open,
     form,
     source,
@@ -260,87 +274,72 @@ export const usePages = ({
     orgUnitNames,
     fileNames,
 }: PagesOptions) => {
-    const [paged, setPaged] = useState<{ from: LoadedForm; to: LoadedForm }>()
+    const { loadPage } = source
+    const paging =
+        open !== undefined && form !== undefined && loadPage !== undefined
+    const query = useInfiniteQuery({
+        queryKey,
+        // A page is loaded once its rows are in the open form: the button stays busy until then.
+        queryFn: paging
+            ? async ({ pageParam, signal }) => {
+                  const page = await loadPage(engine, pageParam, signal)
+                  await open.append(page)
+                  // Stopped (the form closed, or was opened again), the page is no one's to announce.
+                  if (!signal.aborted) {
+                      merge(orgUnitNames, page.orgUnitNames)
+                      merge(fileNames, page.fileNames)
+                      announce(shownText(form, open))
+                  }
+                  return page
+              }
+            : skipToken,
+        // The form is the first page.
+        initialPageParam: 2,
+        getNextPageParam: (page, _pages, number) =>
+            page.hasMore ? number + 1 : undefined,
+        // Only `loadMore` asks.
+        enabled: false,
+        gcTime: 0,
+        retry: false,
+        // Offline, a page says why it cannot load rather than wait for the connection.
+        networkMode: 'always',
+    })
+    const pages = query.data?.pages
+    const hasMore =
+        paging && (pages === undefined ? form.hasMore : query.hasNextPage)
+    const loadingMore = paging && query.isFetching
+    // The query keeps why a page failed while it is asked for again; the view drops it at once.
+    const loadMoreError =
+        paging && query.isError && !loadingMore
+            ? reasonOf(query.error)
+            : undefined
+    const { fetchNextPage } = query
     useEffect(() => {
-        if (
-            open === undefined ||
-            form === undefined ||
-            source.loadPage === undefined
-        ) {
-            return undefined
-        }
-        const stop = new AbortController()
-        let pages = 1
-        let loading = false
         view.setState({
-            hasMore: form.hasMore,
-            loadingMore: false,
+            hasMore,
+            loadingMore,
+            loadMoreError,
             async loadMore() {
-                if (loading || !view.getState().hasMore) {
-                    return
-                }
-                loading = true
-                view.setState({ loadingMore: true, loadMoreError: undefined })
-                await source
-                    .loadPage?.(engine, pages + 1, stop.signal)
-                    .then(async (page) => {
-                        await open.append(page)
-                        if (stop.signal.aborted) {
-                            return
-                        }
-                        pages += 1
-                        setPaged((last) => ({
-                            from: form,
-                            to: withPage(
-                                last?.from === form ? last.to : form,
-                                page
-                            ),
-                        }))
-                        merge(orgUnitNames, page.orgUnitNames)
-                        merge(fileNames, page.fileNames)
-                        view.setState({ hasMore: page.hasMore })
-                        const shown = open.tables
-                            .getState()
-                            .tables.reduce(
-                                (sum, { rows }) => sum + rows.length,
-                                0
-                            )
-                        announce(
-                            form.rowKind === 'person'
-                                ? i18n.t('People shown: {{shown}}', {
-                                      nsSeparator: '::',
-                                      shown: formatCount(shown),
-                                  })
-                                : i18n.t('Events shown: {{shown}}', {
-                                      nsSeparator: '::',
-                                      shown: formatCount(shown),
-                                  })
-                        )
-                    })
-                    // Said as the form says why it could not load, and shown beside the button.
-                    .catch((error: Error) => {
-                        if (!stop.signal.aborted) {
-                            const reason = reasonOf(error)
-                            view.setState({ loadMoreError: reason })
-                            announce(reason, 'assertive')
-                        }
-                    })
-                loading = false
-                if (!stop.signal.aborted) {
-                    view.setState({ loadingMore: false })
+                if (hasMore) {
+                    // One page at a time: a call while a page loads waits for that page.
+                    await fetchNextPage({ cancelRefetch: false })
                 }
             },
         })
-        return () => {
-            stop.abort()
-            view.setState({
-                hasMore: false,
-                loadingMore: false,
-                loadMoreError: undefined,
-                loadMore: NOTHING_MORE,
-            })
+    }, [view, hasMore, loadingMore, loadMoreError, fetchNextPage])
+    // Said as the form says why it could not load, and shown beside the button. Each failure is said: one right after
+    // another, for the same reason, changes only the count.
+    const failures = query.errorUpdateCount
+    useEffect(() => {
+        if (loadMoreError !== undefined) {
+            announce(loadMoreError, 'assertive')
         }
-        // A source with the same keys is the same form: its keys are in the form's query key.
-    }, [open, form, engine, view, announce, orgUnitNames, fileNames])
-    return paged !== undefined && paged.from === form ? paged.to : form
+    }, [announce, loadMoreError, failures])
+    return useMemo(
+        () =>
+            form === undefined || pages === undefined
+                ? form
+                : pages.reduce(withPage, form),
+        [form, pages]
+    )
 }

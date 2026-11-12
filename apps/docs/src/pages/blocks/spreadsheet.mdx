@@ -32,7 +32,8 @@ finds every string once the block is in your app's `src`.
 
 `Spreadsheet` places the pieces you build where the grid and its cells read
 them; put `SpreadsheetGrid` inside it. It needs the DHIS2 app-runtime provider
-above it, for the data engine.
+and a React Query `QueryClientProvider` above it: its searching cells and file
+uploads go to DHIS2 through them.
 
 - `createCellStore(options)` makes the cell store: each cell's value, draft,
   error and sync state. It checks what is typed against the field, keeps undo,

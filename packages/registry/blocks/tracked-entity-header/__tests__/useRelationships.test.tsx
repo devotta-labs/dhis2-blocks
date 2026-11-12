@@ -8,6 +8,7 @@ import {
     CASE_RECORD,
     createFakeServer,
     createWrapper,
+    Probe,
     RMNCH,
 } from './headerTestSupport'
 
@@ -26,13 +27,12 @@ type ServerOptions = Parameters<typeof createFakeServer>[0]
 
 const setup = async (options?: ServerOptions, parts = ['a', 'b']) => {
     const server = createFakeServer(options)
-    const Wrapper = createWrapper()
+    const Wrapper = createWrapper(server.data)
     await render(
         <Wrapper>
             <TrackedEntityHeaderProvider
                 trackedEntity={CASE_RECORD}
                 program={RMNCH}
-                client={server.client}
             >
                 {parts.map((id) => (
                     <Part key={id} id={id} />
@@ -55,11 +55,23 @@ describe('useRelationships', () => {
         expect(server.countOf('trackedEntityAttributes')).toBe(1)
     })
 
-    it('asks for no relationships when no part is mounted', async () => {
-        const server = await setup(undefined, [])
+    it('asks for no relationships when no relationship part is mounted', async () => {
+        const server = createFakeServer()
+        const Wrapper = createWrapper(server.data)
+        await render(
+            <Wrapper>
+                <TrackedEntityHeaderProvider
+                    trackedEntity={CASE_RECORD}
+                    program={RMNCH}
+                >
+                    <Probe />
+                </TrackedEntityHeaderProvider>
+            </Wrapper>
+        )
         await expect
-            .poll(() => server.countOf('tracker/trackedEntities'))
-            .toBe(1)
+            .element(page.getByTestId('state'))
+            .toHaveTextContent(/^ready /)
+        expect(server.countOf('tracker/trackedEntities')).toBe(1)
         expect(server.countOf('tracker/relationships')).toBe(0)
     })
 
@@ -93,13 +105,12 @@ describe('useRelationships', () => {
 
     it('a remount for the same record asks for the types once', async () => {
         const server = createFakeServer()
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const tree = (show: boolean) => (
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={CASE_RECORD}
                     program={RMNCH}
-                    client={server.client}
                 >
                     {show && <Part id="a" />}
                 </TrackedEntityHeaderProvider>

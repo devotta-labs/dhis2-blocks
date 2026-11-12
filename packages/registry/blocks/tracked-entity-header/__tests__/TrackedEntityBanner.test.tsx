@@ -18,7 +18,9 @@ import {
     CHILD,
     createFakeServer,
     createWrapper,
+    requestFailure,
     RMNCH,
+    type HeaderRequest,
 } from './headerTestSupport'
 import {
     ALLERGIES,
@@ -34,7 +36,7 @@ import { banner, Composed, flags, UNIQUE_ID } from './bannerTestSupport'
 const GENDER = 'cejWyOfXge6'
 
 const forbidden = () => {
-    throw Object.assign(new Error('no'), { httpStatusCode: 403 })
+    throw requestFailure(403)
 }
 
 /** Name and one fact on line one, one fact on line two: the two-line banner. */
@@ -277,13 +279,12 @@ describe('TrackedEntityBanner', () => {
 
     it('failed: says so and retries until ready', async () => {
         const server = createFakeServer({ fail: 500 })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Composed />
                 </TrackedEntityHeaderProvider>
@@ -306,13 +307,12 @@ describe('TrackedEntityBanner', () => {
 
     it('Retry moves focus to the banner, so it is not lost when the button goes', async () => {
         const server = createFakeServer({ fail: 500 })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity="te1"
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Composed />
                 </TrackedEntityHeaderProvider>
@@ -353,6 +353,36 @@ describe('TrackedEntityBanner', () => {
         }
         expect(text).not.toContain('Not recorded')
         expect(text).not.toContain('Unavailable')
+    })
+
+    it('asks for the record once, though its parts mount only when it has loaded', async () => {
+        const requests: HeaderRequest[] = []
+        await renderParts(<Composed />, { requests })
+
+        await expect
+            .element(page.getByRole('region', { name: 'Linda Bailey' }))
+            .toBeVisible()
+        // A second request would follow the parts' mount at once.
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(
+            requests.filter((r) => r.resource === 'tracker/trackedEntities')
+        ).toHaveLength(1)
+        expect(requests.filter((r) => r.resource === 'programs')).toHaveLength(
+            1
+        )
+    })
+
+    it('restricted: the hidden parts do not ask for the refused record again', async () => {
+        const requests: HeaderRequest[] = []
+        await renderParts(<Composed />, { status: 'restricted', requests })
+
+        await expect
+            .element(page.getByText(/You don't have access to this record/))
+            .toBeVisible()
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(
+            requests.filter((r) => r.resource === 'tracker/trackedEntities')
+        ).toHaveLength(1)
     })
 
     it("restricted: hides the host's own content, keeping only the actions", async () => {
@@ -442,13 +472,12 @@ describe('TrackedEntityBanner', () => {
 
     it('a new trackedEntity never renders the old name', async () => {
         const server = createFakeServer({ deferFor: 'te2' })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const at = (trackedEntity: string) => (
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={trackedEntity}
                     program={RMNCH}
-                    client={server.client}
                 >
                     <Composed />
                 </TrackedEntityHeaderProvider>

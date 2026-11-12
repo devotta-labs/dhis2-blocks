@@ -1,7 +1,6 @@
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import type { DataEngineValue } from '../api/client'
 import {
     TrackedEntityHeaderProvider,
     TrackedEntityRelationship,
@@ -28,13 +27,12 @@ const setup = async (
     trackedEntity = FOCUS_RECORD
 ) => {
     const server = createFakeServer(options)
-    const Wrapper = createWrapper()
+    const Wrapper = createWrapper(server.data)
     await render(
         <Wrapper>
             <TrackedEntityHeaderProvider
                 trackedEntity={trackedEntity}
                 program={RMNCH}
-                client={server.client}
             >
                 <TrackedEntityRelationship
                     relationshipType={FOCUS_TYPE}
@@ -64,7 +62,7 @@ const link = (type: string, from: End, to: End) => ({
     from,
     to,
 })
-const body = (...relationships: DataEngineValue[]) => ({ relationships })
+const body = (...relationships: object[]) => ({ relationships })
 const facts = () => page.getByRole('definition')
 const labels = () => page.getByRole('term')
 
@@ -204,13 +202,12 @@ describe('TrackedEntityRelationship', () => {
 
     it('asks for the types once with the list and a part for an unlinked type', async () => {
         const server = createFakeServer({ links: 'focus' })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={FOCUS_RECORD}
                     program={RMNCH}
-                    client={server.client}
                 >
                     <TrackedEntityRelationships />
                     <TrackedEntityRelationship relationshipType={INDEX_TYPE} />
@@ -226,13 +223,12 @@ describe('TrackedEntityRelationship', () => {
 
     it('fetches the union once more for a part that mounts after the data loaded', async () => {
         const server = createFakeServer({ links: 'focus' })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         const tree = (withSingle: boolean) => (
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={FOCUS_RECORD}
                     program={RMNCH}
-                    client={server.client}
                 >
                     <TrackedEntityRelationships />
                     {withSingle && (
@@ -257,13 +253,12 @@ describe('TrackedEntityRelationship', () => {
 
     it('asks for the types once with two parts for two unlinked types', async () => {
         const server = createFakeServer({ links: 'none' })
-        const Wrapper = createWrapper()
+        const Wrapper = createWrapper(server.data)
         await render(
             <Wrapper>
                 <TrackedEntityHeaderProvider
                     trackedEntity={FOCUS_RECORD}
                     program={RMNCH}
-                    client={server.client}
                 >
                     <TrackedEntityRelationship relationshipType={INDEX_TYPE} />
                     <TrackedEntityRelationship

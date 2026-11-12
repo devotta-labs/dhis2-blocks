@@ -2,9 +2,9 @@
 
 A banner for one tracked entity in a DHIS2 tracker program, such as a person
 or a shipment, for React 18 applications: what it is and the facts that
-matter most, composed from attribute parts. Read-only. The provider loads the
-tracked entity and the program's attribute metadata once for every part
-inside it.
+matter most, composed from attribute parts. Read-only. The parts load the
+tracked entity and the program's attribute metadata through the DHIS2
+app-runtime, once for every part inside the provider.
 
 ```tsx
 <TrackedEntityHeaderProvider
@@ -79,8 +79,6 @@ Parts also work outside the banner, anywhere under the provider.
 `useTrackedEntityHeader()` returns `status` (`'loading'`, `'failed'`,
 `'restricted'`, `'not-found'` or `'ready'`), `retry` and, once ready, the tracked entity and
 attribute metadata, so a popover or a summary can draw its own states.
-`createTrackedEntityHeaderClient` wraps a custom data engine; by default the
-block uses the DHIS2 app-runtime.
 
 To list the attributes a program captures:
 

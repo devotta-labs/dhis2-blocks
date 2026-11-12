@@ -1,13 +1,13 @@
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import React from 'react'
 import { page } from 'vitest/browser'
-import type { ResourceRequest } from '../api/client'
 import { displayLocale } from '../format/display'
 import {
     TrackedEntityEnrollment,
     TrackedEntityOwner,
     TrackedEntityStatus,
 } from '..'
+import type { HeaderRequest } from './headerTestSupport'
 import {
     CHILD,
     renderParts,
@@ -88,7 +88,7 @@ describe('TrackedEntityStatus', () => {
 
 describe('TrackedEntityOwner', () => {
     it('names the owner org unit after one request', async () => {
-        const requests: ResourceRequest[] = []
+        const requests: HeaderRequest[] = []
         await renderParts(<TrackedEntityOwner />, { requests })
 
         await expect
@@ -108,7 +108,7 @@ describe('TrackedEntityOwner', () => {
     })
 
     it('shares one request between two owners', async () => {
-        const requests: ResourceRequest[] = []
+        const requests: HeaderRequest[] = []
         await renderParts(
             <>
                 <TrackedEntityOwner />
@@ -126,7 +126,7 @@ describe('TrackedEntityOwner', () => {
     })
 
     it('asks for no org unit when the part is not mounted', async () => {
-        const requests: ResourceRequest[] = []
+        const requests: HeaderRequest[] = []
         await renderParts(<TrackedEntityStatus />, { requests })
 
         await expect.poll(() => requests.length).toBeGreaterThan(0)
@@ -161,7 +161,7 @@ describe('TrackedEntityOwner', () => {
     })
 
     it('says Owned by Not recorded, asking for no org unit, when there is no owner in the program', async () => {
-        const requests: ResourceRequest[] = []
+        const requests: HeaderRequest[] = []
         await renderParts(<TrackedEntityOwner />, {
             program: CHILD,
             enrolled: false,

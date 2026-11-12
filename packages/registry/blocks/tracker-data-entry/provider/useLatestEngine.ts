@@ -18,21 +18,16 @@ const forwardTo = (latest: { current: DataEngine }): DataEngine =>
     })
 
 /**
- * One engine per server, which asks the provider's latest engine. The data provider makes a new engine every render,
- * which is no reason to reload; a custom data provider's new engine may answer differently, so it is the one asked.
+ * One engine for the mount, which asks the provider's latest engine. It is for the open form, whose sync loop outlives
+ * the render that started it: the data provider makes a new engine every render, which is no reason to open the form
+ * again; a custom data provider's new engine may answer differently, so it is the one asked.
  */
-export const useServerEngine = (serverUrl: string) => {
+export const useLatestEngine = () => {
     const latestEngine = useDataEngine()
     const latest = useRef(latestEngine)
     useLayoutEffect(() => {
         latest.current = latestEngine
     })
-    const [pinned, setPinned] = useState(() => ({
-        serverUrl,
-        engine: forwardTo(latest),
-    }))
-    if (pinned.serverUrl !== serverUrl) {
-        setPinned({ serverUrl, engine: forwardTo(latest) })
-    }
-    return pinned.engine
+    const [engine] = useState(() => forwardTo(latest))
+    return engine
 }

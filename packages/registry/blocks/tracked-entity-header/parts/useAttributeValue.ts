@@ -1,6 +1,8 @@
 import { formatDhis2Value } from '@/components/dhis2-value-display'
+import type { AttributeMetadata } from '../api/types'
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useLayoutEffect } from 'react'
+import { useTrackedEntityHeader, type TrackedEntityHeaderState } from '../hooks'
 import { useHeaderContext, type HeaderContextValue } from '../provider/context'
 import { isProduction } from '../provider/env'
 
@@ -12,16 +14,17 @@ export type AttributeValueState =
     | { kind: 'unavailable'; label?: string }
     | { kind: 'misconfigured'; message: string }
 
+/** The provider's program and display options: what a value needs besides the record. */
+export type AttributeScope = Pick<HeaderContextValue, 'program' | 'display'>
+
 const describeMisconfigured = (
     uid: string,
-    { program, state }: HeaderContextValue
+    metadata: AttributeMetadata,
+    program: string | undefined
 ) => {
-    const known =
-        state.status === 'ready'
-            ? [...state.metadata.attributes.values()]
-                  .map(({ id, label }) => `${id} (${label})`)
-                  .join(', ')
-            : ''
+    const known = [...metadata.attributes.values()]
+        .map(({ id, label }) => `${id} (${label})`)
+        .join(', ')
     const scope = program ? `program ${program}` : 'the tracked entity type'
     return `Attribute ${uid} is not an attribute of ${scope}. Attributes: ${known || 'none'}`
 }
@@ -29,13 +32,13 @@ const describeMisconfigured = (
 /** One attribute's state, by the rules every value part shares. Pure: parts add placement and logging. */
 export const resolveAttribute = (
     uid: string,
-    context: HeaderContextValue
+    header: TrackedEntityHeaderState,
+    { program, display }: AttributeScope
 ): AttributeValueState => {
-    const { state, display } = context
-    if (state.status !== 'ready') {
+    if (header.status !== 'ready') {
         return { kind: 'hidden' }
     }
-    const { metadata, trackedEntity } = state
+    const { metadata, trackedEntity } = header
     const meta = metadata.attributes.get(uid)
     const invalid = metadata.invalid.get(uid)
     if (!meta) {
@@ -43,7 +46,7 @@ export const resolveAttribute = (
             ? { kind: 'unavailable', label: invalid.label }
             : {
                   kind: 'misconfigured',
-                  message: describeMisconfigured(uid, context),
+                  message: describeMisconfigured(uid, metadata, program),
               }
     }
     const raw = trackedEntity.values.get(uid)
@@ -81,9 +84,10 @@ export const setupMessage = (message: string) =>
  */
 export const useAttributeValue = (uid: string): AttributeValueState => {
     const context = useHeaderContext()
+    const header = useTrackedEntityHeader()
     const { placeAttribute } = context
     useLayoutEffect(() => placeAttribute(uid), [placeAttribute, uid])
-    const result = resolveAttribute(uid, context)
+    const result = resolveAttribute(uid, header, context)
     useLoggedProblem(
         result.kind === 'misconfigured' ? result.message : undefined
     )

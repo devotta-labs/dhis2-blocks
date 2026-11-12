@@ -1,36 +1,39 @@
+import { z } from 'zod'
 import { RMNCH, rmnchEnrollmentResponse } from '../__tests__/rmnch'
-import type { ProgramRulesClient } from './client'
+import { engineOver } from '../__tests__/serve'
 import { fetchRuleEnrollments } from './enrollment'
 
-type RecordedRequest = Parameters<ProgramRulesClient['query']>[0][string]
+/** A request as the data engine hands it to the server. */
+const RequestSchema = z.object({
+    resource: z.string(),
+    params: z.record(z.string(), z.json()).optional(),
+})
 
 /** Records each request and answers every requested enrollment with the RMNCH one, under its own id, in the list body the API sends. */
-const fakeClient = () => {
-    const requests: RecordedRequest[] = []
-    const client: ProgramRulesClient = {
-        query: async (query, schema) => {
-            const request = query.enrollments!
+const fakeServer = async () => {
+    const requests: Array<z.infer<typeof RequestSchema>> = []
+    const engine = await engineOver({
+        'tracker/enrollments': async (_type, query) => {
+            const request = RequestSchema.parse(query)
             requests.push(request)
             const ids = String(request.params?.enrollments).split(',')
-            return schema.parse({
-                enrollments: {
-                    pager: { page: 1, pageSize: ids.length },
-                    enrollments: ids.map((id) => ({
-                        ...rmnchEnrollmentResponse,
-                        enrollment: id,
-                    })),
-                },
+            return z.json().parse({
+                pager: { page: 1, pageSize: ids.length },
+                enrollments: ids.map((id) => ({
+                    ...rmnchEnrollmentResponse,
+                    enrollment: id,
+                })),
             })
         },
-    }
-    return { client, requests }
+    })
+    return { engine, requests }
 }
 
 describe('fetchRuleEnrollments', () => {
     it('fetches many enrollments in one comma-separated request', async () => {
-        const { client, requests } = fakeClient()
+        const { engine, requests } = await fakeServer()
         await fetchRuleEnrollments(
-            client,
+            engine,
             RMNCH.programId,
             ['a', 'b', 'c'],
             true
@@ -45,16 +48,16 @@ describe('fetchRuleEnrollments', () => {
     })
 
     it('leaves out the events when they are not needed', async () => {
-        const { client, requests } = fakeClient()
-        await fetchRuleEnrollments(client, RMNCH.programId, ['a'], false)
+        const { engine, requests } = await fakeServer()
+        await fetchRuleEnrollments(engine, RMNCH.programId, ['a'], false)
         expect(requests[0]?.params?.fields).not.toContain('events[')
     })
 
     it('splits more than 100 enrollments into requests of 100', async () => {
-        const { client, requests } = fakeClient()
+        const { engine, requests } = await fakeServer()
         const ids = Array.from({ length: 120 }, (_, i) => `en${i}`)
         const result = await fetchRuleEnrollments(
-            client,
+            engine,
             RMNCH.programId,
             ids,
             true
@@ -64,9 +67,9 @@ describe('fetchRuleEnrollments', () => {
     })
 
     it('maps each enrollment by its id', async () => {
-        const { client } = fakeClient()
+        const { engine } = await fakeServer()
         const result = await fetchRuleEnrollments(
-            client,
+            engine,
             RMNCH.programId,
             [RMNCH.enrollmentId, 'other'],
             true
@@ -76,9 +79,9 @@ describe('fetchRuleEnrollments', () => {
     })
 
     it('asks for nothing when there are no enrollments', async () => {
-        const { client, requests } = fakeClient()
+        const { engine, requests } = await fakeServer()
         const result = await fetchRuleEnrollments(
-            client,
+            engine,
             RMNCH.programId,
             [],
             true

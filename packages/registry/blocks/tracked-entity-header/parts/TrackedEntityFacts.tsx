@@ -1,6 +1,6 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import React, { type ReactNode } from 'react'
-import { useHeaderContext } from '../provider/context'
+import { useTrackedEntityHeader } from '../hooks'
 import { DIVIDED } from './divided'
 
 export interface TrackedEntityFactsProps {
@@ -13,8 +13,8 @@ export function TrackedEntityFacts({
     children,
     className,
 }: TrackedEntityFactsProps) {
-    const { state } = useHeaderContext()
-    if (state.status !== 'ready') {
+    const header = useTrackedEntityHeader()
+    if (header.status !== 'ready') {
         return null
     }
     return (

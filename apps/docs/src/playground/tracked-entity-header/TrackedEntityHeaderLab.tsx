@@ -1,3 +1,4 @@
+import { FetchError } from '@dhis2/app-runtime'
 import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -12,7 +13,7 @@ import { BannerCanvas } from './BannerCanvas'
 import bannerSource from './BannerCanvas.tsx?canvas'
 import { generateLabData, LAB_PERSON, type LabSettings } from './labData'
 import { LIVE_PARTS, partsFor, SUBJECTS } from './labSubjects'
-import { answer, RESOURCES } from './labServer'
+import { answer, LabHttpError, RESOURCES, type LabRequest } from './labServer'
 import { initialLabState, labReducer } from './labState'
 import { PRESETS } from './presets'
 import { QuickLookCanvas } from './QuickLookCanvas'
@@ -27,6 +28,17 @@ const CANVASES = {
     'quick-look': { Canvas: QuickLookCanvas, source: quickLookSource },
     sidebar: { Canvas: SidebarCanvas, source: sidebarSource },
 }
+
+/**
+ * The block tells a refused or missing record from any other failure by
+ * app-runtime's own error, so the lab server's HTTP failures become one.
+ */
+const asFetchError = ({ message, details }: LabHttpError) =>
+    new FetchError({
+        type: details.httpStatusCode === 403 ? 'access' : 'unknown',
+        message,
+        details,
+    })
 
 export const TrackedEntityHeaderLab = () => {
     const [linkedPreset, setLinkedPreset] = usePresetParam()
@@ -48,7 +60,18 @@ export const TrackedEntityHeaderLab = () => {
     )
 
     const data = useMemo(() => generateLabData(settings), [settings])
-    const respond = useMemo(() => answer(settings, data), [settings, data])
+    const respond = useMemo(() => {
+        const respondTo = answer(settings, data)
+        return async (request: LabRequest) => {
+            try {
+                return await respondTo(request)
+            } catch (error) {
+                throw error instanceof LabHttpError
+                    ? asFetchError(error)
+                    : error
+            }
+        }
+    }, [settings, data])
 
     const subject = SUBJECTS[settings.record]
     const canvasProps = {

@@ -1,20 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
-import { Result } from 'better-result'
 import { useMemo } from 'react'
+import { isForbidden } from '../../api/queries'
 import {
-    isForbidden,
-    shouldRetryTrackedEntityHeaderRequest,
-} from '../../api/client'
-import {
-    fetchRelationships,
-    fetchRelationshipTypes,
-    fetchViewAttributes,
+    useRelationshipLinks,
+    useRelationshipTypes,
+    useViewAttributes,
 } from '../../api/relationships'
-import {
-    METADATA_STALE_TIME,
-    trackedEntityHeaderQueryKeys as keys,
-} from '../../api/queryKeys'
 import type { RelationshipTypeMeta } from '../../api/types'
+import { useTrackedEntityHeader } from '../../hooks'
 import { useHeaderContext } from '../../provider/context'
 import {
     resolveRelationships,
@@ -33,31 +25,17 @@ export type RelationshipsState =
           types: Map<string, RelationshipTypeMeta>
       }
 
-/** Unwraps a Result so React Query owns the error state. */
-const unwrap = <T>(result: Result<T, Error>): T => {
-    if (Result.isError(result)) {
-        throw result.error
-    }
-    return result.value
-}
-
 const EMPTY: string[] = []
 
 /** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. The types parts have registered are fetched with the linked ones, so a type with no link can still be named. */
 export const useRelationships = (
     labels?: Readonly<Record<string, RelationshipLabel>>
 ): RelationshipsState => {
-    const { state, resourceClient, clientId, display, relationshipTypes } =
-        useHeaderContext()
-    const id = state.status === 'ready' ? state.trackedEntity.id : undefined
+    const { display, relationshipTypes } = useHeaderContext()
+    const header = useTrackedEntityHeader()
+    const id = header.status === 'ready' ? header.trackedEntity.id : undefined
 
-    const relationships = useQuery({
-        queryKey: keys.relationships(clientId, id ?? ''),
-        queryFn: async ({ signal }) =>
-            unwrap(await fetchRelationships(resourceClient, id ?? '', signal)),
-        enabled: id !== undefined,
-        retry: shouldRetryTrackedEntityHeaderRequest,
-    })
+    const relationships = useRelationshipLinks(id)
 
     const linkedTypes = useMemo(
         () =>
@@ -74,16 +52,7 @@ export const useRelationships = (
                 : EMPTY,
         [relationships.data, linkedTypes, relationshipTypes]
     )
-    const types = useQuery({
-        queryKey: keys.relationshipTypes(clientId, typeIds),
-        queryFn: async ({ signal }) =>
-            unwrap(
-                await fetchRelationshipTypes(resourceClient, typeIds, signal)
-            ),
-        enabled: typeIds.length > 0,
-        retry: shouldRetryTrackedEntityHeaderRequest,
-        staleTime: METADATA_STALE_TIME,
-    })
+    const types = useRelationshipTypes(typeIds)
 
     const viewIds = useMemo(
         () =>
@@ -101,14 +70,7 @@ export const useRelationships = (
                 : EMPTY,
         [types.data, linkedTypes]
     )
-    const attributes = useQuery({
-        queryKey: keys.viewAttributes(clientId, viewIds),
-        queryFn: async ({ signal }) =>
-            unwrap(await fetchViewAttributes(resourceClient, viewIds, signal)),
-        enabled: viewIds.length > 0,
-        retry: shouldRetryTrackedEntityHeaderRequest,
-        staleTime: METADATA_STALE_TIME,
-    })
+    const attributes = useViewAttributes(viewIds)
 
     const records = relationships.data
     const typeData = types.data

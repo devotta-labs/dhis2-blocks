@@ -13,8 +13,15 @@ import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
-import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
-import type { Found } from './serverSearch'
+import {
+    DEBOUNCE_MS,
+    MIN_LENGTH,
+    searchFor,
+    searchProblem,
+    useDebounced,
+    useServerSearch,
+} from './serverSearch'
+import type { SearchAnswer } from './serverSearch'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
 import { addsRow, composing, READY_CLASS, useCellMode } from './useCellMode'
 
@@ -46,11 +53,8 @@ export const matchCount = (shown: number, total: number) =>
           })
         : ''
 
-/** What a search's answer says: why it failed, that it found nothing, or how many it lists. */
-const searchNews = (found: Found, none: string, count: string) => {
-    if (found.problem !== undefined) {
-        return found.problem
-    }
+/** What a search's answer says: that it found nothing, or how many it lists. */
+const searchNews = (found: SearchAnswer, none: string, count: string) => {
     if (found.results.length === 0) {
         return none
     }
@@ -119,10 +123,17 @@ export const OptionCell = memo(function OptionCell({
         [open, options, hiddenOptions]
     )
     // Only what was typed is searched, not the stored value.
-    const query = open && searching && draft !== null ? draft.trim() : ''
-    const found = useServerSearch(server?.search, query)
+    const text = open && searching && draft !== null ? draft.trim() : ''
+    // A word typed in one go is searched once, when typing stops.
+    const query = useDebounced(text, DEBOUNCE_MS)
+    const search = useServerSearch(field.valueType, query)
+    // Only the search for the very text the cell holds counts, so nothing picks from an older one.
+    const answered = query === text && !search.isPending
+    const found = answered && !search.isError ? search.data : undefined
+    const problem =
+        answered && search.isError ? searchProblem(search.error) : undefined
     // The answer for what the cell holds is still to come.
-    const waiting = query.length >= MIN_LENGTH && found === undefined
+    const waiting = text.length >= MIN_LENGTH && !answered
     const matches = useMemo(() => {
         if (!open || (searching && found === undefined)) {
             return NO_MATCHES
@@ -153,17 +164,20 @@ export const OptionCell = memo(function OptionCell({
     // From the code, so a new top match is a new active option that a screen reader reads.
     const optionId = (code: string) => `${listId}-${encodeURIComponent(code)}`
     const count = matchCount(matches.codes.length, matches.total)
+    // What the search for the cell's text says once it has answered: why it failed, or what it found.
+    const answer =
+        problem ??
+        (found === undefined || server === undefined
+            ? undefined
+            : searchNews(found, server.none, count))
     // Why a search lists nothing, under the cell.
-    const note =
-        found !== undefined && !listed && server !== undefined
-            ? searchNews(found, server.none, count)
-            : undefined
+    const note = listed ? undefined : answer
     // A search's answer is said as it arrives: while one waits there is nothing to say, so the same news is heard again.
     const news = () => {
         if (server === undefined) {
             return open && !listed ? i18n.t('No matches') : count
         }
-        return found === undefined ? '' : searchNews(found, server.none, count)
+        return answer ?? ''
     }
     useAnnounced(news())
 

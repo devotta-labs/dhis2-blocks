@@ -3,12 +3,12 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import i18n from '@dhis2/d2-i18n'
 import React, { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useProgramName, useTrackedEntityHeader } from '../hooks'
 import { TrackedEntityAttribute } from '../parts/TrackedEntityAttribute'
 import { TrackedEntityDetails } from '../parts/TrackedEntityDetails'
 import { TrackedEntityStatus } from '../parts/TrackedEntityStatus'
 import { DIVIDED } from '../parts/divided'
 import { ActionsSlotContext } from '../provider/actionsSlot'
-import { useHeaderContext } from '../provider/context'
 import { InFrameContext } from '../provider/frame'
 import { LabelledRegionContext } from '../provider/labelledRegion'
 
@@ -66,7 +66,8 @@ export function TrackedEntityBanner({
     children,
     className,
 }: TrackedEntityBannerProps) {
-    const { state, programName } = useHeaderContext()
+    const state = useTrackedEntityHeader()
+    const programName = useProgramName()
     // The id of a name part inside this banner; parts elsewhere never set it.
     const [nameId, setNameId] = useState<string>()
     const section = useRef<HTMLElement>(null)

@@ -125,8 +125,11 @@ anywhere.
 | Read-only            | Anything else, and a pop-up type with no form editor                                                        | The value, and the reason it cannot be edited.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 A yes or no field or an option set that is not `required` has a Clear button
-once it holds a value, both as a radio group and as the combobox of more than
-five options, because a radio group cannot otherwise go back to no value.
+once it holds a value, because a radio group cannot otherwise go back to no
+value: a quiet × Clear right after No or under a short option set's radios,
+and the combobox's own × for more than five options. The × in a
+long multi-select's box of chips clears every option, and an org unit or
+username field has the same × once it holds a value.
 Arrow keys move within a radio group and Tab leaves it. Names, not codes, are
 shown for options.
 

@@ -23,7 +23,8 @@ export const unknownName = (id: string) =>
  * An org unit or username searched on the server, from two characters on: a pick is reported at once, and the field
  * shows its name. Typing highlights the top result, which Enter or Tab picks; while the search for the typed text is
  * still to answer, Enter and Tab wait for it, as in the data entry grid. Emptied and left, or Enter, it reports no
- * value; other typing is dropped when the field is left. Offline it says it needs a connection, and does not search.
+ * value; other typing is dropped when the field is left. Unless required, a value has a clear button in the input.
+ * Offline it says it needs a connection, and does not search.
  */
 export const SearchInput = ({
     id,
@@ -117,10 +118,13 @@ export const SearchInput = ({
                     highlighted.current =
                         reason === 'pointer' ? undefined : each
                 }}
-                onValueChange={(next) => {
+                onValueChange={(next, { reason }) => {
                     const result = next === null ? undefined : results.get(next)
                     if (result !== undefined) {
                         pick(result)
+                    } else if (reason === 'clear-press') {
+                        setTyped(null)
+                        report(null)
                     }
                 }}
                 itemToStringLabel={(each) => results.get(each)?.name ?? shown}
@@ -130,6 +134,9 @@ export const SearchInput = ({
                     autoComplete="off"
                     spellCheck={false}
                     aria-required={required || undefined}
+                    // Not for a required field, which is emptied by deleting the text and refused when left.
+                    showClear={!required}
+                    clearLabel={i18n.t('Clear')}
                     onBlur={leave}
                     onKeyDown={(event) => {
                         if (

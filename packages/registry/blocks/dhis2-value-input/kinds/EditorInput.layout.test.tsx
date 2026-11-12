@@ -144,7 +144,7 @@ test("a coordinate's latitude and longitude sit side by side, each narrow", asyn
     expect(box('Latitude').width).toBeLessThanOrEqual(160)
 })
 
-test('a multi-select of five options is a list of boxes, with "Clear all" once one is ticked', async () => {
+test('a multi-select of five options is a list of boxes, each unticked on its own, with no "Clear all"', async () => {
     await mount({
         valueType: 'MULTI_TEXT',
         options: Array.from({ length: 5 }, (_, index) => ({
@@ -157,11 +157,10 @@ test('a multi-select of five options is a list of boxes, with "Clear all" once o
         .toBeVisible()
     expect(page.getByRole('searchbox').elements()).toEqual([])
     expect(page.getByRole('combobox').elements()).toEqual([])
-    const clear = page.getByRole('button', { name: 'Clear all' })
-    await expect.element(clear).not.toBeInTheDocument()
-
     await userEvent.click(page.getByRole('checkbox', { name: 'Option 2' }))
-    await expect.element(clear).toBeVisible()
+    await expect
+        .element(page.getByRole('button', { name: 'Clear all' }))
+        .not.toBeInTheDocument()
 })
 
 const SIX: Field = {

@@ -344,7 +344,7 @@ export const ValueInput = ({
         control = (
             <ChoiceInput
                 id={id}
-                legend={title}
+                title={title}
                 field={field}
                 value={value}
                 hiddenOptions={hiddenOptions}

@@ -164,6 +164,27 @@ test('Enter on an emptied field reports no value', async () => {
     expect(onChange.mock.calls).toEqual([[null, undefined]])
 })
 
+test('the clear button reports no value at once and keeps focus in the field', async () => {
+    const { onChange, box } = await mount({
+        value: CHC,
+        valueName: 'Ngelehun CHC',
+    })
+    await userEvent.click(page.getByRole('button', { name: 'Clear' }))
+    expect(onChange.mock.calls).toEqual([[null, undefined]])
+    await expect.element(box).toHaveValue('')
+    await expect.element(box).toHaveFocus()
+    await expect
+        .element(page.getByRole('button', { name: 'Clear' }))
+        .not.toBeInTheDocument()
+})
+
+test('a required field has no clear button', async () => {
+    await mount({ value: CHC, valueName: 'Ngelehun CHC', required: true })
+    await expect
+        .element(page.getByRole('button', { name: 'Clear' }))
+        .not.toBeInTheDocument()
+})
+
 test('Tab picks the highlighted result, as the field is left', async () => {
     const { onChange, box } = await mount()
     await userEvent.tab()

@@ -17,7 +17,8 @@ import type { useDraft } from '../useDraft'
 /**
  * A long option set: one input showing the option's name, and typing lists the matches to pick from. Typing highlights
  * the top match, which Enter or Tab picks; other typed text is committed when the field is left or Enter is pressed,
- * as a typed field's is, so a name or code is taken and anything else is refused.
+ * as a typed field's is, so a name or code is taken and anything else is refused. Unless required, a chosen option
+ * has a clear button in the input.
  */
 export const OptionComboInput = ({
     id,
@@ -68,9 +69,11 @@ export const OptionComboInput = ({
                 // As in the data entry grid, the mouse highlights nothing for Tab to pick.
                 highlighted.current = reason === 'pointer' ? undefined : code
             }}
-            onValueChange={(code) => {
+            onValueChange={(code, { reason }) => {
                 if (code !== null) {
                     pick(code)
+                } else if (reason === 'clear-press') {
+                    pick('')
                 }
             }}
             itemToStringLabel={(code) => index.names.get(code) ?? code}
@@ -81,6 +84,9 @@ export const OptionComboInput = ({
                 autoComplete="off"
                 spellCheck={false}
                 aria-required={required || undefined}
+                // Not for a required field: it would only empty the text, to be refused when left.
+                showClear={!required && !readOnly}
+                clearLabel={i18n.t('Clear')}
                 onBlur={() => {
                     setTyping(false)
                     draft.commit()

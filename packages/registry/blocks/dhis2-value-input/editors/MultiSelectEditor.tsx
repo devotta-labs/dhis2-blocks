@@ -1,5 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { optionIndex, searchOptions } from '@/components/dhis2-value-types'
 import type { Option } from '@/components/dhis2-value-types'
 import { Button } from '@/components/dhis2/ui/button'
@@ -9,6 +9,7 @@ import {
     ComboboxChip,
     ComboboxChips,
     ComboboxChipsInput,
+    ComboboxClear,
     ComboboxContent,
     ComboboxEmpty,
     ComboboxItem,
@@ -229,101 +230,81 @@ export const MultiSelectFormEditor = (props: FormEditorProps) => {
     const editor = useMultiSelect(props)
     const { found, index, chosen, setQuery } = editor
     const anchor = useComboboxAnchor()
-    const area = useRef<HTMLDivElement>(null)
     const [searched, setSearched] = useState(false)
     useAnnounced(searched ? editor.news : '', announce)
     const listed = visibleCount(editor.options, hiddenOptions) <= RADIO_LIMIT
-    return (
-        <>
-            <div ref={area}>
-                {listed ? (
-                    <OptionBoxes
-                        editor={editor}
-                        invalid={invalid}
-                        className="flex flex-col gap-2"
-                    />
-                ) : (
-                    <Combobox
-                        // Ranked and limited by `searchOptions`, not filtered again.
-                        items={found.codes}
-                        filter={null}
-                        multiple
-                        autoHighlight
-                        value={chosen.map(({ code }) => code)}
-                        onValueChange={(codes: string[]) =>
-                            editor.choose(new Set(codes))
-                        }
-                        onInputValueChange={(text, { reason }) => {
-                            setQuery(text)
-                            if (reason === 'input-change') {
-                                setSearched(true)
-                            }
-                        }}
-                        itemToStringLabel={(code: string) =>
-                            index.names.get(code) ?? code
-                        }
+    return listed ? (
+        <OptionBoxes
+            editor={editor}
+            invalid={invalid}
+            className="flex flex-col gap-2"
+        />
+    ) : (
+        <Combobox
+            // Ranked and limited by `searchOptions`, not filtered again.
+            items={found.codes}
+            filter={null}
+            multiple
+            autoHighlight
+            value={chosen.map(({ code }) => code)}
+            onValueChange={(codes: string[], { reason }) => {
+                if (reason === 'clear-press') {
+                    // Saved at once, not when the field is left; the field stays, showing no chips.
+                    editor.setSelected(new Set())
+                    save(null)
+                } else {
+                    editor.choose(new Set(codes))
+                }
+            }}
+            onInputValueChange={(text, { reason }) => {
+                setQuery(text)
+                if (reason === 'input-change') {
+                    setSearched(true)
+                }
+            }}
+            itemToStringLabel={(code: string) => index.names.get(code) ?? code}
+        >
+            <ComboboxChips
+                ref={anchor}
+                // Room at the end for the clear button, as in a single input.
+                className="relative pe-8"
+            >
+                {chosen.map(({ code, name }) => (
+                    <ComboboxChip
+                        key={code}
+                        removeLabel={i18n.t('Remove {{name}}', {
+                            name,
+                            interpolation: AS_IS,
+                        })}
                     >
-                        <ComboboxChips ref={anchor}>
-                            {chosen.map(({ code, name }) => (
-                                <ComboboxChip
-                                    key={code}
-                                    removeLabel={i18n.t('Remove {{name}}', {
-                                        name,
-                                        interpolation: AS_IS,
-                                    })}
-                                >
-                                    {name}
-                                </ComboboxChip>
-                            ))}
-                            <ComboboxChipsInput
-                                aria-labelledby={labelledBy}
-                                autoComplete="off"
-                                spellCheck={false}
-                                className="h-6 bg-transparent"
-                            />
-                        </ComboboxChips>
-                        <ComboboxContent anchor={anchor}>
-                            <ComboboxEmpty>
-                                {i18n.t('No matches')}
-                            </ComboboxEmpty>
-                            <ComboboxList>
-                                {(code: string) => (
-                                    <ComboboxItem
-                                        key={code}
-                                        value={code}
-                                        indicator="checkbox"
-                                    >
-                                        {index.names.get(code)}
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxList>
-                        </ComboboxContent>
-                    </Combobox>
-                )}
-            </div>
-            {chosen.length === 0 ? null : (
-                <div className="flex gap-2">
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="me-auto"
-                        onClick={() => {
-                            // The field stays, so its boxes show the cleared choice.
-                            editor.setSelected(new Set())
-                            save(null)
-                            // The button leaves with the choice; focus goes to the choice, not the page.
-                            area.current
-                                ?.querySelector<HTMLElement>(
-                                    '[role="checkbox"], [role="combobox"]'
-                                )
-                                ?.focus()
-                        }}
-                    >
-                        {i18n.t('Clear all')}
-                    </Button>
-                </div>
-            )}
-        </>
+                        {name}
+                    </ComboboxChip>
+                ))}
+                <ComboboxChipsInput
+                    aria-labelledby={labelledBy}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="h-6 bg-transparent"
+                />
+                <ComboboxClear
+                    aria-label={i18n.t('Clear all')}
+                    className="absolute end-1 top-1/2 -translate-y-1/2"
+                />
+            </ComboboxChips>
+            <ComboboxContent anchor={anchor}>
+                <ComboboxEmpty>{i18n.t('No matches')}</ComboboxEmpty>
+                <ComboboxList>
+                    {(code: string) => (
+                        <ComboboxItem
+                            key={code}
+                            value={code}
+                            indicator="checkbox"
+                        >
+                            {index.names.get(code)}
+                        </ComboboxItem>
+                    )}
+                </ComboboxList>
+            </ComboboxContent>
+        </Combobox>
     )
 }

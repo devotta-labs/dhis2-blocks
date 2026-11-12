@@ -1,7 +1,7 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { IconChevronDown16 } from '@dhis2/ui-icons'
+import { IconChevronDown16, IconCross16 } from '@dhis2/ui-icons'
 import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { CheckboxCheckmark, checkboxBoxVariants } from './checkbox'
@@ -12,7 +12,7 @@ import {
     InputGroupButton,
     InputGroupInput,
 } from './input-group'
-import { SelectCheckmark, SelectClearIcon } from './select'
+import { SelectCheckmark } from './select'
 
 /*
  * shadcn Combobox (Base UI) restyled to match @dhis2/ui's filterable
@@ -41,7 +41,9 @@ const ComboboxTrigger = React.forwardRef<
         {...props}
     >
         {children}
-        <span className="ms-auto flex shrink-0 ps-0.5 text-dhis2-foreground">
+        {/* Muted, as shadcn's, and the colour of the clear button's ×. After a trigger's text it goes to the end; alone
+        it stays centred in its button. */}
+        <span className="flex shrink-0 text-dhis2-muted-foreground not-first:ms-auto not-first:ps-0.5">
             <IconChevronDown16 />
         </span>
     </ComboboxPrimitive.Trigger>
@@ -57,12 +59,12 @@ const ComboboxClear = React.forwardRef<
         data-slot="combobox-clear"
         render={<InputGroupButton variant="ghost" size="icon-xs" />}
         className={cn(
-            'text-dhis2-subtle-foreground hover:text-dhis2-foreground',
+            'text-dhis2-muted-foreground hover:text-dhis2-foreground',
             className
         )}
         {...props}
     >
-        <SelectClearIcon />
+        <IconCross16 />
     </ComboboxPrimitive.Clear>
 ))
 ComboboxClear.displayName = 'ComboboxClear'
@@ -73,11 +75,14 @@ function ComboboxInput({
     disabled = false,
     showTrigger = true,
     showClear = false,
+    clearLabel = 'Clear',
     'aria-labelledby': labelledBy,
     ...props
 }: ComboboxPrimitive.Input.Props & {
     showTrigger?: boolean
     showClear?: boolean
+    /** Accessible name of the clear button. */
+    clearLabel?: string
 }) {
     return (
         <InputGroup className={cn('w-auto', className)}>
@@ -96,13 +101,19 @@ function ComboboxInput({
                         variant="ghost"
                         render={<ComboboxTrigger />}
                         data-slot="input-group-button"
-                        className="group-has-data-[slot=combobox-clear]/input-group:hidden"
+                        // No pressed square while the list is open, as in shadcn.
+                        className="group-has-data-[slot=combobox-clear]/input-group:hidden data-popup-open:bg-transparent data-pressed:bg-transparent"
                         disabled={disabled}
                         // The input opens the list from the keyboard; the button is for the pointer, not a Tab stop.
                         tabIndex={-1}
                     />
                 )}
-                {showClear && <ComboboxClear disabled={disabled} />}
+                {showClear && (
+                    <ComboboxClear
+                        disabled={disabled}
+                        aria-label={clearLabel}
+                    />
+                )}
             </InputGroupAddon>
             {children}
         </InputGroup>

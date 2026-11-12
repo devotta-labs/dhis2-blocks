@@ -195,7 +195,7 @@ test('a coordinate out of range is reported as a problem when the field is left,
     expect(onChange.mock.calls.at(-1)).toEqual(['[10,8]', undefined])
 })
 
-test('a multi-select is reported when the field is left, in option-set order; Clear all at once', async () => {
+test('a multi-select is reported when the field is left, in option-set order', async () => {
     const { onChange, leave } = await mount({
         valueType: 'MULTI_TEXT',
         options: [
@@ -209,12 +209,6 @@ test('a multi-select is reported when the field is left, in option-set order; Cl
 
     await leave()
     expect(onChange.mock.calls).toEqual([['FEVER,COUGH', undefined]])
-
-    await userEvent.click(page.getByRole('button', { name: 'Clear all' }))
-    expect(onChange.mock.calls.at(-1)).toEqual([null, undefined])
-    await expect
-        .element(page.getByRole('checkbox', { name: 'Fever' }))
-        .not.toBeChecked()
 })
 test('a chosen file is reported as still uploading at once, then as its id', async () => {
     const { onChange, uploads } = await mount({ valueType: 'FILE_RESOURCE' })

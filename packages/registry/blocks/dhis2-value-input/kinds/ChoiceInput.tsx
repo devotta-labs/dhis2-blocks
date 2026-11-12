@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
-import { useMemo, useRef } from 'react'
+import { IconCross16 } from '@dhis2/ui-icons'
+import { useId, useMemo, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
@@ -16,8 +17,7 @@ import {
     FieldDescription,
     FieldItem,
     FieldLabel,
-    FieldLegend,
-    FieldSet,
+    FieldTitle,
 } from '@/components/dhis2/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
 import { focusInto } from '../focusInto'
@@ -73,7 +73,7 @@ export const offeredOptions = (
  */
 export const ChoiceInput = ({
     id,
-    legend,
+    title,
     field,
     value,
     hiddenOptions,
@@ -84,8 +84,8 @@ export const ChoiceInput = ({
     onChange,
 }: {
     id: string
-    /** A radio group's name, its legend. */
-    legend: ReactNode
+    /** A radio group's name, shown above it. */
+    title: ReactNode
     field: Field
     value: string | undefined
     settings: ValueSettings
@@ -97,6 +97,7 @@ export const ChoiceInput = ({
     onChange(value: string | null): void
 }) => {
     const box = useRef<HTMLDivElement>(null)
+    const titleId = useId()
     const kind = cellKind(field)
     const options = useMemo(
         () => (kind === 'boolean' ? yesNo() : (field.options ?? NO_OPTIONS)),
@@ -131,70 +132,70 @@ export const ChoiceInput = ({
     const shown = formatDhis2Value(value, meta, {
         calendar: settings.calendar,
     })
-    return (
-        <div
-            ref={box}
+    const clear = () => {
+        onChange(null)
+        // The button leaves with the value; focus goes to the choice, not the page.
+        box.current?.querySelector<HTMLElement>('[role="radio"]')?.focus()
+    }
+    // × and its words, quiet as the combobox's clear button, the × in line with the radios.
+    const clearButton =
+        required || readOnly || value === undefined ? null : (
+            <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="-ms-1.5 text-dhis2-muted-foreground hover:text-dhis2-foreground"
+                onClick={clear}
+            >
+                <IconCross16 />
+                {i18n.t('Clear')}
+            </Button>
+        )
+    const radios = asRadios(field, hiddenOptions) ? (
+        // Named by its title rather than a fieldset's legend, so Yes/No's Clear can sit right after No, outside the group.
+        <RadioGroup
+            id={id}
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            onFocus={focusInto(
+                '[role="radio"][aria-checked="true"]',
+                '[role="radio"]'
+            )}
+            // An empty value checks no radio.
+            value={known ? value : ''}
+            readOnly={readOnly}
+            // Not `required`: the radios' form inputs have no name, so each would be a group of its own, missing
+            // when unchecked, and hold back the host's form.
+            aria-required={required || undefined}
+            onValueChange={(code: string) => onChange(code)}
             className={
-                // Yes and No are one row, and Clear follows them on it.
                 kind === 'boolean'
-                    ? 'flex flex-wrap items-end gap-x-6 gap-y-2'
+                    ? 'flex w-auto flex-wrap gap-x-6 gap-y-2'
                     : 'flex flex-col gap-2'
             }
         >
-            {asRadios(field, hiddenOptions) ? (
-                // A fieldset that is the radio group, named by its legend: Base UI's labelled radio group.
-                <FieldSet
-                    render={
-                        <RadioGroup
-                            id={id}
-                            tabIndex={-1}
-                            onFocus={focusInto(
-                                '[role="radio"][aria-checked="true"]',
-                                '[role="radio"]'
-                            )}
-                            // An empty value checks no radio.
-                            value={known ? value : ''}
-                            readOnly={readOnly}
-                            // Not `required`: the radios' form inputs have no name, so each would be a group of its
-                            // own, missing when unchecked, and hold back the host's form.
-                            aria-required={required || undefined}
-                            onValueChange={(code: string) => onChange(code)}
-                            className={
-                                kind === 'boolean' ? 'w-auto' : undefined
-                            }
-                        />
-                    }
-                >
-                    <FieldLegend variant="label">{legend}</FieldLegend>
-                    <div
-                        className={
-                            kind === 'boolean'
-                                ? 'flex flex-wrap gap-x-6 gap-y-2'
-                                : 'flex flex-col gap-2'
-                        }
-                    >
-                        {offered.map(({ code, name, description }) => (
-                            <FieldItem key={code}>
-                                <RadioGroupItem value={code} />
-                                {description === undefined ? (
-                                    <FieldLabel className="cursor-pointer">
-                                        {name}
-                                    </FieldLabel>
-                                ) : (
-                                    <FieldContent>
-                                        <FieldLabel className="cursor-pointer">
-                                            {name}
-                                        </FieldLabel>
-                                        <FieldDescription>
-                                            {description}
-                                        </FieldDescription>
-                                    </FieldContent>
-                                )}
-                            </FieldItem>
-                        ))}
-                    </div>
-                </FieldSet>
-            ) : (
+            {offered.map(({ code, name, description }) => (
+                <FieldItem key={code}>
+                    <RadioGroupItem value={code} />
+                    {description === undefined ? (
+                        <FieldLabel className="cursor-pointer">
+                            {name}
+                        </FieldLabel>
+                    ) : (
+                        <FieldContent>
+                            <FieldLabel className="cursor-pointer">
+                                {name}
+                            </FieldLabel>
+                            <FieldDescription>{description}</FieldDescription>
+                        </FieldContent>
+                    )}
+                </FieldItem>
+            ))}
+        </RadioGroup>
+    ) : undefined
+    return (
+        <div ref={box} className="flex flex-col gap-2">
+            {radios === undefined ? (
                 <OptionComboInput
                     id={id}
                     offered={offered}
@@ -203,30 +204,25 @@ export const ChoiceInput = ({
                     readOnly={readOnly}
                     required={required}
                 />
+            ) : (
+                <FieldTitle id={titleId}>{title}</FieldTitle>
+            )}
+            {radios !== undefined && kind === 'boolean' ? (
+                // Yes and No are one row, and Clear follows No on it. Taller than a radio, Clear hangs over the row's
+                // edges rather than making the row taller when a value brings it.
+                <div className="flex items-center gap-x-4">
+                    {radios}
+                    <div className="-my-1.5">{clearButton}</div>
+                </div>
+            ) : (
+                radios
             )}
             {value !== undefined && !known ? (
                 <p className="text-sm text-dhis2-muted-foreground">{shown}</p>
             ) : null}
-            {required || readOnly || value === undefined ? null : (
-                <div>
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                            onChange(null)
-                            // The button leaves with the value; focus goes to the choice, not the page.
-                            box.current
-                                ?.querySelector<HTMLElement>(
-                                    '[role="radio"], [role="combobox"]'
-                                )
-                                ?.focus()
-                        }}
-                    >
-                        {i18n.t('Clear')}
-                    </Button>
-                </div>
-            )}
+            {radios !== undefined && kind !== 'boolean' && clearButton ? (
+                <div>{clearButton}</div>
+            ) : null}
         </div>
     )
 }

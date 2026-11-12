@@ -147,19 +147,35 @@ test('a Yes-only box has its label beside it, which ticks it when clicked', asyn
     expect(onChange).toHaveBeenCalledExactlyOnceWith('true')
 })
 
-test('Yes and No sit on one row, with Clear after them; an option set has a radio per line', async () => {
-    await mount(BOOLEAN, { value: 'true' })
+test('Yes and No sit on one row, with Clear right after No however long the label; an option set has a radio per line', async () => {
+    await mount(BOOLEAN, {
+        value: 'true',
+        label: 'Daily iron and folic acid treatment for moderate anaemia given at this visit',
+    })
     const top = (element: Element) => element.getBoundingClientRect().top
     const yes = radio('Yes').element()
     expect(top(radio('No').element())).toBe(top(yes))
-    expect(clear().element().getBoundingClientRect().left).toBeGreaterThan(
-        radio('No').element().getBoundingClientRect().right
-    )
+    const gap =
+        clear().element().getBoundingClientRect().left -
+        page.getByText('No', { exact: true }).element().getBoundingClientRect()
+            .right
+    expect(gap).toBeGreaterThan(0)
+    expect(gap).toBeLessThan(24)
 
     await mount(SHORT)
     expect(top(radio('Name B').element())).toBeGreaterThan(
         top(radio('Name A').element())
     )
+})
+
+test('picking Yes or No does not make the row taller, though Clear comes with the value', async () => {
+    await mountHeld(BOOLEAN)
+    const row = () =>
+        page.getByRole('radiogroup', { name: LABEL }).element().parentElement!
+    const empty = row().getBoundingClientRect().height
+    await userEvent.click(radio('Yes'))
+    await expect.element(clear()).toBeVisible()
+    expect(row().getBoundingClientRect().height).toBe(empty)
 })
 
 test("a short option set's radios show and are described by each option's description", async () => {
@@ -370,6 +386,22 @@ test('Clear is not offered when nothing is chosen', async () => {
 
 test('Clear is not offered for a required field', async () => {
     await mount(SHORT, { value: 'A', required: true })
+    await expect.element(clear()).not.toBeInTheDocument()
+})
+
+test("a long option set's clear button in the input empties it and reports no value, keeping focus there", async () => {
+    const onChange = await mountHeld(LONG, { value: 'C' })
+    const input = page.getByRole('combobox', { name: LABEL })
+    await expect.element(input).toHaveValue('Name C')
+    await userEvent.click(clear())
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(null, undefined)
+    await expect.element(input).toHaveValue('')
+    await expect.element(input).toHaveFocus()
+    await expect.element(clear()).not.toBeInTheDocument()
+})
+
+test('a required long option set has no clear button', async () => {
+    await mount(LONG, { value: 'C', required: true })
     await expect.element(clear()).not.toBeInTheDocument()
 })
 

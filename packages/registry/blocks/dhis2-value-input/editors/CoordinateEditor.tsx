@@ -7,7 +7,7 @@ import {
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
-import type { PopupEditorProps } from './popupEditors'
+import type { FormEditorProps, PopupEditorProps } from './popupEditors'
 import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
 type Axis = 'latitude' | 'longitude'
@@ -34,28 +34,16 @@ const read = (texts: Texts) => {
     }
 }
 
-/**
- * A coordinate as a latitude and a longitude field (no map, no location from the device), saved as `[lng,lat]`. Each
- * change is reported, not saved: Save, Ctrl+Enter or ⌘+Enter saves it, and numbers out of range keep the editor open
- * with a message for each field that is wrong. Both fields empty save no value.
- */
-export const CoordinateEditor = ({
+/** The two fields' texts, each change reported; a refused save marks the fields that are wrong. */
+const useCoordinate = ({
     value,
-    inline,
-    describedBy,
-    invalid = false,
     save,
     report,
-    cancel,
-}: PopupEditorProps) => {
+}: Pick<PopupEditorProps, 'value' | 'save' | 'report'>) => {
     const id = useId()
     const messages = {
         latitude: i18n.t('Enter a latitude between -90 and 90'),
         longitude: i18n.t('Enter a longitude between -180 and 180'),
-    }
-    const labels = {
-        latitude: i18n.t('Latitude'),
-        longitude: i18n.t('Longitude'),
     }
     // The stored value is [lng,lat]; one that is not shows empty fields.
     const [texts, setTexts] = useState<Texts>(() => {
@@ -94,11 +82,34 @@ export const CoordinateEditor = ({
         // Back to the first field a message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
-    const axes = AXES.map((axis) => (
-        <div
-            key={axis}
-            className={cn('flex flex-col gap-1', inline && 'w-full max-w-40')}
-        >
+    return { id, messages, texts, shown, change, commit }
+}
+
+/** One axis: its label, its field, and the message of a refused save. Classes size it for a dialog or a form. */
+const CoordinateAxis = ({
+    editor: { id, messages, texts, shown, change, commit },
+    axis,
+    describedBy,
+    invalid = false,
+    className,
+    inputClassName,
+    problemClassName,
+}: {
+    editor: ReturnType<typeof useCoordinate>
+    axis: Axis
+    describedBy?: string
+    invalid?: boolean
+    className?: string
+    inputClassName?: string
+    problemClassName: string
+}) => {
+    const labels = {
+        latitude: i18n.t('Latitude'),
+        longitude: i18n.t('Longitude'),
+    }
+    const wrong = shown.includes(axis)
+    return (
+        <div className={cn('flex flex-col gap-1', className)}>
             <Label htmlFor={`${id}-${axis}`}>{labels[axis]}</Label>
             <Input
                 id={`${id}-${axis}`}
@@ -107,38 +118,67 @@ export const CoordinateEditor = ({
                 dir="ltr"
                 autoComplete="off"
                 spellCheck={false}
-                aria-invalid={
-                    invalid || shown.includes(axis) ? true : undefined
-                }
+                aria-invalid={invalid || wrong ? true : undefined}
                 aria-describedby={idList(
-                    shown.includes(axis) && `${id}-${axis}-problem`,
+                    wrong && `${id}-${axis}-problem`,
                     describedBy
                 )}
                 onChange={({ target }) => change(axis, target.value)}
                 onKeyDown={saveOnCtrlEnter(commit)}
-                className={cn(
-                    'rtl:text-right',
-                    !inline && 'h-(--dhis2-field-height-dense)'
-                )}
+                className={cn('rtl:text-right', inputClassName)}
             />
-            {shown.includes(axis) ? (
+            {wrong ? (
                 <p
                     id={`${id}-${axis}-problem`}
                     role="alert"
-                    className={cn(
-                        'text-dhis2-destructive',
-                        inline ? 'text-sm' : 'text-xs'
-                    )}
+                    className={cn('text-dhis2-destructive', problemClassName)}
                 >
                     {messages[axis]}
                 </p>
             ) : null}
         </div>
-    ))
+    )
+}
+
+/**
+ * A coordinate as a latitude and a longitude field (no map, no location from the device), saved as `[lng,lat]`. Each
+ * change is reported, not saved: Save, Ctrl+Enter or ⌘+Enter saves it, and numbers out of range keep the editor open
+ * with a message for each field that is wrong. Both fields empty save no value.
+ */
+export const CoordinateEditor = (props: PopupEditorProps) => {
+    const editor = useCoordinate(props)
     return (
         <>
-            {inline ? <div className="flex flex-wrap gap-2">{axes}</div> : axes}
-            <EditorButtons save={commit} cancel={cancel} inline={inline} />
+            {AXES.map((axis) => (
+                <CoordinateAxis
+                    key={axis}
+                    editor={editor}
+                    axis={axis}
+                    inputClassName="h-(--dhis2-field-height-dense)"
+                    problemClassName="text-xs"
+                />
+            ))}
+            <EditorButtons save={editor.commit} cancel={props.cancel} />
         </>
+    )
+}
+
+/** A coordinate in a form: latitude and longitude side by side, wrapping when there is no room. */
+export const CoordinateFormEditor = (props: FormEditorProps) => {
+    const editor = useCoordinate(props)
+    return (
+        <div className="flex flex-wrap gap-2">
+            {AXES.map((axis) => (
+                <CoordinateAxis
+                    key={axis}
+                    editor={editor}
+                    axis={axis}
+                    describedBy={props.describedBy}
+                    invalid={props.invalid}
+                    className="w-full max-w-40"
+                    problemClassName="text-sm"
+                />
+            ))}
+        </div>
     )
 }

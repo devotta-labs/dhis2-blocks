@@ -23,7 +23,7 @@ import {
 import { Input } from '@/components/dhis2/ui/input'
 import { Textarea } from '@/components/dhis2/ui/textarea'
 import { DownloadLink } from './editors/FileEditor'
-import { editorFor } from './editors/popupEditors'
+import { formEditorFor } from './editors/popupEditors'
 import type { EditorProblem } from './editors/popupEditors'
 import { focusInto } from './focusInto'
 import {
@@ -190,7 +190,8 @@ export const ValueInput = ({
     const choice =
         kind === 'boolean' || kind === 'trueOnly' || kind === 'option'
     // A pop-up type with no editor registered is shown read-only, as in the data entry grid.
-    const popup = kind === 'popup' && editorFor(field.valueType) !== undefined
+    const popup =
+        kind === 'popup' && formEditorFor(field.valueType) !== undefined
     const edited = typed || dated || choice || popup || kind === 'search'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
     // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.

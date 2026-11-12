@@ -5,7 +5,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { birthFromAge, todayIso } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
-import { popupEditors } from '../editors/popupEditors'
+import { formEditors } from '../editors/popupEditors'
 import { ValueInput } from '../ValueInput'
 import type { ValueInputProps } from '../ValueInput'
 
@@ -479,14 +479,14 @@ test.each([
 ] as const)(
     "%s field's editor is given uploads only when it takes files",
     async (_, type, given) => {
-        const editor = popupEditors[type]
+        const editor = formEditors[type]
         const uploadsGiven = vi.fn()
-        popupEditors[type] = ({ uploads }) => {
+        formEditors[type] = ({ uploads }) => {
             uploadsGiven(uploads !== undefined)
             return null
         }
         onTestFinished(() => {
-            popupEditors[type] = editor
+            formEditors[type] = editor
         })
         await mount({ valueType: type })
         expect(uploadsGiven).toHaveBeenLastCalledWith(given)

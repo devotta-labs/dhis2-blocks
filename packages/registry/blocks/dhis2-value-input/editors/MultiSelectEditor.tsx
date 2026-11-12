@@ -20,7 +20,7 @@ import { Input } from '@/components/dhis2/ui/input'
 import { announce as announceInHouse } from '@/components/dhis2/ui/announcer'
 import { matchCount, useAnnounced } from '../announce'
 import { RADIO_LIMIT, visibleCount } from '../kinds/ChoiceInput'
-import type { PopupEditorProps } from './popupEditors'
+import type { FormEditorProps, PopupEditorProps } from './popupEditors'
 import { EditorButtons } from './EditorButtons'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
@@ -29,34 +29,25 @@ const NO_OPTIONS: ReadonlyArray<Option> = []
 const AS_IS = { escapeValue: false }
 
 /**
- * A multi-select as a search over checkboxes. The shared option search narrows the list to 50 options, shown in the
- * option set's order; a choice made before a search stays. Each change is reported, not saved: Save, or leaving the
- * editor, saves the codes in option-set order, joined by commas ("Clear all" saves no value at once). Options a rule
- * hid are not offered, unless the stored value holds one, which can still be unchecked. In a form, five or fewer
- * visible options are a plain list of checkboxes, and more a combobox that shows each choice as a chip.
+ * The choice and the search over the options. Options a rule hid are not offered, unless the stored value holds one,
+ * which can still be unchecked. Each change of choice is reported and said.
  */
-export const MultiSelectEditor = ({
+const useMultiSelect = ({
     field,
     value,
     hiddenOptions,
-    labelledBy,
-    invalid,
-    inline,
-    save,
     report,
-    cancel,
     announce = announceInHouse,
-}: PopupEditorProps) => {
+}: Pick<
+    PopupEditorProps,
+    'field' | 'value' | 'hiddenOptions' | 'report' | 'announce'
+>) => {
     const options = field.options ?? NO_OPTIONS
-    const anchor = useComboboxAnchor()
-    const area = useRef<HTMLDivElement>(null)
     const [stored] = useState<ReadonlySet<string>>(
         () => new Set(value?.split(','))
     )
     const [selected, setSelected] = useState(stored)
     const [query, setQuery] = useState('')
-    // In a form the editor is always there: its count is news once the search is typed in, not when it appears.
-    const [searched, setSearched] = useState(!inline)
     const offered = useMemo(
         () =>
             hiddenOptions === undefined
@@ -66,7 +57,6 @@ export const MultiSelectEditor = ({
                   ),
         [options, hiddenOptions, stored]
     )
-    const listed = inline && visibleCount(options, hiddenOptions) <= RADIO_LIMIT
     // Each position in the option set, for listing matches in its order.
     const { index, at } = useMemo(
         () => ({
@@ -83,11 +73,9 @@ export const MultiSelectEditor = ({
         }
     }, [index, at, query])
     const count = matchCount(found.codes.length, found.total)
-    const news = found.codes.length === 0 ? i18n.t('No matches') : count
-    useAnnounced(searched ? news : '', announce)
 
     // A code the option set lacks is not kept.
-    const choice = (codes: ReadonlySet<string>) => {
+    const valueOf = (codes: ReadonlySet<string>) => {
         const chosen = options.filter(({ code }) => codes.has(code))
         return {
             value:
@@ -99,7 +87,7 @@ export const MultiSelectEditor = ({
     }
     const choose = (next: ReadonlySet<string>) => {
         setSelected(next)
-        const { value: text, names } = choice(next)
+        const { value: text, names } = valueOf(next)
         report(text)
         // With nothing selected the unchecked box says it all.
         if (names !== '') {
@@ -112,148 +100,217 @@ export const MultiSelectEditor = ({
             )
         }
     }
-    const toggle = (code: string, checked: boolean) => {
-        const next = new Set(selected)
-        if (checked) {
-            next.add(code)
-        } else {
-            next.delete(code)
-        }
-        choose(next)
+    return {
+        options,
+        index,
+        found,
+        count,
+        /** What a search says: the count, or that nothing matched. */
+        news: found.codes.length === 0 ? i18n.t('No matches') : count,
+        query,
+        setQuery,
+        selected,
+        setSelected,
+        /** The offered options selected, in the option set's order. */
+        chosen: offered.filter(({ code }) => selected.has(code)),
+        value: () => valueOf(selected).value,
+        choose,
+        toggle: (code: string, checked: boolean) => {
+            const next = new Set(selected)
+            if (checked) {
+                next.add(code)
+            } else {
+                next.delete(code)
+            }
+            choose(next)
+        },
     }
-    const items = found.codes.map((code) => (
-        <FieldItem key={code}>
-            <Checkbox
-                checked={selected.has(code)}
-                onCheckedChange={(checked) => toggle(code, checked)}
-            />
-            <FieldLabel className="cursor-pointer">
-                {index.names.get(code)}
-            </FieldLabel>
-        </FieldItem>
-    ))
-    // Each box takes the field's invalid state. In a form the field's fieldset is the group, named by its legend.
-    const boxes = (className: string) => (
-        <Field
-            invalid={invalid}
-            className={className}
-            {...(listed
-                ? {}
-                : { role: 'group', 'aria-labelledby': labelledBy })}
-        >
-            {items}
-        </Field>
-    )
-    const chosen = offered.filter(({ code }) => selected.has(code))
-    let picker
-    if (listed) {
-        picker = boxes('flex flex-col gap-2')
-    } else if (inline) {
-        picker = (
-            <Combobox
-                // Ranked and limited by `searchOptions`, not filtered again.
-                items={found.codes}
-                filter={null}
-                multiple
-                autoHighlight
-                value={chosen.map(({ code }) => code)}
-                onValueChange={(codes: string[]) => choose(new Set(codes))}
-                onInputValueChange={(text, { reason }) => {
-                    setQuery(text)
-                    if (reason === 'input-change') {
-                        setSearched(true)
-                    }
-                }}
-                itemToStringLabel={(code: string) =>
-                    index.names.get(code) ?? code
-                }
-            >
-                <ComboboxChips ref={anchor}>
-                    {chosen.map(({ code, name }) => (
-                        <ComboboxChip
-                            key={code}
-                            removeLabel={i18n.t('Remove {{name}}', {
-                                name,
-                                interpolation: AS_IS,
-                            })}
-                        >
-                            {name}
-                        </ComboboxChip>
-                    ))}
-                    <ComboboxChipsInput
-                        aria-labelledby={labelledBy}
-                        autoComplete="off"
-                        spellCheck={false}
-                        className="h-6 bg-transparent"
-                    />
-                </ComboboxChips>
-                <ComboboxContent anchor={anchor}>
-                    <ComboboxEmpty>{i18n.t('No matches')}</ComboboxEmpty>
-                    <ComboboxList>
-                        {(code: string) => (
-                            <ComboboxItem
-                                key={code}
-                                value={code}
-                                indicator="checkbox"
-                            >
-                                {index.names.get(code)}
-                            </ComboboxItem>
-                        )}
-                    </ComboboxList>
-                </ComboboxContent>
-            </Combobox>
-        )
-    } else {
-        picker = (
-            <>
-                <Input
-                    type="search"
-                    value={query}
-                    aria-labelledby={labelledBy}
-                    autoComplete="off"
-                    spellCheck={false}
-                    onChange={({ target }) => {
-                        setQuery(target.value)
-                        setSearched(true)
-                    }}
-                    className="h-(--dhis2-field-height-dense)"
+}
+
+type MultiSelectState = ReturnType<typeof useMultiSelect>
+
+/** A checkbox for each option found. Each box takes the field's invalid state. */
+const OptionBoxes = ({
+    editor: { found, index, selected, toggle },
+    invalid,
+    className,
+    labelledBy,
+}: {
+    editor: MultiSelectState
+    invalid?: boolean
+    className: string
+    /** Makes the boxes a group with this name; without it a fieldset around them is the group. */
+    labelledBy?: string
+}) => (
+    <Field
+        invalid={invalid}
+        className={className}
+        {...(labelledBy === undefined
+            ? {}
+            : { role: 'group', 'aria-labelledby': labelledBy })}
+    >
+        {found.codes.map((code) => (
+            <FieldItem key={code}>
+                <Checkbox
+                    checked={selected.has(code)}
+                    onCheckedChange={(checked) => toggle(code, checked)}
                 />
-                {found.codes.length === 0 ? (
-                    <p className="text-dhis2-muted-foreground">
-                        {i18n.t('No matches')}
-                    </p>
-                ) : (
-                    boxes(
-                        'flex max-h-60 flex-col gap-2 overflow-y-auto overscroll-contain'
-                    )
-                )}
-                {count === '' ? null : (
-                    <p className="text-xs text-dhis2-muted-foreground">
-                        {count}
-                    </p>
-                )}
-            </>
-        )
-    }
+                <FieldLabel className="cursor-pointer">
+                    {index.names.get(code)}
+                </FieldLabel>
+            </FieldItem>
+        ))}
+    </Field>
+)
+
+/**
+ * A multi-select as a search over checkboxes. The shared option search narrows the list to 50 options, shown in the
+ * option set's order; a choice made before a search stays. Each change is reported, not saved: Save, or leaving the
+ * editor, saves the codes in option-set order, joined by commas ("Clear all" saves no value at once). Options a rule
+ * hid are not offered, unless the stored value holds one, which can still be unchecked.
+ */
+export const MultiSelectEditor = (props: PopupEditorProps) => {
+    const { labelledBy, save, cancel, announce = announceInHouse } = props
+    const editor = useMultiSelect(props)
+    const { found, count, query, setQuery } = editor
+    useAnnounced(editor.news, announce)
     return (
         <>
-            {inline ? <div ref={area}>{picker}</div> : picker}
-            <EditorButtons
-                save={() => save(choice(selected).value)}
-                cancel={cancel}
-                inline={inline}
-            >
-                {inline && chosen.length === 0 ? undefined : (
+            <Input
+                type="search"
+                value={query}
+                aria-labelledby={labelledBy}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={({ target }) => setQuery(target.value)}
+                className="h-(--dhis2-field-height-dense)"
+            />
+            {found.codes.length === 0 ? (
+                <p className="text-dhis2-muted-foreground">
+                    {i18n.t('No matches')}
+                </p>
+            ) : (
+                <OptionBoxes
+                    editor={editor}
+                    labelledBy={labelledBy}
+                    className="flex max-h-60 flex-col gap-2 overflow-y-auto overscroll-contain"
+                />
+            )}
+            {count === '' ? null : (
+                <p className="text-xs text-dhis2-muted-foreground">{count}</p>
+            )}
+            <EditorButtons save={() => save(editor.value())} cancel={cancel}>
+                <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="me-auto"
+                    onClick={() => save(null)}
+                >
+                    {i18n.t('Clear all')}
+                </Button>
+            </EditorButtons>
+        </>
+    )
+}
+
+/**
+ * A multi-select in a form: five or fewer visible options are a plain list of checkboxes, and more a combobox that
+ * shows each choice as a chip. Its count is said once the combobox is typed in, not when the field appears.
+ */
+export const MultiSelectFormEditor = (props: FormEditorProps) => {
+    const {
+        hiddenOptions,
+        labelledBy,
+        invalid,
+        save,
+        announce = announceInHouse,
+    } = props
+    const editor = useMultiSelect(props)
+    const { found, index, chosen, setQuery } = editor
+    const anchor = useComboboxAnchor()
+    const area = useRef<HTMLDivElement>(null)
+    const [searched, setSearched] = useState(false)
+    useAnnounced(searched ? editor.news : '', announce)
+    const listed = visibleCount(editor.options, hiddenOptions) <= RADIO_LIMIT
+    return (
+        <>
+            <div ref={area}>
+                {listed ? (
+                    <OptionBoxes
+                        editor={editor}
+                        invalid={invalid}
+                        className="flex flex-col gap-2"
+                    />
+                ) : (
+                    <Combobox
+                        // Ranked and limited by `searchOptions`, not filtered again.
+                        items={found.codes}
+                        filter={null}
+                        multiple
+                        autoHighlight
+                        value={chosen.map(({ code }) => code)}
+                        onValueChange={(codes: string[]) =>
+                            editor.choose(new Set(codes))
+                        }
+                        onInputValueChange={(text, { reason }) => {
+                            setQuery(text)
+                            if (reason === 'input-change') {
+                                setSearched(true)
+                            }
+                        }}
+                        itemToStringLabel={(code: string) =>
+                            index.names.get(code) ?? code
+                        }
+                    >
+                        <ComboboxChips ref={anchor}>
+                            {chosen.map(({ code, name }) => (
+                                <ComboboxChip
+                                    key={code}
+                                    removeLabel={i18n.t('Remove {{name}}', {
+                                        name,
+                                        interpolation: AS_IS,
+                                    })}
+                                >
+                                    {name}
+                                </ComboboxChip>
+                            ))}
+                            <ComboboxChipsInput
+                                aria-labelledby={labelledBy}
+                                autoComplete="off"
+                                spellCheck={false}
+                                className="h-6 bg-transparent"
+                            />
+                        </ComboboxChips>
+                        <ComboboxContent anchor={anchor}>
+                            <ComboboxEmpty>
+                                {i18n.t('No matches')}
+                            </ComboboxEmpty>
+                            <ComboboxList>
+                                {(code: string) => (
+                                    <ComboboxItem
+                                        key={code}
+                                        value={code}
+                                        indicator="checkbox"
+                                    >
+                                        {index.names.get(code)}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        </ComboboxContent>
+                    </Combobox>
+                )}
+            </div>
+            {chosen.length === 0 ? null : (
+                <div className="flex gap-2">
                     <Button
                         type="button"
                         size="sm"
                         variant="secondary"
                         className="me-auto"
                         onClick={() => {
-                            // In a form the editor stays, so its boxes show the cleared choice.
-                            if (inline) {
-                                setSelected(new Set())
-                            }
+                            // The field stays, so its boxes show the cleared choice.
+                            editor.setSelected(new Set())
                             save(null)
                             // The button leaves with the choice; focus goes to the choice, not the page.
                             area.current
@@ -265,8 +322,8 @@ export const MultiSelectEditor = ({
                     >
                         {i18n.t('Clear all')}
                     </Button>
-                )}
-            </EditorButtons>
+                </div>
+            )}
         </>
     )
 }

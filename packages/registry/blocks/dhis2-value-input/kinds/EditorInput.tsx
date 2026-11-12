@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { useLocalFileUploads } from '../editors/fileUploads'
 import type { FileUploads } from '../editors/fileUploads'
-import { editorFor } from '../editors/popupEditors'
+import { formEditorFor } from '../editors/popupEditors'
 import type { EditorProblem } from '../editors/popupEditors'
 import { composing } from '../composing'
 import { unknownName } from './SearchInput'
@@ -103,7 +103,7 @@ export const EditorInput = ({
     hiddenOptions: ReadonlySet<string> | undefined
     commits: ReturnType<typeof useEditorCommits>
 }) => {
-    const Editor = editorFor(field.valueType)
+    const Editor = formEditorFor(field.valueType)
     const { isDisconnected } = useDhis2ConnectionStatus()
     // The change reported since focus came in, sent when it leaves.
     const pending = useRef<Parameters<OnChange>>()
@@ -185,7 +185,6 @@ export const EditorInput = ({
         >
             <Editor
                 key={commits.version}
-                inline
                 field={field}
                 value={value}
                 settings={settings}
@@ -209,7 +208,6 @@ export const EditorInput = ({
                     commits.commit(next)
                     return 'queued'
                 }}
-                cancel={() => undefined}
             />
         </div>
     )

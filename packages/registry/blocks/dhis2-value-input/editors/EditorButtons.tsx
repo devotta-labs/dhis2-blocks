@@ -8,34 +8,24 @@ interface EditorButtonsProps {
     cancel(): void
     /** More buttons, before Save. */
     children?: ReactNode
-    /** In a form: only the editor's own buttons, as a form has no Save or Cancel per field. */
-    inline?: boolean
 }
 
-/** The row every editor ends with: its own buttons, then Save and Cancel. */
+/** The row every editor in a cell's dialog ends with: its own buttons, then Save and Cancel. */
 export const EditorButtons = ({
     save,
     cancel,
     children,
-    inline = false,
-}: EditorButtonsProps) => {
-    if (inline) {
-        return children === undefined ? null : (
-            <div className="flex gap-2">{children}</div>
-        )
-    }
-    return (
-        <div className="flex justify-end gap-2">
-            {children}
-            <Button type="button" size="sm" onClick={save}>
-                {i18n.t('Save')}
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={cancel}>
-                {i18n.t('Cancel')}
-            </Button>
-        </div>
-    )
-}
+}: EditorButtonsProps) => (
+    <div className="flex justify-end gap-2">
+        {children}
+        <Button type="button" size="sm" onClick={save}>
+            {i18n.t('Save')}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={cancel}>
+            {i18n.t('Cancel')}
+        </Button>
+    </div>
+)
 
 /** Ids for `aria-describedby`, without the absent ones; undefined for none. */
 export const idList = (...ids: Array<string | false | undefined>) =>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
-import { popupEditors } from './editors/popupEditors'
+import { formEditors } from './editors/popupEditors'
 import { ValueInput } from './ValueInput'
 import type { ValueInputProps } from './ValueInput'
 
@@ -579,10 +579,10 @@ test('a read-only long text shows every line', async () => {
 })
 
 test('a pop-up type with no editor registered is shown read-only, with the reason', async () => {
-    const editor = popupEditors.COORDINATE
-    delete popupEditors.COORDINATE
+    const editor = formEditors.COORDINATE
+    delete formEditors.COORDINATE
     onTestFinished(() => {
-        popupEditors.COORDINATE = editor
+        formEditors.COORDINATE = editor
     })
     const { input } = await mount({ field: COORDINATE, value: '[-11.4,8.1]' })
     await expect.element(input).toHaveAttribute('readonly')

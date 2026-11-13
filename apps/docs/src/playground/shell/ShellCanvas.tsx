@@ -1,11 +1,15 @@
 import { Button } from '@/components/dhis2/ui/button'
 import {
     Pane,
+    PaneActions,
     PaneContent,
     PaneGroup,
     PaneHandle,
     PaneHeader,
+    PaneTitle,
     Section,
+    SectionContent,
+    SectionTrigger,
     Toolbar,
     ToolbarButton,
     ToolbarDivider,
@@ -153,6 +157,17 @@ const EXAMPLES = {
                     <IconMore16 />
                 </Button>
             </PaneHeader>
+            <PaneHeader>
+                <PaneTitle>Composed, with a count</PaneTitle>
+                <span className="text-(length:--dhis2-text-xs) text-dhis2-muted-foreground">
+                    {VISITS.length} visits
+                </span>
+                <PaneActions>
+                    <Button variant="ghost" size="icon-sm" aria-label="More">
+                        <IconMore16 />
+                    </Button>
+                </PaneActions>
+            </PaneHeader>
         </Pair>
     ),
     Toolbar: (density: DensityMode) => (
@@ -199,6 +214,18 @@ const EXAMPLES = {
                 </Section>
                 <Section title="A long section title that wraps onto a second line in a narrow pane">
                     The title wraps; the count and the arrow keep their place.
+                </Section>
+                <Section>
+                    <SectionTrigger>
+                        <IconFilter16 />
+                        <span className="flex-1">Composed trigger</span>
+                        <span className="font-normal">
+                            {VISITS.length} visits
+                        </span>
+                    </SectionTrigger>
+                    <SectionContent flush>
+                        <Rows items={VISITS.slice(0, 3)} />
+                    </SectionContent>
                 </Section>
             </PaneContent>
         </Pair>

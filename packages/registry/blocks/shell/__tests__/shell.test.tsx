@@ -4,11 +4,15 @@ import { render } from 'vitest-browser-react'
 import { roleColour } from '../../../test/roleColour'
 import {
     Pane,
+    PaneActions,
     PaneContent,
     PaneGroup,
     PaneHandle,
     PaneHeader,
+    PaneTitle,
     Section,
+    SectionContent,
+    SectionTrigger,
     Toolbar,
     ToolbarButton,
 } from '..'
@@ -293,6 +297,96 @@ describe('Pane', () => {
         await expect
             .poll(() => Math.abs(box('fixed').width - 200))
             .toBeLessThanOrEqual(1)
+    })
+})
+
+describe('the parts inside a primitive', () => {
+    it('each have a data-slot to style them by', async () => {
+        const screen = await render(
+            <PaneGroup>
+                <Pane collapsible>
+                    <PaneHeader title="Lists">
+                        <button type="button">Add</button>
+                    </PaneHeader>
+                    <Section title="Programmes" meta="4">
+                        Antenatal care
+                    </Section>
+                </Pane>
+                <Pane />
+            </PaneGroup>
+        )
+        const slots = [
+            ...screen.container.querySelectorAll(
+                '[data-slot=pane-header] [data-slot], [data-slot=section] [data-slot]'
+            ),
+        ].map((part) => part.getAttribute('data-slot'))
+        expect(slots).toEqual([
+            'pane-title',
+            'pane-actions',
+            'pane-toggle',
+            'section-heading',
+            'section-trigger',
+            'section-indicator',
+            'section-title',
+            'section-meta',
+            'section-content',
+        ])
+    })
+})
+
+describe('a primitive composed from its parts', () => {
+    it('lays out a header from a title, a count and actions, and folds to its button', async () => {
+        await render(
+            <div style={{ width: 800, height: 300 }}>
+                <PaneGroup>
+                    <Pane defaultSize={300} collapsible data-testid="lists">
+                        <PaneHeader>
+                            <PaneTitle>Lists</PaneTitle>
+                            <span>12 open</span>
+                            <PaneActions>
+                                <button type="button">Add</button>
+                            </PaneActions>
+                        </PaneHeader>
+                    </Pane>
+                    <Pane />
+                </PaneGroup>
+            </div>
+        )
+        await expect.element(page.getByText('12 open')).toBeVisible()
+        // The title names the collapse button.
+        await page.getByRole('button', { name: 'Lists' }).click()
+        await expect.poll(() => box('lists').width).toBe(40)
+        await expect.element(page.getByText('12 open')).not.toBeVisible()
+        await expect
+            .element(page.getByRole('button', { name: 'Add' }))
+            .not.toBeInTheDocument()
+        await expect
+            .element(page.getByRole('button', { name: 'Lists' }))
+            .toBeVisible()
+    })
+
+    it('opens and closes a section from a trigger holding anything', async () => {
+        await render(
+            <Pane>
+                <Section>
+                    <SectionTrigger>
+                        Programmes <span>4 of 9</span>
+                    </SectionTrigger>
+                    <SectionContent>Antenatal care</SectionContent>
+                </Section>
+            </Pane>
+        )
+        const trigger = page.getByRole('button', {
+            name: 'Programmes 4 of 9',
+        })
+        await expect
+            .element(page.getByRole('heading', { level: 3 }))
+            .toHaveTextContent('Programmes 4 of 9')
+        await expect.element(page.getByText('Antenatal care')).toBeVisible()
+        await trigger.click()
+        await expect
+            .element(page.getByText('Antenatal care'))
+            .not.toBeInTheDocument()
     })
 })
 

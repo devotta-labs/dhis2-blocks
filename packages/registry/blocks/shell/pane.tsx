@@ -334,18 +334,58 @@ const CollapseButton = ({
     </button>
 )
 
+/** The id of the title in the PaneHeader around a PaneTitle. */
+const TitleIdContext = createContext<string | undefined>(undefined)
+
+/** A PaneHeader's title, which also names its pane's collapse button. */
+export const PaneTitle = ({
+    className,
+    children,
+    ...props
+}: ComponentPropsWithoutRef<'h2'>) => {
+    const id = useContext(TitleIdContext)
+    return (
+        <h2
+            id={id}
+            {...props}
+            data-slot="pane-title"
+            className={cn(
+                'm-0 min-w-0 flex-1 truncate text-(length:--dhis2-text-xs) font-semibold text-dhis2-muted-foreground',
+                className
+            )}
+        >
+            {children}
+        </h2>
+    )
+}
+
+/** A PaneHeader's trailing actions, which a folded pane hides. */
+export const PaneActions = ({
+    className,
+    ...props
+}: ComponentPropsWithoutRef<'div'>) => (
+    <div
+        {...props}
+        data-slot="pane-actions"
+        className={cn('flex shrink-0 items-center', className)}
+    />
+)
+
 export interface PaneHeaderProps extends Omit<
     ComponentPropsWithoutRef<'header'>,
     'title'
 > {
-    title: ReactNode
-    /** Trailing actions. */
+    /** The title, with `children` as its trailing actions. */
+    title?: ReactNode
+    /** Without a `title`, the header's whole content: a PaneTitle and anything else. */
     children?: ReactNode
 }
 
 /**
- * A pane's small title, with optional trailing actions. In a collapsible pane
- * it carries the collapse button, at the end that faces the other panes.
+ * The bar at a pane's top. Give it a `title`, with any trailing actions as
+ * children; or leave `title` out and compose it from a PaneTitle, a
+ * PaneActions and anything else, such as a count. In a collapsible pane it
+ * carries the collapse button, at the end that faces the other panes.
  */
 export const PaneHeader = ({
     title,
@@ -372,30 +412,30 @@ export const PaneHeader = ({
                 // Folded, the header fills what is left of the pane.
                 collapsed
                     ? cn(
-                          'justify-center overflow-hidden',
+                          'justify-center overflow-hidden [&>[data-slot=pane-actions]]:hidden',
                           !pane?.hidden && RAIL
                       )
                     : cn(BAR_HEIGHT, 'border-b'),
                 rail
-                    ? 'items-start pt-(--dhis2-pane-pad)'
+                    ? 'items-start pt-(--dhis2-pane-pad) [&>*:not([data-slot=pane-toggle])]:hidden'
                     : 'px-(--dhis2-pane-pad)',
                 className
             )}
         >
-            {pane?.side === 'end' && toggle}
-            <h2
-                id={titleId}
-                className={cn(
-                    'm-0 min-w-0 flex-1 truncate text-(length:--dhis2-text-xs) font-semibold text-dhis2-muted-foreground',
-                    rail && 'hidden'
+            <TitleIdContext.Provider value={titleId}>
+                {pane?.side === 'end' && toggle}
+                {title === undefined ? (
+                    children
+                ) : (
+                    <>
+                        <PaneTitle>{title}</PaneTitle>
+                        {children !== undefined && (
+                            <PaneActions>{children}</PaneActions>
+                        )}
+                    </>
                 )}
-            >
-                {title}
-            </h2>
-            {children !== undefined && !collapsed && (
-                <div className="flex shrink-0 items-center">{children}</div>
-            )}
-            {pane?.side !== 'end' && toggle}
+                {pane?.side !== 'end' && toggle}
+            </TitleIdContext.Provider>
         </header>
     )
 }

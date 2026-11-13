@@ -1,4 +1,12 @@
-export { Pane, PaneContent, PaneGroup, PaneHandle, PaneHeader } from './pane'
+export {
+    Pane,
+    PaneActions,
+    PaneContent,
+    PaneGroup,
+    PaneHandle,
+    PaneHeader,
+    PaneTitle,
+} from './pane'
 export type { PaneGroupProps, PaneHeaderProps, PaneProps } from './pane'
 export {
     Toolbar,
@@ -7,5 +15,11 @@ export {
     ToolbarSpacer,
     type ToolbarButtonProps,
 } from './toolbar'
-export { Section, type SectionProps } from './section'
+export {
+    Section,
+    SectionContent,
+    SectionTrigger,
+    type SectionContentProps,
+    type SectionProps,
+} from './section'
 export type { Density } from './density'

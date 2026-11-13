@@ -142,6 +142,38 @@ panes lets the user resize them by dragging or with the arrow keys.
 group or a pane for everything inside it: `comfortable` for data entry,
 `compact` for lists and inspectors.
 
+Every primitive takes `className`, which wins over its own classes, and every
+part inside one has a `data-slot` to style it from there:
+`pane-title`, `pane-actions` and `pane-toggle` in a `PaneHeader`, and
+`section-heading`, `section-trigger`, `section-indicator`, `section-title`,
+`section-meta` and `section-content` in a `Section`.
+
+```tsx
+<PaneHeader
+    title="Lists"
+    className="border-b-0 [&_[data-slot=pane-title]]:text-dhis2-foreground"
+/>
+```
+
+`title` is the short way to write a `PaneHeader` or a `Section`. To put
+anything else in one, such as a count or a status, leave `title` out and
+compose it from its parts: `PaneTitle` and `PaneActions`, or `SectionTrigger`
+and `SectionContent`.
+
+```tsx
+<PaneHeader>
+    <PaneTitle>Lists</PaneTitle>
+    <Tag>{open} open</Tag>
+    <PaneActions>…</PaneActions>
+</PaneHeader>
+<Section>
+    <SectionTrigger>
+        Programmes <Tag>{programmes.length}</Tag>
+    </SectionTrigger>
+    <SectionContent flush>…</SectionContent>
+</Section>
+```
+
 See `/playground/shell` for each primitive at every density and for an app
 composed from them.
 

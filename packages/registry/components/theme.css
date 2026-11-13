@@ -28,6 +28,40 @@
 
     /* Height of a dense field (the sm Select). Buttons beside fields match it. */
     --dhis2-field-height-dense: 32px;
+
+    /*
+     * Density. The shell primitives size themselves with the eight tokens at
+     * the end of this block, which hold the compact values by default. A Pane
+     * with a `density` points them at one set for everything inside it.
+     */
+    --dhis2-compact-control-h: 30px;
+    --dhis2-compact-control-h-sm: 24px;
+    --dhis2-compact-row-h: 28px;
+    --dhis2-compact-pane-pad: 8px;
+    --dhis2-compact-gap: 8px;
+    --dhis2-compact-text: 14px;
+    --dhis2-compact-text-sm: 12px;
+    --dhis2-compact-text-xs: 11px;
+    --dhis2-comfortable-control-h: 40px;
+    --dhis2-comfortable-control-h-sm: 32px;
+    --dhis2-comfortable-row-h: 40px;
+    --dhis2-comfortable-pane-pad: 12px;
+    --dhis2-comfortable-gap: 12px;
+    --dhis2-comfortable-text: 15px;
+    --dhis2-comfortable-text-sm: 13px;
+    --dhis2-comfortable-text-xs: 12px;
+    /* Buttons, inputs and selects; inline and secondary controls. */
+    --dhis2-control-h: var(--dhis2-compact-control-h);
+    --dhis2-control-h-sm: var(--dhis2-compact-control-h-sm);
+    /* List rows, table rows and section headers. */
+    --dhis2-row-h: var(--dhis2-compact-row-h);
+    /* The inner padding of panes and sections; the space between fields. */
+    --dhis2-pane-pad: var(--dhis2-compact-pane-pad);
+    --dhis2-gap: var(--dhis2-compact-gap);
+    /* Body text and controls; secondary text; pane and section headers. */
+    --dhis2-text: var(--dhis2-compact-text);
+    --dhis2-text-sm: var(--dhis2-compact-text-sm);
+    --dhis2-text-xs: var(--dhis2-compact-text-xs);
 }
 
 :root {

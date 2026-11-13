@@ -13,6 +13,30 @@
                     "radius-dhis2-lg": "4px",
                     "font-dhis2": "Roboto, Helvetica, Arial, sans-serif",
                     "dhis2-field-height-dense": "32px",
+                    "dhis2-compact-control-h": "30px",
+                    "dhis2-compact-control-h-sm": "24px",
+                    "dhis2-compact-row-h": "28px",
+                    "dhis2-compact-pane-pad": "8px",
+                    "dhis2-compact-gap": "8px",
+                    "dhis2-compact-text": "14px",
+                    "dhis2-compact-text-sm": "12px",
+                    "dhis2-compact-text-xs": "11px",
+                    "dhis2-comfortable-control-h": "40px",
+                    "dhis2-comfortable-control-h-sm": "32px",
+                    "dhis2-comfortable-row-h": "40px",
+                    "dhis2-comfortable-pane-pad": "12px",
+                    "dhis2-comfortable-gap": "12px",
+                    "dhis2-comfortable-text": "15px",
+                    "dhis2-comfortable-text-sm": "13px",
+                    "dhis2-comfortable-text-xs": "12px",
+                    "dhis2-control-h": "var(--dhis2-compact-control-h)",
+                    "dhis2-control-h-sm": "var(--dhis2-compact-control-h-sm)",
+                    "dhis2-row-h": "var(--dhis2-compact-row-h)",
+                    "dhis2-pane-pad": "var(--dhis2-compact-pane-pad)",
+                    "dhis2-gap": "var(--dhis2-compact-gap)",
+                    "dhis2-text": "var(--dhis2-compact-text)",
+                    "dhis2-text-sm": "var(--dhis2-compact-text-sm)",
+                    "dhis2-text-xs": "var(--dhis2-compact-text-xs)",
                     "color-dhis2-background": "var(--dhis2-background)",
                     "color-dhis2-foreground": "var(--dhis2-foreground)",
                     "color-dhis2-card": "var(--dhis2-card)",
@@ -1201,6 +1225,50 @@
                     "target": "@components/program-rules/lib/valueTypes.ts"
                 }
             ]
+        },
+        {
+            "name": "shell",
+            "type": "registry:block",
+            "title": "Shell",
+            "description": "Layout primitives that dock blocks into a dense tool: Pane, PaneHeader, Toolbar and Section, with resizable and collapsible pane groups.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1",
+                "react-resizable-panels@^4.22.0"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/shell/density.ts",
+                    "type": "registry:file",
+                    "target": "@components/shell/density.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/shell/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/shell/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/shell/pane.tsx",
+                    "type": "registry:file",
+                    "target": "@components/shell/pane.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/shell/section.tsx",
+                    "type": "registry:file",
+                    "target": "@components/shell/section.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/shell/toolbar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/shell/toolbar.tsx"
+                }
+            ],
+            "docs": "Render every block inside a Pane: a PaneHeader and a Toolbar at its top, the rest in a PaneContent, which scrolls. Dock panes in a PaneGroup (orientation horizontal or vertical), which needs a parent with a height; a pane can hold another PaneGroup. Put a PaneHandle between two panes to let the user resize them. Pane takes react-resizable-panels' Panel props: numbers for defaultSize, minSize and maxSize are pixels, and collapsible gives its PaneHeader a collapse button. Set side=\"end\" on a pane docked to the right or bottom. Set density on a PaneGroup or Pane for everything inside it: comfortable for data entry, compact for lists and inspectors. Sizes come from the --dhis2-control-h, --dhis2-row-h, --dhis2-pane-pad, --dhis2-gap and --dhis2-text tokens; do not add heights, font sizes, padding, radius, cards or shadows around a pane's content. Give a Toolbar at most one primary ToolbarButton."
         },
         {
             "name": "sidebar",

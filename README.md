@@ -16,6 +16,7 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
+      shell/            Layout primitives that dock blocks: Pane, PaneHeader, Toolbar, Section
       sidebar/          Composable modeling-app navigation with a collapse rail
       data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
@@ -98,6 +99,51 @@ A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event
 children as its own context policy makes them relevant. All values, direct
 callbacks, and metadata-derived labels are supplied by the host.
+
+## Shell block
+
+Layout primitives that dock blocks into a dense tool, so blocks supply content
+and never their own frame, padding or separation: `Pane`, `PaneHeader`,
+`Toolbar` and `Section`, with `PaneGroup`, `PaneHandle` and `PaneContent` to
+lay panes out.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/shell
+```
+
+Import from `@/components/shell`. Render every block inside a `Pane`: a
+`PaneHeader` and a `Toolbar` at its top, and the rest in a `PaneContent`,
+which scrolls.
+
+```tsx
+<PaneGroup>
+    <Pane defaultSize={264} collapsible aria-label="Lists">
+        <PaneHeader title="Lists" />
+        <PaneContent>…</PaneContent>
+    </Pane>
+    <PaneHandle aria-label="Resize lists" />
+    <Pane density="comfortable" aria-label="Record">
+        <Toolbar aria-label="Record actions">…</Toolbar>
+        <PaneContent>…</PaneContent>
+    </Pane>
+</PaneGroup>
+```
+
+`PaneGroup`, `Pane` and `PaneHandle` are
+[react-resizable-panels](https://github.com/bvaughn/react-resizable-panels)'
+`Group`, `Panel` and `Separator` with the DHIS2 look, and take their props.
+A group docks its panes side by side, or one above the other with
+`orientation="vertical"`, one hairline apart; it fills its parent, which needs
+a height, and a pane can hold another group. A number for a pane's
+`defaultSize`, `minSize` or `maxSize` is in pixels. A `PaneHandle` between two
+panes lets the user resize them by dragging or with the arrow keys.
+`collapsible` gives a pane's `PaneHeader` a button that folds it; set
+`side="end"` on a pane docked to the right or the bottom. Set `density` on a
+group or a pane for everything inside it: `comfortable` for data entry,
+`compact` for lists and inspectors.
+
+See `/playground/shell` for each primitive at every density and for an app
+composed from them.
 
 ## Sidebar block
 

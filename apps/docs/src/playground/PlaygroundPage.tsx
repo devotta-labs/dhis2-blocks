@@ -44,6 +44,11 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
+    'clinic-selector': lazy(() =>
+        import('./clinic-selector/ClinicSelectorLab').then(
+            ({ ClinicSelectorLab }) => ({ default: ClinicSelectorLab })
+        )
+    ),
     shell: lazy(() =>
         import('./shell/ShellLab').then(({ ShellLab }) => ({
             default: ShellLab,

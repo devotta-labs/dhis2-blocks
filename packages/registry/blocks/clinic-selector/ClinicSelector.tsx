@@ -50,6 +50,10 @@ interface ClinicGroup {
 const triggerClassName =
     'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-inherit hover:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring data-popup-open:bg-dhis2-sidebar-accent [&_svg]:shrink-0 [&_svg]:fill-current'
 
+// The shared radio item sets its check on the right; in RTL it moves to the inline end, as in the search form.
+const radioRowClassName =
+    'rtl:pr-3 rtl:pl-9 rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:right-auto rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:left-3'
+
 const tileOnly =
     'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-sidebar-accent text-dhis2-sidebar-accent-foreground md:flex'
 
@@ -258,6 +262,7 @@ export function ClinicSelector({
                                 key={a.id}
                                 value={a.id}
                                 closeOnClick
+                                className={radioRowClassName}
                             >
                                 <Row clinic={a} name={a.displayName} />
                             </DropdownMenuRadioItem>
@@ -341,7 +346,7 @@ export function ClinicSelector({
                                         className="gap-2 ps-3 pe-9 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
                                     >
                                         <Row clinic={c} name={c.displayName} />
-                                        <span className="pointer-events-none absolute right-3 flex items-center justify-center">
+                                        <span className="pointer-events-none absolute end-3 flex items-center justify-center">
                                             <ComboboxPrimitive.ItemIndicator>
                                                 <IconCheckmark16 />
                                             </ComboboxPrimitive.ItemIndicator>

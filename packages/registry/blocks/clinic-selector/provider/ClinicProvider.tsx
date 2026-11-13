@@ -6,6 +6,7 @@ import React, {
     useCallback,
     useEffect,
     useMemo,
+    useRef,
     useState,
     type ReactNode,
 } from 'react'
@@ -60,6 +61,14 @@ const NO_ASSIGNED: AssignedClinic[] = []
 const NO_RECENT: Remembered = { recent: [] }
 const NO_CLINICS: ReadonlyMap<string, Clinic | null> = new Map()
 const noop = () => {}
+
+const announceChange = (clinic: Clinic) =>
+    announce(
+        i18n.t('Clinic changed to {{name}}', {
+            name: clinic.displayName,
+            interpolation: AS_IS,
+        })
+    )
 
 /** State that belongs to one user, so a different user never sees it. */
 interface ForUser<T> {
@@ -134,7 +143,7 @@ export function ClinicProvider({
     )
     // Clinics picked here need no request, but still only count inside the assigned paths.
     const [picked, setPicked] = useState<ForUser<ReadonlyMap<string, Clinic>>>()
-    // Every id already checked: its clinic, or null when the server did not return it.
+    // Every id already checked: its clinic, or null when the server did not return it, so it stays invalid for the session.
     const [known, setKnown] =
         useState<ForUser<ReadonlyMap<string, Clinic | null>>>()
     const pickedClinics =
@@ -232,16 +241,22 @@ export function ClinicProvider({
         (id: string) => assigned.some((a) => a.id === id),
         [assigned]
     )
+    // A controlled pick counts once the host adopts it as its value.
+    const pending = useRef<string>()
     useEffect(() => {
-        if (
-            controlled !== undefined &&
-            !isAssigned(controlled.id) &&
-            remembered.recent[0] !== controlled.id
-        ) {
-            remember({
-                ...remembered,
-                recent: withRecent(remembered.recent, controlled.id),
-            })
+        if (controlled === undefined) {
+            return
+        }
+        const recent =
+            isAssigned(controlled.id) || remembered.recent[0] === controlled.id
+                ? remembered.recent
+                : withRecent(remembered.recent, controlled.id)
+        if (pending.current === controlled.id) {
+            pending.current = undefined
+            remember({ current: controlled.id, recent })
+            announceChange(controlled)
+        } else if (recent !== remembered.recent) {
+            remember({ ...remembered, recent })
         }
     }, [controlled, isAssigned, remembered, remember])
 
@@ -261,24 +276,24 @@ export function ClinicProvider({
                     before?.userId === userId ? before.value : []
                 ).set(next.id, next),
             }))
-            remember({
-                current: next.id,
-                recent: isAssigned(next.id)
-                    ? remembered.recent
-                    : withRecent(remembered.recent, next.id),
-            })
-            onValueChange?.(next)
-            announce(
-                i18n.t('Clinic changed to {{name}}', {
-                    name: next.displayName,
-                    interpolation: AS_IS,
+            if (value === undefined) {
+                remember({
+                    current: next.id,
+                    recent: isAssigned(next.id)
+                        ? remembered.recent
+                        : withRecent(remembered.recent, next.id),
                 })
-            )
+                announceChange(next)
+            } else if (next.id !== value) {
+                pending.current = next.id
+            }
+            onValueChange?.(next)
         },
         [
             status,
             userId,
             assigned,
+            value,
             remember,
             remembered,
             isAssigned,
@@ -346,7 +361,10 @@ export function ClinicProvider({
         }
         return {
             status: 'ready',
-            clinics: server.data.clinics,
+            // A server that ignores the scope filter must not list clinics a pick would drop.
+            clinics: server.data.clinics.filter((c) =>
+                isWithinAssigned(c.path, assigned)
+            ),
             hasMore: server.data.hasMore,
             retry: retrySearch,
         }

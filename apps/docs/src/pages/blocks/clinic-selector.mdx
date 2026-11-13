@@ -82,9 +82,11 @@ function Visits() {
 ```
 
 `clinic` is `{ id, displayName, path }`. `status` is `pending` while the
-clinics load, `ready` once there is a clinic, `failed` if they could not be
-loaded and `none` if the user has no organisation units. `clinic` is only set
-when `status` is `ready`. `useClinic()` also returns `setClinic` and `retry`.
+clinics load, `ready` once they are loaded and checked, `failed` if they could
+not be loaded and `none` if the user has no organisation units. `clinic` is only
+set when `status` is `ready`, and can still be unset then, when the host passed
+a `value` the user cannot work at. `useClinic()` also returns `setClinic` and
+`retry`.
 
 ## More than a few clinics
 
@@ -106,22 +108,34 @@ with `createClinicClient`.
 
 ## Controlling it
 
-By default the provider owns the choice. Pass `value`, a clinic id, to own it
-yourself, for example from the URL, and `onValueChange` to hear every pick.
+With no `value`, the provider chooses the clinic and remembers it, and pages
+read `useClinic().clinic`. To keep the choice somewhere you own, such as the
+URL, pass `value`, a clinic id, and `onValueChange`, which receives the picked
+clinic. The host then decides: a pick changes nothing until the host passes it
+back as `value`.
 
 ```tsx
-const [clinicId, setClinicId] = useState<string>()
+import { useNavigate, useParams } from 'react-router-dom'
 
-<ClinicProvider
-    value={clinicId}
-    onValueChange={(clinic) => setClinicId(clinic.id)}
->
-    <ClinicSelector />
-</ClinicProvider>
+function App() {
+    const { clinicId } = useParams()
+    const navigate = useNavigate()
+    return (
+        <ClinicProvider
+            value={clinicId}
+            onValueChange={(clinic) => navigate(`/clinics/${clinic.id}`)}
+        >
+            <ClinicSelector />
+            <Visits />
+        </ClinicProvider>
+    )
+}
 ```
 
-With a `value` outside the user's hierarchy, `clinic` stays unset. A host that calls clinics
-facilities or sites can set `label` and `searchPlaceholder` on `ClinicSelector`.
+Pages still read `useClinic().clinic`: it is the clinic for `value` once it has
+been checked. A `value` the user cannot work at leaves `clinic` unset, and the
+selector shows Choose a clinic. A host that calls clinics facilities or sites
+can set `label` and `searchPlaceholder` on `ClinicSelector`.
 
 ## What it remembers
 

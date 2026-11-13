@@ -365,6 +365,29 @@ describe('a primitive composed from its parts', () => {
             .toBeVisible()
     })
 
+    it('keeps only the title and button of a header folded upwards', async () => {
+        await render(
+            <div style={{ width: 400, height: 400 }}>
+                <PaneGroup orientation="vertical">
+                    <Pane />
+                    <Pane side="end" defaultSize={200} collapsible>
+                        <PaneHeader>
+                            <PaneTitle>Log</PaneTitle>
+                            <button type="button">Clear</button>
+                        </PaneHeader>
+                    </Pane>
+                </PaneGroup>
+            </div>
+        )
+        await page.getByRole('button', { name: 'Log' }).click()
+        await expect
+            .element(page.getByRole('button', { name: 'Clear' }))
+            .not.toBeInTheDocument()
+        await expect
+            .element(page.getByRole('heading', { name: 'Log' }))
+            .toBeVisible()
+    })
+
     it('opens and closes a section from a trigger holding anything', async () => {
         await render(
             <Pane>

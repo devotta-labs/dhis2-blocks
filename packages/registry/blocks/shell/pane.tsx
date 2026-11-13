@@ -342,12 +342,13 @@ export const PaneTitle = ({
     className,
     children,
     ...props
-}: ComponentPropsWithoutRef<'h2'>) => {
+    // Its id is the header's, which the collapse button is labelled by.
+}: Omit<ComponentPropsWithoutRef<'h2'>, 'id'>) => {
     const id = useContext(TitleIdContext)
     return (
         <h2
-            id={id}
             {...props}
+            id={id}
             data-slot="pane-title"
             className={cn(
                 'm-0 min-w-0 flex-1 truncate text-(length:--dhis2-text-xs) font-semibold text-dhis2-muted-foreground',
@@ -359,7 +360,7 @@ export const PaneTitle = ({
     )
 }
 
-/** A PaneHeader's trailing actions, which a folded pane hides. */
+/** A PaneHeader's trailing actions. */
 export const PaneActions = ({
     className,
     ...props
@@ -409,15 +410,16 @@ export const PaneHeader = ({
             data-slot="pane-header"
             className={cn(
                 'flex shrink-0 items-center gap-(--dhis2-gap) border-dhis2-border-strong bg-dhis2-background',
-                // Folded, the header fills what is left of the pane.
+                // Folded, the header fills what is left of the pane and
+                // keeps its title and button only.
                 collapsed
                     ? cn(
-                          'justify-center overflow-hidden [&>[data-slot=pane-actions]]:hidden',
+                          'justify-center overflow-hidden [&>*:not([data-slot=pane-toggle]):not([data-slot=pane-title])]:hidden',
                           !pane?.hidden && RAIL
                       )
                     : cn(BAR_HEIGHT, 'border-b'),
                 rail
-                    ? 'items-start pt-(--dhis2-pane-pad) [&>*:not([data-slot=pane-toggle])]:hidden'
+                    ? 'items-start pt-(--dhis2-pane-pad) [&>[data-slot=pane-title]]:hidden'
                     : 'px-(--dhis2-pane-pad)',
                 className
             )}

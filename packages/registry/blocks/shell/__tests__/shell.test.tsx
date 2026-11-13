@@ -158,6 +158,37 @@ describe('a collapsible Pane', () => {
         expect(box('outer').width).toBe(40)
     })
 
+    it('hides everything but its button when its header is wrapped', async () => {
+        await render(
+            <div style={{ width: 800, height: 300 }}>
+                <PaneGroup>
+                    <Pane defaultSize={300} collapsible data-testid="notes">
+                        <div>
+                            <div>
+                                <PaneHeader title="Notes" />
+                                <button type="button">Delete</button>
+                            </div>
+                        </div>
+                    </Pane>
+                    <Pane />
+                </PaneGroup>
+            </div>
+        )
+        await page.getByRole('button', { name: 'Notes' }).click()
+        await expect.poll(() => box('notes').width).toBe(40)
+        await expect
+            .element(page.getByRole('button', { name: 'Delete' }))
+            .not.toBeInTheDocument()
+        // Hidden, Delete is out of the tab order too.
+        await userEvent.keyboard('{Tab}')
+        expect(document.activeElement?.textContent).not.toBe('Delete')
+        await page.getByRole('button', { name: 'Notes' }).click()
+        await expect.poll(() => box('notes').width).toBe(300)
+        await expect
+            .element(page.getByRole('button', { name: 'Delete' }))
+            .toBeVisible()
+    })
+
     it('does not scroll itself: only its content does', async () => {
         await render(<App />)
         expect(surface('navigator').overflowY).toBe('hidden')

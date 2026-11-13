@@ -32,12 +32,22 @@ interface PaneContextValue {
     side: Side
     collapsible: boolean
     collapsed: boolean
+    /** A pane around this one is folded, so nothing in it shows. */
+    hidden: boolean
     toggle: () => void
     /** Tells the pane it has a header to carry its collapse button; returns the undo. */
     registerHeader: () => () => void
 }
 
 const PaneContext = createContext<PaneContextValue | undefined>(undefined)
+
+/** Whether the pane, or one around it, is folded. */
+const FoldedContext = createContext(false)
+
+// Folded, a pane hides everything in it, however deeply wrapped, and takes it
+// out of the tab order. Its collapse button's bar opts back in and fills it.
+const FOLDED = 'relative [&>*]:invisible'
+const RAIL = 'visible! absolute inset-0'
 
 export interface PaneGroupProps extends GroupProps {
     /** The density of every pane inside that does not set its own. */
@@ -121,6 +131,7 @@ export const Pane = ({
     ...props
 }: PaneProps) => {
     const orientation = useContext(PaneGroupContext)
+    const hidden = useContext(FoldedContext)
     const panelRef = usePanelRef()
     const [collapsed, setCollapsed] = useState(false)
     const [headers, setHeaders] = useState(0)
@@ -135,6 +146,7 @@ export const Pane = ({
                 side,
                 collapsible,
                 collapsed,
+                hidden,
                 toggle: () => {
                     if (panelRef.current?.isCollapsed()) {
                         panelRef.current.expand()
@@ -142,7 +154,15 @@ export const Pane = ({
                 },
                 registerHeader,
             },
-        [orientation, side, collapsible, collapsed, panelRef, registerHeader]
+        [
+            orientation,
+            side,
+            collapsible,
+            collapsed,
+            hidden,
+            panelRef,
+            registerHeader,
+        ]
     )
     const surface = cn(
         SURFACE,
@@ -150,11 +170,7 @@ export const Pane = ({
         orientation
             ? cn('h-full', SEPARATED[orientation])
             : 'border border-dhis2-border-strong',
-        // Folded, only the part with the collapse button shows.
-        // The button is in this pane's own header, or one wrapper down; a
-        // pane nested in the content has its button deeper than that.
-        collapsed &&
-            '[&>*:not(:has(>[data-slot=pane-toggle])):not(:has(>*>[data-slot=pane-toggle]))]:hidden',
+        collapsed && FOLDED,
         density && DENSITY[density],
         className
     )
@@ -162,10 +178,17 @@ export const Pane = ({
     const content = (
         <PaneGroupContext.Provider value={undefined}>
             <PaneContext.Provider value={context}>
-                {children}
+                <FoldedContext.Provider value={hidden || collapsed}>
+                    {children}
+                </FoldedContext.Provider>
                 {/* Dragged shut with no header to open it from, it gets a button of its own. */}
                 {context && collapsed && headers === 0 && (
-                    <div className="flex h-full items-start justify-center pt-(--dhis2-pane-pad)">
+                    <div
+                        className={cn(
+                            'flex items-start justify-center pt-(--dhis2-pane-pad)',
+                            !hidden && RAIL
+                        )}
+                    >
                         <CollapseButton
                             pane={context}
                             label={props['aria-label']}
@@ -348,7 +371,10 @@ export const PaneHeader = ({
                 'flex shrink-0 items-center gap-(--dhis2-gap) border-dhis2-border-strong bg-dhis2-background',
                 // Folded, the header fills what is left of the pane.
                 collapsed
-                    ? 'h-full justify-center overflow-hidden'
+                    ? cn(
+                          'justify-center overflow-hidden',
+                          !pane?.hidden && RAIL
+                      )
                     : cn(BAR_HEIGHT, 'border-b'),
                 rail
                     ? 'items-start pt-(--dhis2-pane-pad)'

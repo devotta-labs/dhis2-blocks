@@ -8,7 +8,7 @@ export const EXAMPLES = [
     { group: 'Primitives', name: 'Section' },
 ] as const
 
-export type Example = (typeof EXAMPLES)[number]
+type Example = (typeof EXAMPLES)[number]
 export type ExampleName = Example['name']
 export type PrimitiveExample = Exclude<ExampleName, 'App'>
 

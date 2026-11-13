@@ -1,12 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useEffect, useState, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
-import {
-    createClinicClient,
-    type DataEngineLike,
-    type ResourceRequest,
-} from '../api/client'
-import type { AssignedClinic, Clinic } from '../api/schemas'
+import type { Clinic } from '../api/schemas'
 import { useClinic, type ClinicStatus } from '../hooks'
 import {
     ClinicProvider,
@@ -14,129 +9,18 @@ import {
 } from '../provider/ClinicProvider'
 import { useClinicContext } from '../provider/context'
 import { readRemembered, writeRemembered } from '../provider/remembered'
-
-/** A unit whose id is its name padded to a uid. */
-const unit = (name: string, parent = ''): Clinic => {
-    const id = name.padEnd(11, '0')
-    return { id, displayName: name, path: `${parent}/${id}` }
-}
-const district = (name: string): AssignedClinic => ({
-    ...unit(name),
-    hasChildren: true,
-})
-const facility = (name: string, parent = ''): AssignedClinic => ({
-    ...unit(name, parent),
-    hasChildren: false,
-})
-
-const OCEAN = facility('Ocean')
-const BRISTOL = facility('Bristol')
-
-interface ServerOptions {
-    userId?: string
-    assigned?: AssignedClinic[]
-    /** What the by-id check finds; ids not here come back missing. */
-    known?: Clinic[]
-    found?: Clinic[]
-}
-
-/** Who a later `me` request says the user is. */
-interface FakeMe {
-    userId: string
-    assigned: AssignedClinic[]
-}
-
-/** HTTP statuses the server answers with while set. */
-interface Failures {
-    me?: number | undefined
-    byId?: number | undefined
-}
+import {
+    BRISTOL,
+    createServer,
+    district,
+    facility,
+    OCEAN,
+    unit,
+} from './clinicServerSupport'
 
 /** Lets a test change the host's controlled value. */
 interface HostControls {
     setValue: (value: string | undefined) => void
-}
-
-const failure = (status: number) =>
-    Object.assign(new Error('boom'), { httpStatusCode: status })
-
-/** Copies, so the engine sees plain response objects. */
-const plain = (clinics: Clinic[]) => clinics.map((clinic) => ({ ...clinic }))
-
-const createServer = ({
-    userId = 'u1',
-    assigned = [OCEAN, BRISTOL],
-    known = [],
-    found = [],
-}: ServerOptions = {}) => {
-    const requests: ResourceRequest[] = []
-    const me: FakeMe = { userId, assigned }
-    const fail: Failures = {}
-    let meHeld: Promise<void> | undefined
-    let releaseMe = () => {}
-    const server = {
-        me,
-        fail,
-        /** Holds `me` requests open until `releaseMe` is called. */
-        holdMe: () => {
-            meHeld = new Promise((resolve) => {
-                releaseMe = resolve
-            })
-        },
-        releaseMe: () => releaseMe(),
-        meRequests: () =>
-            requests.filter((request) => request.resource === 'me'),
-        byIdRequests: () =>
-            requests.filter((request) => request.params?.filter !== undefined),
-        searchRequests: () =>
-            requests.filter((request) => request.params?.query !== undefined),
-        client: createClinicClient({
-            query: async (query) => {
-                const [[key, request]] = Object.entries(query)
-                requests.push(request)
-                if (request.resource === 'me') {
-                    await meHeld
-                    if (fail.me !== undefined) {
-                        throw failure(fail.me)
-                    }
-                    return {
-                        [key]: {
-                            id: me.userId,
-                            organisationUnits: me.assigned.map(
-                                ({ hasChildren, ...rest }) => ({
-                                    ...rest,
-                                    children: hasChildren,
-                                })
-                            ),
-                        },
-                    }
-                }
-                const filter = request.params?.filter
-                if (filter !== undefined) {
-                    if (fail.byId !== undefined) {
-                        throw failure(fail.byId)
-                    }
-                    const ids = String(filter)
-                        .slice('id:in:['.length, -1)
-                        .split(',')
-                    return {
-                        [key]: {
-                            organisationUnits: plain(
-                                known.filter(({ id }) => ids.includes(id))
-                            ),
-                        },
-                    }
-                }
-                return {
-                    [key]: {
-                        pager: { total: found.length },
-                        organisationUnits: plain(found),
-                    },
-                }
-            },
-        } satisfies DataEngineLike),
-    }
-    return server
 }
 
 interface RenderOptions extends Omit<

@@ -1,5 +1,9 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
+import clinicSelectorSidebarSource from './clinic-selector/ClinicSelectorSidebar.tsx?raw'
+import clinicSelectorStatesSource from './clinic-selector/ClinicSelectorStates.tsx?raw'
+import clinicSelectorStubSource from './clinic-selector/stubClient.ts?raw'
+import { ClinicSelectorSidebarPlaceholder } from './clinic-selector/ClinicSelectorPlaceholders'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
@@ -185,6 +189,32 @@ const examples = [
         Component: lazy(() => import('./timeline/TimelineEntryParts')),
         source: timelineEntryPartsSource,
         minHeight: 260,
+    },
+    {
+        slug: 'clinic-selector/sidebar',
+        title: 'Clinic selector in a sidebar',
+        live: true,
+        Component: lazy(
+            () => import('./clinic-selector/ClinicSelectorSidebar')
+        ),
+        source: clinicSelectorSidebarSource,
+        minHeight: 320,
+        Placeholder: ClinicSelectorSidebarPlaceholder,
+    },
+    {
+        slug: 'clinic-selector/states',
+        title: 'One clinic and a few clinics',
+        live: false,
+        Component: lazy(() => import('./clinic-selector/ClinicSelectorStates')),
+        source: clinicSelectorStatesSource,
+        sourceFiles: [
+            {
+                name: 'ClinicSelectorStates.tsx',
+                code: clinicSelectorStatesSource,
+            },
+            { name: 'stubClient.ts', code: clinicSelectorStubSource },
+        ],
+        minHeight: 220,
     },
     {
         slug: 'context-selector/basic',

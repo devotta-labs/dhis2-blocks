@@ -27,7 +27,7 @@ import {
     TooltipTrigger,
 } from '@/components/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
-import { IconChevronDown16 } from '@dhis2/ui-icons'
+import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
 import React, { type ReactElement } from 'react'
 import type { Clinic } from './api/schemas'
 import { useClinicContext } from './provider/context'
@@ -48,6 +48,34 @@ interface ClinicGroup {
 
 const triggerClassName =
     'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-inherit hover:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring data-popup-open:bg-dhis2-sidebar-accent [&_svg]:shrink-0 [&_svg]:fill-current'
+
+const AS_IS = { escapeValue: false }
+
+const tileOnly =
+    'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-sidebar-accent text-dhis2-sidebar-accent-foreground md:flex'
+
+/** Collapsed from `md` up, the text a tile stands for shows beside it on hover. */
+function Tip({
+    show,
+    text,
+    children,
+}: {
+    show: boolean
+    text: string
+    children: ReactElement
+}) {
+    if (!show) {
+        return children
+    }
+    return (
+        <Tooltip>
+            <TooltipTrigger render={children} />
+            <TooltipContent side="right" className="max-md:hidden">
+                {text}
+            </TooltipContent>
+        </Tooltip>
+    )
+}
 
 function Tile({ clinic }: { clinic?: Clinic }) {
     return (
@@ -105,39 +133,66 @@ export function ClinicSelector({
         retry,
     } = useClinicContext()
     const box = cn('flex min-h-9 items-center gap-2 text-sm', className)
-    // Text that cannot fit beside a 28px tile is left to screen readers.
-    const narrow = collapsed ? 'md:sr-only' : undefined
+    // From `md` up a collapsed selector has 28px, so text there gives way to a tile.
+    const wide = collapsed ? 'md:hidden' : undefined
 
     if (status === 'pending') {
         return (
-            <div className={cn(box, 'p-1', collapsed && 'md:p-0')}>
+            <div
+                aria-busy="true"
+                className={cn(box, 'p-1', collapsed && 'md:p-0')}
+            >
+                <span className="sr-only">{i18n.t('Loading')}</span>
                 <Skeleton className="size-7 shrink-0 bg-dhis2-sidebar-accent" />
                 <Skeleton
-                    className={cn(
-                        'h-4 flex-1 bg-dhis2-sidebar-accent',
-                        collapsed && 'md:hidden'
-                    )}
+                    className={cn('h-4 flex-1 bg-dhis2-sidebar-accent', wide)}
                 />
             </div>
         )
     }
     if (status === 'failed') {
+        const message = i18n.t('Clinics could not be loaded')
         return (
             <div className={cn(box, 'flex-wrap')}>
-                <span className={narrow}>
-                    {i18n.t('Clinics could not be loaded')}
+                <span className={cn('contents', wide)}>
+                    <span>{message}</span>
+                    <Button size="sm" variant="outline" onClick={retry}>
+                        {i18n.t('Retry')}
+                    </Button>
                 </span>
-                <Button size="sm" variant="outline" onClick={retry}>
-                    {i18n.t('Retry')}
-                </Button>
+                {collapsed && (
+                    <Tip show text={message}>
+                        <button
+                            type="button"
+                            aria-label={i18n.t('Retry')}
+                            onClick={retry}
+                            className={cn(
+                                tileOnly,
+                                'cursor-pointer border-0 p-0 hover:bg-[color-mix(in_srgb,var(--dhis2-sidebar-accent),var(--dhis2-sidebar-foreground)_12%)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring [&_svg]:fill-current'
+                            )}
+                        >
+                            <IconSync16 />
+                        </button>
+                    </Tip>
+                )}
             </div>
         )
     }
     if (status === 'none') {
+        const message = i18n.t('No clinic assigned')
         return (
-            <p className={cn(box, 'm-0')}>
-                <span className={narrow}>{i18n.t('No clinic assigned')}</span>
-            </p>
+            <div className={box}>
+                <p className={cn('m-0', wide)}>{message}</p>
+                {collapsed && (
+                    <Tip show text={message}>
+                        <span
+                            role="img"
+                            aria-label={message}
+                            className={tileOnly}
+                        />
+                    </Tip>
+                )}
+            </div>
         )
     }
 
@@ -145,18 +200,25 @@ export function ClinicSelector({
     const [only] = assigned
     if (!searchable && assigned.length === 1 && clinic?.id === only?.id) {
         return (
-            <div
-                className={cn(box, 'p-1', collapsed && 'md:p-0')}
-                title={collapsed ? name : undefined}
-            >
-                <span className="sr-only">{`${label}: `}</span>
-                <Row clinic={clinic} name={name} nameClassName={narrow} />
-            </div>
+            <Tip show={collapsed} text={name}>
+                <div className={cn(box, 'p-1', collapsed && 'md:p-0')}>
+                    <span className="sr-only">{`${label}: `}</span>
+                    <Row
+                        clinic={clinic}
+                        name={name}
+                        nameClassName={collapsed ? 'md:sr-only' : undefined}
+                    />
+                </div>
+            </Tip>
         )
     }
 
     const triggerProps = {
-        'aria-label': i18n.t('{{label}}: {{name}}', { label, name }),
+        'aria-label': i18n.t('{{label}}: {{name}}', {
+            label,
+            name,
+            interpolation: AS_IS,
+        }),
         className: cn(
             triggerClassName,
             collapsed && 'md:size-7 md:p-0',
@@ -164,32 +226,13 @@ export function ClinicSelector({
         ),
         children: (
             <>
-                <Row
-                    clinic={clinic}
-                    name={name}
-                    nameClassName={collapsed ? 'md:hidden' : undefined}
-                />
-                <span
-                    aria-hidden="true"
-                    className={cn('flex', collapsed && 'md:hidden')}
-                >
+                <Row clinic={clinic} name={name} nameClassName={wide} />
+                <span aria-hidden="true" className={cn('flex', wide)}>
                     <IconChevronDown16 />
                 </span>
             </>
         ),
     }
-    // Collapsed, the name only shows on hover or focus, beside the tile.
-    const withTooltip = (trigger: ReactElement) =>
-        collapsed ? (
-            <Tooltip>
-                <TooltipTrigger render={trigger} />
-                <TooltipContent side="right" className="max-md:hidden">
-                    {name}
-                </TooltipContent>
-            </Tooltip>
-        ) : (
-            trigger
-        )
     const popup = {
         side: collapsed ? ('right' as const) : ('bottom' as const),
         className: collapsed ? 'w-60' : 'w-(--anchor-width)',
@@ -198,7 +241,9 @@ export function ClinicSelector({
     if (!searchable) {
         return (
             <DropdownMenu>
-                {withTooltip(<DropdownMenuTrigger {...triggerProps} />)}
+                <Tip show={collapsed} text={name}>
+                    <DropdownMenuTrigger {...triggerProps} />
+                </Tip>
                 <DropdownMenuContent {...popup}>
                     <DropdownMenuRadioGroup
                         value={clinic?.id ?? null}
@@ -224,13 +269,17 @@ export function ClinicSelector({
         )
     }
 
-    const groups: ClinicGroup[] =
-        query.trim() === ''
-            ? [
-                  { label: i18n.t('Recent'), items: recent },
-                  { label: i18n.t('Assigned'), items: assigned },
-              ].filter((group) => group.items.length > 0)
-            : [{ items: search.clinics }]
+    let groups: ClinicGroup[] = [{ items: search.clinics }]
+    if (query.trim() === '') {
+        // Headings only tell two lists apart, so one list goes without.
+        groups =
+            recent.length > 0
+                ? [
+                      { label: i18n.t('Recent'), items: recent },
+                      { label: i18n.t('Assigned'), items: assigned },
+                  ]
+                : [{ items: assigned }]
+    }
 
     return (
         <Combobox
@@ -248,7 +297,9 @@ export function ClinicSelector({
             isItemEqualToValue={(a: Clinic, b: Clinic) => a.id === b.id}
             itemToStringLabel={(c: Clinic) => c.displayName}
         >
-            {withTooltip(<ComboboxPrimitive.Trigger {...triggerProps} />)}
+            <Tip show={collapsed} text={name}>
+                <ComboboxPrimitive.Trigger {...triggerProps} />
+            </Tip>
             <ComboboxContent {...popup}>
                 <ComboboxInput
                     showTrigger={false}
@@ -287,10 +338,15 @@ export function ClinicSelector({
                                     <ComboboxItem
                                         key={c.id}
                                         value={c}
-                                        // The check trails the name, as in the menu.
-                                        className="flex-row-reverse gap-2 ps-3 pe-1.5"
+                                        // Its own leading check and selected tint give way to the menu's trailing check.
+                                        className="gap-2 ps-3 pe-9 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
                                     >
                                         <Row clinic={c} name={c.displayName} />
+                                        <span className="pointer-events-none absolute right-3 flex items-center justify-center">
+                                            <ComboboxPrimitive.ItemIndicator>
+                                                <IconCheckmark16 />
+                                            </ComboboxPrimitive.ItemIndicator>
+                                        </span>
                                     </ComboboxItem>
                                 )}
                             </ComboboxCollection>

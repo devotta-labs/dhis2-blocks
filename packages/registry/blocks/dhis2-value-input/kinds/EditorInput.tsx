@@ -9,6 +9,7 @@ import type { EditorProblem } from '../editors/popupEditors'
 import { composing } from '../composing'
 import { useReported } from '../useReported'
 import { unknownName } from './SearchInput'
+import { intoOwnCalendar } from './ownCalendar'
 
 type OnChange = (value: string | null, problem?: EditorProblem) => void
 
@@ -31,6 +32,9 @@ export const useEditorCommits = (
         problem?: EditorProblem
     }>({ fieldKey, readOnly, version: 0 })
     const echo = useReported(value)
+    // The host's value as of its latest render: an editor leaving the page reads it after its own last render.
+    const held = useRef(value)
+    held.current = value
     let current = state
     if (
         echo.isNew ||
@@ -57,6 +61,7 @@ export const useEditorCommits = (
     return {
         version: current.version,
         problem: current.problem,
+        held: () => held.current ?? null,
         send,
         commit: (next: string | null, problem?: EditorProblem) => {
             setState((now) => ({ ...now, problem }))
@@ -116,13 +121,17 @@ export const EditorInput = ({
         pending.current = undefined
         replaced.current = undefined
     }
-    // An upload the field leaving the page stops is no file: the host gets back what the field held.
-    const send = useRef(commits.send)
-    send.current = commits.send
+    // An upload the field leaving the page stops is no file: the host gets back what the field held. Not when the host
+    // has given a value of its own in the upload's place, as a rule that assigns one and locks the field does.
+    const latest = useRef(commits)
+    latest.current = commits
     useEffect(
         () => () => {
-            if (replaced.current !== undefined) {
-                send.current(replaced.current.before)
+            if (
+                replaced.current !== undefined &&
+                latest.current.held() === null
+            ) {
+                latest.current.send(replaced.current.before)
             }
         },
         []
@@ -184,10 +193,10 @@ export const EditorInput = ({
         <div
             className="flex flex-col gap-2"
             onBlur={(event) => {
-                // A calendar the editor opens is drawn outside it, and is still the editor.
+                // A calendar of the editor's is drawn outside it, and is still the editor.
                 if (
                     !event.currentTarget.contains(event.relatedTarget) &&
-                    !event.relatedTarget?.closest('[data-slot=popover-content]')
+                    !intoOwnCalendar(event.currentTarget, event.relatedTarget)
                 ) {
                     flush()
                 }

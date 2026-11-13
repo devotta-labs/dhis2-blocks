@@ -6,6 +6,7 @@ import { Input } from '@/components/dhis2/ui/input'
 import { InputGroupInput } from '@/components/dhis2/ui/input-group'
 import { composing } from '../composing'
 import type { useDraft } from '../useDraft'
+import { intoOwnCalendar } from './ownCalendar'
 
 export const READ_ONLY_CLASS = 'bg-dhis2-muted text-dhis2-muted-foreground'
 
@@ -45,9 +46,9 @@ export const TypedInput = ({
             value={draft.text}
             onChange={(event) => draft.change(event.target.value)}
             onBlur={(event) => {
-                // A calendar the input opens is drawn outside it, and is still the field.
+                // The input's own calendar is drawn outside it, and is still the field.
                 if (
-                    !event.relatedTarget?.closest('[data-slot=popover-content]')
+                    !intoOwnCalendar(event.currentTarget, event.relatedTarget)
                 ) {
                     draft.commit()
                 }

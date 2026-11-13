@@ -90,7 +90,8 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
                             {...props}
                             {...over}
                             storedFile={storedFile}
-                            value={value}
+                            // A value given with `over` comes in the same render as the rest of it.
+                            value={over && 'value' in over ? over.value : value}
                             onChange={(next, problem) => {
                                 onChange(next, problem)
                                 setValue(next ?? undefined)
@@ -517,6 +518,22 @@ test('after a coordinate problem, the host saying back the report keeps it; anot
         .element(page.getByText('Enter a latitude between -90 and 90'))
         .not.toBeInTheDocument()
     await expect.element(latitude).not.toHaveAttribute('aria-invalid')
+})
+
+test('a rule that assigns a file and locks the field mid-upload keeps its file: the upload reports nothing', async () => {
+    const { onChange, uploads, update } = await mount(
+        { valueType: 'FILE_RESOURCE' },
+        { value: 'oldFileId1' }
+    )
+    await choose('scan.txt')
+    await expect.poll(() => uploads).toHaveLength(1)
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    await update({ value: 'ruleFileId', readOnly: 'Assigned by a rule' })
+    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
+    uploads[0].release()
+    await later(50)
+    expect(onChange).toHaveBeenCalledTimes(1)
 })
 
 test('a file field that becomes another field mid-upload stops the upload, which then reports nothing', async () => {

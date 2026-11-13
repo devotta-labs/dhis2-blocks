@@ -17,6 +17,7 @@ import {
 } from '@/components/dhis2/ui/popover'
 import type { useDraft } from '../useDraft'
 import { DatePicker } from './DatePicker'
+import { calendarOf } from './ownCalendar'
 import { TypedInput } from './TypedInput'
 
 /** How a date, or a date and time, is typed in the system date format, as the data entry grid says it too. */
@@ -92,16 +93,18 @@ export const DatePickerButton = ({
                 finalFocus={input}
                 className="w-auto"
             >
-                <DatePicker
-                    date={date}
-                    settings={settings}
-                    day={day}
-                    dir={dir}
-                    pick={(picked) => {
-                        setOpen(false)
-                        pick(picked)
-                    }}
-                />
+                <div ref={calendarOf(input)} data-slot="date-calendar">
+                    <DatePicker
+                        date={date}
+                        settings={settings}
+                        day={day}
+                        dir={dir}
+                        pick={(picked) => {
+                            setOpen(false)
+                            pick(picked)
+                        }}
+                    />
+                </div>
             </PopoverContent>
         </Popover>
     )

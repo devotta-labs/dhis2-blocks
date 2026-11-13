@@ -1034,6 +1034,11 @@
                     "target": "@components/dhis2-value-input/kinds/TypedInput.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-input/kinds/ownCalendar.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/kinds/ownCalendar.ts"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-input/search/serverSearch.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/search/serverSearch.ts"

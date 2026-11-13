@@ -15,6 +15,7 @@ import {
     shouldRetryClinicRequest,
     type ClinicClient,
 } from '../api/client'
+import { AS_IS } from '../asIs'
 import { fetchClinicsById, fetchMe, searchClinics } from '../api/queries'
 import { clinicQueryKeys } from '../api/queryKeys'
 import { useClinicClient } from '../api/runtimeClient'
@@ -270,6 +271,7 @@ export function ClinicProvider({
             announce(
                 i18n.t('Clinic changed to {{name}}', {
                     name: next.displayName,
+                    interpolation: AS_IS,
                 })
             )
         },

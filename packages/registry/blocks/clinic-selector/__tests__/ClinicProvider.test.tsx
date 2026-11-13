@@ -249,6 +249,20 @@ describe('ClinicProvider', () => {
             .toBe('Clinic changed to Ocean')
     })
 
+    it('announces a clinic name as written', async () => {
+        const named = facility('Smith & Sons <CHC>')
+        const rendered = await renderClinic(
+            createServer({ assigned: [OCEAN, named] })
+        )
+        await settled(rendered)
+
+        await rendered.act(() => rendered.result.current.hook.setClinic(named))
+
+        await expect
+            .poll(() => politeRegion()?.textContent)
+            .toBe('Clinic changed to Smith & Sons <CHC>')
+    })
+
     it('an assigned unit is never a recent', async () => {
         const a = district('A')
         const b = facility('B', a.path)

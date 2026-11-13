@@ -30,6 +30,7 @@ import i18n from '@dhis2/d2-i18n'
 import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
 import React, { type ReactElement } from 'react'
 import type { Clinic } from './api/schemas'
+import { AS_IS } from './asIs'
 import { useClinicContext } from './provider/context'
 import { tileClass, tileInitial } from './tile'
 
@@ -48,8 +49,6 @@ interface ClinicGroup {
 
 const triggerClassName =
     'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-inherit hover:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring data-popup-open:bg-dhis2-sidebar-accent [&_svg]:shrink-0 [&_svg]:fill-current'
-
-const AS_IS = { escapeValue: false }
 
 const tileOnly =
     'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-sidebar-accent text-dhis2-sidebar-accent-foreground md:flex'

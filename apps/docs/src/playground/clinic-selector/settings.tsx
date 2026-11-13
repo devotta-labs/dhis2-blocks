@@ -203,6 +203,18 @@ export const ServerControls = ({
             >
                 Validity check ignores the scope filter
             </Check>
+            <Check
+                checked={settings.failSearch}
+                onChange={(failSearch) => onChange({ failSearch })}
+            >
+                Search fails
+            </Check>
+            <Check
+                checked={settings.failValidity}
+                onChange={(failValidity) => onChange({ failValidity })}
+            >
+                Validity check fails
+            </Check>
         </Section>
         <NetworkControls
             network={settings.network}

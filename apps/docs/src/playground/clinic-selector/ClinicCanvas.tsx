@@ -31,12 +31,12 @@ const ClinicPage = () => {
     return (
         <section
             aria-label="Page"
-            className="flex min-w-0 flex-1 flex-col gap-3 p-6 text-sm"
+            className="flex min-w-0 flex-1 flex-col gap-3 bg-background p-6 text-sm text-foreground"
         >
             <h3 className="m-0 text-xl font-medium break-words">
                 {clinic?.displayName ?? 'No clinic'}
             </h3>
-            <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-dhis2-muted-foreground">
+            <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-muted-foreground">
                 <dt>Status</dt>
                 <dd className="m-0 font-mono">{status}</dd>
                 <dt>Id</dt>
@@ -70,7 +70,7 @@ export const ClinicCanvas = ({
             collapsed={collapsed}
             onCollapsedChange={onCollapsedChange}
         >
-            <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-dhis2-border bg-dhis2-background md:flex-row">
+            <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
                 <Sidebar>
                     {/* Outside the navigation, which is hidden while collapsed, so the tile stays. */}
                     <SidebarHeader>

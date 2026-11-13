@@ -22,6 +22,8 @@ export const DEFAULT_SETTINGS: LabSettings = {
     label: 'Clinic',
     storageThrows: false,
     ignoreScopeFilter: false,
+    failSearch: false,
+    failValidity: false,
     network: { delay: 50, endpoints: {} },
 }
 
@@ -32,7 +34,7 @@ export interface Preset {
     description?: string
     settings: LabSettings
     seed?: Seed
-    /** Kept under Edge cases, closed to start, so the first look stays short. */
+    /** Kept under the shared Edge cases fold, closed to start, so the first look stays short. */
     folded?: boolean
 }
 
@@ -66,20 +68,19 @@ const preset = (
     ...extra,
 })
 
+/** An edge case: `PresetControls` already folds these under Edge cases, so `group` names the kind. */
 const edge = (
+    group: string,
     name: string,
     changes: Partial<LabSettings> = {},
     extra: Pick<Preset, 'description' | 'seed'> = {}
 ): Preset => ({
-    ...preset('Edge cases', name, changes, extra),
+    ...preset(group, name, changes, extra),
     folded: true,
 })
 
-const failing = (
-    resource: string,
-    behaviour: 'fails' | 'hangs'
-): Partial<LabSettings> => ({
-    network: { delay: 50, endpoints: { [resource]: { behaviour } } },
+const failing = (behaviour: 'fails' | 'hangs'): Partial<LabSettings> => ({
+    network: { delay: 50, endpoints: { me: { behaviour } } },
 })
 
 /** The preset the lab opens on without a linked one. */
@@ -164,8 +165,9 @@ export const PRESETS: readonly Preset[] = [
                 "Open the menu and type 'mchp': 150 match, so it shows 50 and asks you to keep typing.",
         }
     ),
-    edge('No clinic assigned', { assignedClinics: 0 }),
+    edge('Assignment', 'No clinic assigned', { assignedClinics: 0 }),
     edge(
+        'Remembered',
         'Remembered clinic no longer exists',
         {},
         {
@@ -175,6 +177,7 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Remembered',
         'Corrupt remembered value',
         {},
         {
@@ -184,15 +187,17 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Remembered',
         'Storage throws',
         { storageThrows: true },
         {
             description:
-                'Storage remembers the second clinic, but every call throws: the first shows, and picks work until a reload. Untick Storage throws to see the second.',
+                "Storage remembers the second clinic, but every call for the block's key throws: the first shows, and picks work until a reload. Untick Storage throws to see the second.",
             seed: { u1: remembered(flatClinicId(2), []) },
         }
     ),
     edge(
+        'Remembered',
         'Second user on this computer',
         { ...DISTRICT_NURSE, userId: 'u2' },
         {
@@ -202,6 +207,7 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Scope',
         'Controlled, value outside scope',
         { value: 'outside' },
         {
@@ -210,6 +216,7 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Scope',
         'Server ignores the scope filter',
         { ignoreScopeFilter: true },
         {
@@ -219,6 +226,7 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Names',
         'Very long names',
         { longNames: true },
         {
@@ -226,6 +234,7 @@ export const PRESETS: readonly Preset[] = [
         }
     ),
     edge(
+        'Names',
         'Every name starts with B',
         {
             assignedClinics: 9,
@@ -236,27 +245,26 @@ export const PRESETS: readonly Preset[] = [
                 'The tiles share an initial, so only their colour tells them apart.',
         }
     ),
-    edge('Clinics fail to load', failing('me', 'fails'), {
+    edge('Server', 'Clinics fail to load', failing('fails'), {
         description:
             'The user request fails, and so do its two retries: after about three seconds, the error with Retry.',
     }),
-    edge('Clinics never load', failing('me', 'hangs'), {
+    edge('Server', 'Clinics never load', failing('hangs'), {
         description: 'The user request never answers: loading, for good.',
     }),
     edge(
+        'Server',
         'Search fails',
-        { ...DISTRICT_NURSE, ...failing('organisationUnits', 'fails') },
+        { ...DISTRICT_NURSE, failSearch: true },
         {
             description:
                 "Open the menu and type 'chc': after two retries, about three seconds, the search fails with Retry in the menu.",
         }
     ),
     edge(
+        'Server',
         'Validity check fails',
-        {
-            ...DISTRICT_NURSE,
-            ...failing('organisationUnits', 'fails'),
-        },
+        { ...DISTRICT_NURSE, failValidity: true },
         {
             description:
                 'Storage remembers two clinics in the district, and checking them fails, retries included: after about three seconds, the error with Retry.',

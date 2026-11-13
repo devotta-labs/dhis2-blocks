@@ -3,13 +3,16 @@ import type { LabSettings } from './labData'
 import { DEFAULT_PRESET, PRESETS, type Preset, type Seed } from './presets'
 
 export interface LabState {
-    /** The example on show; cleared once a setting is changed by hand. */
+    /** The example on show; cleared once a setting that restarts the block is changed by hand. */
     preset?: string
     settings: LabSettings
-    /** What the example wrote to storage, shown beside the stored value. */
-    seed: Seed
-    /** Counts examples picked: the lab clears storage and writes `seed` on each. */
-    seeding: number
+    /**
+     * What the example writes to storage. The lab clears storage and writes it whenever this object is replaced, and
+     * only picking an example replaces it, so a value written by hand survives until the block reads it.
+     */
+    seeding: { seed: Seed }
+    /** Storage was changed by hand since the example wrote it. */
+    edited: boolean
     /** Counts restarts: the canvas remounts on each, with a fresh cache. */
     run: number
     requests: RequestLogEntry[]
@@ -50,8 +53,8 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     return {
         preset: preset.name,
         settings: preset.settings,
-        seed: preset.seed ?? {},
-        seeding: 0,
+        seeding: { seed: preset.seed ?? {} },
+        edited: false,
         run: 0,
         requests: [],
         callbacks: [],
@@ -65,22 +68,21 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 ...state,
                 preset: action.preset.name,
                 settings: action.preset.settings,
-                seed: action.preset.seed ?? {},
-                seeding: state.seeding + 1,
+                seeding: { seed: action.preset.seed ?? {} },
+                edited: false,
             })
         case 'changeSettings': {
-            const next: LabState = {
-                ...state,
-                preset: undefined,
-                settings: { ...state.settings, ...action.changes },
-            }
+            const settings = { ...state.settings, ...action.changes }
             const inPlace = Object.keys(action.changes).every((key) =>
                 IN_PLACE.has(key)
             )
-            return inPlace ? next : restarted(next)
+            // A prop change leaves the example on show, so the sidebar's own toggle keeps its link.
+            return inPlace
+                ? { ...state, settings }
+                : restarted({ ...state, preset: undefined, settings })
         }
         case 'editStorage':
-            return restarted({ ...state, preset: undefined, seed: {} })
+            return restarted({ ...state, preset: undefined, edited: true })
         case 'restart':
             return restarted(state)
         case 'logRequests':

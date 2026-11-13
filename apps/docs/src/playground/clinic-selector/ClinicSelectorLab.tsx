@@ -34,7 +34,7 @@ export const ClinicSelectorLab = () => {
         linkedPreset,
         initialLabState
     )
-    const { settings, seed, seeding, run, requests, callbacks } = state
+    const { settings, seeding, edited, run, requests, callbacks } = state
     useEffect(
         () => setLinkedPreset(state.preset),
         [state.preset, setLinkedPreset]
@@ -42,9 +42,9 @@ export const ClinicSelectorLab = () => {
 
     // Before the block's first read, which waits for the user request; cleared again when the lab closes.
     useLayoutEffect(() => {
-        seedStored(seed)
+        seedStored(seeding.seed)
         return clearStored
-    }, [seeding, seed])
+    }, [seeding])
     useLayoutEffect(
         () => (settings.storageThrows ? breakStorage() : undefined),
         [settings.storageThrows]
@@ -122,7 +122,7 @@ export const ClinicSelectorLab = () => {
                     <RememberedControls
                         settings={settings}
                         data={data}
-                        seed={seed}
+                        seed={edited ? {} : seeding.seed}
                         onChange={change}
                         onEdit={() => dispatch({ type: 'editStorage' })}
                     />

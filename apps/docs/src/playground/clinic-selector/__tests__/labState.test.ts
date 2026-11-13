@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestLogEntry } from '../../network'
-import { generateLabData } from '../labData'
+import { generateLabData, GONE } from '../labData'
 import { answer } from '../labServer'
-import { initialLabState, labReducer } from '../labState'
+import { initialLabState, labReducer, type LabAction } from '../labState'
 import { PRESETS } from '../presets'
 
 const presetNamed = (name: string) => {
@@ -43,19 +43,52 @@ describe('the clinic selector lab state', () => {
         expect(state.preset).toBe('District nurse')
         expect(state.settings).toEqual(presetNamed('District nurse').settings)
         expect(state.run).toBe(withRequest.run + 1)
-        expect(state.seeding).toBe(withRequest.seeding + 1)
-        expect(Object.keys(state.seed)).toEqual(['u1'])
+        expect(state.seeding).not.toBe(withRequest.seeding)
+        expect(Object.keys(state.seeding.seed)).toEqual(['u1'])
         expect(state.requests).toEqual([])
 
         const plain = labReducer(state, {
             type: 'pickPreset',
             preset: presetNamed('Three clinics'),
         })
-        expect(plain.seed).toEqual({})
-        expect(plain.seeding).toBe(state.seeding + 1)
+        expect(plain.seeding.seed).toEqual({})
+        expect(plain.seeding).not.toBe(state.seeding)
     })
 
-    it('restarts the block when a data setting changes', () => {
+    it('seeds again when the same preset is picked again', () => {
+        const state = labReducer(withRequest, {
+            type: 'pickPreset',
+            preset: presetNamed('Three clinics'),
+        })
+        expect(state.seeding).not.toBe(withRequest.seeding)
+    })
+
+    // The lab writes the seed whenever `seeding` is replaced; anything else replacing it wipes storage before the block reads.
+    it.each([
+        ['storage is edited by hand', { type: 'editStorage' }],
+        [
+            'a data setting changes',
+            { type: 'changeSettings', changes: { assignedClinics: 9 } },
+        ],
+        [
+            'the sidebar collapses',
+            { type: 'changeSettings', changes: { collapsed: true } },
+        ],
+        [
+            'the user switches',
+            { type: 'changeSettings', changes: { userId: 'u2' } },
+        ],
+        ['the block restarts', { type: 'restart' }],
+    ] satisfies Array<[string, LabAction]>)(
+        'keeps the seeding untouched when %s',
+        (_, action) => {
+            expect(labReducer(withRequest, action).seeding).toBe(
+                withRequest.seeding
+            )
+        }
+    )
+
+    it('restarts the block when a data setting changes, and drops the preset', () => {
         const state = labReducer(withRequest, {
             type: 'changeSettings',
             changes: { assignedClinics: 9 },
@@ -63,10 +96,9 @@ describe('the clinic selector lab state', () => {
         expect(state.preset).toBeUndefined()
         expect(state.run).toBe(withRequest.run + 1)
         expect(state.requests).toEqual([])
-        expect(state.seeding).toBe(withRequest.seeding)
     })
 
-    it('keeps the block running when the sidebar collapses, the label or the value changes', () => {
+    it('keeps the block running and the preset on show when the sidebar collapses, the label or the value changes', () => {
         for (const changes of [
             { collapsed: true },
             { label: 'Facility' as const },
@@ -78,15 +110,27 @@ describe('the clinic selector lab state', () => {
             })
             expect(state.run).toBe(withRequest.run)
             expect(state.requests).toEqual([REQUEST])
+            expect(state.preset).toBe(withRequest.preset)
+            expect(state.settings).toMatchObject(changes)
         }
     })
 
-    it('restarts without reseeding when the lab edits storage by hand', () => {
-        const state = labReducer(withRequest, { type: 'editStorage' })
-        expect(state.run).toBe(withRequest.run + 1)
+    it('restarts on a hand edit of storage and hides what the example stored', () => {
+        const nurse = labReducer(withRequest, {
+            type: 'pickPreset',
+            preset: presetNamed('District nurse'),
+        })
+        expect(nurse.edited).toBe(false)
+        const state = labReducer(nurse, { type: 'editStorage' })
+        expect(state.run).toBe(nurse.run + 1)
         expect(state.preset).toBeUndefined()
-        expect(state.seed).toEqual({})
-        expect(state.seeding).toBe(withRequest.seeding)
+        expect(state.edited).toBe(true)
+        expect(
+            labReducer(state, {
+                type: 'pickPreset',
+                preset: presetNamed('District nurse'),
+            }).edited
+        ).toBe(false)
     })
 
     it('logs callbacks until cleared', () => {
@@ -100,37 +144,53 @@ describe('the clinic selector lab state', () => {
         )
     })
 
-    it('has unique names, the edge cases folded', () => {
+    it('has unique names, and folds the edge cases under kinds of their own', () => {
         expect(new Set(PRESETS.map(({ name }) => name)).size).toBe(
             PRESETS.length
         )
-        expect(
-            PRESETS.filter(({ folded }) => folded).every(
-                ({ group }) => group === 'Edge cases'
-            )
-        ).toBe(true)
+        const folded = PRESETS.filter(({ folded }) => folded)
+        expect(folded).toHaveLength(13)
+        // PresetControls already heads them Edge cases.
+        expect(folded.some(({ group }) => group === 'Edge cases')).toBe(false)
     })
 
     it.each(PRESETS.map((preset) => [preset.name, preset] as const))(
-        '%s gives settings the server answers',
-        (_, preset) => {
-            const respond = answer(
-                preset.settings,
-                generateLabData(preset.settings)
+        '%s seeds only ids its own data has, and the server answers it',
+        (name, preset) => {
+            const data = generateLabData(preset.settings)
+            const seeded = Object.values(preset.seed ?? {}).flatMap(
+                (raw) => raw.match(/\b[A-Za-z][A-Za-z0-9]{10}\b/g) ?? []
             )
-            expect(() => respond({ resource: 'me' })).not.toThrow()
-            expect(() =>
+            const missing = seeded.filter(
+                (id) => !data.units.some((unit) => unit.id === id)
+            )
+            expect(missing).toEqual(
+                name === 'Remembered clinic no longer exists'
+                    ? [GONE, GONE]
+                    : []
+            )
+
+            const respond = answer(preset.settings, data)
+            expect(respond({ resource: 'me' })).toMatchObject({
+                id: data.userId,
+            })
+            const search = () =>
                 respond({
                     resource: 'organisationUnits',
                     params: { query: 'a', pageSize: 50 },
                 })
-            ).not.toThrow()
-            expect(() =>
+            const check = () =>
                 respond({
                     resource: 'organisationUnits',
-                    params: { filter: 'id:in:[labFlat0001]', paging: false },
+                    params: {
+                        filter: `id:in:[${seeded.join(',')}]`,
+                        paging: false,
+                    },
                 })
-            ).not.toThrow()
+            if (preset.settings.failSearch) expect(search).toThrow()
+            else expect(search).not.toThrow()
+            if (preset.settings.failValidity) expect(check).toThrow()
+            else expect(check).not.toThrow()
         }
     )
 })

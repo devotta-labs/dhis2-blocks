@@ -909,7 +909,7 @@
                     "target": "@components/clinic-selector/tile.ts"
                 }
             ],
-            "docs": "Wrap the app in ClinicProvider, put ClinicSelector in SidebarHeader and pass collapsed={useSidebar().state.collapsed}, and read useClinic() on any page to scope its data to the current clinic. The block does not depend on the sidebar, so the host passes collapsed. Pass value and onValueChange to ClinicProvider to control the choice, for example from the URL. Set label and searchPlaceholder when your users call clinics facilities or sites. For a tree picker of any organisation unit, use context-selector instead."
+            "docs": "Wrap the app in ClinicProvider, put ClinicSelector in a SidebarHeader directly under Sidebar, before SidebarNavigation (which is hidden while collapsed), and pass collapsed={useSidebar().state.collapsed}, and read useClinic() on any page to scope its data to the current clinic. The block does not depend on the sidebar, so the host passes collapsed. Pass value and onValueChange to ClinicProvider to control the choice, for example from the URL. Set label and searchPlaceholder when your users call clinics facilities or sites. For a tree picker of any organisation unit, use context-selector instead."
         },
         {
             "name": "context-selector",

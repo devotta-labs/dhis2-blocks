@@ -47,8 +47,9 @@ export default function ClinicSelectorSidebar() {
             <SidebarProvider>
                 <div className="flex min-h-80 flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
                     <Sidebar>
+                        {/* Outside the navigation, which is hidden while collapsed, so the clinic's tile stays. */}
+                        <ClinicHeader />
                         <SidebarNavigation aria-label="Workspace navigation">
-                            <ClinicHeader />
                             <SidebarContent>
                                 <SidebarItems>
                                     <SidebarItem>

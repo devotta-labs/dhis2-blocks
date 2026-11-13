@@ -18,10 +18,12 @@ with a few clinics gets a menu, and a user with one gets a plain label.
 
 ## In a sidebar
 
-Wrap the app in `ClinicProvider`, and put `ClinicSelector` in `SidebarHeader`.
-The block does not depend on the sidebar, so pass `collapsed` yourself. Read it
-with `useSidebar()`, which works inside `SidebarProvider`. Collapsed, the
-selector shrinks to the clinic's initial, with the name in a tooltip.
+Wrap the app in `ClinicProvider`, and put `ClinicSelector` in a `SidebarHeader`
+directly under `Sidebar`, before `SidebarNavigation`: the navigation is hidden
+while the sidebar is collapsed, and the header stays. The block does not depend
+on the sidebar, so pass `collapsed` yourself. Read it with `useSidebar()`, which
+works inside `SidebarProvider`. Collapsed, the selector shrinks to the clinic's
+initial, with the name in a tooltip.
 
 ```tsx
 import { ClinicProvider, ClinicSelector } from '@/components/clinic-selector'
@@ -47,8 +49,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <ClinicProvider>
             <SidebarProvider>
                 <Sidebar>
+                    <ClinicHeader />
                     <SidebarNavigation aria-label="Application navigation">
-                        <ClinicHeader />
+                        {/* SidebarContent and its links */}
                     </SidebarNavigation>
                 </Sidebar>
                 {children}

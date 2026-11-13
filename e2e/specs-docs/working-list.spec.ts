@@ -73,6 +73,10 @@ const trackerRequest = (
     return action().then(() => requestPromise)
 }
 
+// Menu items carry their own data-test; there is no wrapper around them.
+const menuItem = (page: Page, dataTest: string) =>
+    page.locator(`[role="menuitem"][data-test="${dataTest}"]`)
+
 const addFilter = async (page: Page, fieldId: string) => {
     await page.getByTestId('more-filters-tracked-entity').click()
     await page.locator(`[data-test="add-filter-${fieldId}"]`).click()
@@ -198,14 +202,8 @@ test.describe('live Working List preview', () => {
         // event mode, which queries /tracker/events.
         const eventRequest = trackerRequest(page, 'events', async () => {
             await page.getByTestId('more-filters-tracked-entity').click()
-            await page
-                .locator('[data-test="program-stage-filter-menu"]')
-                .getByRole('menuitem')
-                .hover()
-            await page
-                .locator(`[data-test="select-filter-stage-${stageId}"]`)
-                .getByRole('menuitem')
-                .click()
+            await menuItem(page, 'program-stage-filter-menu').hover()
+            await menuItem(page, `select-filter-stage-${stageId}`).click()
             await expect(page.getByTestId('filter-programStage')).toBeVisible()
 
             const update = page.getByTestId('filter-update-programStage')
@@ -225,16 +223,11 @@ test.describe('live Working List preview', () => {
 
         // A program-stage column can be added on top of event mode.
         await page.getByTestId('more-filters-tracked-entity').click()
-        await page
-            .locator(`[data-test="stage-filter-fields-${stageId}"]`)
-            .getByRole('menuitem')
-            .hover()
-        await page
-            .locator(
-                `[data-test="add-stage-filter-${stageId}-eventOccurredAt"]`
-            )
-            .getByRole('menuitem')
-            .click()
+        await menuItem(page, `stage-filter-fields-${stageId}`).hover()
+        await menuItem(
+            page,
+            `add-stage-filter-${stageId}-eventOccurredAt`
+        ).click()
         await expect(tableBody(page)).toHaveAttribute('aria-busy', 'false', {
             timeout: 30_000,
         })
@@ -269,9 +262,7 @@ test.describe('live Working List preview', () => {
         // marked data-saved-view-menu (its testid embeds the server list id).
         await viewButton.locator('..').locator('[data-saved-view-menu]').click()
 
-        const deleteItem = page.locator('[data-test="delete-saved-view"]')
-        await expect(deleteItem).toBeVisible()
-        await deleteItem.getByRole('menuitem').click()
+        await menuItem(page, 'delete-saved-view').click()
         await page.locator('[data-test="delete-saved-view-confirm"]').click()
         await expect(viewButton).toHaveCount(0)
     })

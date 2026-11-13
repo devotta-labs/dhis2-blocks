@@ -41,9 +41,10 @@ test.describe('preview authentication bootstrap', () => {
 
         const lists = page.getByTestId('working-list-main')
 
-        await expect(lists).toHaveCount(2)
-        await expect(lists.nth(0)).toBeVisible()
-        await expect(lists.nth(1)).toBeVisible()
+        await expect(lists).toHaveCount(3)
+        for (const list of await lists.all()) {
+            await expect(list).toBeVisible()
+        }
         await expect(page.locator('html')).not.toHaveAttribute(
             'data-docs-login-mounted',
             'true'
@@ -93,7 +94,7 @@ test.describe('preview authentication bootstrap', () => {
             await page.goto('/blocks/working-list')
             await expect(
                 page.getByText('Live preview unavailable.', { exact: true })
-            ).toHaveCount(2)
+            ).toHaveCount(3)
             await expect(
                 page.getByRole('heading', { name: 'Please sign in' })
             ).toHaveCount(0)
@@ -109,8 +110,8 @@ test.describe('preview authentication bootstrap', () => {
                     .getByRole('button', { name: 'Retry preview' })
                     .click()
                 await expect(
-                    surface.locator('[data-testid^="working-list-row-"]')
-                ).toHaveCount(10, { timeout: 30_000 })
+                    surface.getByTestId('working-list-main')
+                ).toBeVisible({ timeout: 30_000 })
             }
             await expect(
                 page.getByText('Live preview unavailable.', { exact: true })

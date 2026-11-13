@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestLogEntry } from '../../network'
-import { generateLabData, GONE } from '../labData'
+import { generateLabData, GONE, valueFor } from '../labData'
 import { answer } from '../labServer'
 import { initialLabState, labReducer, type LabAction } from '../labState'
 import { PRESETS } from '../presets'
@@ -103,6 +103,7 @@ describe('the clinic selector lab state', () => {
             { collapsed: true },
             { label: 'Facility' as const },
             { value: 'outside' as const },
+            { rtl: true },
         ]) {
             const state = labReducer(withRequest, {
                 type: 'changeSettings',
@@ -112,6 +113,121 @@ describe('the clinic selector lab state', () => {
             expect(state.requests).toEqual([REQUEST])
             expect(state.preset).toBe(withRequest.preset)
             expect(state.settings).toMatchObject(changes)
+        }
+    })
+
+    it('keeps the block running when a failure is turned off, so its Retry can recover', () => {
+        for (const name of [
+            'Search fails',
+            'Validity check fails',
+            'Clinics fail to load',
+        ]) {
+            const failing = labReducer(withRequest, {
+                type: 'pickPreset',
+                preset: presetNamed(name),
+            })
+            const state = labReducer(failing, {
+                type: 'changeSettings',
+                changes: {
+                    failSearch: false,
+                    failValidity: false,
+                    network: { delay: 50, endpoints: {} },
+                },
+            })
+            expect(state.run).toBe(failing.run)
+            expect(state.preset).toBe(name)
+            expect(state.settings.failSearch).toBe(false)
+            expect(state.settings.failValidity).toBe(false)
+            expect(state.settings.network.endpoints).toEqual({})
+        }
+    })
+
+    it('restarts the block when a failure is turned on', () => {
+        for (const changes of [
+            { failSearch: true },
+            { failValidity: true },
+            {
+                network: {
+                    delay: 50,
+                    endpoints: { me: { behaviour: 'fails' as const } },
+                },
+            },
+        ]) {
+            expect(
+                labReducer(withRequest, { type: 'changeSettings', changes }).run
+            ).toBe(withRequest.run + 1)
+        }
+    })
+
+    it('adopts each pick in place while the host follows picks, and starts over when the value changes', () => {
+        const follows = labReducer(withRequest, {
+            type: 'pickPreset',
+            preset: presetNamed('Controlled host that follows picks'),
+        })
+        expect(follows.followed).toBeUndefined()
+        const adopted = labReducer(follows, {
+            type: 'adoptValue',
+            id: 'labFlat0001',
+        })
+        expect(adopted.followed).toBe('labFlat0001')
+        expect(adopted.run).toBe(follows.run)
+        expect(
+            labReducer(adopted, {
+                type: 'changeSettings',
+                changes: { value: 'valid' },
+            }).followed
+        ).toBeUndefined()
+        expect(labReducer(adopted, { type: 'restart' }).followed).toBe(
+            undefined
+        )
+        expect(
+            labReducer(adopted, {
+                type: 'changeSettings',
+                changes: { collapsed: true },
+            }).followed
+        ).toBe('labFlat0001')
+    })
+
+    it('ignores a pick while the host does not follow picks', () => {
+        const ignores = labReducer(withRequest, {
+            type: 'pickPreset',
+            preset: presetNamed('Controlled host that ignores picks'),
+        })
+        expect(
+            labReducer(ignores, { type: 'adoptValue', id: 'labFlat0001' })
+        ).toBe(ignores)
+    })
+
+    it('opens on lab data, and keeps the settings when switching to live DHIS2, and restarts', () => {
+        expect(initialLabState().mode).toBe('lab')
+        const state = labReducer(withRequest, {
+            type: 'switchMode',
+            mode: 'live',
+        })
+        expect(state.mode).toBe('live')
+        expect(state.settings).toBe(withRequest.settings)
+        expect(state.run).toBe(withRequest.run + 1)
+        expect(state.requests).toEqual([])
+        expect(
+            labReducer(state, { type: 'switchMode', mode: 'lab' }).mode
+        ).toBe('lab')
+    })
+
+    it('drops a value that names a lab clinic when switching to live DHIS2', () => {
+        for (const [value, live] of [
+            ['valid', 'uncontrolled'],
+            ['outside', 'uncontrolled'],
+            ['follows', 'follows'],
+            ['missing', 'missing'],
+        ] as const) {
+            const lab = labReducer(withRequest, {
+                type: 'changeSettings',
+                changes: { value },
+            })
+            expect(
+                labReducer(lab, { type: 'switchMode', mode: 'live' }).settings
+                    .value
+            ).toBe(live)
         }
     })
 
@@ -149,7 +265,7 @@ describe('the clinic selector lab state', () => {
             PRESETS.length
         )
         const folded = PRESETS.filter(({ folded }) => folded)
-        expect(folded).toHaveLength(13)
+        expect(folded).toHaveLength(21)
         // PresetControls already heads them Edge cases.
         expect(folded.some(({ group }) => group === 'Edge cases')).toBe(false)
     })
@@ -169,6 +285,13 @@ describe('the clinic selector lab state', () => {
                     ? [GONE, GONE]
                     : []
             )
+            // The host's value names a unit of the data, except where the preset passes one no unit has.
+            const value = valueFor(preset.settings, data)
+            if (value !== undefined) {
+                expect(data.units.some((unit) => unit.id === value)).toBe(
+                    name !== 'Controlled, value does not exist'
+                )
+            }
 
             const respond = answer(preset.settings, data)
             expect(respond({ resource: 'me' })).toMatchObject({

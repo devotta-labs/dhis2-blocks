@@ -70,7 +70,8 @@ export const answer =
                     const matches = data.units
                         .filter(
                             (unit) =>
-                                isInScope(unit, data) &&
+                                (settings.ignoreScopeFilter ||
+                                    isInScope(unit, data)) &&
                                 unit.displayName.toLowerCase().includes(query)
                         )
                         .sort(byName)

@@ -6,7 +6,9 @@ import {
     useMemo,
     useReducer,
 } from 'react'
-import { PresetControls } from '../controls'
+import { LivePreviewHost } from '../../preview/LivePreviewHost'
+import { PreviewSpinner } from '../../preview/PreviewShell'
+import { PresetControls, Segmented } from '../controls'
 import { LabLayout } from '../LabLayout'
 import { LogPanel } from '../LogPanel'
 import { CanvasBoundary, LabServerScope } from '../LabServer'
@@ -34,11 +36,9 @@ export const ClinicSelectorLab = () => {
         linkedPreset,
         initialLabState
     )
-    const { settings, seeding, edited, run, requests, callbacks } = state
-    useEffect(
-        () => setLinkedPreset(state.preset),
-        [state.preset, setLinkedPreset]
-    )
+    const { mode, settings, seeding, edited, run, requests, callbacks } = state
+    const linked = mode === 'lab' ? state.preset : undefined
+    useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
     // Before the block's first read, which waits for the user request; cleared again when the lab closes.
     useLayoutEffect(() => {
@@ -60,14 +60,13 @@ export const ClinicSelectorLab = () => {
         (update) => dispatch({ type: 'logRequests', update }),
         []
     )
-    const onValueChange = useCallback(
-        (clinic: Clinic) =>
-            dispatch({
-                type: 'logCallback',
-                entry: `onValueChange ${JSON.stringify(clinic)}`,
-            }),
-        []
-    )
+    const onValueChange = useCallback((clinic: Clinic) => {
+        dispatch({
+            type: 'logCallback',
+            entry: `onValueChange ${JSON.stringify(clinic)}`,
+        })
+        dispatch({ type: 'adoptValue', id: clinic.id })
+    }, [])
     const onCollapsedChange = useCallback(
         (collapsed: boolean) => change({ collapsed }),
         [change]
@@ -80,7 +79,7 @@ export const ClinicSelectorLab = () => {
     const canvasProps = {
         collapsed: settings.collapsed,
         label: settings.label,
-        value: valueFor(settings, data),
+        value: state.followed ?? valueFor(settings, data),
         onCollapsedChange,
         onValueChange,
     }
@@ -88,45 +87,72 @@ export const ClinicSelectorLab = () => {
     return (
         <LabLayout
             source={{ ...canvasSource, props: canvasProps }}
-            panel={{
-                title: 'Logs',
-                children: (
-                    <LogPanel
-                        callbacks={callbacks}
-                        requests={requests}
-                        onClearCallbacks={() =>
-                            dispatch({ type: 'clearCallbacks' })
-                        }
-                        onClearRequests={() =>
-                            dispatch({ type: 'clearRequests' })
-                        }
-                    />
-                ),
-            }}
+            panel={
+                mode === 'lab'
+                    ? {
+                          title: 'Logs',
+                          children: (
+                              <LogPanel
+                                  callbacks={callbacks}
+                                  requests={requests}
+                                  onClearCallbacks={() =>
+                                      dispatch({ type: 'clearCallbacks' })
+                                  }
+                                  onClearRequests={() =>
+                                      dispatch({ type: 'clearRequests' })
+                                  }
+                              />
+                          ),
+                      }
+                    : undefined
+            }
             sidebar={
                 <>
-                    <PresetControls
-                        presets={PRESETS}
-                        selected={state.preset}
-                        onPick={(preset) =>
-                            dispatch({ type: 'pickPreset', preset })
+                    <Segmented
+                        value={mode}
+                        options={[
+                            ['lab', 'Lab data'],
+                            ['live', 'Live DHIS2'],
+                        ]}
+                        onChange={(next) =>
+                            dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    {selected?.description && (
-                        <p className="m-0 text-xs text-muted-foreground">
-                            {selected.description}
-                        </p>
+                    {mode === 'lab' && (
+                        <>
+                            <PresetControls
+                                presets={PRESETS}
+                                selected={state.preset}
+                                onPick={(preset) =>
+                                    dispatch({ type: 'pickPreset', preset })
+                                }
+                            />
+                            {selected?.description && (
+                                <p className="m-0 text-xs text-muted-foreground">
+                                    {selected.description}
+                                </p>
+                            )}
+                            <ClinicsControls
+                                settings={settings}
+                                onChange={change}
+                            />
+                        </>
                     )}
-                    <ClinicsControls settings={settings} onChange={change} />
-                    <SidebarControls settings={settings} onChange={change} />
+                    <SidebarControls
+                        settings={settings}
+                        live={mode === 'live'}
+                        onChange={change}
+                    />
                     <RememberedControls
                         settings={settings}
-                        data={data}
-                        seed={edited ? {} : seeding.seed}
+                        data={mode === 'lab' ? data : undefined}
+                        seed={edited || mode === 'live' ? {} : seeding.seed}
                         onChange={change}
                         onEdit={() => dispatch({ type: 'editStorage' })}
                     />
-                    <ServerControls settings={settings} onChange={change} />
+                    {mode === 'lab' && (
+                        <ServerControls settings={settings} onChange={change} />
+                    )}
                     <button
                         type="button"
                         className="self-start"
@@ -137,17 +163,28 @@ export const ClinicSelectorLab = () => {
                 </>
             }
         >
-            <CanvasBoundary key={run}>
-                <LabServerScope
-                    key={run}
-                    network={settings.network}
-                    resources={RESOURCES}
-                    respond={respond}
-                    log={log}
-                >
-                    <ClinicCanvas {...canvasProps} />
-                </LabServerScope>
-            </CanvasBoundary>
+            <div dir={settings.rtl ? 'rtl' : 'ltr'}>
+                <CanvasBoundary key={run}>
+                    {mode === 'lab' ? (
+                        <LabServerScope
+                            key={run}
+                            network={settings.network}
+                            resources={RESOURCES}
+                            respond={respond}
+                            log={log}
+                        >
+                            <ClinicCanvas {...canvasProps} />
+                        </LabServerScope>
+                    ) : (
+                        <LivePreviewHost
+                            key={run}
+                            placeholder={<PreviewSpinner className="h-96" />}
+                        >
+                            <ClinicCanvas {...canvasProps} />
+                        </LivePreviewHost>
+                    )}
+                </CanvasBoundary>
+            </div>
         </LabLayout>
     )
 }

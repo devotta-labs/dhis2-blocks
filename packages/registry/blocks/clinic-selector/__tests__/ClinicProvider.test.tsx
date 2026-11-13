@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import React, { type ReactNode } from 'react'
+import React, { useEffect, useState, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
 import {
     createClinicClient,
@@ -7,7 +7,7 @@ import {
     type ResourceRequest,
 } from '../api/client'
 import type { AssignedClinic, Clinic } from '../api/schemas'
-import { useClinic } from '../hooks'
+import { useClinic, type ClinicStatus } from '../hooks'
 import {
     ClinicProvider,
     type ClinicProviderProps,
@@ -40,6 +40,26 @@ interface ServerOptions {
     found?: Clinic[]
 }
 
+/** Who a later `me` request says the user is. */
+interface FakeMe {
+    userId: string
+    assigned: AssignedClinic[]
+}
+
+/** HTTP statuses the server answers with while set. */
+interface Failures {
+    me?: number | undefined
+    byId?: number | undefined
+}
+
+/** Lets a test change the host's controlled value. */
+interface HostControls {
+    setValue: (value: string | undefined) => void
+}
+
+const failure = (status: number) =>
+    Object.assign(new Error('boom'), { httpStatusCode: status })
+
 /** Copies, so the engine sees plain response objects. */
 const plain = (clinics: Clinic[]) => clinics.map((clinic) => ({ ...clinic }))
 
@@ -50,12 +70,22 @@ const createServer = ({
     found = [],
 }: ServerOptions = {}) => {
     const requests: ResourceRequest[] = []
-    let byIdFailsWith: number | undefined
+    const me: FakeMe = { userId, assigned }
+    const fail: Failures = {}
+    let meHeld: Promise<void> | undefined
+    let releaseMe = () => {}
     const server = {
-        /** Answers by-id checks with this HTTP status, or normally when undefined. */
-        failByIdWith: (status: number | undefined) => {
-            byIdFailsWith = status
+        me,
+        fail,
+        /** Holds `me` requests open until `releaseMe` is called. */
+        holdMe: () => {
+            meHeld = new Promise((resolve) => {
+                releaseMe = resolve
+            })
         },
+        releaseMe: () => releaseMe(),
+        meRequests: () =>
+            requests.filter((request) => request.resource === 'me'),
         byIdRequests: () =>
             requests.filter((request) => request.params?.filter !== undefined),
         searchRequests: () =>
@@ -65,10 +95,14 @@ const createServer = ({
                 const [[key, request]] = Object.entries(query)
                 requests.push(request)
                 if (request.resource === 'me') {
+                    await meHeld
+                    if (fail.me !== undefined) {
+                        throw failure(fail.me)
+                    }
                     return {
                         [key]: {
-                            id: userId,
-                            organisationUnits: assigned.map(
+                            id: me.userId,
+                            organisationUnits: me.assigned.map(
                                 ({ hasChildren, ...rest }) => ({
                                     ...rest,
                                     children: hasChildren,
@@ -79,10 +113,8 @@ const createServer = ({
                 }
                 const filter = request.params?.filter
                 if (filter !== undefined) {
-                    if (byIdFailsWith !== undefined) {
-                        throw Object.assign(new Error('boom'), {
-                            httpStatusCode: byIdFailsWith,
-                        })
+                    if (fail.byId !== undefined) {
+                        throw failure(fail.byId)
                     }
                     const ids = String(filter)
                         .slice('id:in:['.length, -1)
@@ -107,30 +139,59 @@ const createServer = ({
     return server
 }
 
-const renderClinic = (
+interface RenderOptions extends Omit<
+    ClinicProviderProps,
+    'client' | 'children'
+> {
+    /** The host makes every pick its controlled value. */
+    adopt?: boolean
+}
+
+const renderClinic = async (
     server: ReturnType<typeof createServer>,
-    props: Omit<ClinicProviderProps, 'client' | 'children'> = {}
+    { adopt = false, value: initialValue, onValueChange }: RenderOptions = {}
 ) => {
     // Delays off so the block's own retries finish quickly.
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retryDelay: 0 } },
     })
-    return renderHook(
+    const seen: ClinicStatus[] = []
+    const host: HostControls = {
+        setValue: () => {},
+    }
+    const Host = ({ children }: { children: ReactNode }) => {
+        const [value, setValue] = useState(initialValue)
+        useEffect(() => {
+            host.setValue = setValue
+        }, [])
+        const change = (clinic: Clinic) => {
+            onValueChange?.(clinic)
+            if (adopt) {
+                setValue(clinic.id)
+            }
+        }
+        return (
+            <QueryClientProvider client={queryClient}>
+                <ClinicProvider
+                    client={server.client}
+                    value={value}
+                    onValueChange={change}
+                >
+                    {children}
+                </ClinicProvider>
+            </QueryClientProvider>
+        )
+    }
+    const rendered = await renderHook(
         () => {
             const hook = useClinic()
             const context = useClinicContext()
+            seen.push(hook.status)
             return { hook, context }
         },
-        {
-            wrapper: ({ children }: { children: ReactNode }) => (
-                <QueryClientProvider client={queryClient}>
-                    <ClinicProvider client={server.client} {...props}>
-                        {children}
-                    </ClinicProvider>
-                </QueryClientProvider>
-            ),
-        }
+        { wrapper: Host }
     )
+    return { ...rendered, queryClient, seen, host }
 }
 
 type Rendered = Awaited<ReturnType<typeof renderClinic>>
@@ -221,7 +282,7 @@ describe('ClinicProvider', () => {
         const x = unit('Xclinic', OCEAN.path)
         writeRemembered('u1', { current: x.id, recent: [x.id] })
         const server = createServer({ known: [x] })
-        server.failByIdWith(500)
+        server.fail.byId = 500
 
         const rendered = await renderClinic(server)
         await settled(rendered)
@@ -230,7 +291,7 @@ describe('ClinicProvider', () => {
         expect(rendered.result.current.hook.clinic).toBeUndefined()
         expect(readRemembered('u1')).toEqual({ current: x.id, recent: [x.id] })
 
-        server.failByIdWith(undefined)
+        server.fail.byId = undefined
         await rendered.act(() => rendered.result.current.hook.retry())
         await expect
             .poll(() => rendered.result.current.hook.status)
@@ -417,5 +478,122 @@ describe('ClinicProvider', () => {
         await rendered.act(() => rendered.result.current.hook.setClinic(OCEAN))
 
         expect(rendered.result.current.hook.clinic).toEqual(OCEAN)
+    })
+    it('a controlled pick does not re-check', async () => {
+        const root = district('Root')
+        const [v, r, x] = ['Vclinic', 'Rclinic', 'Xclinic'].map((name) =>
+            unit(name, root.path)
+        )
+        writeRemembered('u1', { current: r.id, recent: [r.id] })
+        const server = createServer({ assigned: [root], known: [v, r] })
+        const rendered = await renderClinic(server, {
+            value: v.id,
+            adopt: true,
+        })
+        await settled(rendered)
+        expect(rendered.result.current.hook.clinic).toEqual(v)
+        expect(server.byIdRequests()).toHaveLength(1)
+        const before = rendered.seen.length
+
+        await rendered.act(() => rendered.result.current.hook.setClinic(x))
+
+        await expect.poll(() => rendered.result.current.hook.clinic).toEqual(x)
+        expect(server.byIdRequests()).toHaveLength(1)
+        expect(rendered.seen.slice(before)).not.toContain('pending')
+        expect(rendered.seen.slice(before)).not.toContain('failed')
+    })
+
+    it('re-validates a controlled value that changes after mount', async () => {
+        const y = unit('Yclinic', '/Other')
+        const server = createServer({ known: [y] })
+        const rendered = await renderClinic(server, { value: OCEAN.id })
+        await settled(rendered)
+        expect(rendered.result.current.hook.clinic).toEqual(OCEAN)
+        expect(server.byIdRequests()).toHaveLength(0)
+
+        await rendered.act(() => rendered.host.setValue(y.id))
+
+        await expect.poll(() => server.byIdRequests()).toHaveLength(1)
+        expect(server.byIdRequests()[0]?.params?.filter).toBe(`id:in:[${y.id}]`)
+        await expect
+            .poll(() => rendered.result.current.hook.status)
+            .toBe('ready')
+        expect(rendered.result.current.hook.clinic).toBeUndefined()
+    })
+
+    it("a new user does not inherit the last user's pick", async () => {
+        const x = unit('Xclinic', OCEAN.path)
+        const harbour = facility('Harbour')
+        const server = createServer({ known: [x] })
+        const rendered = await renderClinic(server, { adopt: true })
+        await settled(rendered)
+        await rendered.act(() => rendered.result.current.hook.setClinic(x))
+        expect(rendered.result.current.hook.clinic).toEqual(x)
+
+        server.me.userId = 'u2'
+        server.me.assigned = [harbour]
+        await rendered.act(() => rendered.queryClient.invalidateQueries())
+
+        await expect
+            .poll(() => rendered.result.current.context.assigned)
+            .toEqual([harbour])
+        await expect
+            .poll(() => rendered.result.current.hook.status)
+            .toBe('ready')
+        // The host still holds X, which is not the new user's.
+        expect(rendered.result.current.hook.clinic).toBeUndefined()
+        expect(rendered.result.current.context.recent).toEqual([])
+        expect(
+            localStorage.getItem('dhis2-blocks:clinic-selector:u2') ?? ''
+        ).not.toContain(x.id)
+    })
+
+    it('setClinic ignores a clinic outside the assigned paths', async () => {
+        const onValueChange = vi.fn()
+        const rendered = await renderClinic(createServer(), { onValueChange })
+        await settled(rendered)
+
+        await rendered.act(() =>
+            rendered.result.current.hook.setClinic(unit('Xclinic', '/Other'))
+        )
+
+        expect(rendered.result.current.hook.clinic).toEqual(BRISTOL)
+        expect(onValueChange).not.toHaveBeenCalled()
+        expect(readRemembered('u1')).toEqual({ recent: [] })
+    })
+
+    it('a failed refetch keeps the current clinic', async () => {
+        const server = createServer()
+        const rendered = await renderClinic(server)
+        await settled(rendered)
+
+        server.fail.me = 500
+        await rendered.act(() => rendered.queryClient.invalidateQueries())
+
+        expect(server.meRequests()).toHaveLength(4)
+        expect(
+            rendered.queryClient
+                .getQueryCache()
+                .getAll()
+                .some((query) => query.state.status === 'error')
+        ).toBe(true)
+        expect(rendered.result.current.hook.status).toBe('ready')
+        expect(rendered.result.current.hook.clinic).toEqual(BRISTOL)
+    })
+
+    it('setClinic before the clinics load does nothing', async () => {
+        const onValueChange = vi.fn()
+        const server = createServer()
+        server.holdMe()
+        const rendered = await renderClinic(server, { onValueChange })
+        expect(rendered.result.current.hook.status).toBe('pending')
+
+        await rendered.act(() => rendered.result.current.hook.setClinic(OCEAN))
+        server.releaseMe()
+        await settled(rendered)
+
+        expect(onValueChange).not.toHaveBeenCalled()
+        expect(rendered.result.current.hook.clinic).toEqual(BRISTOL)
+        expect(readRemembered('u1')).toEqual({ recent: [] })
     })
 })

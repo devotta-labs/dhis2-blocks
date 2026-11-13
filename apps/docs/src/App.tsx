@@ -114,6 +114,10 @@ const router = createBrowserRouter([
                     docRoute('/blocks/tooltip', './pages/blocks/tooltip.mdx'),
                     docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
                     docRoute(
+                        '/blocks/clinic-selector',
+                        './pages/blocks/clinic-selector.mdx'
+                    ),
+                    docRoute(
                         '/blocks/context-selector',
                         './pages/blocks/context-selector.mdx'
                     ),

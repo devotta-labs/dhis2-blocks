@@ -1,0 +1,133 @@
+---
+title: Clinic Selector
+description: A switcher for the clinic a user is working in, with search when they have more than a few.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="clinic-selector/sidebar" />
+
+This preview reads the organisation units of the user signed in to the preview
+host. That user can reach a whole country, so the selector shows search. A user
+with a few clinics gets a menu, and a user with one gets a plain label.
+
+## Installation
+
+<InstallCommand item="clinic-selector" />
+
+## In a sidebar
+
+Wrap the app in `ClinicProvider`, and put `ClinicSelector` in `SidebarHeader`.
+The block does not depend on the sidebar, so pass `collapsed` yourself. Read it
+with `useSidebar()`, which works inside `SidebarProvider`. Collapsed, the
+selector shrinks to the clinic's initial, with the name in a tooltip.
+
+```tsx
+import { ClinicProvider, ClinicSelector } from '@/components/clinic-selector'
+import {
+    Sidebar,
+    SidebarHeader,
+    SidebarNavigation,
+    SidebarProvider,
+    useSidebar,
+} from '@/components/sidebar'
+
+function ClinicHeader() {
+    const { state } = useSidebar()
+    return (
+        <SidebarHeader>
+            <ClinicSelector collapsed={state.collapsed} />
+        </SidebarHeader>
+    )
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+    return (
+        <ClinicProvider>
+            <SidebarProvider>
+                <Sidebar>
+                    <SidebarNavigation aria-label="Application navigation">
+                        <ClinicHeader />
+                    </SidebarNavigation>
+                </Sidebar>
+                {children}
+            </SidebarProvider>
+        </ClinicProvider>
+    )
+}
+```
+
+The selector needs an app-runtime `DataProvider` and a React Query
+`QueryClientProvider` above it.
+
+## Reading the clinic
+
+Call `useClinic()` anywhere under the provider to scope a page to the current
+clinic.
+
+```tsx
+import { useClinic } from '@/components/clinic-selector'
+
+function Visits() {
+    const { clinic, status } = useClinic()
+    if (status !== 'ready' || !clinic) {
+        return null
+    }
+    return <VisitList organisationUnit={clinic.id} />
+}
+```
+
+`clinic` is `{ id, displayName, path }`. `status` is `pending` while the
+clinics load, `ready` once there is a clinic, `failed` if they could not be
+loaded and `none` if the user has no organisation units. `clinic` is only set
+when `status` is `ready`. `useClinic()` also returns `setClinic` and `retry`.
+
+## More than a few clinics
+
+A user with a district, or with more than eight clinics, gets a search box.
+Below a district, search runs on the server, within the user's own hierarchy.
+The clinics the user picks by search are kept as **Recent**, newest first, five
+at most, above their assigned units. A user can never pick a unit outside
+their hierarchy, and a remembered unit they lose access to drops out.
+
+## One or a few clinics
+
+A user with one clinic sees a label and no button. A user with up to eight
+clinics and no districts sees a menu without search. This example runs on a
+made-up user, because the preview host's user can reach every clinic. The
+`stubClient` in the Code tab shows how to give the block your own data layer
+with `createClinicClient`.
+
+<ExampleCard slug="clinic-selector/states" />
+
+## Controlling it
+
+By default the provider owns the choice. Pass `value`, a clinic id, to own it
+yourself, for example from the URL, and `onValueChange` to hear every pick.
+
+```tsx
+const [clinicId, setClinicId] = useState<string>()
+
+<ClinicProvider
+    value={clinicId}
+    onValueChange={(clinic) => setClinicId(clinic.id)}
+>
+    <ClinicSelector />
+</ClinicProvider>
+```
+
+With a `value` outside the user's hierarchy, `clinic` stays unset. A host that calls clinics
+facilities or sites can set `label` and `searchPlaceholder` on `ClinicSelector`.
+
+## What it remembers
+
+The provider keeps the current clinic and the recent ones in the browser's
+local storage, for each user. It is not shared across devices, and another user
+signing in on the same browser starts clean. A host that wants the choice to
+follow the user across devices controls it with `value`.
+
+## Related
+
+To pick any organisation unit from a tree, use [Context
+Selector](/blocks/context-selector).

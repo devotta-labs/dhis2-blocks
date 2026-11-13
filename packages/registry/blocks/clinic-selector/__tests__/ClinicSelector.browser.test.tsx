@@ -2,7 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { ClinicProvider, ClinicSelector, type ClinicSelectorProps } from '..'
+import {
+    ClinicProvider,
+    ClinicSelector,
+    type ClinicProviderProps,
+    type ClinicSelectorProps,
+} from '..'
 import {
     createServer,
     district,
@@ -21,7 +26,8 @@ const NGELEHUN = unit('Ngelehun CHC', BO.path)
 const renderSelector = async (
     server: ClinicServer,
     props: ClinicSelectorProps = {},
-    width: 'w-60' | 'w-13' = 'w-60'
+    width: 'w-60' | 'w-13' = 'w-60',
+    provider: Omit<ClinicProviderProps, 'client' | 'children'> = {}
 ) => {
     // Delays off so the block's own retries finish quickly.
     const queryClient = new QueryClient({
@@ -29,7 +35,7 @@ const renderSelector = async (
     })
     return render(
         <QueryClientProvider client={queryClient}>
-            <ClinicProvider client={server.client}>
+            <ClinicProvider client={server.client} {...provider}>
                 <div
                     data-testid="header"
                     className={`${width} bg-dhis2-sidebar px-3 py-4 text-dhis2-sidebar-foreground`}
@@ -47,6 +53,19 @@ const atDesktopWidth = async () => {
 }
 
 const searchBox = () => page.getByPlaceholder('Search clinics')
+
+const tooltipText = () =>
+    document.querySelector('[data-slot="tooltip-content"]')?.textContent
+
+/** The current row's background and its check's inset from the row's end. */
+const currentRowLook = (row: Element) => {
+    const rowBox = row.getBoundingClientRect()
+    const check = [...row.querySelectorAll('svg')].at(-1)
+    return {
+        background: getComputedStyle(row).backgroundColor,
+        inset: rowBox.right - (check?.getBoundingClientRect().right ?? 0),
+    }
+}
 
 afterEach(() => {
     localStorage.clear()
@@ -191,12 +210,121 @@ describe('ClinicSelector', () => {
 
         await searchBox().clear()
         await expect
-            .element(
-                page
-                    .getByRole('group', { name: 'Assigned' })
-                    .getByRole('option', { name: 'Bo District' })
-            )
+            .element(page.getByRole('option', { name: 'Bo District' }))
             .toBeVisible()
+        expect(page.getByText('Assigned').elements()).toHaveLength(0)
+    })
+
+    it('shows no heading with only assigned clinics', async () => {
+        const screen = await renderSelector(
+            createServer({ assigned: [BO, OCEAN] })
+        )
+
+        await screen
+            .getByRole('combobox', { name: 'Clinic: Bo District' })
+            .click()
+
+        await expect
+            .poll(() => page.getByRole('option').elements())
+            .toHaveLength(2)
+        expect(page.getByText('Recent').elements()).toHaveLength(0)
+        expect(page.getByText('Assigned').elements()).toHaveLength(0)
+    })
+
+    it('shows a pending indicator while searching', async () => {
+        const server = createServer({ assigned: [BO], found: [NGELEHUN] })
+        server.holdSearch()
+        onTestFinished(() => server.releaseSearch())
+        const screen = await renderSelector(server)
+
+        await screen
+            .getByRole('combobox', { name: 'Clinic: Bo District' })
+            .click()
+        await searchBox().fill('ngel')
+        await expect.poll(() => server.searchRequests()).toHaveLength(1)
+
+        await expect
+            .element(page.getByRole('status', { name: 'Loading' }))
+            .toBeVisible()
+        expect(page.getByRole('option').elements()).toHaveLength(0)
+
+        server.releaseSearch()
+        await expect
+            .element(page.getByRole('option', { name: 'Ngelehun CHC' }))
+            .toBeVisible()
+        expect(
+            page.getByRole('status', { name: 'Loading' }).elements()
+        ).toHaveLength(0)
+    })
+
+    it('marks the current row the same way in both forms', async () => {
+        const menu = await renderSelector(
+            createServer({ assigned: [OCEAN, BRISTOL, HARBOUR] })
+        )
+        await menu
+            .getByRole('button', { name: 'Clinic: Bristol Clinic' })
+            .click()
+        const radio = page.getByRole('menuitemradio', {
+            name: 'Bristol Clinic',
+        })
+        await expect.element(radio).toHaveAttribute('aria-checked', 'true')
+        // Another row takes the highlight, so only the current-row styling is compared.
+        await page
+            .getByRole('menuitemradio', { name: 'Ocean Beach Clinic' })
+            .hover()
+        const menuLook = currentRowLook(radio.element())
+        await userEvent.keyboard('{Escape}')
+        await menu.unmount()
+
+        const search = await renderSelector(
+            createServer({ assigned: [BO, OCEAN] })
+        )
+        await search
+            .getByRole('combobox', { name: 'Clinic: Bo District' })
+            .click()
+        const option = page.getByRole('option', { name: 'Bo District' })
+        await expect.element(option).toHaveAttribute('aria-selected', 'true')
+        await page.getByRole('option', { name: 'Ocean Beach Clinic' }).hover()
+        const searchLook = currentRowLook(option.element())
+
+        expect(searchLook.background).toBe(menuLook.background)
+        expect(Math.abs(searchLook.inset - menuLook.inset)).toBeLessThanOrEqual(
+            1
+        )
+    })
+
+    it('shows Choose a clinic when the controlled value is out of scope', async () => {
+        const onValueChange = vi.fn()
+        const screen = await renderSelector(
+            createServer({ assigned: [OCEAN, BRISTOL, HARBOUR] }),
+            {},
+            'w-60',
+            { value: unit('Xclinic').id, onValueChange }
+        )
+
+        await screen
+            .getByRole('button', { name: 'Clinic: Choose a clinic' })
+            .click()
+        await page
+            .getByRole('menuitemradio', { name: 'Ocean Beach Clinic' })
+            .click()
+
+        expect(onValueChange).toHaveBeenCalledWith(OCEAN)
+    })
+
+    it('names the trigger with the clinic name as written', async () => {
+        const screen = await renderSelector(
+            createServer({
+                assigned: [
+                    facility('Smith & Sons <CHC>'),
+                    facility('Zeta Clinic'),
+                ],
+            })
+        )
+
+        await expect
+            .element(screen.getByRole('button', { name: /^Clinic: S/ }))
+            .toHaveAccessibleName('Clinic: Smith & Sons <CHC>')
     })
 
     it.each([
@@ -219,20 +347,19 @@ describe('ClinicSelector', () => {
             await expect.element(screen.getByText(name)).not.toBeVisible()
             expect(trigger.element().getBoundingClientRect().width).toBe(28)
             await trigger.hover()
+            await expect.poll(tooltipText, { timeout: 2000 }).toBe(name)
+
+            await trigger.click()
             await expect
                 .poll(
                     () =>
-                        document.querySelector('[data-slot="tooltip-content"]')
-                            ?.textContent,
-                    { timeout: 2000 }
+                        document
+                            .querySelector(
+                                '[data-slot="dropdown-menu-content"], [data-slot="combobox-content"]'
+                            )
+                            ?.getBoundingClientRect().width
                 )
-                .toBe(name)
-
-            await trigger.click()
-            const popup = document.querySelector<HTMLElement>(
-                '[data-slot="dropdown-menu-content"], [data-slot="combobox-content"]'
-            )
-            expect(popup?.getBoundingClientRect().width).toBe(240)
+                .toBe(240)
         }
     )
 
@@ -278,6 +405,10 @@ describe('ClinicSelector', () => {
         expect(
             screen.container.querySelector('[data-slot="skeleton"]')
         ).not.toBeNull()
+        expect(
+            screen.container.querySelector('[aria-busy="true"]')
+        ).not.toBeNull()
+        expect(screen.getByText('Loading').element()).toBeTruthy()
         expect(screen.getByRole('button').elements()).toHaveLength(0)
     })
 
@@ -303,6 +434,64 @@ describe('ClinicSelector', () => {
         await expect
             .element(screen.getByText('No clinic assigned'))
             .toBeVisible()
+    })
+
+    it('collapsed failed state keeps Retry reachable', async () => {
+        await atDesktopWidth()
+        const server = createServer()
+        server.fail.me = 400
+        const screen = await renderSelector(server, { collapsed: true }, 'w-13')
+
+        const retry = screen.getByRole('button', { name: 'Retry' })
+        await expect.element(retry).toBeVisible()
+        expect(retry.elements()).toHaveLength(1)
+        expect(retry.element().getBoundingClientRect().width).toBe(28)
+        await retry.hover()
+        await expect
+            .poll(tooltipText, { timeout: 2000 })
+            .toBe('Clinics could not be loaded')
+
+        server.fail.me = undefined
+        await retry.click()
+        await expect
+            .element(screen.getByRole('button', { name: 'Clinic: Bristol' }))
+            .toBeInTheDocument()
+    })
+
+    it('collapsed none shows a placeholder tile', async () => {
+        await atDesktopWidth()
+        const screen = await renderSelector(
+            createServer({ assigned: [] }),
+            { collapsed: true },
+            'w-13'
+        )
+
+        const tile = screen.getByRole('img', { name: 'No clinic assigned' })
+        await expect.element(tile).toBeVisible()
+        expect(tile.element().getBoundingClientRect().width).toBe(28)
+        await tile.hover()
+        await expect
+            .poll(tooltipText, { timeout: 2000 })
+            .toBe('No clinic assigned')
+    })
+
+    it('collapsed single clinic shows the tile with its name', async () => {
+        await atDesktopWidth()
+        const screen = await renderSelector(
+            createServer({ assigned: [BRISTOL] }),
+            { collapsed: true },
+            'w-13'
+        )
+
+        const row = screen.getByText('Bristol Clinic')
+        await expect.element(row).toBeInTheDocument()
+        const tile = screen.getByTestId('header').element().firstElementChild
+        if (!tile) {
+            throw new Error('The selector rendered nothing')
+        }
+        expect(tile.getBoundingClientRect().width).toBe(28)
+        await userEvent.hover(tile)
+        await expect.poll(tooltipText, { timeout: 2000 }).toBe('Bristol Clinic')
     })
 
     it('keyboard: menu', async () => {

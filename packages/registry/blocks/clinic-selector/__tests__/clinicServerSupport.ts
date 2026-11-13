@@ -63,6 +63,8 @@ export const createServer = ({
     const fail: Failures = {}
     let meHeld: Promise<void> | undefined
     let releaseMe = () => {}
+    let searchHeld: Promise<void> | undefined
+    let releaseSearch = () => {}
     const server = {
         me,
         fail,
@@ -73,6 +75,13 @@ export const createServer = ({
             })
         },
         releaseMe: () => releaseMe(),
+        /** Holds search requests open until `releaseSearch` is called. */
+        holdSearch: () => {
+            searchHeld = new Promise((resolve) => {
+                releaseSearch = resolve
+            })
+        },
+        releaseSearch: () => releaseSearch(),
         meRequests: () =>
             requests.filter((request) => request.resource === 'me'),
         byIdRequests: () =>
@@ -116,6 +125,7 @@ export const createServer = ({
                         },
                     }
                 }
+                await searchHeld
                 if (fail.search !== undefined) {
                     throw failure(fail.search)
                 }

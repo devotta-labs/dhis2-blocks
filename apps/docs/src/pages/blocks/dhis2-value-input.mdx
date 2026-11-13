@@ -1,0 +1,174 @@
+---
+title: Value input
+description: A form control for each DHIS2 value type, accepting what the data entry grid accepts, in the system calendar.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="dhis2-value-input/kinds" />
+
+This example has one field of each kind that needs no server: text, number,
+date, date and time, time, age, yes or no, a yes-only checkbox, a short and a
+long option set, a short and a long multi-select, a coordinate and long text. `ValueInput` picks the control from
+the field's value type, so a host that does not know the types ahead, such as a
+form built from metadata, renders every field the same way. Search fields
+(organisation units and users) and file fields fetch from DHIS2, so the
+examples leave them out.
+
+## Installation
+
+<InstallCommand item="dhis2-value-input" />
+
+It installs `dhis2-value-types` (what each value type accepts) and
+`dhis2-value-display` (the calendar) with it. The text goes through
+`@dhis2/d2-i18n` as literal `i18n.t` calls, so `d2-app-scripts i18n extract`
+finds every string once the block is in your app's `src`.
+
+## Usage
+
+```tsx
+import { ValueInput } from '@/components/dhis2-value-input'
+
+const RESULT = {
+    valueType: 'TEXT',
+    options: [
+        { code: 'POS', name: 'Positive' },
+        { code: 'NEG', name: 'Negative' },
+    ],
+}
+const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
+
+<ValueInput
+    field={RESULT}
+    settings={SETTINGS}
+    label="Test result"
+    value={stored}
+    onChange={(value, problem) => {
+        if (problem === undefined) save(value)
+    }}
+/>
+```
+
+| Prop                        | Meaning                                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `field`                     | The value type, with `options` for an option set and a `fieldMask` if the value must match one.       |
+| `settings`                  | The system calendar and date format.                                                                  |
+| `label`, `description`      | The field's label and the text under it.                                                              |
+| `value`                     | The value as DHIS2 stores it; `undefined` or `null` for none.                                         |
+| `onChange(value, problem?)` | Called when a value is committed. `value` is what would be saved, or `null` to clear.                 |
+| `required`                  | The field needs a value. It is announced, and a choice field has no Clear.                            |
+| `readOnly`                  | Why the field cannot be edited. The field stays focusable and says why. Absent means editable.        |
+| `hiddenOptions`             | Option codes a rule hides.                                                                            |
+| `messages`                  | Rule or host messages under the field, each with a tone of `error`, `warning` or `info`.              |
+| `valueName`                 | The name of a stored organisation unit or file id. Without it the field shows "Unknown" and the id.   |
+| `storedFile`                | The file or image DHIS2 holds: `{ value, url }`, its file resource id and where it is served.         |
+| `id`                        | The field's id, for a host to link to or focus; focus lands in the field. Otherwise one is generated. |
+
+## When onChange fires
+
+`onChange` fires when a value is committed, never on each keystroke: when a
+typed field loses focus, when Enter is pressed in it, and at once for a pick (a
+radio, the checkbox, an option from the list, a date from the picker). A pop-up
+type shown inline holds a change and reports it when focus leaves the editor or
+on Enter outside a text area; only a save, such as a finished upload or Remove,
+is reported at once. Typing changes only the field's own draft, so a form of
+many fields does not re-render on every key, and rules run on a number someone
+finished typing, not on its first digit. Enter commits before the key reaches a
+surrounding form, so Enter to save saves what was typed.
+
+A `problem` means the typed text is not a value yet. Its `message` says why and
+its `text` is what was typed. The field keeps showing the text, and shows the
+message until the text is edited into a valid value. From then on the message
+stays hidden, whatever is typed, until the field is committed again, which
+reports the value or the problem the text has then. Committing the same text
+with the same problem again shows the problem without reporting it a second
+time. Nothing is reported on each change.
+Treat the field as not valid while a problem stands, as the form below does.
+
+A `value` from the host that is the value the field last reported is the host
+saying it back, whenever it arrives, and changes nothing; `null` and `undefined`
+count as the same value. Any other `value` replaces what was typed and drops any
+problem, for example when a rule assigns the field a value. This holds for
+typed fields and pop-up fields alike.
+
+A problem reports `null`, so after a problem an empty `value` (`undefined` or
+`null`) is the host saying the report back: the typed text and the problem stay.
+To empty such a field, or to reset any field whose `value` does not change,
+after a form is saved for example, give `ValueInput` a new React `key`.
+
+A field is identified by its value type, field mask, option codes, calendar and
+date format. A new `field` or `settings` that changes any of them replaces what
+was typed. If one `ValueInput` shows two different fields that share all of
+these, give it a React `key` for each field.
+
+## A form with rule effects
+
+<ExampleCard slug="dhis2-value-input/form" />
+
+The host owns what rules say, and passes it in: `required`, `readOnly`,
+`hiddenOptions` and `messages`. This form keeps each committed value, tracks
+which fields hold a problem, and lists the values on Save. Nothing is saved
+anywhere.
+
+## Kinds
+
+| Kind                 | Value types                                                                                                 | Control                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text, number         | `TEXT`, `EMAIL`, `PHONE_NUMBER`, `URL`, `LETTER`, `TIME`, the number types, `PERCENTAGE`, the integer types | A text input with the keyboard that suits the type, as wide as the value: narrow for a number or a time. It is checked when the field is left or Enter is pressed.                                                                                                                                                                                                                                                                                                                                                           |
+| Date, date and time  | `DATE`, `DATETIME`                                                                                          | Typed in the system calendar and date format, with the format shown as a hint. A "Choose date" button opens a calendar. A date and time waits for the time before it commits.                                                                                                                                                                                                                                                                                                                                                |
+| Yes or no            | `BOOLEAN`                                                                                                   | A radio group on one row: Yes, No.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Yes only             | `TRUE_ONLY`                                                                                                 | A checkbox with the label beside it, which ticks it too.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Option set           | Any value type with options                                                                                 | Five or fewer visible options: a radio group, with an option's `description` under its name. More: a combobox that takes the typed name or code.                                                                                                                                                                                                                                                                                                                                                                             |
+| Search               | `ORGANISATION_UNIT`, `USERNAME`                                                                             | A search of the server. Typing highlights the top result, which Enter or Tab picks; while a search is answering, Enter waits for it and Tab leaves the field. It needs the app-runtime provider and says it needs a connection when offline.                                                                                                                                                                                                                                                                                 |
+| Pop-up types, inline | `LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE`, `IMAGE`                                    | A form's version of the grid's editor, with no Save and Cancel. An age is one row: date of birth with a "Choose date" button and its format under it, then years, months and days, which move under it together when there is no room. A coordinate's latitude and longitude sit side by side. A multi-select of five or fewer options is a list of checkboxes; more is a combobox where each pick is a chip. A change is reported when focus leaves the editor or on Enter outside a text area; a save is reported at once. |
+| Read-only            | Anything else, and a pop-up type with no form editor                                                        | The value, and the reason it cannot be edited.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+
+A yes or no field or an option set that is not `required` has a Clear button
+once it holds a value, because a radio group cannot otherwise go back to no
+value: a quiet × Clear right after No or under a short option set's radios,
+and the combobox's own × for more than five options. The × in a
+long multi-select's box of chips clears every option, and an org unit or
+username field has the same × once it holds a value.
+Arrow keys move within a radio group and Tab leaves it. Names, not codes, are
+shown for options.
+
+A hidden option is left out of the list and refused when typed, unless the field
+already holds its code.
+
+A file upload belongs to the field. While it runs, `onChange` reports the
+problem "Still uploading", so a form cannot save the field without its file.
+When it finishes, `onChange` reports the file resource id. If the field
+unmounts mid-upload, the upload is aborted and nothing more is reported. A
+field that picked an organisation unit or uploaded a file remembers its name
+only while that field stays mounted. A remounted field shows "Unknown" and the
+id unless you pass `valueName`.
+
+`storedFile` gives the link and preview only while the field holds that file
+resource id: none once the file is removed or replaced here. After the host
+saves an upload, it passes `storedFile` with the new id, and the link shows,
+even at the same address, as DHIS2 serves an event's file.
+
+## For block authors
+
+`dhis2-value-input` also exports what the data entry grid is built from, so a
+block with its own editing surface does not copy it: `popupEditors` and
+`editorFor`, the pop-up editors by value type and their props type;
+`createFileUploads` and `FileUploads`, an upload map that outlives an editor;
+and `useServerSearch` and `searchFor`, the organisation unit and user search.
+Read the exports in the block's `index.ts` for their types.
+
+## Accessibility
+
+Each kind is built from the house [Field](/blocks/field) parts. One control
+sits in a `Field` with a label. A group of controls (a radio group, a list of
+checkboxes, an age, a coordinate, a file) is a `FieldSet` named by its legend,
+with each option a `FieldItem`. Either way the label, description and messages
+are tied to the control or the group, and it says when it has an error or
+needs a value. Focusing the
+field's `id` puts focus in it: on a radio group's checked radio, or its first,
+and on a pop-up field's first control. A read-only
+field is focusable and says why it cannot be edited. A problem is announced
+once when it appears, and so is a rule's error or warning that appears after the
+field is on the page; information from a rule is not announced. Colours are the house tokens, so the dark and
+high-contrast themes work.

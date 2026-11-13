@@ -120,7 +120,15 @@ const SPEC = {
     'sidebar-ring': ['grey-050', 'white'],
 } satisfies Record<string, [string, string]>
 // Not palette steps: the overlay is a translucent grey and the shadows are lists.
-const NOT_IN_PALETTE = ['overlay', 'shadow-card', 'shadow-popover']
+const NOT_IN_PALETTE = [
+    'overlay',
+    'shadow-card',
+    'shadow-popover',
+    'control-height',
+    'button-height',
+    'field-gap',
+    'field-group-gap',
+]
 
 const luminance = (hex: string): number => {
     const channels = [1, 3, 5].map((start) => {
@@ -308,4 +316,29 @@ describe('theme.css', () => {
             ).toBeGreaterThanOrEqual(floor)
         }
     )
+})
+
+describe('density', () => {
+    const compact = declarations(
+        blockOf(css, /\[data-density='compact'\]\s*\{([^}]*)\}/)
+    )
+
+    it("is @dhis2/ui's regular field height by default, and its dense one when compact", () => {
+        expect(defaultLayer.get('dhis2-control-height')).toBe('40px')
+        expect(compact.get('dhis2-control-height')).toBe('32px')
+    })
+
+    it('compact only overrides density variables', () => {
+        expect([...compact.keys()].toSorted()).toEqual(
+            [
+                'dhis2-button-height',
+                'dhis2-control-height',
+                'dhis2-field-gap',
+                'dhis2-field-group-gap',
+            ].toSorted()
+        )
+        for (const name of compact.keys()) {
+            expect(defaultLayer.has(name)).toBe(true)
+        }
+    })
 })

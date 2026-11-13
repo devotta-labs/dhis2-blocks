@@ -13,8 +13,8 @@ import { cellKey } from '../../model/types'
 import { addDaysIso, todayIso } from '@/components/dhis2-value-types'
 import { CELL, HEADER, inputOf, rig, withEditor } from '../__tests__/harness'
 import { Cell } from '../Cell'
-import type { PopupEditor } from '../popupEditors'
-import { AgeEditor } from './AgeEditor'
+import type { PopupEditor } from '@/components/dhis2-value-input'
+import { AgeEditor } from '@/components/dhis2-value-input/editors/AgeEditor'
 
 const AGE: Field = { valueType: 'AGE' }
 const TODAY = '2026-10-27'

@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { Button } from '@/components/dhis2/ui/button'
-import { composing } from '../useCellMode'
+import { composing } from '../composing'
 
 interface EditorButtonsProps {
     save(): void
@@ -10,7 +10,7 @@ interface EditorButtonsProps {
     children?: ReactNode
 }
 
-/** The row every editor ends with: its own buttons, then Save and Cancel. */
+/** The row every editor in a cell's dialog ends with: its own buttons, then Save and Cancel. */
 export const EditorButtons = ({
     save,
     cancel,
@@ -26,6 +26,10 @@ export const EditorButtons = ({
         </Button>
     </div>
 )
+
+/** Ids for `aria-describedby`, without the absent ones; undefined for none. */
+export const idList = (...ids: Array<string | false | undefined>) =>
+    ids.filter(Boolean).join(' ') || undefined
 
 /** A key handler for a field of an editor: Ctrl+Enter or ⌘+Enter saves. */
 export const saveOnCtrlEnter = (save: () => void) => (event: KeyboardEvent) => {

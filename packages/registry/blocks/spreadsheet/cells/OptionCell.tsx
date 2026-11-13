@@ -1,7 +1,17 @@
 import i18n from '@dhis2/d2-i18n'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useStore } from 'zustand'
+import {
+    composing,
+    formatCount,
+    matchCount,
+    MIN_LENGTH,
+    searchFor,
+    useAnnounced,
+    useServerSearch,
+} from '@/components/dhis2-value-input'
+import type { Found } from '@/components/dhis2-value-input'
 import {
     optionIndex,
     searchOptions,
@@ -13,10 +23,8 @@ import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { OptionList } from './OptionList'
-import { MIN_LENGTH, searchFor, useServerSearch } from './serverSearch'
-import type { Found } from './serverSearch'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
-import { addsRow, composing, READY_CLASS, useCellMode } from './useCellMode'
+import { addsRow, READY_CLASS, useCellMode } from './useCellMode'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
 const NO_MATCHES = {
@@ -24,27 +32,6 @@ const NO_MATCHES = {
     total: 0,
     names: new Map<string, ReactNode>(),
 }
-
-export const formatCount = (count: number) => {
-    try {
-        // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
-        return new Intl.NumberFormat(i18n.language.replace('_', '-')).format(
-            count
-        )
-    } catch {
-        // A locale Intl still cannot read.
-        return String(count)
-    }
-}
-
-/** "Showing … of … matches", when more match than a list draws; empty otherwise. */
-export const matchCount = (shown: number, total: number) =>
-    total > shown
-        ? i18n.t('Showing {{shown}} of {{total}} matches', {
-              shown: formatCount(shown),
-              total: formatCount(total),
-          })
-        : ''
 
 /** What a search's answer says: why it failed, that it found nothing, or how many it lists. */
 const searchNews = (found: Found, none: string, count: string) => {
@@ -60,16 +47,6 @@ const searchNews = (found: Found, none: string, count: string) => {
               results: formatCount(found.results.length),
           })
         : count
-}
-
-/** Says `text` in the grid's live region when it changes, not on every keystroke. */
-export const useAnnounced = (text: string) => {
-    const { announce } = useSpreadsheetContext()
-    useEffect(() => {
-        if (text !== '') {
-            announce(text)
-        }
-    }, [text, announce])
 }
 
 /**
@@ -93,7 +70,7 @@ export const OptionCell = memo(function OptionCell({
     aria,
     quickKeys,
 }: ControlProps & { quickKeys?: ReadonlyMap<string, string> }) {
-    const { store, settings, orgUnitNames } = useSpreadsheetContext()
+    const { store, settings, orgUnitNames, announce } = useSpreadsheetContext()
     const { view } = useCellContext()
     const server = searchFor(field.valueType)
     const searching = server !== undefined
@@ -165,7 +142,7 @@ export const OptionCell = memo(function OptionCell({
         }
         return found === undefined ? '' : searchNews(found, server.none, count)
     }
-    useAnnounced(news())
+    useAnnounced(news(), announce)
 
     const close = () => {
         setListing(false)

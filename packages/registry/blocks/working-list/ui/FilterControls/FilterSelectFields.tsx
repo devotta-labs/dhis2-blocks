@@ -1,5 +1,4 @@
 import React, { useId, useMemo } from 'react'
-import { cn } from '@/components/dhis2/ui/cn'
 import {
     Combobox,
     ComboboxChip,
@@ -199,40 +198,35 @@ export const ComboboxField = ({
                 onValueChange={(next: string[]) => onChange(next)}
             >
                 {/* The trigger covers the whole box so a press anywhere opens
-                    it; the chips sit above it and only their remove buttons
-                    take the pointer. */}
-                <div
+                    it; only the chips' remove buttons sit above it. */}
+                <ComboboxChips
                     ref={anchor}
-                    className={cn(
-                        selectTriggerVariants({ size: 'sm' }),
-                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)]'
-                    )}
+                    size="sm"
+                    className="pe-6 [&_[data-slot=combobox-chip-remove]]:relative"
                 >
                     <ComboboxTrigger
                         id={triggerId}
                         className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2"
                     />
                     {collapsed ? (
-                        <span className="pointer-events-none relative flex-1">
+                        <span>
                             {translate('{{count}} selected', {
                                 count: values.length,
                             })}
                         </span>
                     ) : (
-                        <ComboboxChips className="pointer-events-none relative min-h-6 flex-1 [&_[data-slot=combobox-chip-remove]]:pointer-events-auto">
-                            {values.map((value) => (
-                                <ComboboxChip
-                                    key={value}
-                                    removeLabel={translate('Remove {{label}}', {
-                                        label: labelFor(value),
-                                    })}
-                                >
-                                    {labelFor(value)}
-                                </ComboboxChip>
-                            ))}
-                        </ComboboxChips>
+                        values.map((value) => (
+                            <ComboboxChip
+                                key={value}
+                                removeLabel={translate('Remove {{label}}', {
+                                    label: labelFor(value),
+                                })}
+                            >
+                                {labelFor(value)}
+                            </ComboboxChip>
+                        ))
                     )}
-                </div>
+                </ComboboxChips>
                 {content}
             </Combobox>
         </Field>

@@ -1,6 +1,7 @@
 import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import { Combobox, ComboboxChips, ComboboxChipsInput } from './combobox'
 import { Input } from './input'
 import { SelectTrigger, Select, SelectValue } from './select'
 import { Textarea } from './textarea'
@@ -34,5 +35,19 @@ describe('form controls in forced colours', () => {
         const field = screen.getByLabelText('Field').element()
         expect(document.activeElement).toBe(field)
         expect(style(field).outlineStyle).toBe('solid')
+    })
+
+    it('outline a chips box while its input has keyboard focus', async () => {
+        const screen = await render(
+            <Combobox items={['Bo']} multiple>
+                <ComboboxChips data-testid="chips">
+                    <ComboboxChipsInput aria-label="Facilities" />
+                </ComboboxChips>
+            </Combobox>
+        )
+        await userEvent.tab()
+        expect(style(screen.getByTestId('chips').element()).outlineStyle).toBe(
+            'solid'
+        )
     })
 })

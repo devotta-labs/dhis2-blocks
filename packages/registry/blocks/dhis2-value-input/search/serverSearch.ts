@@ -2,7 +2,6 @@ import { FetchError, useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import type { DataEngine } from '../provider/context'
 
 // Fewer characters match too much to be worth asking the server.
 export const MIN_LENGTH = 2
@@ -24,7 +23,7 @@ interface SearchAnswer {
 }
 
 type Search = (
-    engine: DataEngine,
+    engine: ReturnType<typeof useDataEngine>,
     query: string,
     signal: AbortSignal
 ) => Promise<SearchAnswer>

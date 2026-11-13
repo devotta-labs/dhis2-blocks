@@ -1,3 +1,5 @@
+export { ageFromBirth, birthFromAge, futureBirth } from './age'
+export type { Age } from './age'
 export { addDaysIso, addMonthsIso, parseDateFormat, todayIso } from './dates'
 export { OPTION_LIMIT, optionIndex, searchOptions } from './optionSearch'
 export type { OptionIndex } from './optionSearch'
@@ -16,6 +18,7 @@ export {
     checkStored,
     coordinateNumber,
     inputModeFor,
+    textDirectionFor,
     parseCoordinate,
     parseTyped,
     typedText,

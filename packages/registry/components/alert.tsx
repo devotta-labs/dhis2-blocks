@@ -5,7 +5,7 @@ import { cn } from './cn'
 
 /** shadcn Alert restyled to match @dhis2/ui NoticeBox. */
 const alertVariants = cva(
-    'group/alert relative grid w-full gap-0.5 rounded-dhis2-sm border px-4 py-3 text-left text-sm leading-[19px] text-dhis2-foreground has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:fill-current *:[svg:not([class*=size-])]:size-6',
+    'group/alert relative grid w-full gap-0.5 rounded-dhis2-sm border px-4 py-3 text-start text-sm leading-[19px] text-dhis2-foreground has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:fill-current *:[svg:not([class*=size-])]:size-6',
     {
         variants: {
             variant: {

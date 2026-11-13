@@ -6,7 +6,7 @@ import { cn } from './cn'
 /**
  * shadcn Button (Base UI) restyled to match @dhis2/ui Button.
  * default = DHIS2 primary, outline = DHIS2 basic, secondary = DHIS2 secondary.
- * Sizes default/sm/lg match DHIS2 buttons; field-dense matches the sm Select.
+ * Sizes default/sm/lg match DHIS2 buttons, default following the density; field-dense matches the sm Select.
  */
 const buttonVariants = cva(
     "relative inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-dhis2-md border text-sm leading-4 font-normal tracking-[0.5px] whitespace-nowrap no-underline outline-none select-none focus-visible:underline focus-visible:outline-3 focus-visible:outline-solid focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring data-disabled:cursor-not-allowed data-disabled:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:fill-current [&_svg:not([class*='size-'])]:size-4",
@@ -25,7 +25,7 @@ const buttonVariants = cva(
                 link: 'border-transparent bg-transparent text-dhis2-primary underline-offset-4 hover:underline data-disabled:text-dhis2-disabled-foreground',
             },
             size: {
-                default: 'h-9 px-3',
+                default: 'h-(--dhis2-button-height) px-3',
                 sm: 'h-7 gap-0.5 px-1.5',
                 /** Matches a dense field, for buttons that sit beside one. */
                 'field-dense': 'h-(--dhis2-field-height-dense) gap-0.5 px-1.5',

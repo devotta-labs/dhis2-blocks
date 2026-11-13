@@ -102,9 +102,18 @@ export const formatDhis2Value = (
     switch (meta.valueType) {
         case 'TEXT':
         case 'LONG_TEXT':
+        case 'LETTER':
+        case 'EMAIL':
+        case 'PHONE_NUMBER':
+        case 'URL':
         case 'TIME':
         case 'USERNAME':
             return value
+        // The stored value is a file resource id, which means nothing to a reader.
+        case 'FILE_RESOURCE':
+            return i18n.t('File')
+        case 'IMAGE':
+            return i18n.t('Image')
         case 'MULTI_TEXT':
             return value.split(',').join(', ')
         case 'INTEGER':

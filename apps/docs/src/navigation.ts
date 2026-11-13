@@ -40,6 +40,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                     },
                     { title: 'Dialog', href: '/blocks/dialog' },
                     { title: 'Dropdown Menu', href: '/blocks/dropdown-menu' },
+                    { title: 'Field', href: '/blocks/field' },
                     { title: 'Input', href: '/blocks/input' },
                     { title: 'Input Group', href: '/blocks/input-group' },
                     { title: 'Popover', href: '/blocks/popover' },
@@ -78,6 +79,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                 title: 'Data entry',
                 links: [
                     { title: 'Spreadsheet', href: '/blocks/spreadsheet' },
+                    { title: 'Value input', href: '/blocks/dhis2-value-input' },
                     {
                         title: 'Tracker Data Entry',
                         href: '/blocks/tracker-data-entry',

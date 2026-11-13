@@ -139,6 +139,23 @@ describe('the clinic selector lab server', () => {
         ).toEqual([flatClinicId(1), OUTSIDE].sort())
     })
 
+    it('searches outside the assigned subtrees too when told to ignore the scope filter', () => {
+        const nurse = {
+            assignedClinics: 0,
+            assignedDistricts: 1,
+            clinicsPerDistrict: 40,
+        }
+        expect(
+            search('hospital', nurse).parsed.clinics.map(({ id }) => id)
+        ).not.toContain(OUTSIDE)
+        expect(
+            search('hospital', {
+                ...nurse,
+                ignoreScopeFilter: true,
+            }).parsed.clinics.map(({ id }) => id)
+        ).toContain(OUTSIDE)
+    })
+
     it('gives every name 120 characters, or a B, when asked', () => {
         const long = me({ longNames: true, assignedDistricts: 1 }).assigned
         expect(

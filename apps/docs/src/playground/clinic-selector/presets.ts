@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     collapsed: false,
     value: 'uncontrolled',
     label: 'Clinic',
+    rtl: false,
     storageThrows: false,
     ignoreScopeFilter: false,
     failSearch: false,
@@ -45,12 +46,18 @@ const remembered = (current: string | undefined, recent: string[]) =>
 export const GONE_VALUE = remembered(GONE, [GONE])
 /** A value cut off mid-write. */
 export const CORRUPT_VALUE = '{"current":"labFlat0002","recent":['
+/** A value that parses, but whose ids are not uids, so they never reach the by-id filter. */
+export const NOT_UID_VALUE = remembered('clinic-0002', ['clinic-0002'])
 
 const DISTRICT_NURSE: Partial<LabSettings> = {
     assignedClinics: 0,
     assignedDistricts: 1,
     clinicsPerDistrict: 40,
 }
+const FIVE_PICKS = remembered(
+    districtClinicId(1, 1),
+    [1, 2, 3, 4, 5].map((index) => districtClinicId(1, index))
+)
 const NURSE_PICKS = remembered(districtClinicId(1, 5), [
     districtClinicId(1, 5),
     districtClinicId(1, 12),
@@ -78,6 +85,8 @@ const edge = (
     ...preset(group, name, changes, extra),
     folded: true,
 })
+
+const UNTICK = 'Untick the failure, then press Retry.'
 
 const failing = (behaviour: 'fails' | 'hangs'): Partial<LabSettings> => ({
     network: { delay: 50, endpoints: { me: { behaviour } } },
@@ -167,6 +176,15 @@ export const PRESETS: readonly Preset[] = [
     ),
     edge('Assignment', 'No clinic assigned', { assignedClinics: 0 }),
     edge(
+        'Assignment',
+        'Collapsed, no clinic assigned',
+        { assignedClinics: 0, collapsed: true },
+        {
+            description:
+                'An empty tile; hover it for No clinic assigned. Narrow the page below the md breakpoint and the text returns.',
+        }
+    ),
+    edge(
         'Remembered',
         'Remembered clinic no longer exists',
         {},
@@ -186,6 +204,21 @@ export const PRESETS: readonly Preset[] = [
             seed: { u1: CORRUPT_VALUE },
         }
     ),
+    edge(
+        'Remembered',
+        'Remembered id is not a uid',
+        {},
+        {
+            description:
+                'Storage holds an id that parses but is not a uid: it never goes to the server, it is dropped from storage, and the first clinic shows.',
+            seed: { u1: NOT_UID_VALUE },
+        }
+    ),
+    edge('Remembered', 'Six recents, five kept', DISTRICT_NURSE, {
+        description:
+            'Five clinics of the district are Recent already. Type to search and pick a sixth: it goes on top, and the oldest drops out.',
+        seed: { u1: FIVE_PICKS },
+    }),
     edge(
         'Remembered',
         'Storage throws',
@@ -218,11 +251,47 @@ export const PRESETS: readonly Preset[] = [
     edge(
         'Scope',
         'Server ignores the scope filter',
-        { ignoreScopeFilter: true },
+        { ...DISTRICT_NURSE, ignoreScopeFilter: true },
         {
             description:
-                "Storage remembers a clinic outside the user's units and the server returns it anyway: the block's own path check drops it.",
+                "Storage remembers a clinic outside the user's units and the server returns it anyway: the block's own path check drops it. Type 'hospital': the waterfall shows the server also returned Connaught Hospital, outside the district, and the menu leaves it out.",
             seed: { u1: remembered(OUTSIDE, [OUTSIDE]) },
+        }
+    ),
+    edge(
+        'Controlled host',
+        'Controlled host that follows picks',
+        { value: 'follows' },
+        {
+            description:
+                'The host holds the value and adopts each onValueChange: pick a clinic and the page, the announcement and Remembered follow.',
+        }
+    ),
+    edge(
+        'Controlled host',
+        'Controlled host that ignores picks',
+        { value: 'valid' },
+        {
+            description:
+                'The host holds one clinic and ignores onValueChange: a pick is logged, but the selector, the page and Remembered stay, and nothing is announced.',
+        }
+    ),
+    edge(
+        'Controlled host',
+        'Controlled, value does not exist',
+        { value: 'missing' },
+        {
+            description:
+                'The host passes an id no unit has: it is checked, not found, and the selector asks to choose.',
+        }
+    ),
+    edge(
+        'Languages',
+        'Right to left',
+        { ...DISTRICT_NURSE, rtl: true },
+        {
+            description:
+                "The sidebar mirrors, the tile at the inline start and the chevron at the end. The menus open on the page's body, which stays left to right here; in an app that sets dir on its document they mirror too, the check at the inline end.",
         }
     ),
     edge(
@@ -247,8 +316,17 @@ export const PRESETS: readonly Preset[] = [
     ),
     edge('Server', 'Clinics fail to load', failing('fails'), {
         description:
-            'The user request fails, and so do its two retries: after about three seconds, the error with Retry.',
+            'The user request fails, and so do its two retries: after about three seconds, the error with Retry. Set Network back to Normal, then press Retry.',
     }),
+    edge(
+        'Server',
+        'Collapsed, clinics fail to load',
+        { ...failing('fails'), collapsed: true },
+        {
+            description:
+                'After about three seconds, a retry tile; hover it for the error. Set Network back to Normal, then press the tile.',
+        }
+    ),
     edge('Server', 'Clinics never load', failing('hangs'), {
         description: 'The user request never answers: loading, for good.',
     }),
@@ -257,8 +335,7 @@ export const PRESETS: readonly Preset[] = [
         'Search fails',
         { ...DISTRICT_NURSE, failSearch: true },
         {
-            description:
-                "Open the menu and type 'chc': after two retries, about three seconds, the search fails with Retry in the menu.",
+            description: `Open the menu and type 'chc': after two retries, about three seconds, the search fails with Retry in the menu. ${UNTICK}`,
         }
     ),
     edge(
@@ -266,8 +343,7 @@ export const PRESETS: readonly Preset[] = [
         'Validity check fails',
         { ...DISTRICT_NURSE, failValidity: true },
         {
-            description:
-                'Storage remembers two clinics in the district, and checking them fails, retries included: after about three seconds, the error with Retry.',
+            description: `Storage remembers two clinics in the district, and checking them fails, retries included: after about three seconds, the error with Retry. ${UNTICK}`,
             seed: { u1: NURSE_PICKS },
         }
     ),

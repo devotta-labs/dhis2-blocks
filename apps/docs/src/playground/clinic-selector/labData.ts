@@ -13,12 +13,17 @@ export interface LabSettings {
     sameInitials: boolean
     userId: LabUser
     collapsed: boolean
-    /** The host's `value`: none, a clinic inside the user's scope, or one outside it. */
-    value: 'uncontrolled' | 'valid' | 'outside'
+    /**
+     * The host's `value`: none; a clinic inside the user's scope, held whatever the user picks; the same clinic to
+     * start, adopting each pick; one outside the scope; or an id no unit has.
+     */
+    value: 'uncontrolled' | 'valid' | 'follows' | 'outside' | 'missing'
     label: 'Clinic' | 'Facility'
+    /** The canvas is laid out right to left. */
+    rtl: boolean
     /** Every `localStorage` call throws while the lab is open. */
     storageThrows: boolean
-    /** The validity check answers with units outside the user's hierarchy too. */
+    /** The validity check and the search answer with units outside the user's hierarchy too. */
     ignoreScopeFilter: boolean
     /** The search answers with a 500; the user request and the validity check still work. */
     failSearch: boolean
@@ -212,9 +217,10 @@ export type LabData = ReturnType<typeof generateLabData>
 export const isInScope = (unit: LabUnit, data: LabData) =>
     data.assigned.some((assigned) => unit.path.split('/').includes(assigned.id))
 
-/** The host's `value` for the setting: a clinic in scope, preferring one reached through a district, or one outside. */
+/** The host's first `value` for the setting: a clinic in scope, preferring one reached through a district, one outside, or none. */
 export const valueFor = (settings: LabSettings, data: LabData) => {
     if (settings.value === 'outside') return OUTSIDE
+    if (settings.value === 'missing') return GONE
     if (settings.value === 'uncontrolled') return undefined
     const assignedIds = new Set(data.assigned.map(({ id }) => id))
     const throughDistrict = data.units.find(

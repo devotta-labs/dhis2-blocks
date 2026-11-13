@@ -87,6 +87,9 @@ const settled = async ({ result }: Rendered) => {
 const politeRegion = () =>
     document.querySelector('body > [role="status"][aria-live="polite"]')
 
+/** Longer than the announcer takes to say a text. */
+const announcerIdle = () => new Promise((resolve) => setTimeout(resolve, 300))
+
 const names = (clinics: Clinic[]) => clinics.map((c) => c.displayName)
 
 afterEach(() => {
@@ -340,6 +343,27 @@ describe('ClinicProvider', () => {
         ])
     })
 
+    it('drops search results outside the assigned paths', async () => {
+        const root = district('Root')
+        const inside = unit('Ngelehun', root.path)
+        const outside = unit('Ngelehux', '/Other')
+        const server = createServer({
+            assigned: [root],
+            found: [inside, outside],
+        })
+        const rendered = await renderClinic(server)
+        await settled(rendered)
+
+        await rendered.act(() =>
+            rendered.result.current.context.setQuery('ngel')
+        )
+
+        await expect
+            .poll(() => rendered.result.current.context.search.status)
+            .toBe('ready')
+        expect(rendered.result.current.context.search.clinics).toEqual([inside])
+    })
+
     it('filters locally past eight units with no children', async () => {
         const flat = [
             'Ocean',
@@ -399,6 +423,59 @@ describe('ClinicProvider', () => {
         expect(server.byIdRequests()).toHaveLength(1)
         expect(rendered.seen.slice(before)).not.toContain('pending')
         expect(rendered.seen.slice(before)).not.toContain('failed')
+    })
+
+    it('a controlled host that ignores a pick sees no change', async () => {
+        const root = district('Root')
+        const [v, x] = ['Vclinic', 'Xclinic'].map((name) =>
+            unit(name, root.path)
+        )
+        writeRemembered('u1', { current: v.id, recent: [v.id] })
+        const onValueChange = vi.fn()
+        const server = createServer({ assigned: [root], known: [v] })
+        const rendered = await renderClinic(server, {
+            value: v.id,
+            onValueChange,
+        })
+        await settled(rendered)
+        const before = readRemembered('u1')
+        // The live region outlives each test, so it starts empty once an earlier test's text is said.
+        await announcerIdle()
+        politeRegion()?.replaceChildren()
+
+        await rendered.act(() => rendered.result.current.hook.setClinic(x))
+        await announcerIdle()
+
+        expect(onValueChange).toHaveBeenCalledTimes(1)
+        expect(onValueChange).toHaveBeenCalledWith(x)
+        expect(rendered.result.current.hook.clinic).toEqual(v)
+        expect(readRemembered('u1')).toEqual(before)
+        expect(before).toEqual({ current: v.id, recent: [v.id] })
+        expect(politeRegion()?.textContent ?? '').toBe('')
+    })
+
+    it('a controlled host that adopts a pick is remembered and announced', async () => {
+        const root = district('Root')
+        const [v, x] = ['Vclinic', 'Xclinic'].map((name) =>
+            unit(name, root.path)
+        )
+        const server = createServer({ assigned: [root], known: [v] })
+        const rendered = await renderClinic(server, {
+            value: v.id,
+            adopt: true,
+        })
+        await settled(rendered)
+        const checks = server.byIdRequests().length
+
+        await rendered.act(() => rendered.result.current.hook.setClinic(x))
+
+        await expect.poll(() => rendered.result.current.hook.clinic).toEqual(x)
+        await expect.poll(() => readRemembered('u1').current).toBe(x.id)
+        expect(readRemembered('u1').recent).toEqual([x.id, v.id])
+        await expect
+            .poll(() => politeRegion()?.textContent)
+            .toBe('Clinic changed to Xclinic')
+        expect(server.byIdRequests()).toHaveLength(checks)
     })
 
     it('re-validates a controlled value that changes after mount', async () => {

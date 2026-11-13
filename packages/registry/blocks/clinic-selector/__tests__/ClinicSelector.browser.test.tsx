@@ -57,13 +57,24 @@ const searchBox = () => page.getByPlaceholder('Search clinics')
 const tooltipText = () =>
     document.querySelector('[data-slot="tooltip-content"]')?.textContent
 
-/** The current row's background and its check's inset from the row's end. */
+/** The current row's background, its check's inset from the row's inline end, and whether the check overlaps the tile. */
 const currentRowLook = (row: Element) => {
     const rowBox = row.getBoundingClientRect()
-    const check = [...row.querySelectorAll('svg')].at(-1)
+    const checkBox = [...row.querySelectorAll('svg')]
+        .at(-1)
+        ?.getBoundingClientRect()
+    const tileBox = row.querySelector('.size-7')?.getBoundingClientRect()
+    if (!checkBox || !tileBox) {
+        throw new Error('The row has no check or no tile')
+    }
+    const rtl = getComputedStyle(row).direction === 'rtl'
     return {
         background: getComputedStyle(row).backgroundColor,
-        inset: rowBox.right - (check?.getBoundingClientRect().right ?? 0),
+        inset: rtl
+            ? checkBox.left - rowBox.left
+            : rowBox.right - checkBox.right,
+        overlapsTile:
+            checkBox.left < tileBox.right && tileBox.left < checkBox.right,
     }
 }
 
@@ -257,41 +268,57 @@ describe('ClinicSelector', () => {
         ).toHaveLength(0)
     })
 
-    it('marks the current row the same way in both forms', async () => {
-        const menu = await renderSelector(
-            createServer({ assigned: [OCEAN, BRISTOL, HARBOUR] })
-        )
-        await menu
-            .getByRole('button', { name: 'Clinic: Bristol Clinic' })
-            .click()
-        const radio = page.getByRole('menuitemradio', {
-            name: 'Bristol Clinic',
-        })
-        await expect.element(radio).toHaveAttribute('aria-checked', 'true')
-        // Another row takes the highlight, so only the current-row styling is compared.
-        await page
-            .getByRole('menuitemradio', { name: 'Ocean Beach Clinic' })
-            .hover()
-        const menuLook = currentRowLook(radio.element())
-        await userEvent.keyboard('{Escape}')
-        await menu.unmount()
+    it.each(['ltr', 'rtl'] as const)(
+        'marks the current row the same way in both forms, %s',
+        async (dir) => {
+            // The menus portal to the body, so the direction goes on the document, as an RTL app sets it.
+            document.documentElement.dir = dir
+            onTestFinished(() =>
+                document.documentElement.removeAttribute('dir')
+            )
+            const menu = await renderSelector(
+                createServer({ assigned: [OCEAN, BRISTOL, HARBOUR] })
+            )
+            await menu
+                .getByRole('button', { name: 'Clinic: Bristol Clinic' })
+                .click()
+            const radio = page.getByRole('menuitemradio', {
+                name: 'Bristol Clinic',
+            })
+            await expect.element(radio).toHaveAttribute('aria-checked', 'true')
+            // Another row takes the highlight, so only the current-row styling is compared.
+            await page
+                .getByRole('menuitemradio', { name: 'Ocean Beach Clinic' })
+                .hover()
+            const menuLook = currentRowLook(radio.element())
+            await userEvent.keyboard('{Escape}')
+            await menu.unmount()
 
-        const search = await renderSelector(
-            createServer({ assigned: [BO, OCEAN] })
-        )
-        await search
-            .getByRole('combobox', { name: 'Clinic: Bo District' })
-            .click()
-        const option = page.getByRole('option', { name: 'Bo District' })
-        await expect.element(option).toHaveAttribute('aria-selected', 'true')
-        await page.getByRole('option', { name: 'Ocean Beach Clinic' }).hover()
-        const searchLook = currentRowLook(option.element())
+            const search = await renderSelector(
+                createServer({ assigned: [BO, OCEAN] })
+            )
+            await search
+                .getByRole('combobox', { name: 'Clinic: Bo District' })
+                .click()
+            const option = page.getByRole('option', { name: 'Bo District' })
+            await expect
+                .element(option)
+                .toHaveAttribute('aria-selected', 'true')
+            await page
+                .getByRole('option', { name: 'Ocean Beach Clinic' })
+                .hover()
+            const searchLook = currentRowLook(option.element())
 
-        expect(searchLook.background).toBe(menuLook.background)
-        expect(Math.abs(searchLook.inset - menuLook.inset)).toBeLessThanOrEqual(
-            1
-        )
-    })
+            expect(searchLook.background).toBe(menuLook.background)
+            expect(menuLook.inset).toBeGreaterThanOrEqual(0)
+            expect(menuLook.inset).toBeLessThan(24)
+            expect(
+                Math.abs(searchLook.inset - menuLook.inset)
+            ).toBeLessThanOrEqual(1)
+            expect(menuLook.overlapsTile).toBe(false)
+            expect(searchLook.overlapsTile).toBe(false)
+        }
+    )
 
     it('shows Choose a clinic when the controlled value is out of scope', async () => {
         const onValueChange = vi.fn()

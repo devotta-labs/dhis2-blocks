@@ -44,6 +44,11 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
+    shell: lazy(() =>
+        import('./shell/ShellLab').then(({ ShellLab }) => ({
+            default: ShellLab,
+        }))
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

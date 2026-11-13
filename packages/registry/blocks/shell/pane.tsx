@@ -1,7 +1,9 @@
 import { cn } from '@/components/dhis2/ui/cn'
 import React, {
     createContext,
+    useCallback,
     useContext,
+    useEffect,
     useId,
     useMemo,
     useState,
@@ -31,6 +33,8 @@ interface PaneContextValue {
     collapsible: boolean
     collapsed: boolean
     toggle: () => void
+    /** Tells the pane it has a header to carry its collapse button; returns the undo. */
+    registerHeader: () => () => void
 }
 
 const PaneContext = createContext<PaneContextValue | undefined>(undefined)
@@ -98,7 +102,8 @@ export interface PaneProps extends Omit<PanelProps, 'panelRef'> {
  *
  * In a PaneGroup it is a react-resizable-panels Panel and takes its props. A
  * number for `defaultSize`, `minSize` or `maxSize` is in pixels, and a pane
- * with a pixel `defaultSize` keeps it when the group resizes. `collapsible`
+ * with a `defaultSize` in pixels (a number, or a string ending in `px`) keeps
+ * it when the group resizes. `collapsible`
  * gives its PaneHeader a button that folds it to `collapsedSize`; dragging it
  * below `minSize` folds it too. Name it with `aria-label` or `aria-labelledby`.
  */
@@ -111,12 +116,18 @@ export const Pane = ({
     onCollapsedChange,
     onResize,
     className,
+    style,
     children,
     ...props
 }: PaneProps) => {
     const orientation = useContext(PaneGroupContext)
     const panelRef = usePanelRef()
     const [collapsed, setCollapsed] = useState(false)
+    const [headers, setHeaders] = useState(0)
+    const registerHeader = useCallback(() => {
+        setHeaders((count) => count + 1)
+        return () => setHeaders((count) => count - 1)
+    }, [])
     const context = useMemo(
         () =>
             orientation && {
@@ -129,15 +140,21 @@ export const Pane = ({
                         panelRef.current.expand()
                     } else panelRef.current?.collapse()
                 },
+                registerHeader,
             },
-        [orientation, side, collapsible, collapsed, panelRef]
+        [orientation, side, collapsible, collapsed, panelRef, registerHeader]
     )
     const surface = cn(
         SURFACE,
-        orientation && 'h-full overflow-hidden',
-        orientation && SEPARATED[orientation],
+        // Docked, panes share hairlines; on its own, a pane has an edge.
+        orientation
+            ? cn('h-full', SEPARATED[orientation])
+            : 'border border-dhis2-border-strong',
         // Folded, only the part with the collapse button shows.
-        collapsed && '[&>*:not(:has([data-slot=pane-toggle]))]:hidden',
+        // The button is in this pane's own header, or one wrapper down; a
+        // pane nested in the content has its button deeper than that.
+        collapsed &&
+            '[&>*:not(:has(>[data-slot=pane-toggle])):not(:has(>*>[data-slot=pane-toggle]))]:hidden',
         density && DENSITY[density],
         className
     )
@@ -146,6 +163,16 @@ export const Pane = ({
         <PaneGroupContext.Provider value={undefined}>
             <PaneContext.Provider value={context}>
                 {children}
+                {/* Dragged shut with no header to open it from, it gets a button of its own. */}
+                {context && collapsed && headers === 0 && (
+                    <div className="flex h-full items-start justify-center pt-(--dhis2-pane-pad)">
+                        <CollapseButton
+                            pane={context}
+                            label={props['aria-label']}
+                            labelledBy={props['aria-labelledby']}
+                        />
+                    </div>
+                )}
             </PaneContext.Provider>
         </PaneGroupContext.Provider>
     )
@@ -168,6 +195,7 @@ export const Pane = ({
         return (
             <section
                 {...attributes}
+                style={style}
                 id={id === undefined ? undefined : String(id)}
                 data-slot="pane"
                 data-density={density}
@@ -181,7 +209,8 @@ export const Pane = ({
         <Panel
             // A pane sized in pixels keeps that size when the group resizes.
             groupResizeBehavior={
-                Number.isFinite(props.defaultSize)
+                Number.isFinite(props.defaultSize) ||
+                String(props.defaultSize).endsWith('px')
                     ? 'preserve-pixel-size'
                     : undefined
             }
@@ -195,6 +224,8 @@ export const Pane = ({
             data-density={density}
             data-collapsed={collapsed ? '' : undefined}
             className={surface}
+            // The panel scrolls by default; here only PaneContent does.
+            style={{ overflow: 'hidden', ...style }}
             onResize={(size, id, previous) => {
                 onResize?.(size, id, previous)
                 const next = panelRef.current?.isCollapsed() ?? false
@@ -218,7 +249,7 @@ export const PaneHandle = ({ className, ...props }: SeparatorProps) => (
         {...props}
         data-slot="pane-handle"
         className={cn(
-            'relative z-20 basis-0 outline-none after:absolute hover:after:bg-dhis2-border-strong focus-visible:after:bg-dhis2-ring aria-[orientation=horizontal]:after:inset-x-0 aria-[orientation=horizontal]:after:-inset-y-0.5 aria-[orientation=vertical]:after:-inset-x-0.5 aria-[orientation=vertical]:after:inset-y-0 data-[separator=active]:after:bg-dhis2-ring',
+            'relative z-20 basis-0 outline-none focus-visible:outline-3 focus-visible:outline-dhis2-ring focus-visible:outline-solid after:absolute hover:after:bg-dhis2-border-strong focus-visible:after:bg-dhis2-ring aria-[orientation=horizontal]:after:inset-x-0 aria-[orientation=horizontal]:after:-inset-y-0.5 aria-[orientation=vertical]:after:-inset-x-0.5 aria-[orientation=vertical]:after:inset-y-0 data-[separator=active]:after:bg-dhis2-ring',
             className
         )}
     />
@@ -248,16 +279,19 @@ const PANEL_LINE = {
 
 const CollapseButton = ({
     pane,
-    titleId,
+    label,
+    labelledBy,
 }: {
     pane: PaneContextValue
-    titleId: string
+    label?: string
+    labelledBy?: string
 }) => (
     <button
         type="button"
         data-slot="pane-toggle"
         aria-expanded={!pane.collapsed}
-        aria-labelledby={titleId}
+        aria-label={label}
+        aria-labelledby={labelledBy}
         className="flex size-(--dhis2-control-h-sm) shrink-0 cursor-pointer items-center justify-center rounded-dhis2-sm border-0 bg-transparent p-0 text-dhis2-muted-foreground outline-none hover:bg-dhis2-accent focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring focus-visible:outline-solid"
         onClick={pane.toggle}
     >
@@ -298,11 +332,13 @@ export const PaneHeader = ({
 }: PaneHeaderProps) => {
     const pane = useContext(PaneContext)
     const titleId = useId()
+    const registerHeader = pane?.registerHeader
+    useEffect(() => registerHeader?.(), [registerHeader])
     const collapsed = pane?.collapsed ?? false
     // Folded sideways, a pane is a rail with room for the button only.
     const rail = collapsed && pane?.orientation === 'horizontal'
     const toggle = pane?.collapsible && (
-        <CollapseButton pane={pane} titleId={titleId} />
+        <CollapseButton pane={pane} labelledBy={titleId} />
     )
     return (
         <header

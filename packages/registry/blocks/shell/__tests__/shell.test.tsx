@@ -1,6 +1,7 @@
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import { roleColour } from '../../../test/roleColour'
 import {
     Pane,
     PaneContent,
@@ -86,6 +87,9 @@ describe('PaneGroup', () => {
         expect(surface('navigator').borderInlineStartWidth).toBe('0px')
         expect(surface('middle').borderInlineStartWidth).toBe('1px')
         expect(surface('bottom').borderTopWidth).toBe('1px')
+        expect(surface('middle').borderInlineStartColor).toBe(
+            roleColour('border-strong')
+        )
         expect(surface('middle').boxShadow).toBe('none')
         expect(surface('middle').borderRadius).toBe('0px')
     })
@@ -127,6 +131,66 @@ describe('a collapsible Pane', () => {
         expect(box('navigator').width).toBe(264)
     })
 
+    it('hides a nested collapsible pane along with the rest of its content', async () => {
+        await render(
+            <div style={{ width: 800, height: 300 }}>
+                <PaneGroup>
+                    <Pane defaultSize={400} collapsible data-testid="outer">
+                        <PaneHeader title="Outer" />
+                        <PaneContent>
+                            <PaneGroup orientation="vertical">
+                                <Pane collapsible>
+                                    <PaneHeader title="Inner" />
+                                </Pane>
+                                <Pane />
+                            </PaneGroup>
+                        </PaneContent>
+                    </Pane>
+                    <Pane />
+                </PaneGroup>
+            </div>
+        )
+        const inner = page.getByRole('heading', { name: 'Inner' })
+        await expect.element(inner).toBeVisible()
+        await page.getByRole('button', { name: 'Outer' }).click()
+        // Hidden content leaves the accessibility tree, so the role finds nothing.
+        await expect.element(inner).not.toBeInTheDocument()
+        expect(box('outer').width).toBe(40)
+    })
+
+    it('does not scroll itself: only its content does', async () => {
+        await render(<App />)
+        expect(surface('navigator').overflowY).toBe('hidden')
+    })
+
+    it('keeps a button to open it when it has no header', async () => {
+        await render(
+            <div style={{ width: 800, height: 300 }}>
+                <PaneGroup>
+                    <Pane
+                        defaultSize={300}
+                        collapsible
+                        aria-label="Notes"
+                        data-testid="notes"
+                    >
+                        <PaneContent>Nothing yet</PaneContent>
+                    </Pane>
+                    <PaneHandle aria-label="Resize notes" />
+                    <Pane />
+                </PaneGroup>
+            </div>
+        )
+        await expect.poll(() => box('notes').width).toBe(300)
+        // No header, so no button while it is open; the keyboard folds it.
+        page.getByRole('separator', { name: 'Resize notes' }).element().focus()
+        await userEvent.keyboard('{Home}')
+        const open = page.getByRole('button', { name: 'Notes' })
+        await expect.element(open).toHaveAttribute('aria-expanded', 'false')
+        expect(box('notes').width).toBe(40)
+        await open.click()
+        await expect.element(page.getByText('Nothing yet')).toBeVisible()
+    })
+
     it('puts its button, and the marked side of its icon, toward the other panes', async () => {
         await render(<App />)
         const button = (name: string) =>
@@ -164,10 +228,40 @@ describe('Pane', () => {
         )
         const scroller = page.getByTestId('content').element()
         expect(box('content').top).toBe(box('toolbar').bottom)
-        expect(box('content').bottom).toBe(box('pane').bottom)
+        // A pane on its own has a 1px edge.
+        expect(box('content').bottom).toBe(box('pane').bottom - 1)
         scroller.scrollTop = 300
-        expect(box('header').top).toBe(box('pane').top)
+        expect(box('header').top).toBe(box('pane').top + 1)
         expect(box('tall').top).toBeLessThan(box('pane').top)
+    })
+})
+
+describe('Pane', () => {
+    it('has an edge of its own outside a group', async () => {
+        await render(<Pane data-testid="alone">Content</Pane>)
+        const style = getComputedStyle(page.getByTestId('alone').element())
+        expect(style.borderTopWidth).toBe('1px')
+        expect(style.borderTopColor).toBe(roleColour('border-strong'))
+        expect(style.boxShadow).toBe('none')
+        expect(style.borderRadius).toBe('0px')
+    })
+
+    it('keeps a pixel size given as a string when its group resizes', async () => {
+        const Sized = ({ width }: { width: number }) => (
+            <div style={{ width, height: 200 }}>
+                <PaneGroup>
+                    <Pane defaultSize="200px" data-testid="fixed" />
+                    <Pane />
+                </PaneGroup>
+            </div>
+        )
+        const screen = await render(<Sized width={800} />)
+        await expect.poll(() => box('fixed').width).toBe(200)
+        await screen.rerender(<Sized width={1200} />)
+        // Kept in proportion it would be 300; the library rounds to a pixel.
+        await expect
+            .poll(() => Math.abs(box('fixed').width - 200))
+            .toBeLessThanOrEqual(1)
     })
 })
 
@@ -190,5 +284,23 @@ describe('Section', () => {
             .not.toBeInTheDocument()
         await userEvent.keyboard(' ')
         await expect.element(trigger).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('takes its heading level from the sections around it, or a prop', async () => {
+        await render(
+            <Pane>
+                <Section title="Outer">
+                    <Section title="Inner">Content</Section>
+                </Section>
+                <Section title="Top" level={2}>
+                    Content
+                </Section>
+            </Pane>
+        )
+        const level = (name: string) =>
+            page.getByRole('heading', { name }).element().tagName
+        expect(level('Outer')).toBe('H3')
+        expect(level('Inner')).toBe('H4')
+        expect(level('Top')).toBe('H2')
     })
 })

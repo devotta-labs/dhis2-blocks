@@ -186,6 +186,7 @@ const EXAMPLES = {
     ),
     Section: (density: DensityMode) => (
         <Pair density={density}>
+            <PaneHeader title="Sections" />
             <PaneContent>
                 <Section title="Open by default">
                     <Facts items={FACTS} />

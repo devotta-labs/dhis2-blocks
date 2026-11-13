@@ -502,7 +502,7 @@ export const AppShell = () => {
                                 {i18n.t('Highlight data quality issues')}
                             </Label>
                         </div>
-                        <Pane className="border border-dhis2-border-strong">
+                        <Pane>
                             <WorkingList
                                 programId={selectedProgramSummary.id}
                                 orgUnitId={urlState.orgUnitId}

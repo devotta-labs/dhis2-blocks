@@ -94,18 +94,15 @@ import {
     WorkingListFilterControls,
     WorkingListViewSwitcher,
 } from '@/components/working-list'
-import { Pane } from '@/components/shell'
 
 export const ChildProgrammeList = () => (
-    <Pane>
-        <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
-            <WorkingListViewSwitcher />
-            <WorkingListToolbar>
-                <WorkingListFilterControls />
-            </WorkingListToolbar>
-            <WorkingListTable />
-        </WorkingList>
-    </Pane>
+    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
+        <WorkingListViewSwitcher />
+        <WorkingListToolbar>
+            <WorkingListFilterControls />
+        </WorkingListToolbar>
+        <WorkingListTable />
+    </WorkingList>
 )
 ```
 

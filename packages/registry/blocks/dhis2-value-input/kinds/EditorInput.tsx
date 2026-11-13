@@ -121,17 +121,17 @@ export const EditorInput = ({
         pending.current = undefined
         replaced.current = undefined
     }
-    // An upload the field leaving the page stops is no file: the host gets back what the field held. Not when the host
-    // has given a value of its own in the upload's place, as a rule that assigns one and locks the field does.
+    // An upload the field leaving the page stops is no file: the host gets back what the field held, which also clears
+    // the upload's problem for a host that kept that value. Not when the host has given a value of its own in its
+    // place, as a rule that assigns one and locks the field does.
     const latest = useRef(commits)
     latest.current = commits
     useEffect(
         () => () => {
-            if (
-                replaced.current !== undefined &&
-                latest.current.held() === null
-            ) {
-                latest.current.send(replaced.current.before)
+            const before = replaced.current?.before
+            const held = latest.current.held()
+            if (before !== undefined && (held === null || held === before)) {
+                latest.current.send(before)
             }
         },
         []

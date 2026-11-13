@@ -49,6 +49,11 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
+    'clinic-selector': lazy(() =>
+        import('./clinic-selector/ClinicSelectorLab').then(
+            ({ ClinicSelectorLab }) => ({ default: ClinicSelectorLab })
+        )
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

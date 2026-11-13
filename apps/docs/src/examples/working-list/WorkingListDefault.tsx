@@ -1,3 +1,4 @@
+import { Pane } from '@/components/shell'
 import {
     WorkingList,
     WorkingListColumnSelector,
@@ -16,19 +17,21 @@ import {
  * organisation unit from your own instance.
  */
 const WorkingListDefault = () => (
-    <WorkingList
-        programId="IpHINAT79UW"
-        orgUnitId="y77LiPqLMoq"
-        defaultPagination={{ page: 1, pageSize: 10 }}
-    >
-        <WorkingListViewSwitcher />
-        <WorkingListToolbar>
-            <WorkingListColumnSelector />
-            <WorkingListFilterControls />
-            <WorkingListToolbarActions />
-        </WorkingListToolbar>
-        <WorkingListTable />
-    </WorkingList>
+    <Pane>
+        <WorkingList
+            programId="IpHINAT79UW"
+            orgUnitId="y77LiPqLMoq"
+            defaultPagination={{ page: 1, pageSize: 10 }}
+        >
+            <WorkingListViewSwitcher />
+            <WorkingListToolbar>
+                <WorkingListColumnSelector />
+                <WorkingListFilterControls />
+                <WorkingListToolbarActions />
+            </WorkingListToolbar>
+            <WorkingListTable />
+        </WorkingList>
+    </Pane>
 )
 
 export default WorkingListDefault

@@ -1,3 +1,4 @@
+import { Pane } from '@/components/shell'
 import { useDataQuery } from '@dhis2/app-runtime'
 import { ProgramSelector, type Option } from '@/components/context-selector'
 import {
@@ -123,16 +124,18 @@ const WorkingListProgramPicker = () => {
             </div>
 
             {selectedProgramId && orgUnitId ? (
-                <WorkingList
-                    key={selectedProgramId}
-                    programId={selectedProgramId}
-                    orgUnitId={orgUnitId}
-                    defaultPagination={{ page: 1, pageSize: 10 }}
-                >
-                    <WorkingListViewSwitcher />
-                    <WorkingListToolbar />
-                    <WorkingListTable />
-                </WorkingList>
+                <Pane>
+                    <WorkingList
+                        key={selectedProgramId}
+                        programId={selectedProgramId}
+                        orgUnitId={orgUnitId}
+                        defaultPagination={{ page: 1, pageSize: 10 }}
+                    >
+                        <WorkingListViewSwitcher />
+                        <WorkingListToolbar />
+                        <WorkingListTable />
+                    </WorkingList>
+                </Pane>
             ) : (
                 <p className="text-sm text-dhis2-muted-foreground">
                     No tracker program or organisation unit is available for

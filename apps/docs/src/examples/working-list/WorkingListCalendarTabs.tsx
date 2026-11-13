@@ -1,3 +1,4 @@
+import { Pane } from '@/components/shell'
 import { useState } from 'react'
 import {
     ToggleGroup,
@@ -32,42 +33,44 @@ const WorkingListCalendarTabs = () => {
     const [layout, setLayout] = useState<Layout>('calendar')
 
     return (
-        <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
-            <WorkingListViewSwitcher />
-            <WorkingListToolbar>
-                <WorkingListColumnSelector />
-                <WorkingListFilterControls />
-                <ToggleGroup
-                    aria-label="Layout"
-                    variant="outline"
-                    size="sm"
-                    className="ms-auto"
-                    value={[layout]}
-                >
-                    <ToggleGroupItem
-                        value="table"
-                        onClick={() => setLayout('table')}
+        <Pane>
+            <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
+                <WorkingListViewSwitcher />
+                <WorkingListToolbar>
+                    <WorkingListColumnSelector />
+                    <WorkingListFilterControls />
+                    <ToggleGroup
+                        aria-label="Layout"
+                        variant="outline"
+                        size="sm"
+                        className="ms-auto"
+                        value={[layout]}
                     >
-                        Table
-                    </ToggleGroupItem>
-                    <ToggleGroupItem
-                        value="calendar"
-                        onClick={() => setLayout('calendar')}
-                    >
-                        Calendar
-                    </ToggleGroupItem>
-                </ToggleGroup>
-            </WorkingListToolbar>
-            {layout === 'table' ? (
-                <WorkingListTable />
-            ) : (
-                <ListCalendar className="p-2">
-                    <CalendarNavigation />
-                    <CalendarGrid />
-                    <CalendarDayRecords />
-                </ListCalendar>
-            )}
-        </WorkingList>
+                        <ToggleGroupItem
+                            value="table"
+                            onClick={() => setLayout('table')}
+                        >
+                            Table
+                        </ToggleGroupItem>
+                        <ToggleGroupItem
+                            value="calendar"
+                            onClick={() => setLayout('calendar')}
+                        >
+                            Calendar
+                        </ToggleGroupItem>
+                    </ToggleGroup>
+                </WorkingListToolbar>
+                {layout === 'table' ? (
+                    <WorkingListTable />
+                ) : (
+                    <ListCalendar className="p-2">
+                        <CalendarNavigation />
+                        <CalendarGrid />
+                        <CalendarDayRecords />
+                    </ListCalendar>
+                )}
+            </WorkingList>
+        </Pane>
     )
 }
 

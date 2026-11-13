@@ -5,8 +5,9 @@ import { useWorkingListText } from '../WorkingListText'
 
 export interface WorkingListContainerProps extends ComponentPropsWithoutRef<'article'> {}
 
-export const LIST_CLASS =
-    'w-full min-w-0 max-w-full overflow-visible rounded-[4px] border border-dhis2-border-strong bg-dhis2-background shadow-dhis2-card contrast-more:shadow-none'
+// No edge of its own: the Pane it renders in docks it and draws the hairlines.
+const LIST_CLASS =
+    'w-full min-w-0 max-w-full overflow-visible bg-dhis2-background'
 
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
@@ -28,7 +29,7 @@ export const WorkingListContainer = ({
         <div className="w-full min-w-0" data-testid="working-list-main">
             {!online && (
                 <div
-                    className="border border-dhis2-warning-border bg-dhis2-warning-subtle px-3 py-2 text-dhis2-warning-strong [border-radius:4px_4px_0_0]"
+                    className="border-b border-dhis2-warning-border bg-dhis2-warning-subtle px-3 py-2 text-dhis2-warning-strong"
                     data-testid="offline-notice"
                     role="status"
                 >

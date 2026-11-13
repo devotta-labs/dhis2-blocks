@@ -1,3 +1,4 @@
+import { Pane } from '@/components/shell'
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
 import { Label } from '@/components/dhis2/ui/label'
 import { Switch } from '@/components/dhis2/ui/switch'
@@ -501,41 +502,43 @@ export const AppShell = () => {
                                 {i18n.t('Highlight data quality issues')}
                             </Label>
                         </div>
-                        <WorkingList
-                            programId={selectedProgramSummary.id}
-                            orgUnitId={urlState.orgUnitId}
-                            viewId={urlState.selectedTemplateId ?? null}
-                            pagination={{
-                                page: urlState.page ?? 1,
-                                pageSize: urlState.pageSize ?? 15,
-                            }}
-                            onPaginationChange={({ page, pageSize }) =>
-                                setUrlState((current) => ({
-                                    ...current,
-                                    page,
-                                    pageSize,
-                                }))
-                            }
-                            onViewChange={(viewId) =>
-                                setUrlState((current) => ({
-                                    ...current,
-                                    selectedTemplateId: viewId,
-                                    page: 1,
-                                }))
-                            }
-                        >
-                            <WorkingListDirtyBridge onChange={setDirty} />
-                            <WorkingListViewSwitcher />
-                            <WorkingListToolbar>
-                                <WorkingListColumnSelector />
-                                <WorkingListFilterControls />
-                                <WorkingListToolbarActions />
-                            </WorkingListToolbar>
-                            <WorkingListTable
-                                dataQualityMode={dataQualityMode}
-                                onRowClick={setOpenedRecord}
-                            />
-                        </WorkingList>
+                        <Pane className="border border-dhis2-border-strong">
+                            <WorkingList
+                                programId={selectedProgramSummary.id}
+                                orgUnitId={urlState.orgUnitId}
+                                viewId={urlState.selectedTemplateId ?? null}
+                                pagination={{
+                                    page: urlState.page ?? 1,
+                                    pageSize: urlState.pageSize ?? 15,
+                                }}
+                                onPaginationChange={({ page, pageSize }) =>
+                                    setUrlState((current) => ({
+                                        ...current,
+                                        page,
+                                        pageSize,
+                                    }))
+                                }
+                                onViewChange={(viewId) =>
+                                    setUrlState((current) => ({
+                                        ...current,
+                                        selectedTemplateId: viewId,
+                                        page: 1,
+                                    }))
+                                }
+                            >
+                                <WorkingListDirtyBridge onChange={setDirty} />
+                                <WorkingListViewSwitcher />
+                                <WorkingListToolbar>
+                                    <WorkingListColumnSelector />
+                                    <WorkingListFilterControls />
+                                    <WorkingListToolbarActions />
+                                </WorkingListToolbar>
+                                <WorkingListTable
+                                    dataQualityMode={dataQualityMode}
+                                    onRowClick={setOpenedRecord}
+                                />
+                            </WorkingList>
+                        </Pane>
                     </main>
                 )}
 

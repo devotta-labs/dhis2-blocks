@@ -13,6 +13,8 @@
 @source '../../../../../../packages/registry/components';
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../../../../packages/registry/blocks/working-list';
+@source '../../../packages/registry/blocks/shell';
+@source '../../../../../../packages/registry/blocks/shell';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../../../../packages/registry/blocks/context-selector';
 

@@ -1,3 +1,4 @@
+import { Pane } from '@/components/shell'
 import { useState, type ReactNode } from 'react'
 import {
     ToggleGroup,
@@ -119,42 +120,46 @@ export const CalendarCanvas = ({
         (view.layout === 'toggle' && toggle === 'table')
 
     return (
-        <WorkingList
-            programId={programId}
-            orgUnitId={orgUnitId}
-            defaultViewId={defaultViewId}
-            onViewChange={(id) => note(`onViewChange(${JSON.stringify(id)})`)}
-        >
-            {view.toolbar && <WorkingListViewSwitcher />}
-            {view.toolbar && (
-                <WorkingListToolbar>
-                    {showsTable && <WorkingListColumnSelector />}
-                    <WorkingListFilterControls />
-                    {view.layout === 'toggle' && (
-                        <ToggleGroup
-                            aria-label="Layout"
-                            variant="outline"
-                            size="sm"
-                            className="ms-auto"
-                            value={[toggle]}
-                        >
-                            <ToggleGroupItem
-                                value="table"
-                                onClick={() => setToggle('table')}
+        <Pane>
+            <WorkingList
+                programId={programId}
+                orgUnitId={orgUnitId}
+                defaultViewId={defaultViewId}
+                onViewChange={(id) =>
+                    note(`onViewChange(${JSON.stringify(id)})`)
+                }
+            >
+                {view.toolbar && <WorkingListViewSwitcher />}
+                {view.toolbar && (
+                    <WorkingListToolbar>
+                        {showsTable && <WorkingListColumnSelector />}
+                        <WorkingListFilterControls />
+                        {view.layout === 'toggle' && (
+                            <ToggleGroup
+                                aria-label="Layout"
+                                variant="outline"
+                                size="sm"
+                                className="ms-auto"
+                                value={[toggle]}
                             >
-                                Table
-                            </ToggleGroupItem>
-                            <ToggleGroupItem
-                                value="calendar"
-                                onClick={() => setToggle('calendar')}
-                            >
-                                Calendar
-                            </ToggleGroupItem>
-                        </ToggleGroup>
-                    )}
-                </WorkingListToolbar>
-            )}
-            {body}
-        </WorkingList>
+                                <ToggleGroupItem
+                                    value="table"
+                                    onClick={() => setToggle('table')}
+                                >
+                                    Table
+                                </ToggleGroupItem>
+                                <ToggleGroupItem
+                                    value="calendar"
+                                    onClick={() => setToggle('calendar')}
+                                >
+                                    Calendar
+                                </ToggleGroupItem>
+                            </ToggleGroup>
+                        )}
+                    </WorkingListToolbar>
+                )}
+                {body}
+            </WorkingList>
+        </Pane>
     )
 }

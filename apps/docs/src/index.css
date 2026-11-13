@@ -5,6 +5,7 @@
 @source '../../../packages/registry/blocks/working-list';
 @source '../../../packages/registry/blocks/calendar';
 @source '../../../packages/registry/blocks/context-selector';
+@source '../../../packages/registry/blocks/shell';
 @source '../../../packages/registry/blocks/sidebar';
 @source '../../../packages/registry/blocks/spreadsheet';
 @source '../../../packages/registry/blocks/tracker-data-entry';

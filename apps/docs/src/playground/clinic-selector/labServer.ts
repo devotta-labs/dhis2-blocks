@@ -21,6 +21,12 @@ const clinicJson = ({ id, displayName, path }: LabUnit) => ({
     path,
 })
 
+/** Shaped like app-runtime's HTTP failure, so the block reads the 500 and retries as it would for real. */
+const serverError = () =>
+    Object.assign(new Error('Internal server error'), {
+        details: { httpStatusCode: 500, message: 'Internal server error' },
+    })
+
 const byName = (a: LabUnit, b: LabUnit) =>
     a.displayName.localeCompare(b.displayName)
 
@@ -41,6 +47,7 @@ export const answer =
                 }
             case 'organisationUnits': {
                 if (params.filter !== undefined) {
+                    if (settings.failValidity) throw serverError()
                     const ids =
                         /^id:in:\[(.*)\]$/
                             .exec(String(params.filter))?.[1]
@@ -57,6 +64,7 @@ export const answer =
                     }
                 }
                 if (params.query !== undefined) {
+                    if (settings.failSearch) throw serverError()
                     const query = String(params.query).toLowerCase()
                     const pageSize = Number(params.pageSize ?? 50)
                     const matches = data.units

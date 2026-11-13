@@ -20,6 +20,10 @@ export interface LabSettings {
     storageThrows: boolean
     /** The validity check answers with units outside the user's hierarchy too. */
     ignoreScopeFilter: boolean
+    /** The search answers with a 500; the user request and the validity check still work. */
+    failSearch: boolean
+    /** The validity check answers with a 500; the user request and the search still work. */
+    failValidity: boolean
     network: LabNetwork
 }
 

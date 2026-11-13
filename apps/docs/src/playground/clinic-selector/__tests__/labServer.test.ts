@@ -151,4 +151,40 @@ describe('the clinic selector lab server', () => {
             bees.every(({ displayName }) => displayName.startsWith('B'))
         ).toBe(true)
     })
+
+    it('fails the search alone, or the validity check alone, with a 500', () => {
+        // The message the network shows: the 500 for a failure, nothing for an answer.
+        const outcome = (run: () => object) => {
+            try {
+                run()
+                return 'answered'
+            } catch (error) {
+                return error instanceof Error ? error.message : 'threw'
+            }
+        }
+        const failed = 'Internal server error'
+        const both = (changes: Partial<LabSettings>) => [
+            outcome(() => search('chc', changes)),
+            outcome(() => byId([flatClinicId(1)], changes)),
+            outcome(() => me(changes)),
+        ]
+        expect(both({ failSearch: true })).toEqual([
+            failed,
+            'answered',
+            'answered',
+        ])
+        expect(both({ failValidity: true })).toEqual([
+            'answered',
+            failed,
+            'answered',
+        ])
+    })
+
+    it('fails with the 500 shape app-runtime gives, so the block retries as for real', () => {
+        expect(() => search('chc', { failSearch: true })).toThrow(
+            expect.objectContaining({
+                details: expect.objectContaining({ httpStatusCode: 500 }),
+            })
+        )
+    })
 })

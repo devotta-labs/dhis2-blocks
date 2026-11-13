@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { USER_IDS, type LabUser } from './labData'
 import type { Seed } from './presets'
 
+const PREFIX = 'dhis2-blocks:clinic-selector:'
+
 /** The key the block stores a user's remembered clinics under. */
-const storageKey = (user: LabUser) =>
-    `dhis2-blocks:clinic-selector:${USER_IDS[user]}`
+const storageKey = (user: LabUser) => `${PREFIX}${USER_IDS[user]}`
 
 const LAB_USERS: LabUser[] = ['u1', 'u2']
 
@@ -29,15 +30,29 @@ export const seedStored = (seed: Seed) => {
     })
 }
 
-/** Makes every Storage call throw, as a blocked or private-mode browser does; returns the undo. */
+/**
+ * Makes Storage calls for the block's keys throw, as a blocked or private-mode browser does, and leaves every other
+ * key on the page working; returns the undo.
+ */
 export const breakStorage = () => {
-    const fail = () => {
-        throw new DOMException('The lab blocks storage', 'SecurityError')
+    const blocked = (key: string) => {
+        if (key.startsWith(PREFIX)) {
+            throw new DOMException('The lab blocks storage', 'SecurityError')
+        }
     }
     Object.assign(Storage.prototype, {
-        getItem: fail,
-        setItem: fail,
-        removeItem: fail,
+        getItem(this: Storage, key: string) {
+            blocked(key)
+            return getItem.call(this, key)
+        },
+        setItem(this: Storage, key: string, value: string) {
+            blocked(key)
+            setItem.call(this, key, value)
+        },
+        removeItem(this: Storage, key: string) {
+            blocked(key)
+            removeItem.call(this, key)
+        },
     })
     return () => {
         Object.assign(Storage.prototype, { getItem, setItem, removeItem })

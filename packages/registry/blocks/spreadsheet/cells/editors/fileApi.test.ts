@@ -1,6 +1,6 @@
 import uploaded from '../__tests__/fixtures/file-upload.json'
 import type { DataEngine } from '../../provider/context'
-import { uploadFile } from './fileApi'
+import { uploadFile } from '@/components/dhis2-value-input/editors/fileApi'
 
 type Query = Parameters<DataEngine['query']>[0]
 type Mutation = Parameters<DataEngine['mutate']>[0]

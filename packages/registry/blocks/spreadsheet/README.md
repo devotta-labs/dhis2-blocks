@@ -3,7 +3,7 @@
 A grid of DHIS2-typed cells entered like a spreadsheet: Excel-style keys, paste and undo, pop-up editors, searching
 cells, and the state of each cell (saved, waiting, failed) for any data your app saves. It knows nothing about programs,
 people or rules, and nothing about the DHIS2 Web API beyond what its cells need: org unit and user search, file
-upload, and showing the file or image an event holds. It builds on `dhis2-value-types` (what each value type accepts) and `dhis2-value-display` (the calendar).
+upload, and showing the file or image an event holds. It builds on `dhis2-value-types` (what each value type accepts) and `dhis2-value-display` (the calendar). Its pop-up editors come from `dhis2-value-input`.
 
 ```sh
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/spreadsheet

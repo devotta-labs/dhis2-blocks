@@ -51,8 +51,11 @@ type ThemeLayers = {
     theme: [string, string][]
     /** Top-level `:root` declarations: the semantic roles' default values. */
     light: [string, string][]
-    /** At-rules that override the roles, such as the high-contrast block. */
-    css: Record<string, Record<string, Record<string, string>>>
+    /**
+     * What overrides the defaults: an at-rule's rules (the high-contrast block), or a selector's variables (compact
+     * density).
+     */
+    css: Record<string, Record<string, string | Record<string, string>>>
 }
 
 const oneLine = (value: string): string =>
@@ -88,6 +91,20 @@ const parseTheme = (source: string): ThemeLayers => {
                 if (!prop.startsWith('--')) unsupported(`:root { ${prop} }`)
                 layers.light.push([prop.slice(2), oneLine(value)])
             })
+            return
+        }
+        // Another selector's variables, such as compact density's: a rule of the item's `css`.
+        if (node.type === 'rule') {
+            const declarations: Record<string, string> = {}
+            node.walkDecls(({ prop, value }) => {
+                if (!prop.startsWith('--'))
+                    unsupported(`${node.selector} { ${prop} }`)
+                declarations[prop] = oneLine(value)
+            })
+            if (layers.css[node.selector]) {
+                unsupported(`a second ${node.selector}`)
+            }
+            layers.css[node.selector] = declarations
             return
         }
         if (node.type === 'atrule' && node.name === 'media') {

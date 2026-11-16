@@ -20,7 +20,7 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
 } from '@/components/dhis2/ui/dropdown-menu'
-import { formatCount } from '../cells/OptionCell'
+import { formatCount } from '@/components/dhis2-value-input'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'

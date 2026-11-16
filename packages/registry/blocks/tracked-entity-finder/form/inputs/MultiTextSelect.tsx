@@ -1,6 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { useId, useMemo } from 'react'
-import { cn } from '@/components/dhis2/ui/cn'
 import {
     Combobox,
     ComboboxChip,
@@ -13,7 +12,6 @@ import {
     ComboboxTrigger,
     useComboboxAnchor,
 } from '@/components/dhis2/ui/combobox'
-import { selectTriggerVariants } from '@/components/dhis2/ui/select'
 import { FieldFrame } from './FieldFrame'
 import type { FieldInputProps } from './types'
 
@@ -62,12 +60,9 @@ export const MultiTextSelect = ({
             >
                 {/* The trigger covers the whole box, so a press anywhere opens
                     it; only the chips' remove buttons sit above it. */}
-                <div
+                <ComboboxChips
                     ref={anchor}
-                    className={cn(
-                        selectTriggerVariants(),
-                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)]'
-                    )}
+                    className="pe-6 [&_[data-slot=combobox-chip-remove]]:relative"
                 >
                     <ComboboxTrigger
                         id={id}
@@ -75,25 +70,23 @@ export const MultiTextSelect = ({
                         className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-2 outline-none forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2"
                     />
                     {selected.length === 0 ? (
-                        <span className="pointer-events-none relative flex-1 text-dhis2-subtle-foreground">
+                        <span className="text-dhis2-subtle-foreground">
                             {placeholder ?? i18n.t('Any')}
                         </span>
                     ) : (
-                        <ComboboxChips className="pointer-events-none relative min-h-6 flex-1 [&_[data-slot=combobox-chip-remove]]:pointer-events-auto">
-                            {selected.map((code) => (
-                                <ComboboxChip
-                                    key={code}
-                                    removeLabel={i18n.t('Remove {{name}}', {
-                                        name: nameOf(code),
-                                        interpolation: { escapeValue: false },
-                                    })}
-                                >
-                                    {nameOf(code)}
-                                </ComboboxChip>
-                            ))}
-                        </ComboboxChips>
+                        selected.map((code) => (
+                            <ComboboxChip
+                                key={code}
+                                removeLabel={i18n.t('Remove {{name}}', {
+                                    name: nameOf(code),
+                                    interpolation: { escapeValue: false },
+                                })}
+                            >
+                                {nameOf(code)}
+                            </ComboboxChip>
+                        ))
                     )}
-                </div>
+                </ComboboxChips>
                 <ComboboxContent anchor={anchor}>
                     <ComboboxInput
                         showTrigger={false}

@@ -6,6 +6,7 @@
 @source '../../../packages/registry/blocks/calendar';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../packages/registry/blocks/sidebar';
+@source '../../../packages/registry/blocks/dhis2-value-input';
 @source '../../../packages/registry/blocks/spreadsheet';
 @source '../../../packages/registry/blocks/tracker-data-entry';
 @source '../../../packages/registry/blocks/observation-cards';

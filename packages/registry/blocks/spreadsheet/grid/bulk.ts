@@ -1,7 +1,7 @@
 import i18n from '@dhis2/d2-i18n'
 import { parseTyped, typedText } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
-import { formatCount } from '../cells/OptionCell'
+import { formatCount } from '@/components/dhis2-value-input'
 import type { AnnotationsState } from '../model/annotations'
 import type {
     CellKey,

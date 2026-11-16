@@ -1,7 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
 import { createStore } from 'zustand/vanilla'
 import type { StoreApi } from 'zustand/vanilla'
-import { checkStored, parseTyped } from '@/components/dhis2-value-types'
+import {
+    checkStored,
+    futureBirth,
+    parseTyped,
+} from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { todayIso } from '@/components/dhis2-value-types'
 import type { AnnotationsState } from '../model/annotations'
@@ -81,12 +85,6 @@ export interface CellStoreState {
         }>
     ): void
 }
-
-/** Why a date of birth (`YYYY-MM-DD`) after `today` cannot be an age's; undefined for one up to today. */
-export const futureBirth = (birth: string, today: string) =>
-    birth > today
-        ? i18n.t('Enter a date of birth that is not in the future')
-        : undefined
 
 /**
  * Whether `value` adds an option code that `hidden` holds to a cell that holds `held`. A code the cell already holds is

@@ -15,7 +15,7 @@ import {
 import { cellKey } from '../model/types'
 import { CELL, HEADER, inputOf, rig, withEditor } from './__tests__/harness'
 import { Cell } from './Cell'
-import type { PopupEditorProps } from './popupEditors'
+import type { PopupEditorProps } from '@/components/dhis2-value-input'
 
 // SAFETY: these tests run on the playwright provider, whose `cdp()` is this
 // session; its typing lands on only one of the workspace's two vitest installs.

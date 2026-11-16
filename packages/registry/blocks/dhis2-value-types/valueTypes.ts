@@ -296,6 +296,35 @@ export const cellKind = ({ valueType, options }: Field): CellKind => {
         : kind
 }
 
+// Read left to right in any script: numbers, dates and times, phone numbers, addresses, coordinates.
+const LEFT_TO_RIGHT: ReadonlySet<string> = new Set([
+    'INTEGER',
+    'INTEGER_POSITIVE',
+    'INTEGER_NEGATIVE',
+    'INTEGER_ZERO_OR_POSITIVE',
+    'NUMBER',
+    'PERCENTAGE',
+    'UNIT_INTERVAL',
+    'DATE',
+    'DATETIME',
+    'TIME',
+    'AGE',
+    'PHONE_NUMBER',
+    'EMAIL',
+    'URL',
+    'COORDINATE',
+])
+
+/**
+ * The `dir` for a field's text: `ltr` for a value that reads left to right in any script, so a right-to-left page
+ * keeps `+232 76…` and `-3` in order; `auto` for words, such as free text and option names, which follow their script.
+ */
+export const textDirectionFor = ({
+    valueType,
+    options,
+}: Field): 'ltr' | 'auto' =>
+    options === undefined && LEFT_TO_RIGHT.has(valueType) ? 'ltr' : 'auto'
+
 export const inputModeFor = (field: Field): InputMode | undefined => {
     const kind = cellKind(field)
     return kind === 'text' || kind === 'number'

@@ -3,6 +3,7 @@ import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
+import { Combobox, ComboboxChips, ComboboxChipsInput } from './combobox'
 import { Input } from './input'
 import { RadioGroup, RadioGroupItem } from './radio-group'
 import { Switch } from './switch'
@@ -15,6 +16,19 @@ describe('form controls with more contrast', () => {
         const screen = await render(<Input aria-label="Name" />)
         expect(
             style(screen.getByRole('textbox').element()).borderTopColor
+        ).toBe(roleColour('input'))
+    })
+
+    it('frame a chips box like an input', async () => {
+        const screen = await render(
+            <Combobox items={['Bo']} multiple>
+                <ComboboxChips data-testid="chips">
+                    <ComboboxChipsInput aria-label="Facilities" />
+                </ComboboxChips>
+            </Combobox>
+        )
+        expect(
+            style(screen.getByTestId('chips').element()).borderTopColor
         ).toBe(roleColour('input'))
     })
 

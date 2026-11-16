@@ -39,6 +39,11 @@ const LABS = {
             })
         )
     ),
+    'dhis2-value-input': lazy(() =>
+        import('./dhis2-value-input/ValueInputLab').then(
+            ({ ValueInputLab }) => ({ default: ValueInputLab })
+        )
+    ),
     'tracker-data-entry': lazy(() =>
         import('./tracker-data-entry/TrackerDataEntryLab').then(
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })

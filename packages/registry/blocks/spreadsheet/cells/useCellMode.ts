@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react'
+import { composing } from '@/components/dhis2-value-input'
 import type { NavKey } from '../grid/navigation'
 import type { CommitResult } from '../model/types'
 import { useCellContext } from './CellStatus'
@@ -13,10 +14,6 @@ export const READY_CLASS = 'caret-transparent selection:bg-transparent'
 /** Whether the control is a text cell being typed in (Enter or Edit); any other cell is in Ready. */
 export const typingIn = (control: HTMLElement) =>
     control.dataset.mode === 'enter' || control.dataset.mode === 'edit'
-
-// Safari reports the key that ends a composition as keyCode 229 with `isComposing` already false.
-export const composing = (event: KeyboardEvent) =>
-    event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229
 
 /** The move a plain arrow, Enter or Tab asks for; a key with a modifier belongs to the browser. */
 export const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {

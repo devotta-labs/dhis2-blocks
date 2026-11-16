@@ -13,7 +13,7 @@ const Input = React.forwardRef<
         type={type}
         data-slot="input"
         className={cn(
-            'h-10 w-full min-w-0 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background px-3 py-[11px] text-sm leading-4 text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none placeholder:text-dhis2-subtle-foreground focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2 disabled:cursor-not-allowed disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground aria-invalid:border-dhis2-destructive-border',
+            'h-(--dhis2-control-height) w-full min-w-0 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background px-3 py-[calc((var(--dhis2-control-height)-18px)/2)] text-sm leading-4 text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none placeholder:text-dhis2-subtle-foreground focus-visible:border-dhis2-ring focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2 disabled:cursor-not-allowed disabled:bg-dhis2-muted disabled:text-dhis2-disabled-foreground aria-invalid:border-dhis2-destructive-border',
             className
         )}
         {...props}

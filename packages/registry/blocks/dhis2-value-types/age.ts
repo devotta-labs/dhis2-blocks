@@ -1,5 +1,6 @@
+import i18n from '@dhis2/d2-i18n'
 import { getDaysInMonth } from '@dhis2/multi-calendar-dates'
-import { addDaysIso, addMonthsIso } from '@/components/dhis2-value-types'
+import { addDaysIso, addMonthsIso } from './dates'
 
 export interface Age {
     years: number
@@ -54,3 +55,9 @@ export const birthFromAge = (
         ? birth
         : undefined
 }
+
+/** Why a date of birth (`YYYY-MM-DD`) after `today` cannot be an age's; undefined for one up to today. */
+export const futureBirth = (birth: string, today: string) =>
+    birth > today
+        ? i18n.t('Enter a date of birth that is not in the future')
+        : undefined

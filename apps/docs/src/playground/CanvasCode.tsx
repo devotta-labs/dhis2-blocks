@@ -65,7 +65,8 @@ const sliceLine = (line: ReactNode, start: number, end: number) => {
         if (!text) return []
         return [
             isValidElement(token)
-                ? cloneElement(token, { key: index }, text)
+                ? // Keyed by where the slice starts too: a line with two props slices it three times into one list.
+                  cloneElement(token, { key: `${start}:${index}` }, text)
                 : text,
         ]
     })

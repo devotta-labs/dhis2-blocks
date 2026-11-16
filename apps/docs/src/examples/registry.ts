@@ -2,6 +2,9 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
+import valueInputKindsSource from './dhis2-value-input/ValueInputKinds.tsx?raw'
+import { fieldExamples } from './fieldExamples'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
 import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
@@ -23,11 +26,13 @@ import chartTrendSource from './ui/ChartTrend.tsx?raw'
 import chartVisitsSource from './ui/ChartVisits.tsx?raw'
 import checkboxOptionsSource from './ui/CheckboxOptions.tsx?raw'
 import comboboxOrgUnitsSource from './ui/ComboboxOrgUnits.tsx?raw'
+import comboboxMultipleSource from './ui/ComboboxMultiple.tsx?raw'
 import dialogConfirmSource from './ui/DialogConfirm.tsx?raw'
 import dropdownMenuActionsSource from './ui/DropdownMenuActions.tsx?raw'
 import inputFieldSource from './ui/InputField.tsx?raw'
 import inputGroupSearchSource from './ui/InputGroupSearch.tsx?raw'
 import popoverDetailsSource from './ui/PopoverDetails.tsx?raw'
+import radioGroupDescriptionSource from './ui/RadioGroupDescription.tsx?raw'
 import radioGroupOutcomeSource from './ui/RadioGroupOutcome.tsx?raw'
 import selectPeriodSource from './ui/SelectPeriod.tsx?raw'
 import spinnerSizesSource from './ui/SpinnerSizes.tsx?raw'
@@ -215,6 +220,22 @@ const examples = [
         minHeight: 300,
     },
     {
+        slug: 'dhis2-value-input/kinds',
+        title: 'Fields that need no server',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputKinds')),
+        source: valueInputKindsSource,
+        minHeight: 520,
+    },
+    {
+        slug: 'dhis2-value-input/form',
+        title: 'A form with rule effects',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputForm')),
+        source: valueInputFormSource,
+        minHeight: 520,
+    },
+    {
         slug: 'tracker-data-entry/event-program',
         title: 'Inpatient morbidity and mortality at Ngelehun CHC',
         live: true,
@@ -347,6 +368,14 @@ const examples = [
         minHeight: 420,
     },
     {
+        slug: 'combobox/multiple',
+        title: 'Programs as chips',
+        live: false,
+        Component: lazy(() => import('./ui/ComboboxMultiple')),
+        source: comboboxMultipleSource,
+        minHeight: 320,
+    },
+    {
         slug: 'dialog/confirm',
         title: 'Dialogs',
         live: false,
@@ -362,6 +391,7 @@ const examples = [
         source: dropdownMenuActionsSource,
         minHeight: 300,
     },
+    ...fieldExamples,
     {
         slug: 'input/field',
         title: 'Text fields',
@@ -433,6 +463,14 @@ const examples = [
         Component: lazy(() => import('./ui/RadioGroupOutcome')),
         source: radioGroupOutcomeSource,
         minHeight: 160,
+    },
+    {
+        slug: 'radio-group/description',
+        title: 'Referral',
+        live: false,
+        Component: lazy(() => import('./ui/RadioGroupDescription')),
+        source: radioGroupDescriptionSource,
+        minHeight: 200,
     },
     {
         slug: 'spinner/sizes',

@@ -1,0 +1,233 @@
+---
+title: Field
+description: A label, a hint and an error around a control, and groups of them.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="field/demo" />
+
+A field puts a label, a hint and an error around one control, such as an
+input, a select or a group of radios. It links them to the control, so
+screen readers read them with it. A fieldset groups several fields, or a
+group's options, under one legend. It looks like the `@dhis2/ui` Field.
+
+## Installation
+
+<InstallCommand item="field" />
+
+## Usage
+
+```tsx
+import {
+    Field,
+    FieldDescription,
+    FieldError,
+    FieldLabel,
+} from '@/components/dhis2/ui/field'
+import { Input } from '@/components/dhis2/ui/input'
+
+export const PhoneNumber = () => (
+    <Field invalid={invalid}>
+        <FieldLabel htmlFor="phone-number">Phone number</FieldLabel>
+        <Input id="phone-number" type="tel" />
+        <FieldDescription>
+            Used to send visit reminders by SMS.
+        </FieldDescription>
+        {invalid && (
+            <FieldError>Enter a phone number with its country code.</FieldError>
+        )}
+    </Field>
+)
+```
+
+## Input
+
+<ExampleCard slug="field/input" />
+
+## Textarea
+
+<ExampleCard slug="field/textarea" />
+
+## Select
+
+<ExampleCard slug="field/select" />
+
+Put the `id` on the `SelectTrigger`, the part users click.
+
+## Fieldset
+
+<ExampleCard slug="field/fieldset" />
+
+Use a `FieldSet` with a `FieldLegend` for fields that belong together, such
+as the parts of an address. Put the fields in a `FieldGroup` to space them
+evenly, and in a grid to set two of them side by side.
+
+## Checkboxes
+
+<ExampleCard slug="field/checkboxes" />
+
+When several checkboxes answer one question, they are one field. Put a
+`FieldSet` inside the `Field`, name it with a `FieldLegend` with
+`variant="label"`, and give each checkbox a `FieldItem` with its own
+`FieldLabel`.
+
+```tsx
+<Field>
+    <FieldSet>
+        <FieldLegend variant="label">Symptoms</FieldLegend>
+        <FieldItem>
+            <Checkbox />
+            <FieldLabel>Fever</FieldLabel>
+        </FieldItem>
+    </FieldSet>
+    <FieldDescription>Tick every symptom the patient reports.</FieldDescription>
+</Field>
+```
+
+## Radio group
+
+<ExampleCard slug="field/radio-group" />
+
+A radio group is the same, with the `RadioGroup` rendered as the fieldset:
+
+```tsx
+<Field>
+    <FieldSet render={<RadioGroup />}>
+        <FieldLegend variant="label">Malaria test result</FieldLegend>
+        <FieldItem>
+            <RadioGroupItem value="Positive" />
+            <FieldLabel>Positive</FieldLabel>
+        </FieldItem>
+    </FieldSet>
+    <FieldDescription>From the rapid diagnostic test.</FieldDescription>
+</Field>
+```
+
+Put the group's own props, such as `value`, `onValueChange` and
+`defaultValue`, on the `RadioGroup` in `render`.
+
+## Option with a description
+
+<ExampleCard slug="field/radio-description" />
+
+When an option needs a line of explanation, put its label and a
+`FieldDescription` in a `FieldContent` inside the `FieldItem`. The
+description is read with that option only. Clicking the label picks the
+option; clicking the description does not.
+
+```tsx
+<FieldItem>
+    <RadioGroupItem value="CURED" />
+    <FieldContent>
+        <FieldLabel>Cured</FieldLabel>
+        <FieldDescription>
+            Finished treatment with a negative test at the end.
+        </FieldDescription>
+    </FieldContent>
+</FieldItem>
+```
+
+## Checkbox or switch beside its label
+
+<ExampleCard slug="field/horizontal" />
+
+For a single checkbox or switch, use `orientation="horizontal"` to set the
+control beside its label. Put the label first, in a `FieldContent` with a
+description, to set the control at the end of the row.
+
+## Field group
+
+<ExampleCard slug="field/group" />
+
+A `FieldGroup` spaces a form's fields evenly. A `FieldSeparator` draws a line
+between them, with optional text on it, for example to offer two ways to
+find a person.
+
+## Validation
+
+<ExampleCard slug="field/validation" />
+
+Set `invalid` on the `Field` and add a `FieldError` that says how to fix the
+value. The field marks its control invalid; in a group, it marks every
+option.
+
+Write errors as the next step ("Enter a weight from 0.5 to 300 kg") rather
+than the problem ("Invalid value"). `FieldError` also takes a list of
+`errors` with a `message` each, for example from a form library, and shows
+each message once.
+
+## Density
+
+<ExampleCard slug="field/density" />
+
+Fields are as tall and as spaced as `@dhis2/ui`'s regular fields: 40px
+controls and 36px buttons. Put `data-density="compact"` on any element to
+make everything inside it compact: 32px controls and buttons, and tighter
+gaps between a field's parts and between fields. Put it on a form, a side
+panel or a dialog, or on one `Field` to make only that field compact.
+
+```tsx
+<form data-density="compact">…</form>
+```
+
+The theme sets the sizes as `--dhis2-control-height`, `--dhis2-button-height`,
+`--dhis2-field-gap` and `--dhis2-field-group-gap`, so your own controls can use
+them too.
+
+## Anatomy
+
+- `Field` — one control and its label, description and error. Use one for
+  each input, select, textarea, single checkbox or switch, and for a whole
+  group of radios or checkboxes.
+- `FieldLabel` — names the control, in medium weight so it leads. Inside a
+  `FieldItem`, it names that option, in regular weight.
+- `FieldDescription` — a hint under the control. Inside a `FieldItem`, it
+  describes that option.
+- `FieldError` — the message shown while the value is wrong.
+- `FieldSet` and `FieldLegend` — a group of options, or of fields, under one
+  legend.
+- `FieldLegend variant="label"` — for a group that is one field's choice,
+  such as a radio group. It looks like a field's label (medium weight)
+  instead of a heading, so it stands above its options' labels.
+- `FieldItem` — one option of a radio or checkbox group, inside the group's
+  `Field`.
+- `FieldContent` — stacks a label and its description beside a control.
+- `FieldGroup` — spaces several fields, or several fieldsets.
+- `FieldSeparator` — a line between fields in a group, with optional text.
+- `FieldTitle` — text that looks like a label but labels nothing, such as
+  a heading inside an option.
+- `FieldControl` — a control that is not one of the house components. It
+  renders an `<input>`, or passes the field's ids and state to your own
+  element through `render`.
+
+`FieldItem` belongs inside a `Field`. `FieldLabel`, `FieldDescription` and
+`FieldError` are linked by the `Field` they are in. Outside one they are
+plain: a label names its control by `htmlFor`, and a description or error
+directly in a `FieldSet`, such as one under its legend, describes the
+fieldset.
+
+## Accessibility
+
+- `FieldLabel` names the control, and clicking it moves focus to the
+  control. The label, description and error are linked to the control, so
+  screen readers read them together.
+- A `FieldSet` is a `<fieldset>` named by its `FieldLegend`, so screen
+  readers announce the group's name when focus enters it.
+- A `FieldItem` gets the field's invalid and disabled state, so every option
+  of an invalid group is announced as invalid.
+- A `FieldError` is an alert, so screen readers announce it when it
+  appears.
+
+## API reference
+
+- `Field` — `orientation?: 'vertical' | 'horizontal'`, vertical by default;
+  `invalid?: boolean` marks the control invalid; `disabled?: boolean`
+  disables its parts.
+- `FieldLegend` — `variant?: 'legend' | 'label'`, legend by default.
+- `FieldItem` — `disabled?: boolean` blocks one option.
+- `FieldError` — the message as children, or
+  `errors?: Array<{ message?: string }>`.
+- `FieldSet` — `render` to render it as another component, such as a
+  `RadioGroup`.

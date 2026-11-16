@@ -57,21 +57,29 @@ export const FacilityPicker = () => (
 ## Choose several
 
 Add `multiple`, and show a checkbox beside each option with
-`indicator="checkbox"`. The value is then a list:
+`indicator="checkbox"`. The value is then a list. To show each choice as a
+chip, make `ComboboxChips` the box and anchor the list to it:
+
+<ExampleCard slug="combobox/multiple" />
 
 ```tsx
-<Combobox items={facilities} multiple value={chosen} onValueChange={setChosen}>
-    <ComboboxTrigger className={selectTriggerVariants()}>
-        <ComboboxValue>
-            {(values: string[]) =>
-                values.length > 0 ? values.join(', ') : 'Choose facilities'
-            }
-        </ComboboxValue>
-    </ComboboxTrigger>
-    {/* … */}
-    <ComboboxItem value={item} indicator="checkbox">
-        {item}
-    </ComboboxItem>
+const anchor = useComboboxAnchor()
+
+<Combobox items={programs} multiple value={chosen} onValueChange={setChosen}>
+    <ComboboxChips ref={anchor}>
+        {chosen.map((program) => (
+            <ComboboxChip key={program} removeLabel={`Remove ${program}`}>
+                {program}
+            </ComboboxChip>
+        ))}
+        <ComboboxChipsInput id="programs" />
+    </ComboboxChips>
+    <ComboboxContent anchor={anchor}>
+        {/* … */}
+        <ComboboxItem value={item} indicator="checkbox">
+            {item}
+        </ComboboxItem>
+    </ComboboxContent>
 </Combobox>
 ```
 
@@ -101,3 +109,9 @@ closed combobox use the option's name:
 - `ComboboxList` — renders each option through its children.
 - `ComboboxItem` — one option. `indicator?: 'check' | 'checkbox'`.
 - `ComboboxEmpty` — shown when nothing matches.
+- `ComboboxChips` — the box holding the chips and their input, framed like
+  an input. `size?: 'default' | 'sm'`.
+- `ComboboxChip` — one choice. `removeLabel` names its remove button.
+- `ComboboxChipsInput` — the search box among the chips.
+- `useComboboxAnchor` — a ref for `ComboboxChips`, passed to
+  `ComboboxContent` as `anchor`.

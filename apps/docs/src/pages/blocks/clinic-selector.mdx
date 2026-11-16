@@ -16,46 +16,28 @@ with a few clinics gets a menu, and a user with one gets a plain label.
 
 <InstallCommand item="clinic-selector" />
 
-## In a sidebar
+## In your navigation
 
-Wrap the app in `ClinicProvider`, and put `ClinicSelector` in a `SidebarHeader`
-directly under `Sidebar`, before `SidebarNavigation`: the navigation is hidden
-while the sidebar is collapsed, and the header stays. The block does not depend
-on the sidebar, so pass `collapsed` yourself. Read it with `useSidebar()`, which
-works inside `SidebarProvider`. Collapsed, the selector shrinks to the clinic's
-initial, with the name in a tooltip.
+Wrap the app in `ClinicProvider`, and put `ClinicSelector` at the top of the
+app's navigation, where it stays while the links below collapse. The block
+brings no navigation of its own, so pass `collapsed` yourself when yours is
+narrowed to icons. Collapsed, the selector shrinks to the clinic's initial,
+with the name in a tooltip.
 
 ```tsx
 import { ClinicProvider, ClinicSelector } from '@/components/clinic-selector'
-import {
-    Sidebar,
-    SidebarHeader,
-    SidebarNavigation,
-    SidebarProvider,
-    useSidebar,
-} from '@/components/sidebar'
-
-function ClinicHeader() {
-    const { state } = useSidebar()
-    return (
-        <SidebarHeader>
-            <ClinicSelector collapsed={state.collapsed} />
-        </SidebarHeader>
-    )
-}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+    const [collapsed, setCollapsed] = useState(false)
     return (
         <ClinicProvider>
-            <SidebarProvider>
-                <Sidebar>
-                    <ClinicHeader />
-                    <SidebarNavigation aria-label="Application navigation">
-                        {/* SidebarContent and its links */}
-                    </SidebarNavigation>
-                </Sidebar>
-                {children}
-            </SidebarProvider>
+            <aside>
+                <ClinicSelector collapsed={collapsed} />
+                <nav aria-label="Application navigation">
+                    {/* links, hidden or narrowed while collapsed */}
+                </nav>
+            </aside>
+            {children}
         </ClinicProvider>
     )
 }

@@ -3,28 +3,8 @@ import {
     ClinicSelector,
     useClinic,
 } from '@/components/clinic-selector'
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarHeader,
-    SidebarItem,
-    SidebarItems,
-    SidebarLink,
-    SidebarNavigation,
-    SidebarProvider,
-    SidebarToggle,
-    useSidebar,
-} from '@/components/sidebar'
-
-/** Reads the sidebar's state, so it sits inside `SidebarProvider`. */
-function ClinicHeader() {
-    const { state } = useSidebar()
-    return (
-        <SidebarHeader>
-            <ClinicSelector collapsed={state.collapsed} />
-        </SidebarHeader>
-    )
-}
+import { Button } from '@/components/dhis2/ui/button'
+import { useState } from 'react'
 
 /** Any page under the provider can scope its data to the current clinic. */
 function ClinicPage() {
@@ -42,37 +22,38 @@ function ClinicPage() {
 }
 
 export default function ClinicSelectorSidebar() {
+    const [collapsed, setCollapsed] = useState(false)
     return (
         <ClinicProvider>
-            <SidebarProvider>
-                <div className="flex min-h-80 flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
-                    <Sidebar>
-                        {/* Outside the navigation, which is hidden while collapsed, so the clinic's tile stays. */}
-                        <ClinicHeader />
-                        <SidebarNavigation aria-label="Workspace navigation">
-                            <SidebarContent>
-                                <SidebarItems>
-                                    <SidebarItem>
-                                        <SidebarLink
-                                            href="#visits"
-                                            aria-current="page"
-                                        >
-                                            Visits
-                                        </SidebarLink>
-                                    </SidebarItem>
-                                    <SidebarItem>
-                                        <SidebarLink href="#stock">
-                                            Stock
-                                        </SidebarLink>
-                                    </SidebarItem>
-                                </SidebarItems>
-                            </SidebarContent>
-                        </SidebarNavigation>
-                        <SidebarToggle />
-                    </Sidebar>
-                    <ClinicPage />
-                </div>
-            </SidebarProvider>
+            <div className="flex min-h-80 flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
+                <aside
+                    className={`flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0 ${collapsed ? 'md:w-13' : 'md:w-60'}`}
+                >
+                    {/* At the top of the navigation, where it stays while the links below collapse. */}
+                    <ClinicSelector collapsed={collapsed} />
+                    <nav
+                        aria-label="Workspace navigation"
+                        className={`flex flex-col gap-1 text-sm ${collapsed ? 'md:hidden' : ''}`}
+                    >
+                        <a href="#visits" className="rounded-md px-2 py-1.5">
+                            Visits
+                        </a>
+                        <a href="#stock" className="rounded-md px-2 py-1.5">
+                            Stock
+                        </a>
+                    </nav>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-auto self-start max-md:hidden"
+                        aria-expanded={!collapsed}
+                        onClick={() => setCollapsed(!collapsed)}
+                    >
+                        {collapsed ? '»' : '« Collapse'}
+                    </Button>
+                </aside>
+                <ClinicPage />
+            </div>
         </ClinicProvider>
     )
 }

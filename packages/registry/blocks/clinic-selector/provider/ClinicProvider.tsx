@@ -24,7 +24,9 @@ import type { AssignedClinic, Clinic } from '../api/schemas'
 import { isWithinAssigned } from '../api/scope'
 import {
     ClinicContext,
+    ClinicSearchContext,
     type ClinicContextValue,
+    type ClinicSearchValue,
     type ClinicStatus,
 } from './context'
 import {
@@ -183,6 +185,8 @@ export function ClinicProvider({
             unwrap(await fetchClinicsById(resourceClient, toCheck, signal)),
         enabled: checking,
         retry: shouldRetryClinicRequest,
+        // Asked again on every mount, whatever the host's default: access can be lost between visits.
+        staleTime: 0,
     })
 
     const answer = byId.data
@@ -212,24 +216,32 @@ export function ClinicProvider({
     }, [pickedClinics, knownClinics, answer, assigned])
 
     // Data held through a failed refetch still counts: a background failure never blanks the clinic.
+    // A check that cannot be made leaves its clinics unknown; the user's own clinics still work.
+    const unchecked = checking && byId.isError && answer === undefined
     const validated =
-        me.data !== undefined && (!checking || answer !== undefined)
+        me.data !== undefined &&
+        (!checking || answer !== undefined || unchecked)
     const status = statusOf({
-        failed:
-            (me.isError && me.data === undefined) ||
-            (checking && byId.isError && answer === undefined),
+        failed: me.isError && me.data === undefined,
         validated,
         assigned,
     })
 
-    const remembers = valid.get(remembered.current ?? '') ?? assigned[0]
+    // An unknown remembered clinic is neither shown nor replaced: the user chooses, or the check succeeds later.
+    const awaitsCheck =
+        unchecked &&
+        remembered.current !== undefined &&
+        !valid.has(remembered.current)
+    const remembers =
+        valid.get(remembered.current ?? '') ??
+        (awaitsCheck ? undefined : assigned[0])
     const controlled = value === undefined ? undefined : valid.get(value)
     const current = value === undefined ? remembers : controlled
     const clinic = status === 'ready' ? current : undefined
 
     // Written only after a successful check, so a failed one never forgets a clinic.
     useEffect(() => {
-        if (!validated) {
+        if (!validated || unchecked) {
             return
         }
         const kept = {
@@ -244,7 +256,7 @@ export function ClinicProvider({
         ) {
             remember(kept)
         }
-    }, [validated, valid, remembered, remember])
+    }, [validated, unchecked, valid, remembered, remember])
 
     const isAssigned = useCallback(
         (id: string) => assigned.some((a) => a.id === id),
@@ -279,6 +291,8 @@ export function ClinicProvider({
             if (
                 status !== 'ready' ||
                 userId === undefined ||
+                // Choosing the current clinic again changes nothing, so nothing is said or called.
+                next.id === clinic?.id ||
                 !isWithinAssigned(next.path, assigned)
             ) {
                 return
@@ -303,6 +317,7 @@ export function ClinicProvider({
         [
             status,
             userId,
+            clinic,
             assigned,
             value,
             remember,
@@ -324,6 +339,8 @@ export function ClinicProvider({
     const searchesServer = assigned.some((a) => a.hasChildren)
     const searchable = searchesServer || assigned.length > MAX_UNFILTERED
     const [query, setQuery] = useState('')
+    const [browsed, setBrowsed] = useState(false)
+    const browse = useCallback(() => setBrowsed(true), [])
     const trimmed = query.trim()
     const [debounced, setDebounced] = useState('')
     useEffect(() => {
@@ -345,12 +362,16 @@ export function ClinicProvider({
         initialPageParam: 1,
         getNextPageParam: (last, pages) =>
             last.hasMore ? pages.length + 1 : undefined,
-        enabled: searchesServer && userId !== undefined,
+        // Nothing is asked for until the menu is opened or the user types.
+        enabled:
+            searchesServer &&
+            userId !== undefined &&
+            (browsed || debounced !== ''),
         retry: shouldRetryClinicRequest,
         staleTime: FRESH_MS,
     })
     const { refetch: refetchSearch, fetchNextPage } = server
-    const search = useMemo((): ClinicContextValue['search'] => {
+    const search = useMemo((): ClinicSearchValue['search'] => {
         if (!searchesServer) {
             const lower = trimmed.toLowerCase()
             return {
@@ -393,7 +414,8 @@ export function ClinicProvider({
             hasMore: server.hasNextPage,
             loadingMore: server.isFetchingNextPage,
             moreFailed: server.isFetchNextPageError,
-            loadMore: () => void fetchNextPage(),
+            // A second press while the page loads joins it rather than starting over.
+            loadMore: () => void fetchNextPage({ cancelRefetch: false }),
             retry: retrySearch,
         }
     }, [
@@ -431,9 +453,6 @@ export function ClinicProvider({
             recent,
             searchable,
             searchesServer,
-            query,
-            setQuery,
-            search,
             setClinic,
             retry,
         }),
@@ -444,16 +463,20 @@ export function ClinicProvider({
             recent,
             searchable,
             searchesServer,
-            query,
-            search,
             setClinic,
             retry,
         ]
     )
+    const searching = useMemo<ClinicSearchValue>(
+        () => ({ query, setQuery, browse, search }),
+        [query, browse, search]
+    )
 
     return (
         <ClinicContext.Provider value={context}>
-            {children}
+            <ClinicSearchContext.Provider value={searching}>
+                {children}
+            </ClinicSearchContext.Provider>
         </ClinicContext.Provider>
     )
 }

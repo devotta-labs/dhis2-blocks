@@ -1,7 +1,14 @@
 import { page, userEvent } from 'vitest/browser'
+import { render } from 'vitest-browser-react'
 import { todayIso, typedText } from '@/components/dhis2-value-types'
-import { childVisitProgram } from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+import {
+    CHILD_VISIT,
+    CHILD_VISIT_RULES,
+    CHILD_VISIT_VARIABLES,
+    childVisitProgram,
+} from '../__tests__/childVisit'
+import { editable, renderForm, serve } from '../__tests__/serve'
+import { EventForm } from './EventForm'
 import { settingsOf } from '../lib/metadata'
 
 const SECTIONS = ['Measurements', 'Patient', 'Assessment', 'Follow-up']
@@ -29,6 +36,31 @@ test('a stage without sections is one group with no legend', async () => {
     await expect
         .element(page.getByRole('textbox', { name: 'Internal code' }))
         .toBeVisible()
+})
+
+test('a new event for another org unit starts afresh', async () => {
+    const server = serve({
+        program: childVisitProgram(),
+        rules: CHILD_VISIT_RULES,
+        variables: CHILD_VISIT_VARIABLES,
+    })
+    const form = (orgUnitId: string) => (
+        <EventForm
+            programId={CHILD_VISIT.programId}
+            programStageId={CHILD_VISIT.stageId}
+            orgUnitId={orgUnitId}
+            blame="off"
+        />
+    )
+    const screen = await render(form(CHILD_VISIT.orgUnitId), {
+        wrapper: server.wrapper,
+    })
+    await editable()
+    await userEvent.click(weight())
+    await userEvent.keyboard('70{Tab}')
+    await screen.rerender(form('OtherOrgUnt'))
+    await editable()
+    await expect.element(weight()).toHaveValue('')
 })
 
 test("the event date is labelled by the stage and holds today's date", async () => {

@@ -157,9 +157,10 @@ const EventFormRoot = (props: EventFormProps) => {
 
 /** Enters or edits one event of a program stage, with the stage's program rules applied, and saves it. */
 export const EventForm = (props: EventFormProps) => (
-    // A form per event: another program, stage or event starts afresh.
+    // A form per event: another program, stage or event starts afresh, and so does a new event for another org unit
+    // or subject. An edited event keeps its form, since its own org unit and subject are what it saves under.
     <EventFormRoot
-        key={`${props.programId}/${props.programStageId}/${props.eventId ?? ''}`}
+        key={`${props.programId}/${props.programStageId}/${props.eventId ?? `new/${props.orgUnitId}/${props.enrollmentId ?? ''}/${props.trackedEntityId ?? ''}`}`}
         {...props}
     />
 )

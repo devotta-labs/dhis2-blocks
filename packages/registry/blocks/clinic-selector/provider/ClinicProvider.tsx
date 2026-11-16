@@ -55,6 +55,8 @@ const unwrap = <T,>(result: Result<T, Error>): T => {
 // Stored ids are untrusted: only a uid may go into the by-id filter.
 const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
 const SEARCH_DELAY_MS = 250
+// A user's units rarely change mid-session, so returning to the tab does not ask for every loaded page again.
+const FRESH_MS = 5 * 60_000
 // More than this many facilities is too many to scan without a filter.
 const MAX_UNFILTERED = 8
 const NO_ASSIGNED: AssignedClinic[] = []
@@ -120,6 +122,7 @@ export function ClinicProvider({
         queryFn: async ({ signal }) =>
             unwrap(await fetchMe(resourceClient, signal)),
         retry: shouldRetryClinicRequest,
+        staleTime: FRESH_MS,
     })
     const userId = me.data?.userId
     const assigned = me.data?.assigned ?? NO_ASSIGNED
@@ -344,6 +347,7 @@ export function ClinicProvider({
             last.hasMore ? pages.length + 1 : undefined,
         enabled: searchesServer && userId !== undefined,
         retry: shouldRetryClinicRequest,
+        staleTime: FRESH_MS,
     })
     const { refetch: refetchSearch, fetchNextPage } = server
     const search = useMemo((): ClinicContextValue['search'] => {

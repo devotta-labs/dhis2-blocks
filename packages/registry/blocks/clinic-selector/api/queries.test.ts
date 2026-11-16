@@ -66,13 +66,13 @@ describe('fetchMe', () => {
 })
 
 describe('searchClinics', () => {
-    it('searches within the user hierarchy, one page', async () => {
+    it('searches within the user hierarchy, one page by name', async () => {
         const { client, query } = engineReturning({
-            pager: { total: 1 },
+            pager: { page: 2, pageSize: 20, total: 21 },
             organisationUnits: [unit('a', 'Ngelehun')],
         })
 
-        const result = await searchClinics(client, 'ngel')
+        const result = await searchClinics(client, 'ngel', 2)
 
         expect(requestOf(query)).toEqual({
             resource: 'organisationUnits',
@@ -80,7 +80,9 @@ describe('searchClinics', () => {
                 query: 'ngel',
                 withinUserHierarchy: true,
                 fields: 'id,displayName,path',
+                order: 'displayName:asc',
                 pageSize: SEARCH_PAGE_SIZE,
+                page: 2,
             },
         })
         expect(result.unwrap()).toEqual({
@@ -89,16 +91,15 @@ describe('searchClinics', () => {
         })
     })
 
-    it('reports more results than the page holds', async () => {
-        const { client } = engineReturning({
-            pager: { total: 51 },
-            organisationUnits: Array.from({ length: 50 }, (_, i) =>
-                unit(`u${i}`, `Unit ${i}`)
-            ),
+    it('sends no query for a blank one, and says a page follows', async () => {
+        const { client, query } = engineReturning({
+            pager: { page: 1, pageSize: 20, total: 21 },
+            organisationUnits: [unit('a', 'A')],
         })
 
-        const result = await searchClinics(client, 'unit')
+        const result = await searchClinics(client, '', 1)
 
+        expect(requestOf(query)?.params).not.toHaveProperty('query')
         expect(result.unwrap().hasMore).toBe(true)
     })
 })

@@ -1,7 +1,8 @@
 # Clinic Selector
 
 A switcher for the clinic a user is working in, for React 18 applications: a
-short list of their own organisation units, with search when they have more.
+short list of their own organisation units, with search and a paged list of
+every clinic when they have more.
 The provider loads the user's units, remembers the current clinic and the
 recent ones in the browser, and shares the choice with every page through
 `useClinic()`.

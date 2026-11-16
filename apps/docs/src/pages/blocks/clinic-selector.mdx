@@ -91,7 +91,10 @@ a `value` the user cannot work at. `useClinic()` also returns `setClinic` and
 ## More than a few clinics
 
 A user with a district, or with more than eight clinics, gets a search box.
-Below a district, search runs on the server, within the user's own hierarchy.
+Below a district, the menu also lists **All clinics** in the user's own
+hierarchy by name, twenty at a time, with **Show more** at the end of the list,
+so a user with thousands of clinics can browse without typing. Search runs on
+the server over the same hierarchy and pages the same way.
 The clinics the user picks by search are kept as **Recent**, newest first, five
 at most, above their assigned units. A user can never pick a unit outside
 their hierarchy, and a remembered unit they lose access to drops out.

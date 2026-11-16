@@ -27,7 +27,7 @@ export default function ClinicSelectorSidebar() {
         <ClinicProvider>
             <div className="flex min-h-80 flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
                 <aside
-                    className={`flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0 ${collapsed ? 'md:w-13' : 'md:w-60'}`}
+                    className={`flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0 ${collapsed ? 'md:w-12' : 'md:w-60'}`}
                 >
                     {/* At the top of the navigation, where it stays while the links below collapse. */}
                     <ClinicSelector collapsed={collapsed} />

@@ -27,6 +27,6 @@ describe('the clinic selector lab design values', () => {
     it('lists each change with what it was', () => {
         const spec = designSpec({ ...DESIGN_DEFAULTS, 'tile.size': 32 })
         expect(spec).toContain('Changed from the block as it ships (1):')
-        expect(spec).toContain('tile.size: 28px -> 32px')
+        expect(spec).toContain('tile.size: 24px -> 32px')
     })
 })

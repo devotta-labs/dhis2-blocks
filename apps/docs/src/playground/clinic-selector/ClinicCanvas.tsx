@@ -69,7 +69,7 @@ export const ClinicCanvas = ({
                 <aside
                     className={cn(
                         'flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0',
-                        collapsed ? 'md:w-13' : 'md:w-60'
+                        collapsed ? 'md:w-12' : 'md:w-60'
                     )}
                 >
                     <ClinicSelector

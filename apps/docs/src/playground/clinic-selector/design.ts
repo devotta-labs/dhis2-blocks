@@ -102,7 +102,7 @@ export const DESIGN_GROUPS: DesignGroup[] = [
                 'line-height',
             ]),
             weight('trigger.fontWeight', 'Font weight', 500, TRIGGER),
-            px('trigger.radius', 'Corner radius', 4, 16, [
+            px('trigger.radius', 'Corner radius', 3, 16, [
                 TRIGGER,
                 'border-radius',
             ]),
@@ -140,10 +140,10 @@ export const DESIGN_GROUPS: DesignGroup[] = [
     {
         title: 'Tile',
         controls: [
-            px('tile.size', 'Size', 28, 48, [TILE, 'width'], [TILE, 'height']),
+            px('tile.size', 'Size', 24, 48, [TILE, 'width'], [TILE, 'height']),
             px('tile.radius', 'Corner radius', 4, 24, [TILE, 'border-radius']),
-            px('tile.fontSize', 'Initial size', 14, 28, [TILE, 'font-size']),
-            weight('tile.fontWeight', 'Initial weight', 500, TILE),
+            px('tile.fontSize', 'Initial size', 12, 28, [TILE, 'font-size']),
+            weight('tile.fontWeight', 'Initial weight', 600, TILE),
         ],
     },
     {
@@ -165,11 +165,11 @@ export const DESIGN_GROUPS: DesignGroup[] = [
         title: 'Menu',
         controls: [
             {
-                ...px('menu.width', 'Width', 400, 640, [MENU, 'width']),
+                ...px('menu.width', 'Width', 360, 640, [MENU, 'width']),
                 min: 200,
             },
             {
-                ...px('menu.listMaxHeight', 'List max height', 236, 640, [
+                ...px('menu.listMaxHeight', 'List max height', 300, 640, [
                     `${MENU} [data-slot="combobox-list"]`,
                     'max-height',
                 ]),
@@ -199,7 +199,7 @@ export const DESIGN_GROUPS: DesignGroup[] = [
                 SEARCH,
                 'margin-bottom',
             ]),
-            px('search.paddingStart', 'Padding start', 12, 24, [
+            px('search.paddingStart', 'Padding start', 8, 24, [
                 `${SEARCH} input`,
                 'padding-inline-start',
             ]),
@@ -223,11 +223,11 @@ export const DESIGN_GROUPS: DesignGroup[] = [
             px('heading.fontSize', 'Font size', 13, 18, [HEADING, 'font-size']),
             weight('heading.fontWeight', 'Font weight', 500, HEADING),
             colour('heading.text', 'Text', '#4a5768', [HEADING, 'color']),
-            px('heading.paddingTop', 'Padding top', 8, 24, [
+            px('heading.paddingTop', 'Padding top', 12, 24, [
                 HEADING,
                 'padding-top',
             ]),
-            px('heading.paddingBottom', 'Padding bottom', 4, 24, [
+            px('heading.paddingBottom', 'Padding bottom', 2, 24, [
                 HEADING,
                 'padding-bottom',
             ]),
@@ -249,7 +249,7 @@ export const DESIGN_GROUPS: DesignGroup[] = [
                 ITEM,
                 'padding-inline-start',
             ]),
-            px('row.paddingEnd', 'Padding end', 36, 56, [
+            px('row.paddingEnd', 'Padding end', 32, 56, [
                 ITEM,
                 'padding-inline-end',
             ]),
@@ -294,7 +294,7 @@ export const DESIGN_GROUPS: DesignGroup[] = [
     {
         title: 'Show more row',
         controls: [
-            px('more.fontSize', 'Font size', 14, 20, [MORE, 'font-size']),
+            px('more.fontSize', 'Font size', 13, 20, [MORE, 'font-size']),
             weight('more.fontWeight', 'Font weight', 500, MORE),
             colour('more.text', 'Text', '#1565c0', [MORE, 'color']),
             px('more.paddingTop', 'Padding top', 8, 20, [MORE, 'padding-top']),

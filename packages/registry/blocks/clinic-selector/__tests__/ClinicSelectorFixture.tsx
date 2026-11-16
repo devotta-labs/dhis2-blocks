@@ -3,7 +3,7 @@ import React from 'react'
 import { ClinicProvider, ClinicSelector } from '..'
 import { createServer, facility } from './clinicServerSupport'
 
-/** A selector over three clinics, in a sidebar-coloured header. */
+/** A selector over three clinics, in a navigation-width header. */
 export const ClinicSelectorFixture = () => {
     const [queryClient] = React.useState(() => new QueryClient())
     const [server] = React.useState(() =>
@@ -18,7 +18,7 @@ export const ClinicSelectorFixture = () => {
     return (
         <QueryClientProvider client={queryClient}>
             <ClinicProvider client={server.client}>
-                <div className="w-60 bg-dhis2-sidebar px-3 py-4 text-dhis2-sidebar-foreground">
+                <div className="w-60 bg-dhis2-background px-3 py-4 text-dhis2-foreground">
                     <ClinicSelector />
                 </div>
             </ClinicProvider>

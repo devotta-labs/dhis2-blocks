@@ -52,14 +52,14 @@ interface ClinicGroup {
 const MORE: Clinic = { id: '', displayName: '', path: '' }
 
 const triggerClassName =
-    'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-inherit hover:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring data-popup-open:bg-dhis2-sidebar-accent [&_svg]:shrink-0 [&_svg]:fill-current'
+    'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring data-popup-open:bg-dhis2-accent [&_svg]:shrink-0 [&_svg]:fill-current'
 
 // The shared radio item sets its check on the right; in RTL it moves to the inline end, as in the search form.
 const radioRowClassName =
     'rtl:pr-3 rtl:pl-9 rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:right-auto rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:left-3'
 
 const tileOnly =
-    'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-sidebar-accent text-dhis2-sidebar-accent-foreground md:flex'
+    'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
 
 /** Collapsed from `md` up, the text a tile stands for shows beside it on hover. */
 function Tip({
@@ -139,7 +139,10 @@ export function ClinicSelector({
         setClinic,
         retry,
     } = useClinicContext()
-    const box = cn('flex min-h-9 items-center gap-2 text-sm', className)
+    const box = cn(
+        'flex min-h-9 items-center gap-2 text-sm text-dhis2-foreground',
+        className
+    )
     // From `md` up a collapsed selector has 28px, so text there gives way to a tile.
     const wide = collapsed ? 'md:hidden' : undefined
 
@@ -150,10 +153,8 @@ export function ClinicSelector({
                 className={cn(box, 'p-1', collapsed && 'md:p-0')}
             >
                 <span className="sr-only">{i18n.t('Loading')}</span>
-                <Skeleton className="size-7 shrink-0 bg-dhis2-sidebar-accent" />
-                <Skeleton
-                    className={cn('h-4 flex-1 bg-dhis2-sidebar-accent', wide)}
-                />
+                <Skeleton className="size-7 shrink-0" />
+                <Skeleton className={cn('h-4 flex-1', wide)} />
             </div>
         )
     }
@@ -175,7 +176,7 @@ export function ClinicSelector({
                             onClick={retry}
                             className={cn(
                                 tileOnly,
-                                'cursor-pointer border-0 p-0 hover:bg-[color-mix(in_srgb,var(--dhis2-sidebar-accent),var(--dhis2-sidebar-foreground)_12%)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring [&_svg]:fill-current'
+                                'cursor-pointer border-0 p-0 hover:bg-dhis2-accent-strong focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring [&_svg]:fill-current'
                             )}
                         >
                             <IconSync16 />

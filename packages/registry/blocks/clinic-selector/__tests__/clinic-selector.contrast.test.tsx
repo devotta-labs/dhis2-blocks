@@ -10,14 +10,14 @@ describe('clinic selector with more contrast', () => {
     // An earlier test's remembered clinic must not decide the current one.
     beforeEach(() => localStorage.clear())
 
-    it('writes the clinic name in the sidebar foreground', async () => {
+    it('writes the clinic name in the foreground', async () => {
         await render(<ClinicSelectorFixture />)
         const trigger = page.getByRole('button', {
             name: 'Clinic: Bristol Clinic',
         })
         await expect.element(trigger).toBeVisible()
         expect(getComputedStyle(trigger.element()).color).toBe(
-            roleColour('sidebar-foreground')
+            roleColour('foreground')
         )
     })
 

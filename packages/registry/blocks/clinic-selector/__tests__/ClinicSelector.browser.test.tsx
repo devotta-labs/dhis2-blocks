@@ -398,7 +398,7 @@ describe('ClinicSelector', () => {
                             )
                             ?.getBoundingClientRect().width
                 )
-                .toBe(240)
+                .toBe(400)
         }
     )
 

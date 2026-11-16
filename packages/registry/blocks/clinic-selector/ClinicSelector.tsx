@@ -242,7 +242,8 @@ export function ClinicSelector({
     }
     const popup = {
         side: collapsed ? ('right' as const) : ('bottom' as const),
-        className: collapsed ? 'w-60' : 'w-(--anchor-width)',
+        // Wide enough for clinic names whatever the sidebar's width, and never wider than the screen.
+        className: 'w-100 max-w-[calc(100vw-1rem)]',
     }
 
     if (!searchable) {

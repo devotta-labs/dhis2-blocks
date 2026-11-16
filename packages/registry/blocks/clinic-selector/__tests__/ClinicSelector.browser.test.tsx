@@ -53,6 +53,7 @@ const atDesktopWidth = async () => {
 }
 
 const searchBox = () => page.getByPlaceholder('Search clinics')
+const TILE = '[data-clinic-selector="tile"]'
 
 const tooltipText = () =>
     document.querySelector('[data-slot="tooltip-content"]')?.textContent
@@ -63,7 +64,7 @@ const currentRowLook = (row: Element) => {
     const checkBox = [...row.querySelectorAll('svg')]
         .at(-1)
         ?.getBoundingClientRect()
-    const tileBox = row.querySelector('.size-7')?.getBoundingClientRect()
+    const tileBox = row.querySelector(TILE)?.getBoundingClientRect()
     if (!checkBox || !tileBox) {
         throw new Error('The row has no check or no tile')
     }
@@ -384,7 +385,7 @@ describe('ClinicSelector', () => {
             })
             await expect.element(trigger).toBeVisible()
             await expect.element(screen.getByText(name)).not.toBeVisible()
-            expect(trigger.element().getBoundingClientRect().width).toBe(28)
+            expect(trigger.element().getBoundingClientRect().width).toBe(24)
             await trigger.hover()
             await expect.poll(tooltipText, { timeout: 2000 }).toBe(name)
 
@@ -398,7 +399,7 @@ describe('ClinicSelector', () => {
                             )
                             ?.getBoundingClientRect().width
                 )
-                .toBe(400)
+                .toBe(360)
         }
     )
 
@@ -484,7 +485,7 @@ describe('ClinicSelector', () => {
         const retry = screen.getByRole('button', { name: 'Retry' })
         await expect.element(retry).toBeVisible()
         expect(retry.elements()).toHaveLength(1)
-        expect(retry.element().getBoundingClientRect().width).toBe(28)
+        expect(retry.element().getBoundingClientRect().width).toBe(24)
         await retry.hover()
         await expect
             .poll(tooltipText, { timeout: 2000 })
@@ -507,7 +508,7 @@ describe('ClinicSelector', () => {
 
         const tile = screen.getByRole('img', { name: 'No clinic assigned' })
         await expect.element(tile).toBeVisible()
-        expect(tile.element().getBoundingClientRect().width).toBe(28)
+        expect(tile.element().getBoundingClientRect().width).toBe(24)
         await tile.hover()
         await expect
             .poll(tooltipText, { timeout: 2000 })
@@ -524,11 +525,11 @@ describe('ClinicSelector', () => {
 
         const row = screen.getByText('Bristol Clinic')
         await expect.element(row).toBeInTheDocument()
-        const tile = screen.getByTestId('header').element().firstElementChild
+        const tile = screen.getByTestId('header').element().querySelector(TILE)
         if (!tile) {
             throw new Error('The selector rendered nothing')
         }
-        expect(tile.getBoundingClientRect().width).toBe(28)
+        expect(tile.getBoundingClientRect().width).toBe(24)
         await userEvent.hover(tile)
         await expect.poll(tooltipText, { timeout: 2000 }).toBe('Bristol Clinic')
     })

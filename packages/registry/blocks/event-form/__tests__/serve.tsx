@@ -27,6 +27,8 @@ interface Served {
     authorities?: readonly string[]
     /** The import report a refused save throws with. */
     refuse?: z.infer<typeof importReportSchema>
+    /** What a save answers when it is not refused; an import report by default. */
+    saved?: Json
     /** Resources that fail with an access error, so the rules' hooks do not retry. */
     failing?: readonly string[]
     /** Resources that answer only once `release` is called. */
@@ -51,6 +53,7 @@ export const serve = ({
     orgUnit = { path: CHILD_VISIT_PATH },
     authorities = [],
     refuse,
+    saved = { status: 'OK', validationReport: { errorReports: [] } },
     failing = [],
     held = [],
 }: Served) => {
@@ -106,7 +109,7 @@ export const serve = ({
             if (refuse !== undefined) {
                 throw Object.assign(new Error('Conflict'), { details: refuse })
             }
-            return { status: 'OK', validationReport: { errorReports: [] } }
+            return saved
         }),
     }
     const queryClient = new QueryClient({

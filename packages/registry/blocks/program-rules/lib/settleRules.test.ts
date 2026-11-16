@@ -177,6 +177,31 @@ describe('settleRules', () => {
         expect(cleared.outcome).toEqual(cold({}).outcome)
     })
 
+    it('confirms in one run a value typed into a field a rule can set', () => {
+        const { settle, cold } = rulesWith([
+            rule('very hot', '#{tempVar} > 40', [
+                {
+                    id: 'very hot',
+                    type: 'ASSIGN',
+                    dataElementId: 'flag',
+                    data: "'1'",
+                },
+            ]),
+            rule('flagged', "#{flagVar} == '1'", [
+                {
+                    id: 'flagged',
+                    type: 'SHOWWARNING',
+                    dataElementId: 'flag',
+                    content: 'Flagged',
+                },
+            ]),
+        ])
+        const first = settle(undefined, {}).settled
+        const { settled, runs } = settle(first, { flag: '1' })
+        expect(runs).toBe(1)
+        expect(settled.outcome).toEqual(cold({ flag: '1' }).outcome)
+    })
+
     it('settles from the entered values when rules feed each other in a loop', () => {
         // Keeps itself set once set: from the last values a warm start would keep `flag` after it is cleared.
         const { settle, cold } = rulesWith([

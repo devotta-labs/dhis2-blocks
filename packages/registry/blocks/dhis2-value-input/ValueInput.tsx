@@ -59,7 +59,7 @@ export interface ValueInputProps {
      * Where the `readOnly` reason is given: under the field (`'visible'`, the default), or only in the control's
      * accessible description (`'described'`), for a host that shows it another way, such as a marker in `labelAside`;
      * Tab then passes the control for that, which a script can still focus. `'held'` describes it too and keeps
-     * the field drawn as when it can be edited, its pop-up editor or search there but inert, for a host that locks it
+     * the field drawn as when it can be edited, its pop-up editor, search or calendar button there but inert, for a host that locks it
      * for a moment, such as while it saves, so nothing moves.
      */
     readOnlyReason?: 'visible' | 'described' | 'held'
@@ -352,6 +352,7 @@ export const ValueInput = ({
                 settings={settings}
                 draft={draft}
                 readOnly={reason !== undefined}
+                held={held}
                 required={required}
                 className={WIDTHS.get(kind)}
                 tabIndex={tabIndex}

@@ -21,11 +21,11 @@ export interface PayloadInput {
     eventDate: string
     status: RuleEventStatus
     effective: Values
-    /** The effective values as opened or last saved. */
+    /** The effective values DHIS2 may hold: as opened or last saved, with those of a save the form stopped waiting for. */
     opened: Values
     /** The chosen option of each category of a non-default combination, in order; absent for the default one. */
     categoryOptions?: readonly string[]
-    /** The point of a point stage as `[lng,lat]`, now and as opened or last saved; absent for other stages. */
+    /** The point of a point stage as `[lng,lat]`, now and as DHIS2 may hold it; absent for other stages. */
     location?: { now?: string; opened?: string }
     /** A note to add, with the id made for it; absent or blank adds none. */
     note?: { id: string; text: string }

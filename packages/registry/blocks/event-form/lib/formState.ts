@@ -4,10 +4,11 @@ import {
 } from '@dhis2/multi-calendar-dates'
 import { storedDay } from '@/components/dhis2-value-display'
 import type { EditorProblem } from '@/components/dhis2-value-input'
+import { sameValues } from '@/components/program-rules'
 import type { RuleEventStatus } from '@/components/program-rules'
 import { heldChoices } from './categories'
 import { pointValue } from './location'
-import { sameValues, valuesOf } from './metadata'
+import { valuesOf } from './metadata'
 import type { Category, EventNote, HeldEvent, Values } from './metadata'
 import { generateUid } from './uid'
 import { EVENT_DATE, LOCATION } from './validate'
@@ -28,13 +29,17 @@ export interface FormState {
     note: { id: string; text: string }
     /** Field or `EVENT_DATE` → `ValueInput`'s problem message. */
     problems: ReadonlyMap<string, string>
-    /** The baseline: as opened, then as last sent. `stored` is what DHIS2 holds, so a save deletes what left it. */
+    /**
+     * The baseline: as opened, then as last sent. `stored` and `storedLocation` are what DHIS2 may hold, so a save
+     * deletes what left it.
+     */
     opened: {
         entered: Values
         stored: Values
         eventDate?: string
         categories: Values
         location?: string
+        storedLocation?: string
     }
     attempt?: Attempt
     summary?: Validation
@@ -63,8 +68,8 @@ export type FormAction =
     | { type: 'cancelConfirm' }
     | { type: 'noted'; text: string }
     | { type: 'saving'; attempt: Attempt | 'reopen' }
-    /** The form stopped waiting for DHIS2 to answer the save. */
-    | { type: 'stoppedWaiting' }
+    /** The form stopped waiting for DHIS2 to answer the save of `sent`, which DHIS2 may still store. */
+    | { type: 'stoppedWaiting'; sent: { effective: Values; location?: string } }
     | {
           type: 'saved'
           status: RuleEventStatus
@@ -104,7 +109,14 @@ export const initialFormState = (
         note: { id: generateUid(), text: '' },
         problems: new Map(),
         saved: false,
-        opened: { entered, stored: entered, eventDate, categories, location },
+        opened: {
+            entered,
+            stored: entered,
+            eventDate,
+            categories,
+            location,
+            storedLocation: location,
+        },
         serverErrors: new Map(),
     }
 }
@@ -164,9 +176,12 @@ export const formReducer = (
     action: FormAction
 ): FormState => {
     switch (action.type) {
-        // An edit ends the form's "Saved".
+        // An edit ends the form's "Saved". The fields are read-only while a save is unanswered, so what arrives then,
+        // such as a location found late, is not taken: the save would not hold it.
         case 'committed':
-            return committed({ ...state, saved: false }, action)
+            return state.saving === undefined
+                ? committed({ ...state, saved: false }, action)
+                : state
         case 'attempted':
             return {
                 ...state,
@@ -191,7 +206,19 @@ export const formReducer = (
                 saved: false,
             }
         case 'stoppedWaiting':
-            return { ...state, saving: undefined }
+            return {
+                ...state,
+                saving: undefined,
+                opened: {
+                    ...state.opened,
+                    stored: {
+                        ...state.opened.stored,
+                        ...action.sent.effective,
+                    },
+                    storedLocation:
+                        state.opened.storedLocation ?? action.sent.location,
+                },
+            }
         case 'saved': {
             const text = state.note.text.trim()
             return {
@@ -204,6 +231,7 @@ export const formReducer = (
                     eventDate: state.eventDate,
                     categories: state.categories,
                     location: state.location,
+                    storedLocation: state.location,
                 },
                 notes:
                     text === ''

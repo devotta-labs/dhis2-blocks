@@ -19,7 +19,7 @@ const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
 
 /** Everything one field shows, so a field renders only when its own part of the form changes. */
-export interface FieldModel {
+interface FieldModel {
     value?: string
     required: boolean
     readOnly?: string

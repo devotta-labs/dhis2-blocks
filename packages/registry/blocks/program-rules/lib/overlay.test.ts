@@ -246,7 +246,7 @@ describe('overlay', () => {
         )
     })
 
-    it('drops the messages of hidden fields and keeps form messages', () => {
+    it('drops the messages of hidden fields, keeps form messages, and makes those outside the stage the form’s', () => {
         const message = (text: string) => ({
             kind: 'warning' as const,
             text,
@@ -260,10 +260,16 @@ describe('overlay', () => {
                     ['labPregnant', [message('gone')]],
                     ['labTempC001', [message('kept')]],
                     ['form', [message('form')]],
+                    // An attribute's, or another stage's data element's.
+                    ['labAttrib01', [message('outside')]],
                 ]),
             }
         )
         expect([...outcome.messages.keys()]).toEqual(['labTempC001', 'form'])
+        expect(outcome.messages.get('form')?.map(({ text }) => text)).toEqual([
+            'form',
+            'outside',
+        ])
     })
 
     it('ignores HIDEPROGRAMSTAGE and lists display texts before key-value pairs', () => {

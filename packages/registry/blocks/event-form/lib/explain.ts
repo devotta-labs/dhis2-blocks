@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
+import { languageTags } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { fieldDisplay } from '@/components/program-rules'
 import type {
@@ -44,21 +45,16 @@ export const reasonLabel = ({ label, from }: RuleReason): string => {
     if (from.kind === 'enrollment') {
         return i18n.t('{{label}} (from the enrolment)', options)
     }
+    if (from.previous) {
+        return i18n.t('{{label}} (previous event)', options)
+    }
     return from.stage === undefined
         ? i18n.t('{{label}} (another event)', options)
         : i18n.t('{{label}} ({{stage}})', { ...options, stage: from.stage })
 }
 
-const listOf = (items: string[]) => {
-    try {
-        // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
-        return new Intl.ListFormat(i18n.language?.replace('_', '-'), {
-            type: 'conjunction',
-        }).format(items)
-    } catch {
-        return items.join(', ')
-    }
-}
+const listOf = (items: string[]) =>
+    new Intl.ListFormat(languageTags(), { type: 'conjunction' }).format(items)
 
 const reasonsOf = (because: Blame['because']) => {
     const reasons = because.slice(0, SHOWN_REASONS).map((reason) => {

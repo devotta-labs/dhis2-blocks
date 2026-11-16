@@ -62,6 +62,9 @@ test.each([
     '8.1,1.2,3.3',
     'somewhere near the river',
     'https://example.org/maps',
+    // A bracketed pair inside other text is GeoJSON's lng,lat, never read as lat,lng.
+    '{"type":"Point","coordinates":[-13.2356,8.4871]}',
+    '[-13.2356,8.4871] clinic',
 ])('the coordinate %s is refused', (text) => {
     expect(
         parseTyped({ valueType: 'COORDINATE' }, text, GREGORIAN)

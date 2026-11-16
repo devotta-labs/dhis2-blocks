@@ -97,11 +97,19 @@ test.each([
         const screen = await render(draw({}))
         const height = screen.container.getBoundingClientRect().height
         const boxes = screen.container.querySelectorAll('input').length
+        const buttons = screen.container.querySelectorAll('button').length
         await screen.rerender(
             draw({ readOnly: 'Saving', readOnlyReason: 'held' })
         )
         expect(screen.container.getBoundingClientRect().height).toBe(height)
         expect(screen.container.querySelectorAll('input')).toHaveLength(boxes)
+        // A date keeps its calendar button, which cannot be pressed.
+        expect(screen.container.querySelectorAll('button')).toHaveLength(
+            buttons
+        )
+        for (const button of screen.container.querySelectorAll('button')) {
+            expect(button.closest('[inert]')).not.toBeNull()
+        }
         await expect
             .element(page.getByText('Saving', { exact: true }))
             .toHaveClass('sr-only')

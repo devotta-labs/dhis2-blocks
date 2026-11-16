@@ -18,6 +18,7 @@ export {
     cellKind,
     checkStored,
     inputModeFor,
+    languageTags,
     textDirectionFor,
     parseTyped,
     typedText,

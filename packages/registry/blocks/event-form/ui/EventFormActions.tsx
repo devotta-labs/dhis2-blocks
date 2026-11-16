@@ -14,7 +14,7 @@ import {
 } from '@/components/dhis2/ui/alert-dialog'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { Button } from '@/components/dhis2/ui/button'
-import { EVENT_DATE } from '../lib/validate'
+import { EVENT_DATE, LOCATION } from '../lib/validate'
 import { failedAttempt, useEventFormContext } from './context'
 
 // Labels and DHIS2's texts are shown as written, not HTML-escaped.
@@ -29,12 +29,15 @@ const commitField = (event: MouseEvent<HTMLButtonElement>) =>
 /** A button that names a field's error and puts focus in the field. */
 const ToField = ({ fieldId, text }: { fieldId: string; text: string }) => {
     const { form, formId } = useEventFormContext()
-    const label =
-        fieldId === EVENT_DATE
-            ? form.eventDateLabel
-            : (form.fields.get(fieldId)?.label ??
-              form.categories.find(({ id }) => id === fieldId)?.name ??
-              '')
+    let label =
+        form.fields.get(fieldId)?.label ??
+        form.categories.find(({ id }) => id === fieldId)?.name ??
+        ''
+    if (fieldId === EVENT_DATE) {
+        label = form.eventDateLabel
+    } else if (fieldId === LOCATION) {
+        label = i18n.t('Location')
+    }
     return (
         <Button
             type="button"
@@ -153,6 +156,7 @@ export const EventFormActions = () => {
                 </Button>
                 {state.status === 'COMPLETED' ? null : (
                     <Button
+                        id={`${formId}-complete`}
                         type="button"
                         variant="secondary"
                         disabled={disabled}

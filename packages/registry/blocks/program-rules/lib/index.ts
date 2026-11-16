@@ -27,6 +27,7 @@ export { outsideReads } from './outsideReads'
 export {
     overlay,
     runRules,
+    sameValues,
     settleRules,
     type RuleForm,
     type RuleOutcome,

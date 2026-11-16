@@ -1,6 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
-import { parseCoordinate } from '@/components/dhis2-value-types'
+import { languageTags, parseCoordinate } from '@/components/dhis2-value-types'
 import type { HeldEvent } from './metadata'
 
 // GeoJSON: longitude first; an altitude may follow.
@@ -96,24 +96,15 @@ export const insideArea = (
             inRing(point, outer) && !holes.some((hole) => inRing(point, hole))
     )
 
-const locale = () => {
-    try {
-        // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
-        return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))
-    } catch {
-        return []
-    }
-}
-
 /** A distance in words: metres under a kilometre, one decimal under ten kilometres, whole kilometres beyond. */
 export const formatDistance = (km: number) =>
     km < 1
-        ? new Intl.NumberFormat(locale(), {
+        ? new Intl.NumberFormat(languageTags(), {
               style: 'unit',
               unit: 'meter',
               maximumFractionDigits: 0,
           }).format(km * 1000)
-        : new Intl.NumberFormat(locale(), {
+        : new Intl.NumberFormat(languageTags(), {
               style: 'unit',
               unit: 'kilometer',
               maximumFractionDigits: km < 10 ? 1 : 0,

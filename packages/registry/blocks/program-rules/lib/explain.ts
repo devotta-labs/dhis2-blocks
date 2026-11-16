@@ -32,7 +32,10 @@ export interface Blame {
     ruleName: string
     /** The rule's expression, as written. */
     condition: string
-    /** The answers the rule read: the form's, the event date, then what it read outside the form, as they are now. */
+    /**
+     * The answers the rule read: the form's, the event date, then what it read outside the form or in the previous
+     * event, as they are now.
+     */
     because: RuleReason[]
     /** Assigned: the display value set. Hidden: the answer not saved while hidden. Message: its text. */
     value?: string
@@ -69,24 +72,33 @@ export const fieldDisplay = (
     return field && displayOf(value, field, context)
 }
 
-/** The answers a rule read: this stage's fields, the event date when the rule reads it, and what it read elsewhere. */
+/**
+ * The answers a rule read: this stage's fields, the event date when the rule reads it, and what it read elsewhere,
+ * a field of this stage among them when the rule reads it in the previous event.
+ */
 const becauseOf = (by: Attribution, context: BlameContext): RuleReason[] => {
     const { form, graph, effective, eventDate, outside } = context
+    const readsVariables = graph?.rules.get(by.ruleId)?.readsVariables ?? []
     const reasons: RuleReason[] = []
     const elsewhere: RuleReason[] = []
     for (const fieldId of by.readsFields) {
         const label = form.fields.get(fieldId)?.label
-        const read = label === undefined ? outside?.get(fieldId) : undefined
+        const read = outside?.get(fieldId)
+        const previous =
+            read?.from.kind === 'event' &&
+            read.from.previous === true &&
+            readsVariables.includes(read.variable)
         if (label !== undefined) {
             reasons.push({
                 fieldId,
                 label,
                 value: fieldDisplay(fieldId, effective[fieldId], context),
             })
-        } else if (read !== undefined) {
+        }
+        if (read !== undefined && (label === undefined || previous)) {
             elsewhere.push({
                 fieldId,
-                label: read.label,
+                label: label ?? read.label,
                 value: displayOf(read.value, read, context),
                 from: read.from,
             })

@@ -19,6 +19,7 @@ const held = heldEventSchema.parse({
     ...SAVED_VISIT,
     attributeOptionCombo: 'labAoc00001',
     assignedUser: { uid: 'labUser0001', username: 'nurse' },
+    followUp: true,
 })
 
 const EDIT: PayloadInput = {
@@ -117,6 +118,7 @@ describe('eventPayload', () => {
             occurredAt: SAVED_VISIT.occurredAt,
             scheduledAt: SAVED_VISIT.scheduledAt,
             status: 'ACTIVE',
+            followUp: true,
             geometry: SAVED_VISIT.geometry,
             attributeOptionCombo: 'labAoc00001',
             assignedUser: { uid: 'labUser0001', username: 'nurse' },

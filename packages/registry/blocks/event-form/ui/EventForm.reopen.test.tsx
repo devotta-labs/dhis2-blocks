@@ -148,3 +148,17 @@ test('a refused reopen says so with DHIS2’s reason and leaves the event comple
     await expect.element(reopen()).toBeEnabled()
     expect(onSaved).not.toHaveBeenCalled()
 })
+
+test.each([
+    ['Reopen', MAY_REOPEN],
+    ['Save', []],
+])('the pressed Complete leaves its focus to %s', async (name, authorities) => {
+    await renderForm({ authorities })
+    await editable()
+    await userEvent.click(weight())
+    await userEvent.keyboard('12')
+    await page.getByRole('button', { name: 'Complete', exact: true }).click()
+    await expect
+        .element(page.getByRole('button', { name, exact: true }))
+        .toHaveFocus()
+})

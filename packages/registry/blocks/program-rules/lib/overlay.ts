@@ -30,7 +30,8 @@ export interface RuleForm {
     eventDateLabel: string
 }
 
-const sameValues = (a: RuleValues, b: RuleValues) => {
+/** Whether two sets of values hold the same value for every field. */
+export const sameValues = (a: RuleValues, b: RuleValues) => {
     const keys = Object.keys(a)
     return (
         keys.length === Object.keys(b).length &&
@@ -61,7 +62,7 @@ export interface RuleOutcome {
     requiredBy: ReadonlyMap<string, Attribution>
     hiddenOptions: ReadonlyMap<string, ReadonlySet<string>>
     optionsBy: ReadonlyMap<string, Attribution>
-    /** Keyed by shown field, or `'form'`. */
+    /** Keyed by shown field, or `'form'`: the form's own and those on fields outside the stage. */
     messages: ReadonlyMap<string, readonly RuleMessage[]>
     /** Display texts, then key-value pairs. */
     display: readonly RuleDisplayItem[]
@@ -200,11 +201,14 @@ export const overlay = (
         )
     )
 
-    const messages = new Map(
-        [...effects.messages].filter(
-            ([key]) => key === 'form' || (inStage(key) && !hidden.has(key))
-        )
-    )
+    // A hidden field's messages go with it; those on a field outside the stage, such as an attribute, are the form's.
+    const messages = new Map<string, RuleMessage[]>()
+    for (const [key, list] of effects.messages) {
+        const to = key === 'form' || !inStage(key) ? 'form' : key
+        if (!hidden.has(to)) {
+            messages.set(to, [...(messages.get(to) ?? []), ...list])
+        }
+    }
 
     return {
         effective: Object.fromEntries(effective),
@@ -353,9 +357,9 @@ const changedKeys = (
 /**
  * `runRules` for `entered` and `event`, starting from `last`, the settled outcome of the same rules before a change.
  * When no rule reads what changed, its effects stand without running the engine. Otherwise the first run reads the
- * values `last` settled on, so a chain the change leaves alone confirms in one run; that is only done when the rules
- * settle to one outcome from any start within `maxRuns`, so the result is always what a settle from the entered values
- * gives.
+ * values `last` settled on, and what was entered in a field that changed, so a chain the change leaves alone confirms
+ * in one run; that is only done when the rules settle to one outcome from any start within `maxRuns`, so the result is
+ * always what a settle from the entered values gives.
  */
 export const settleRules = (
     last: RuleSettled | undefined,
@@ -395,7 +399,11 @@ export const settleRules = (
     let start = entered
     if (last !== undefined && plan.runs !== undefined && plan.runs <= maxRuns) {
         const warm = { ...entered }
+        // A written field the user just changed starts from what they entered.
         for (const field of plan.written) {
+            if (last.entered[field] !== entered[field]) {
+                continue
+            }
             const value = last.outcome.effective[field]
             if (value === undefined) {
                 delete warm[field]

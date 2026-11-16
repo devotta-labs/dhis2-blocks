@@ -48,6 +48,7 @@ settleRules(last: RuleSettled | undefined, entered: RuleValues, event: RuleSettl
 explain(outcome: RuleOutcome, context: BlameContext): ReadonlyMap<string, readonly Blame[]> // per field, hidden section, 'form'
 fieldDisplay(fieldId: string, value: string | undefined, context: BlameContext): string | undefined
 EVENT_DATE // 'occurredAt', the event date among the answers a rule read
+sameValues(a: RuleValues, b: RuleValues): boolean // the same value for every field
 ```
 
 These keep what was entered apart from what the form shows and saves. `RuleValues` is field id → value, empty values
@@ -58,26 +59,28 @@ options? } }`, every field of the stage), `sections` (`{ id, fieldIds }`) and `e
   HIDEFIELD clears its field's value unless an ASSIGN targets it (`hidden.get(id).cleared` is the answer not saved); a
   hidden section keeps its fields' values; an ASSIGN of `null`, `''` or a code outside the field's options clears.
   `RuleOutcome` has the `effective` values, `hidden`, fully `hiddenSections`, `assigned`, `required` and `requiredBy`,
-  `hiddenOptions` and `optionsBy`, the `messages` of shown fields and `'form'`, and `display` (texts, then pairs). The
-  entered values are never changed: a field shown again gets its answer back.
+  `hiddenOptions` and `optionsBy`, the `messages` of shown fields and `'form'` (with those on fields outside the stage),
+  and `display` (texts, then pairs). The entered values are never changed: a field shown again gets its answer back.
 - `runRules` evaluates, lays the effects over the entered values, and evaluates again on the result until the values stop
   changing, as many times as `maxRuns` allows (`capped` when the rules keep undoing each other).
 - `settleRules` gives what `runRules` gives from the entered values, with fewer runs. `last` is the previous result for
   the same rules and supplement (drop it when `evaluate` changes). When no rule reads what changed (a field, directly or
   through a variable; the event date, which rules read through `V{event_date}` and through which event is newest or
-  previous), the effects stand and no rule runs. Otherwise the first run reads the values `last` settled on, so a chain
-  the change leaves alone confirms in one run. It starts from the entered values instead when the rules feed each other
-  in a loop, or their longest chain needs more than `maxRuns` runs: only then could a start from the last values end
-  elsewhere.
+  previous), the effects stand and no rule runs. Otherwise the first run reads the values `last` settled on, and what
+  was entered in a field that changed, so a chain the change leaves alone confirms in one run. It starts from the
+  entered values instead when the rules feed each other in a loop, or their longest chain needs more than `maxRuns`
+  runs: only then could a start from the last values end elsewhere.
 - `explain` says, per effect, which rule did it and the answers it read (`Blame`): the form's fields with their display
   values, the event date when the rule reads `V{event_date}`, then the attributes and other events' data elements it
-  read, from `context.outside` (`outsideReads`), each with `from` (`{ kind: 'enrollment' }` or `{ kind: 'event', stage }`).
+  read, from `context.outside` (`outsideReads`), each with `from` (`{ kind: 'enrollment' }` or
+  `{ kind: 'event', stage, previous? }`); a field of the form that the rule reads through a previous-event variable is
+  listed there too, with the previous event's value.
   `BlameContext` holds the `form`, `graph`, `effective` and `stored` values, `eventDate` and
   `display(value, { valueType, options })`, which the form supplies: the lib formats nothing and has no strings.
 - `outsideReads` says, for every field a variable reads, its name (`fieldName`, else the variable's name) and the value
   the rules read for this event: an attribute from the enrolment; a data element from the newest event with a value
   among those its variable reads (the stage's for a newest-in-stage variable, the ones before the event for a
-  previous-event one), with that event's stage.
+  previous-event one, marked `previous`), with that event's stage, and the `variable` it is read through.
 
 `engine` is the `@dhis2/rule-engine` module itself. The lib only imports its types, so the ~214 KB (gzip)
 engine never enters an initial bundle. Build the context once per program and stage; evaluation is pure and
@@ -170,7 +173,10 @@ interface RuleOutsideRead {
     value?: string // the value the rules read
     valueType: string
     options?: ReadonlyArray<{ code: string; name: string }>
-    from: { kind: 'enrollment' } | { kind: 'event'; stage?: string } // the stage of the event it came from
+    variable: string // the variable it is read through
+    from:
+        | { kind: 'enrollment' }
+        | { kind: 'event'; stage?: string; previous?: true } // the stage of the event it came from
 }
 ```
 

@@ -121,6 +121,7 @@ export const DateInput = ({
     settings,
     draft,
     readOnly,
+    held = false,
     required,
     className,
     tabIndex,
@@ -130,6 +131,8 @@ export const DateInput = ({
     settings: ValueSettings
     draft: ReturnType<typeof useDraft>
     readOnly: boolean
+    /** Read-only for a moment: drawn as when it can be edited, its calendar button there but inert. */
+    held?: boolean
     required: boolean
     className?: string
     /** For a read-only date. */
@@ -144,7 +147,7 @@ export const DateInput = ({
             ? draft.text.match(/\b\d{1,2}:\d{2}\b/)?.[0]
             : storedTime(stored)
     const withTime = field.valueType === 'DATETIME'
-    if (readOnly) {
+    if (readOnly && !held) {
         return (
             <TypedInput
                 id={id}
@@ -164,11 +167,14 @@ export const DateInput = ({
                 inputRef={input}
                 field={field}
                 draft={draft}
-                readOnly={false}
+                readOnly={readOnly}
                 required={required}
                 grouped
             />
-            <InputGroupAddon align="inline-end">
+            <InputGroupAddon
+                align="inline-end"
+                {...(readOnly && { inert: '' })}
+            >
                 <DatePickerButton
                     input={input}
                     date={

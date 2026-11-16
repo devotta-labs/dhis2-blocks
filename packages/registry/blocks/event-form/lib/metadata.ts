@@ -9,10 +9,10 @@ export const PROGRAM_FIELDS =
 
 /**
  * An event's own fields with its values: an update replaces the own fields, so an edit sends them back. Its notes are
- * shown, never sent back.
+ * shown, never sent back. `completedAt` is left out: DHIS2 keeps it, and refuses it on an event set back to active.
  */
 export const EVENT_FIELDS =
-    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,attributeOptionCombo,attributeCategoryOptions,geometry,assignedUser[uid,username],dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy[displayName]]'
+    'event,program,programStage,orgUnit,enrollment,occurredAt,scheduledAt,status,followUp,attributeOptionCombo,attributeCategoryOptions,geometry,assignedUser[uid,username],dataValues[dataElement,value],notes[note,value,storedAt,storedBy,createdBy[displayName]]'
 
 const stageSchema = z.object({
     id: z.string(),
@@ -123,6 +123,7 @@ export const heldEventSchema = z.object({
         'VISITED',
         'OVERDUE',
     ]),
+    followUp: z.boolean().optional(),
     attributeOptionCombo: z.string().optional(),
     /** The event's category options, comma-separated. */
     attributeCategoryOptions: z.string().optional(),
@@ -304,11 +305,3 @@ export const valuesOf = (event: HeldEvent): Values =>
             value ? [[dataElement, value]] : []
         )
     )
-
-export const sameValues = (a: Values, b: Values) => {
-    const keys = Object.keys(a)
-    return (
-        keys.length === Object.keys(b).length &&
-        keys.every((key) => a[key] === b[key])
-    )
-}

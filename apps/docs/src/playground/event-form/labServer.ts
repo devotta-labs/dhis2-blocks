@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { NAMES } from '../dhis2-value-input/labData'
 import { answer as valueInputAnswer } from '../dhis2-value-input/labServer'
 import { EXAMPLES, ORG_UNITS, type LabEvent, type LabSettings } from './labData'
+import { httpError } from '../network'
 
 /** One request as the block sends it through app-runtime. */
 export interface LabRequest {
@@ -77,11 +78,6 @@ const uploadSchema = z
     .catch(undefined)
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
 const errorReport = (
     errorCode: string,
     message: string,

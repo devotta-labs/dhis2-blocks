@@ -43,6 +43,7 @@ typedText(field, value, settings): string // a stored value -> what an editable 
 coordinateNumber(axis, text): string | undefined // a typed latitude or longitude as numbers are stored, within its limit (90, 180)
 checkStored(field, value): ValueProblem | undefined // a stored value today's rules reject
 parseDateFormat(systemInfoDateFormat): DateFormat
+languageTags(): string[] // the language set as tags Intl reads (DHIS2 writes `pt_BR`); none when Intl reads none
 optionIndex(options): OptionIndex // the search text for an option list, built once per list and cached
 searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every word must match; exact code first, then code starts, then word starts
 ```

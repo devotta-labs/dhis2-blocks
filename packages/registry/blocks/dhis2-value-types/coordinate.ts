@@ -45,8 +45,9 @@ const ANGLES = [
         'i'
     ),
 ]
-// "lat,lng" inside other text, such as the `@8.4871,-13.2356,15z` of a maps link.
-const EMBEDDED = /(?<![\d.])(-?\d+\.\d+),\s*(-?\d+\.\d+)(?![\d.])/
+// "lat,lng" inside other text, such as the `@8.4871,-13.2356,15z` of a maps link; never a pair after `[`, which is
+// GeoJSON's lng,lat.
+const EMBEDDED = /(?<![\d.[-]\s*)(-?\d+\.\d+),\s*(-?\d+\.\d+)(?![\d.])/
 
 const pair = (latitude: string | undefined, longitude: string | undefined) => {
     const lat = latitude && coordinateNumber('latitude', latitude)

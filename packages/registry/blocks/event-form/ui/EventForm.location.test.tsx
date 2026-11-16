@@ -327,6 +327,9 @@ test('DHIS2’s error about the geometry is shown on the location', async () => 
             )
         )
         .toBeVisible()
+    await expect
+        .element(button('Location: Geometry does not conform to FeatureType'))
+        .toBeVisible()
 })
 
 test('a polygon stage shows a stored area as recorded and sends it back as it is', async () => {

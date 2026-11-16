@@ -6,6 +6,7 @@ import {
     evaluateEventRules,
     metadataForStage,
     runRules,
+    sameValues,
     settleRules,
 } from '@/components/program-rules'
 import type {
@@ -37,12 +38,7 @@ import { LONG_FORM, longFormProgram } from './longForm'
 import { MAX_RUNS } from '../hooks/useFormRules'
 import { formReducer, initialFormState, isDirty } from '../lib/formState'
 import type { FormState } from '../lib/formState'
-import {
-    heldEventSchema,
-    programSchema,
-    sameValues,
-    stageFormOf,
-} from '../lib/metadata'
+import { heldEventSchema, programSchema, stageFormOf } from '../lib/metadata'
 import type { HeldEvent, StageForm, Values } from '../lib/metadata'
 import { eventPayload } from '../lib/payload'
 import { EVENT_DATE } from '../lib/validate'

@@ -8,6 +8,7 @@ import {
     type LabPerson,
     type LabSettings,
 } from './labData'
+import { httpError } from '../network'
 
 /** One request as the block sends it through app-runtime. */
 export interface LabRequest {
@@ -90,11 +91,6 @@ export const RECORDS = ['tracker']
 const REFUSAL = 'The lab’s DHIS2 refuses every change to this row.'
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
 /** A comma-separated id list param, or undefined when the request has none. */
 const ids = (value?: string) => value?.split(',')
 

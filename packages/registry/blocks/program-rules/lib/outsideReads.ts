@@ -31,6 +31,7 @@ export const outsideReads = (
             label: variable.fieldName ?? variable.name,
             valueType: variable.fieldValueType ?? variable.valueType ?? 'TEXT',
             options,
+            variable: variable.name,
         }
         if (variable.attributeId !== undefined) {
             reads.set(fieldId, {
@@ -63,6 +64,9 @@ export const outsideReads = (
                 stage: context.stageNames.get(
                     source?.programStageId ?? variable.programStageId ?? ''
                 ),
+                ...(variable.sourceType === 'DATAELEMENT_PREVIOUS_EVENT' && {
+                    previous: true,
+                }),
             },
         })
     }

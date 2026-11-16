@@ -1,6 +1,14 @@
 import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+    useCallback,
+    useEffect,
+    useId,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import { announce } from '@/components/dhis2/ui/announcer'
 import type { EditorProblem } from '@/components/dhis2-value-input'
 import { todayIso } from '@/components/dhis2-value-types'
@@ -256,6 +264,8 @@ export const useEventForm = (
 
     // A save in flight, by number: one the form stopped waiting for is answered to no one.
     const saves = useRef(0)
+    // What the save in flight sent, which DHIS2 may still store after the form stops waiting.
+    const sending = useRef<ReturnType<typeof toSend>>(undefined)
     const [stillSaving, setStillSaving] = useState(false)
     useEffect(() => {
         if (state.saving === undefined) {
@@ -267,9 +277,21 @@ export const useEventForm = (
             setStillSaving(false)
         }
     }, [state.saving])
+    // The pressed Complete leaves once the event is completed; Reopen, else Save, takes its focus.
+    const completedFromButton = useRef(false)
+    useLayoutEffect(() => {
+        if (completedFromButton.current && state.status === 'COMPLETED') {
+            completedFromButton.current = false
+            ;(
+                document.getElementById(`${formId}-reopen`) ??
+                document.getElementById(`${formId}-save`)
+            )?.focus()
+        }
+    }, [state.status, formId])
     const stopWaiting = () => {
         saves.current++
-        dispatch({ type: 'stoppedWaiting' })
+        const { effective = {}, location } = sending.current ?? {}
+        dispatch({ type: 'stoppedWaiting', sent: { effective, location } })
     }
 
     const save = async (attempt: Attempt | 'reopen') => {
@@ -284,6 +306,7 @@ export const useEventForm = (
         dispatch({ type: 'saving', attempt })
         const number = ++saves.current
         const sent = toSend(current, attempt, now.effective)
+        sending.current = sent
         const payload = eventPayload({
             eventId: current.eventId,
             programId,
@@ -305,7 +328,10 @@ export const useEventForm = (
                       }),
             location:
                 form.location === 'point'
-                    ? { now: sent.location, opened: current.opened.location }
+                    ? {
+                          now: sent.location,
+                          opened: current.opened.storedLocation,
+                      }
                     : undefined,
             note: sent.note,
         })
@@ -329,6 +355,8 @@ export const useEventForm = (
         if (result.ok) {
             inDhis2.current = true
             const { status } = payload.events[0]
+            completedFromButton.current =
+                document.activeElement?.id === `${formId}-complete`
             dispatch({
                 type: 'saved',
                 status,

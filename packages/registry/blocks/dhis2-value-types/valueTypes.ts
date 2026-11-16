@@ -383,7 +383,7 @@ const yesNo = () =>
     ])
 
 /** The language set as tags `Intl` reads (DHIS2 writes `pt_BR`); none when it reads none, for the default casing. */
-const languageTags = () => {
+export const languageTags = () => {
     try {
         return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))
     } catch {

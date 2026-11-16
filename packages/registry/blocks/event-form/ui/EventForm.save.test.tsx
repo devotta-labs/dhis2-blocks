@@ -352,6 +352,23 @@ test('a save shows "Saved" by the buttons, announced, until the next edit; the n
     expect(second.event).toBe(first.event)
 })
 
+test('an answer that is not an import report, such as a sign-in page, is not taken as saved', async () => {
+    const onSaved = vi.fn()
+    await renderForm(
+        { saved: '<!doctype html><title>Sign in to the network</title>' },
+        { onSaved }
+    )
+    await editable()
+    await userEvent.click(weight())
+    await userEvent.keyboard('12')
+    await save().click()
+    await expect
+        .element(alertSaying("Didn't save"))
+        .toHaveTextContent('DHIS2 did not confirm the save')
+    expect(savedStatus().query()).toBeNull()
+    expect(onSaved).not.toHaveBeenCalled()
+})
+
 test('with confirmSaved="off" a save says nothing of itself', async () => {
     const onSaved = vi.fn()
     await renderForm({}, { confirmSaved: 'off', onSaved })

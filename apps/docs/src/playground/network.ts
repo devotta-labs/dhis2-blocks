@@ -42,7 +42,8 @@ export type Log = (
 ) => void
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
+/** An error as the app-runtime throws one for a DHIS2 answer with `status`. */
+export const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
     })

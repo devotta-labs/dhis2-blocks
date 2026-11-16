@@ -139,6 +139,7 @@ describe('formReducer', () => {
             eventDate: '2026-11-02',
             categories: {},
             location: '[-11.42,8.47]',
+            storedLocation: '[-11.42,8.47]',
         })
         expect(state).toMatchObject({ status: 'COMPLETED' })
         expect(state.saving).toBeUndefined()
@@ -248,6 +249,39 @@ describe('location', () => {
         expect(isDirty(moved)).toBe(true)
         expect(isDirty(commit(opened(), LOCATION, null))).toBe(true)
         expect(isDirty(commit(moved, LOCATION, '[-11.42,8.47]'))).toBe(false)
+    })
+
+    it('takes nothing committed while a save is unanswered, such as a location found late', () => {
+        const saving = formReducer(opened(), {
+            type: 'saving',
+            attempt: 'save',
+        })
+        expect(commit(saving, LOCATION, '[-11.5,8.5]')).toBe(saving)
+        expect(commit(saving, 'labWeight01', '13')).toBe(saving)
+    })
+
+    it('after it stops waiting, takes what the save sent as maybe held, so a later save can delete it', () => {
+        const fresh = initialFormState(undefined, '2026-11-12')
+        let state = commit(
+            commit(fresh, 'labWeight01', '13'),
+            LOCATION,
+            '[-11.5,8.5]'
+        )
+        state = formReducer(state, { type: 'saving', attempt: 'save' })
+        state = formReducer(state, {
+            type: 'stoppedWaiting',
+            sent: {
+                effective: { labWeight01: '13', labDoseMg01: '26' },
+                location: '[-11.5,8.5]',
+            },
+        })
+        expect(state.opened.stored).toEqual({
+            labWeight01: '13',
+            labDoseMg01: '26',
+        })
+        expect(state.opened.storedLocation).toBe('[-11.5,8.5]')
+        // Still unsaved as far as the form knows.
+        expect(isDirty(state)).toBe(true)
     })
 
     it('keeps the last good location on a problem', () => {

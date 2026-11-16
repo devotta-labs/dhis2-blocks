@@ -98,6 +98,7 @@ describe('explain', () => {
                     value: 'M',
                     valueType: 'TEXT',
                     options: [{ code: 'M', name: 'Male' }],
+                    variable: 'sexAtRegistration',
                     from: { kind: 'enrollment' as const },
                 },
             ],
@@ -114,6 +115,60 @@ describe('explain', () => {
                 value: 'Male',
                 from: { kind: 'enrollment' },
             },
+        ])
+    })
+
+    it('lists a form field the rule reads in the previous event with that event’s answer too', () => {
+        const smaller = by(
+            'Losing weight',
+            ['labWeight01'],
+            '#{weight} < #{prevWeight}'
+        )
+        const outcome = outcomeOf(
+            { labWeight01: '60' },
+            {
+                messages: new Map([
+                    [
+                        'labWeight01',
+                        [{ kind: 'warning', text: 'Lost weight', by: smaller }],
+                    ],
+                ]),
+            }
+        )
+        const previous = {
+            label: 'weight',
+            value: '65',
+            valueType: 'NUMBER',
+            from: {
+                kind: 'event' as const,
+                stage: 'Child visit',
+                previous: true as const,
+            },
+        }
+        const graph = (readsVariables: string[]): RuleDependencyGraph => ({
+            rules: new Map([
+                [smaller.ruleId, { ...dependencies([]), readsVariables }],
+            ]),
+            fieldReaders: new Map(),
+            fieldWriters: new Map(),
+        })
+        const because = (readsVariables: string[], variable: string) =>
+            explain(outcome, {
+                ...contextOf(outcome.effective, graph(readsVariables)),
+                outside: new Map([['labWeight01', { ...previous, variable }]]),
+            }).get('labWeight01')?.[0].because
+        expect(because(['weight', 'prevWeight'], 'prevWeight')).toEqual([
+            { fieldId: 'labWeight01', label: 'Weight (kg)', value: '60' },
+            {
+                fieldId: 'labWeight01',
+                label: 'Weight (kg)',
+                value: '65',
+                from: previous.from,
+            },
+        ])
+        // A rule that reads only this event's answer says only that.
+        expect(because(['weight'], 'prevWeight')).toEqual([
+            { fieldId: 'labWeight01', label: 'Weight (kg)', value: '60' },
         ])
     })
 

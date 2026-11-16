@@ -248,6 +248,12 @@ describe('reasonLabel', () => {
         expect(reasonLabel({ ...reason, from: { kind: 'event' } })).toBe(
             'Age (another event)'
         )
+        expect(
+            reasonLabel({
+                ...reason,
+                from: { kind: 'event', stage: 'Child visit', previous: true },
+            })
+        ).toBe('Age (previous event)')
     })
 
     it('names an outside answer with its origin in the sentence', () => {

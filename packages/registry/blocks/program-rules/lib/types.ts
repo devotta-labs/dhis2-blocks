@@ -192,8 +192,15 @@ export interface RuleOutsideRead {
     value?: string
     valueType: string
     options?: ReadonlyArray<{ code: string; name: string }>
-    /** The enrolment, or the stage of the event the value came from (the variable's stage when no event has one). */
-    from: { kind: 'enrollment' } | { kind: 'event'; stage?: string }
+    /** The name of the variable it is read through. */
+    variable: string
+    /**
+     * The enrolment, or the stage of the event the value came from (the variable's stage when no event has one),
+     * `previous` when the variable reads the events before this one.
+     */
+    from:
+        | { kind: 'enrollment' }
+        | { kind: 'event'; stage?: string; previous?: true }
 }
 
 // ---- Context ---------------------------------------------------------------

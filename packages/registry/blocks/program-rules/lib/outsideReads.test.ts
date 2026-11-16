@@ -27,6 +27,7 @@ describe('outsideReads', () => {
             value: '1991-01-18',
             valueType: 'DATE',
             options: undefined,
+            variable: expect.any(String),
             from: { kind: 'enrollment' },
         })
     })
@@ -64,7 +65,11 @@ describe('outsideReads', () => {
         // The newest event before 1 May is the second visit of 18 April.
         expect(outsideReads(context, later).get(SMOKING)).toMatchObject({
             value: 'false',
-            from: { kind: 'event', stage: 'Second antenatal care visit' },
+            from: {
+                kind: 'event',
+                stage: 'Second antenatal care visit',
+                previous: true,
+            },
         })
     })
 })

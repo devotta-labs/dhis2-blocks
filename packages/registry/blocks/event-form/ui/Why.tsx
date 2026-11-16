@@ -45,7 +45,9 @@ const Explanation = ({
                                   )
                                 : null
                         return (
-                            <li key={reason.fieldId}>
+                            <li
+                                key={`${reason.fieldId}-${reason.from?.kind ?? 'form'}`}
+                            >
                                 {control === null ? (
                                     answer
                                 ) : (

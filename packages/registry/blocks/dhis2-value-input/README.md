@@ -13,7 +13,7 @@ keystroke; a `problem` means the typed text is not a value yet. A host passes wh
 control's name, and `readOnlyReason="described"` keeps the `readOnly` reason in the control's accessible description
 without showing it, for a host that shows it another way, such as a marker there; Tab then passes the control for the
 marker, and a script can still focus it. `readOnlyReason="held"` describes it too and keeps the field
-drawn as when it can be edited, a pop-up editor or search there but inert, for a host that locks it for a moment. A `value` other than the one last reported replaces the typed text and any
+drawn as when it can be edited, a pop-up editor, search or calendar button there but inert, for a host that locks it for a moment. A `value` other than the one last reported replaces the typed text and any
 problem; the one last reported (a problem reports `null`) changes nothing. A host gives the control a new React `key`
 to reset it, such as emptying it after a problem, or to show two different fields with one instance when they share a
 value type and options.

@@ -79,7 +79,12 @@ export const ClinicSelectorLab = () => {
     const canvasProps = {
         collapsed: settings.collapsed,
         label: settings.label,
-        value: state.followed ?? valueFor(settings, data),
+        value:
+            state.followed ??
+            // A live instance has no lab clinic to start on, so the host holds none until the first pick.
+            (mode === 'live' && settings.value === 'follows'
+                ? undefined
+                : valueFor(settings, data)),
         onCollapsedChange,
         onValueChange,
     }

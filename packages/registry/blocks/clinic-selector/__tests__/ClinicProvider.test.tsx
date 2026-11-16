@@ -478,6 +478,23 @@ describe('ClinicProvider', () => {
         expect(server.byIdRequests()).toHaveLength(checks)
     })
 
+    it('a value the host changes itself is remembered and announced', async () => {
+        const harbour = facility('Harbour')
+        const server = createServer({ assigned: [OCEAN, harbour] })
+        const rendered = await renderClinic(server, { value: OCEAN.id })
+        await settled(rendered)
+        await expect.poll(() => readRemembered('u1').current).toBe(OCEAN.id)
+        await announcerIdle()
+        politeRegion()?.replaceChildren()
+
+        await rendered.act(() => rendered.host.setValue(harbour.id))
+
+        await expect.poll(() => readRemembered('u1').current).toBe(harbour.id)
+        await expect
+            .poll(() => politeRegion()?.textContent)
+            .toBe('Clinic changed to Harbour')
+    })
+
     it('re-validates a controlled value that changes after mount', async () => {
         const y = unit('Yclinic', '/Other')
         const server = createServer({ known: [y] })

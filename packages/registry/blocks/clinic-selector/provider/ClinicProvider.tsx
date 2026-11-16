@@ -241,24 +241,28 @@ export function ClinicProvider({
         (id: string) => assigned.some((a) => a.id === id),
         [assigned]
     )
-    // A controlled pick counts once the host adopts it as its value.
-    const pending = useRef<string>()
+    // The host's clinic is remembered, and announced when it changes, whether a pick or the host itself changed it.
+    const shown = useRef<ForUser<string>>()
     useEffect(() => {
-        if (controlled === undefined) {
+        if (controlled === undefined || userId === undefined) {
             return
+        }
+        const before = shown.current
+        shown.current = { userId, value: controlled.id }
+        if (before?.userId === userId && before.value !== controlled.id) {
+            announceChange(controlled)
         }
         const recent =
             isAssigned(controlled.id) || remembered.recent[0] === controlled.id
                 ? remembered.recent
                 : withRecent(remembered.recent, controlled.id)
-        if (pending.current === controlled.id) {
-            pending.current = undefined
+        if (
+            remembered.current !== controlled.id ||
+            recent !== remembered.recent
+        ) {
             remember({ current: controlled.id, recent })
-            announceChange(controlled)
-        } else if (recent !== remembered.recent) {
-            remember({ ...remembered, recent })
         }
-    }, [controlled, isAssigned, remembered, remember])
+    }, [controlled, userId, isAssigned, remembered, remember])
 
     const setClinic = useCallback(
         (next: Clinic) => {
@@ -284,8 +288,6 @@ export function ClinicProvider({
                         : withRecent(remembered.recent, next.id),
                 })
                 announceChange(next)
-            } else if (next.id !== value) {
-                pending.current = next.id
             }
             onValueChange?.(next)
         },

@@ -55,14 +55,14 @@ interface ClinicGroup {
 const MORE: Clinic = { id: '', displayName: '', path: '' }
 
 const triggerClassName =
-    'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring data-popup-open:bg-dhis2-accent [&_svg]:shrink-0 [&_svg]:fill-current'
+    'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-sm border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring data-popup-open:bg-dhis2-accent [&_svg]:shrink-0 [&_svg]:fill-current'
 
 // The shared radio item sets its check on the right; in RTL it moves to the inline end, as in the search form.
 const radioRowClassName =
-    'rtl:pr-3 rtl:pl-9 rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:right-auto rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:left-3'
+    'pr-8 rtl:pr-3 rtl:pl-8 rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:right-auto rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:left-3'
 
 const tileOnly =
-    'hidden size-7 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
+    'hidden size-6 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
 
 /** Collapsed from `md` up, the text a tile stands for shows beside it on hover. */
 function Tip({
@@ -93,7 +93,7 @@ function Tile({ clinic }: { clinic?: Clinic }) {
             aria-hidden="true"
             data-clinic-selector="tile"
             className={cn(
-                'flex size-7 shrink-0 items-center justify-center rounded-dhis2-md text-sm leading-none font-medium',
+                'flex size-6 shrink-0 items-center justify-center rounded-dhis2-md text-xs leading-none font-semibold',
                 tileClass(clinic?.id ?? '')
             )}
         >
@@ -152,7 +152,7 @@ export function ClinicSelector({
         'flex min-h-9 items-center gap-2 text-sm text-dhis2-foreground',
         className
     )
-    // From `md` up a collapsed selector has 28px, so text there gives way to a tile.
+    // From `md` up a collapsed selector has 24px, so text there gives way to a tile.
     const wide = collapsed ? 'md:hidden' : undefined
 
     if (status === 'pending') {
@@ -162,7 +162,7 @@ export function ClinicSelector({
                 className={cn(box, 'p-1', collapsed && 'md:p-0')}
             >
                 <span className="sr-only">{i18n.t('Loading')}</span>
-                <Skeleton className="size-7 shrink-0" />
+                <Skeleton className="size-6 shrink-0" />
                 <Skeleton className={cn('h-4 flex-1', wide)} />
             </div>
         )
@@ -240,7 +240,7 @@ export function ClinicSelector({
         }),
         className: cn(
             triggerClassName,
-            collapsed && 'md:size-7 md:p-0',
+            collapsed && 'md:size-6 md:p-0',
             className
         ),
         children: (
@@ -259,7 +259,7 @@ export function ClinicSelector({
     const popup = {
         side: collapsed ? ('right' as const) : ('bottom' as const),
         // Wide enough for clinic names whatever the sidebar's width, and never wider than the screen.
-        className: 'w-100 max-w-[calc(100vw-1rem)]',
+        className: 'w-90 max-w-[calc(100vw-1rem)]',
         'data-clinic-selector': 'menu',
     }
 
@@ -360,6 +360,7 @@ export function ClinicSelector({
             <ComboboxContent {...popup}>
                 <ComboboxInput
                     showTrigger={false}
+                    className="[&_input]:ps-2"
                     placeholder={searchPlaceholder}
                     aria-label={searchPlaceholder}
                 />
@@ -381,11 +382,13 @@ export function ClinicSelector({
                     )}
                     {search.status === 'ready' && i18n.t('No clinics found')}
                 </ComboboxEmpty>
-                <ComboboxList>
+                <ComboboxList className="max-h-[min(300px,calc(var(--available-height)---spacing(11)))]">
                     {(group: ClinicGroup) => (
                         <ComboboxGroup key={group.key} items={group.items}>
                             {headed && group.label !== '' && (
-                                <ComboboxLabel>{group.label}</ComboboxLabel>
+                                <ComboboxLabel className="pt-3 pb-0.5">
+                                    {group.label}
+                                </ComboboxLabel>
                             )}
                             <ComboboxCollection>
                                 {(c: Clinic) =>
@@ -398,7 +401,7 @@ export function ClinicSelector({
                                             data-clinic-selector="more"
                                             onClick={loadMore}
                                             onMouseUp={loadMore}
-                                            className="justify-center px-3 font-medium text-dhis2-primary *:first:hidden"
+                                            className="justify-center px-3 text-[13px] font-medium text-dhis2-primary *:first:hidden"
                                         >
                                             {moreLabel}
                                         </ComboboxItem>
@@ -407,7 +410,7 @@ export function ClinicSelector({
                                             key={c.id}
                                             value={c}
                                             // Its own leading check and selected tint give way to the menu's trailing check.
-                                            className="gap-2 ps-3 pe-9 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
+                                            className="gap-2 ps-3 pe-8 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
                                         >
                                             <Row
                                                 clinic={c}

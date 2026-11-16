@@ -26,6 +26,8 @@ import {
     ClinicContext,
     ClinicSearchContext,
     type ClinicContextValue,
+    type ClinicSearchActions,
+    type ClinicSearchState,
     type ClinicSearchValue,
     type ClinicStatus,
 } from './context'
@@ -65,6 +67,10 @@ const NO_ASSIGNED: AssignedClinic[] = []
 const NO_RECENT: Remembered = { recent: [] }
 const NO_CLINICS: ReadonlyMap<string, Clinic | null> = new Map()
 const noop = () => {}
+
+/** What a search has found and how to go on, before it is split into state and actions. */
+type SearchView = Omit<ClinicSearchState, 'query'> &
+    Pick<ClinicSearchActions, 'loadMore' | 'retry'>
 const NO_MORE = {
     hasMore: false,
     loadingMore: false,
@@ -185,11 +191,14 @@ export function ClinicProvider({
             unwrap(await fetchClinicsById(resourceClient, toCheck, signal)),
         enabled: checking,
         retry: shouldRetryClinicRequest,
-        // Asked again on every mount, whatever the host's default: access can be lost between visits.
+        // Asked again on every mount, whatever the host's defaults: access can be lost between visits.
         staleTime: 0,
+        refetchOnMount: 'always',
     })
 
-    const answer = byId.data
+    // Only an answer fetched by this mount counts: one left in the cache by an earlier visit may be out of date.
+    const answer =
+        byId.isFetchedAfterMount && byId.isSuccess ? byId.data : undefined
     useEffect(() => {
         if (answer === undefined || userId === undefined) {
             return
@@ -371,7 +380,7 @@ export function ClinicProvider({
         staleTime: FRESH_MS,
     })
     const { refetch: refetchSearch, fetchNextPage } = server
-    const search = useMemo((): ClinicSearchValue['search'] => {
+    const search = useMemo((): SearchView => {
         if (!searchesServer) {
             const lower = trimmed.toLowerCase()
             return {
@@ -447,14 +456,15 @@ export function ClinicProvider({
 
     const context = useMemo<ClinicContextValue>(
         () => ({
-            status,
-            clinic,
-            assigned,
-            recent,
-            searchable,
-            searchesServer,
-            setClinic,
-            retry,
+            state: {
+                status,
+                clinic,
+                assigned,
+                recent,
+                searchable,
+                searchesServer,
+            },
+            actions: { setClinic, retry },
         }),
         [
             status,
@@ -467,10 +477,13 @@ export function ClinicProvider({
             retry,
         ]
     )
-    const searching = useMemo<ClinicSearchValue>(
-        () => ({ query, setQuery, browse, search }),
-        [query, browse, search]
-    )
+    const searching = useMemo<ClinicSearchValue>(() => {
+        const { loadMore, retry: retrySearch, ...found } = search
+        return {
+            state: { query, ...found },
+            actions: { setQuery, browse, loadMore, retry: retrySearch },
+        }
+    }, [query, browse, search])
 
     return (
         <ClinicContext.Provider value={context}>

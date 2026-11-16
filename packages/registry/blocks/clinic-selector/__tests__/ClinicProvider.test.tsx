@@ -71,7 +71,11 @@ const renderClinic = async (
             const hook = useClinic()
             const clinics = useClinicContext()
             const searching = useClinicSearch()
-            const context = { ...clinics, ...searching }
+            const context = {
+                ...clinics.state,
+                ...searching.actions,
+                search: { ...searching.state, ...searching.actions },
+            }
             seen.push(hook.status)
             return { hook, context }
         },

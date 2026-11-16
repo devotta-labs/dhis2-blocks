@@ -3,16 +3,26 @@ import React, { act, useEffect } from 'react'
 import { render } from 'vitest-browser-react'
 import { ClinicProvider, useClinic } from '..'
 import { useClinicSearch } from '../provider/context'
-import { createServer, district, unit } from './clinicServerSupport'
+import type { Clinic } from '../api/schemas'
+import { readRemembered, writeRemembered } from '../provider/remembered'
+import {
+    BRISTOL,
+    createServer,
+    district,
+    OCEAN,
+    unit,
+} from './clinicServerSupport'
 
 /** Stands for a menu that has been opened. */
 const Opened = () => {
-    const { browse } = useClinicSearch()
-    useEffect(browse, [browse])
+    const { actions } = useClinicSearch()
+    useEffect(actions.browse, [actions.browse])
     return null
 }
 
 describe('ClinicProvider freshness', () => {
+    beforeEach(() => localStorage.clear())
+
     it("keeps the user's units and the clinic list fresh, so a return to the tab asks for nothing", async () => {
         const root = district('Root')
         const server = createServer({
@@ -48,8 +58,8 @@ describe('ClinicProvider freshness', () => {
             return null
         }
         const Box = () => {
-            const { setQuery } = useClinicSearch()
-            type = setQuery
+            const { actions } = useClinicSearch()
+            type = actions.setQuery
             return null
         }
         await render(
@@ -67,5 +77,38 @@ describe('ClinicProvider freshness', () => {
         await act(() => type('nge'))
 
         expect(pageRenders).toBe(before)
+    })
+
+    it('checks a remembered clinic again on remount, not from the cache', async () => {
+        const x = unit('Xclinic', OCEAN.path)
+        const known = [x]
+        const server = createServer({ known })
+        writeRemembered('u1', { current: x.id, recent: [] })
+        const queryClient = new QueryClient()
+        let clinic: Clinic | undefined
+        const Page = () => {
+            const current = useClinic()
+            clinic = current.clinic
+            return null
+        }
+        const mount = () =>
+            render(
+                <QueryClientProvider client={queryClient}>
+                    <ClinicProvider client={server.client}>
+                        <Page />
+                    </ClinicProvider>
+                </QueryClientProvider>
+            )
+        const first = await mount()
+        await expect.poll(() => clinic).toEqual(x)
+        await first.unmount()
+
+        // The user loses the clinic between visits; the first visit's answer is still cached.
+        known.length = 0
+        await mount()
+
+        await expect.poll(() => clinic).toEqual(BRISTOL)
+        expect(readRemembered('u1').current).toBeUndefined()
+        expect(server.byIdRequests()).toHaveLength(2)
     })
 })

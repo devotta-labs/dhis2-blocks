@@ -48,6 +48,7 @@ const OptionSetSchema = z.object({
 
 const SourceFieldSchema = z.object({
     id: z.string(),
+    displayName: z.string().optional(),
     valueType: z.string().optional(),
     optionSet: OptionSetSchema.optional(),
 })
@@ -130,6 +131,7 @@ const toVariable = (
         dataElementId: variable.dataElement?.id,
         attributeId: variable.trackedEntityAttribute?.id,
         fieldValueType: source?.valueType,
+        fieldName: source?.displayName,
         optionSetId: source?.optionSet?.id,
         programStageId: variable.programStage?.id,
     }
@@ -165,7 +167,7 @@ export const toProgramRulesMetadata = (
 
 const ACTION_FIELDS =
     'id,programRuleActionType,content,displayContent,data,location,dataElement[id],trackedEntityAttribute[id],programStageSection[id],programStage[id],option[id,code],optionGroup[id,options[code]]'
-const SOURCE_FIELD = 'id,valueType,optionSet[id,options[code,name]]'
+const SOURCE_FIELD = 'id,displayName,valueType,optionSet[id,options[code,name]]'
 
 export const fetchProgramRulesMetadata = async (
     client: ProgramRulesClient,

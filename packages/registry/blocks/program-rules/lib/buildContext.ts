@@ -310,6 +310,27 @@ export const buildRuleContext = (
             valueTypes.set(field, variable.fieldValueType)
         }
     }
+    const optionsById = new Map(
+        metadata.optionSets.map(({ id, options }) => [id, options])
+    )
+    const fieldVariables: RuleContext['fieldVariables'] = new Map()
+    for (const variable of metadata.variables) {
+        const field = variable.dataElementId ?? variable.attributeId
+        const known = fieldVariables.get(field ?? '')
+        if (
+            field !== undefined &&
+            (known === undefined ||
+                known.variable.sourceType === 'DATAELEMENT_CURRENT_EVENT')
+        ) {
+            fieldVariables.set(field, {
+                variable,
+                options:
+                    variable.optionSetId === undefined
+                        ? undefined
+                        : optionsById.get(variable.optionSetId),
+            })
+        }
+    }
     const optionGroupOptions = new Map<string, Set<string>>()
     for (const action of valid.flatMap((rule) => rule.actions)) {
         if (action.optionGroup !== undefined) {
@@ -348,6 +369,7 @@ export const buildRuleContext = (
             metadata.programStages.map((stage) => [stage.id, stage.name])
         ),
         valueTypes,
+        fieldVariables,
         engine: ruleEngine,
         engineContext,
     }

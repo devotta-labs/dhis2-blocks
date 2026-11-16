@@ -29,7 +29,55 @@ emptyEffects(): RuleEffects // effects with nothing in them
 scanExpression(expression: string): ExpressionReferences // names read, deduplicated, by kind
 expressionReferences(expression: string): ExpressionReference[] // every reference with its span, in order
 assignedVariable(action: ProgramRuleActionMetadata): string | undefined // the variable an ASSIGN writes
+outsideReads(context: RuleContext, input: EventRuleInput): Map<string, RuleOutsideRead> // what each field read through a variable holds as the rules read it
 ```
+
+### A form on top of the effects
+
+```ts
+overlay(entered: RuleValues, effects: RuleEffects, form: RuleForm, optionGroups): RuleOutcome
+runRules(entered, evaluate: (values: RuleValues) => Result<RuleEffects, Error>, form, optionGroups, maxRuns: number, start?: RuleValues)
+    : Result<{ effects: RuleEffects; outcome: RuleOutcome; capped: boolean }, Error>
+settleRules(last: RuleSettled | undefined, entered: RuleValues, event: RuleSettleEvent, {
+    context: RuleContext, // its graph and requirements
+    evaluate: (event: RuleEventInput) => Result<RuleEffects, Error>, // the evaluator hook's evaluate
+    form: RuleForm,
+    optionGroups: ReadonlyMap<string, ReadonlySet<string>>,
+    maxRuns: number,
+}): Result<RuleSettled, Error> // runRules, from the last settled outcome
+explain(outcome: RuleOutcome, context: BlameContext): ReadonlyMap<string, readonly Blame[]> // per field, hidden section, 'form'
+fieldDisplay(fieldId: string, value: string | undefined, context: BlameContext): string | undefined
+EVENT_DATE // 'occurredAt', the event date among the answers a rule read
+```
+
+These keep what was entered apart from what the form shows and saves. `RuleValues` is field id → value, empty values
+absent. `RuleForm` is what they read of a stage's form: `fields` (id → `{ id, label, compulsory, field: { valueType,
+options? } }`, every field of the stage), `sections` (`{ id, fieldIds }`) and `eventDateLabel`.
+
+- `overlay` lays the effects over the entered values. A required field (compulsory, or by a rule) is never hidden; a
+  HIDEFIELD clears its field's value unless an ASSIGN targets it (`hidden.get(id).cleared` is the answer not saved); a
+  hidden section keeps its fields' values; an ASSIGN of `null`, `''` or a code outside the field's options clears.
+  `RuleOutcome` has the `effective` values, `hidden`, fully `hiddenSections`, `assigned`, `required` and `requiredBy`,
+  `hiddenOptions` and `optionsBy`, the `messages` of shown fields and `'form'`, and `display` (texts, then pairs). The
+  entered values are never changed: a field shown again gets its answer back.
+- `runRules` evaluates, lays the effects over the entered values, and evaluates again on the result until the values stop
+  changing, as many times as `maxRuns` allows (`capped` when the rules keep undoing each other).
+- `settleRules` gives what `runRules` gives from the entered values, with fewer runs. `last` is the previous result for
+  the same rules and supplement (drop it when `evaluate` changes). When no rule reads what changed (a field, directly or
+  through a variable; the event date, which rules read through `V{event_date}` and through which event is newest or
+  previous), the effects stand and no rule runs. Otherwise the first run reads the values `last` settled on, so a chain
+  the change leaves alone confirms in one run. It starts from the entered values instead when the rules feed each other
+  in a loop, or their longest chain needs more than `maxRuns` runs: only then could a start from the last values end
+  elsewhere.
+- `explain` says, per effect, which rule did it and the answers it read (`Blame`): the form's fields with their display
+  values, the event date when the rule reads `V{event_date}`, then the attributes and other events' data elements it
+  read, from `context.outside` (`outsideReads`), each with `from` (`{ kind: 'enrollment' }` or `{ kind: 'event', stage }`).
+  `BlameContext` holds the `form`, `graph`, `effective` and `stored` values, `eventDate` and
+  `display(value, { valueType, options })`, which the form supplies: the lib formats nothing and has no strings.
+- `outsideReads` says, for every field a variable reads, its name (`fieldName`, else the variable's name) and the value
+  the rules read for this event: an attribute from the enrolment; a data element from the newest event with a value
+  among those its variable reads (the stage's for a newest-in-stage variable, the ones before the event for a
+  previous-event one), with that event's stage.
 
 `engine` is the `@dhis2/rule-engine` module itself. The lib only imports its types, so the ~214 KB (gzip)
 engine never enters an initial bundle. Build the context once per program and stage; evaluation is pure and
@@ -110,8 +158,21 @@ interface RuleEffects {
 ```
 
 `RuleContext` also carries `invalidRules: InvalidRule[]` (`{ ruleId, ruleName, actionId?, expression, message }`),
-the dependency `graph`, the data `requirements` (`{ enrollment, otherEvents, orgUnitGroups }`) and
-`optionGroupOptions` (`Map<optionGroupId, Set<optionCode>>`).
+the dependency `graph`, the data `requirements` (`{ enrollment, otherEvents, orgUnitGroups }`),
+`optionGroupOptions` (`Map<optionGroupId, Set<optionCode>>`) and `fieldVariables` (field id → the variable that reads it,
+with the field's options). Each rule in `graph.rules` lists the fields it reads (`readsFields`) and writes:
+`writesFields` (every field an action targets) and `writesValues` (those whose value it can change: ASSIGN targets, and
+the fields it hides or requires).
+
+```ts
+interface RuleOutsideRead {
+    label: string // the attribute's or data element's display name
+    value?: string // the value the rules read
+    valueType: string
+    options?: ReadonlyArray<{ code: string; name: string }>
+    from: { kind: 'enrollment' } | { kind: 'event'; stage?: string } // the stage of the event it came from
+}
+```
 
 ## Hook API
 
@@ -141,6 +202,7 @@ useProgramRuleEvaluator({
 }): {
     status: 'loading' | 'ready' | 'error'
     evaluate?(event: RuleEventInput): Result<RuleEffects, Error> // memoised on the event's content
+    outsideReads?(event: RuleEventInput): Map<string, RuleOutsideRead> // outsideReads with the loaded enrollment and events
     invalidRules: InvalidRule[]
     error?: Error
     graph?: RuleDependencyGraph
@@ -160,7 +222,7 @@ programRulesQueryKeys // React Query keys for invalidation
 How the hook behaves:
 
 - On mount it starts `import('@dhis2/rule-engine')` (once per app) and, in parallel, one app-runtime query for
-  rules, variables (with their option sets), constants, program stages and the user's roles and groups.
+  rules, variables (with their fields' names and option sets), constants, program stages and the user's roles and groups.
 - Rules for other program stages are dropped before the context is built.
 - `useProgramRuleContext` is the same fetching and context build without an event, for tools that inspect a
   stage's rules (its dependency graph, invalid rules, data requirements). It shares its queries with
@@ -307,7 +369,11 @@ row at a time over the same array pays for the index once; pass a new array when
   `otherEvents`. `DATAELEMENT_NEWEST_EVENT_PROGRAM` takes the newest event by date, so editing an older event
   doesn't change it when a newer event has a value. That is DHIS2 behaviour.
 - **Attribution.** `readsFields` follows variables and ASSIGN chains in evaluation order (priority ascending,
-  rules without priority last): an ASSIGN feeds only rules evaluated after it, as in the engine.
-- **Not covered.** No pruned re-evaluation (full evaluation of RMNCH takes about 5 ms at 4× CPU throttle).
+  rules without priority last). Within one evaluation only an ASSIGN whose target is a program rule variable (content
+  `#{variable}`) is visible to the rules evaluated after it. An ASSIGN that names a data element is not visible through
+  `#{variable}` references in the same evaluation; the rules read it on the next one, which is why a form settles
+  (`runRules`).
+- **Not covered.** No pruned evaluation of single rules: `settleRules` skips the engine only when no rule reads a change
+  (full evaluation of RMNCH takes about 5 ms at 4× CPU throttle).
   `d2:inOrgUnitGroup(#{var})` with a group computed at runtime is not prefetched. Server-side actions (send or
   schedule message, create event) produce no effect.

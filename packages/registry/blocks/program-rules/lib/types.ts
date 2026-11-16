@@ -46,6 +46,8 @@ export interface ProgramRuleVariableMetadata {
     attributeId?: string
     /** Value type of the backing data element or attribute. */
     fieldValueType?: string
+    /** Display name of the backing data element or attribute. */
+    fieldName?: string
     optionSetId?: string
     programStageId?: string
 }
@@ -182,6 +184,18 @@ export interface RuleEffects {
     programStageAttributions: Map<string, Attribution[]>
 }
 
+/** An attribute, or a data element of another event, that the rules read, with the value they read. */
+export interface RuleOutsideRead {
+    /** The attribute's or data element's display name. */
+    label: string
+    /** Absent when there is none. */
+    value?: string
+    valueType: string
+    options?: ReadonlyArray<{ code: string; name: string }>
+    /** The enrolment, or the stage of the event the value came from (the variable's stage when no event has one). */
+    from: { kind: 'enrollment' } | { kind: 'event'; stage?: string }
+}
+
 // ---- Context ---------------------------------------------------------------
 
 /** A rule, or one of its actions, that the engine cannot parse. It is left out of evaluation. */
@@ -202,6 +216,8 @@ export interface RuleDependencies {
     /** Transitive, through variables and ASSIGNs evaluated earlier. */
     readsFields: string[]
     writesFields: string[]
+    /** Fields whose value an action can change: ASSIGN targets, and the fields it hides or requires. */
+    writesValues: string[]
     writesVariables: string[]
     writesSections: string[]
     writesProgramStages: string[]
@@ -252,6 +268,17 @@ export interface RuleContext {
     stageNames: Map<string, string>
     /** fieldId → value type, for fields read through variables */
     valueTypes: Map<string, string>
+    /**
+     * fieldId → the variable that reads it (one reading the enrolment or other events before a current-event one),
+     * with the field's options
+     */
+    fieldVariables: Map<
+        string,
+        {
+            variable: ProgramRuleVariableMetadata
+            options?: ReadonlyArray<{ code: string; name: string }>
+        }
+    >
     engine: Engine.RuleEngineJs
     engineContext: Engine.RuleEngineContextJs
 }

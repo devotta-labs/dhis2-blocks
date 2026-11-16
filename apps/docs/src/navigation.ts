@@ -84,6 +84,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                         title: 'Tracker Data Entry',
                         href: '/blocks/tracker-data-entry',
                     },
+                    { title: 'Event Form', href: '/blocks/event-form' },
                 ],
             },
         ],

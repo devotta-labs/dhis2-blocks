@@ -54,6 +54,7 @@ import trackerDataEntryImmunisationSource from './tracker-data-entry/Immunisatio
 import trackerDataEntryPersonEventsSource from './tracker-data-entry/PersonEventsGrid.tsx?raw'
 import trackerDataEntryTrackerRegisterSource from './tracker-data-entry/TrackerRegisterGrid.tsx?raw'
 import trackerDataEntryValueTypesSource from './tracker-data-entry/ValueTypesGrid.tsx?raw'
+import eventFormFirstAncVisitSource from './event-form/FirstAncVisit.tsx?raw'
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
@@ -286,6 +287,14 @@ const examples = [
         Component: lazy(() => import('./tracker-data-entry/ValueTypesGrid')),
         source: trackerDataEntryValueTypesSource,
         minHeight: 360,
+    },
+    {
+        slug: 'event-form/first-anc-visit',
+        title: 'A first antenatal care visit',
+        live: true,
+        Component: lazy(() => import('./event-form/FirstAncVisit')),
+        source: eventFormFirstAncVisitSource,
+        minHeight: 720,
     },
     {
         slug: 'tracked-entity-finder/find-person',

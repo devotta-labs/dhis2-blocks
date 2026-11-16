@@ -10,6 +10,8 @@ export interface NetworkRequest {
     params?: object
     /** A mutation's kind; reads leave it out. */
     type?: 'create' | 'update' | 'replace' | 'delete'
+    /** What a mutation sends. */
+    data?: unknown
 }
 
 interface Endpoint {

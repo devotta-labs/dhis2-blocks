@@ -53,7 +53,7 @@ const atDesktopWidth = async () => {
 }
 
 const searchBox = () => page.getByPlaceholder('Search clinics')
-const TILE = '[data-clinic-selector="tile"]'
+const TILE = '.size-6'
 
 const tooltipText = () =>
     document.querySelector('[data-slot="tooltip-content"]')?.textContent

@@ -171,7 +171,20 @@ export const PRESETS: readonly Preset[] = [
         },
         {
             description:
-                "Open the menu and type 'mchp': 150 match, so it shows 50 and asks you to keep typing.",
+                "Open the menu and type 'mchp': 150 match, 20 show, and Show more loads the next 20.",
+        }
+    ),
+    preset(
+        'More clinics',
+        'About 5,000 clinics',
+        {
+            assignedClinics: 0,
+            assignedDistricts: 3,
+            clinicsPerDistrict: 1667,
+        },
+        {
+            description:
+                'Open the menu without typing: All clinics lists the first 20 by name, and Show more at the end of the list pages through the rest. Each page is one request in the logs.',
         }
     ),
     edge('Assignment', 'No clinic assigned', { assignedClinics: 0 }),

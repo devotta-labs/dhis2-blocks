@@ -135,7 +135,7 @@ const clamp = (value: number, max: number) =>
 export const generateLabData = (settings: LabSettings) => {
     const flat = clamp(settings.assignedClinics, 20)
     const districts = clamp(settings.assignedDistricts, 3)
-    const perDistrict = clamp(settings.clinicsPerDistrict, 200)
+    const perDistrict = clamp(settings.clinicsPerDistrict, 2000)
     const unit = (
         id: string,
         name: string,

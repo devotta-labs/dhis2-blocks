@@ -148,7 +148,7 @@ export const ChoiceInput = ({
             </Button>
         )
     const radios = asRadios(field, hiddenOptions) ? (
-        // Named by its title rather than a fieldset's legend, so Yes/No's Clear can sit right after No, outside the group.
+        // Named by its title rather than a fieldset's legend, so Clear can sit after the radios, outside the group.
         <RadioGroup
             id={id}
             aria-labelledby={titleId}
@@ -164,11 +164,7 @@ export const ChoiceInput = ({
             // when unchecked, and hold back the host's form.
             aria-required={required || undefined}
             onValueChange={(code: string) => onChange(code)}
-            className={
-                kind === 'boolean'
-                    ? 'flex w-auto flex-wrap gap-x-6 gap-y-2'
-                    : 'flex flex-col gap-2'
-            }
+            className="flex flex-col gap-2"
         >
             {offered.map(({ code, name, description }) => (
                 <FieldItem key={code}>
@@ -203,20 +199,11 @@ export const ChoiceInput = ({
             ) : (
                 <FieldTitle id={titleId}>{title}</FieldTitle>
             )}
-            {radios !== undefined && kind === 'boolean' ? (
-                // Yes and No are one row, and Clear follows No on it. Taller than a radio, Clear hangs over the row's
-                // edges rather than making the row taller when a value brings it.
-                <div className="flex items-center gap-x-4">
-                    {radios}
-                    <div className="-my-1.5">{clearButton}</div>
-                </div>
-            ) : (
-                radios
-            )}
+            {radios}
             {value !== undefined && !known ? (
                 <p className="text-sm text-dhis2-muted-foreground">{shown}</p>
             ) : null}
-            {radios !== undefined && kind !== 'boolean' && clearButton ? (
+            {radios !== undefined && clearButton ? (
                 <div>{clearButton}</div>
             ) : null}
         </div>

@@ -356,7 +356,8 @@ export const PRESETS: readonly Preset[] = [
         'Validity check fails',
         { ...DISTRICT_NURSE, failValidity: true },
         {
-            description: `Storage remembers two clinics in the district, and checking them fails, retries included: after about three seconds, the error with Retry. ${UNTICK}`,
+            description:
+                'Storage remembers two clinics in the district, and checking them fails, retries included: after about three seconds the selector reads Choose a clinic and still lists the district, and nothing remembered is lost. Untick the failure and press Retry on the page to check again.',
             seed: { u1: NURSE_PICKS },
         }
     ),

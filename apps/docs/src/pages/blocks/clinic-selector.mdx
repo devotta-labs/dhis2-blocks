@@ -112,7 +112,8 @@ With no `value`, the provider chooses the clinic and remembers it, and pages
 read `useClinic().clinic`. To keep the choice somewhere you own, such as the
 URL, pass `value`, a clinic id, and `onValueChange`, which receives the picked
 clinic. The host then decides: a pick changes nothing until the host passes it
-back as `value`.
+back as `value`. Whenever `value` changes to another of the user's clinics,
+after a pick or the back button, the provider remembers it and announces it.
 
 ```tsx
 import { useNavigate, useParams } from 'react-router-dom'

@@ -123,8 +123,8 @@ const StoredValue = ({
     data,
 }: {
     stored: ReturnType<typeof useStored>
-    /** The lab's clinics, to name each stored id; none on a live instance. */
-    data?: LabData
+    /** The lab's clinics, to name each stored id. */
+    data: LabData
 }) => {
     if (stored === UNAVAILABLE) {
         return (
@@ -135,11 +135,7 @@ const StoredValue = ({
     }
     if (stored === null) {
         return (
-            <p className="m-0 text-xs text-muted-foreground">
-                {data
-                    ? 'Nothing stored'
-                    : 'Nothing stored yet: pick a clinic and the block stores it.'}
-            </p>
+            <p className="m-0 text-xs text-muted-foreground">Nothing stored</p>
         )
     }
     return (
@@ -147,11 +143,9 @@ const StoredValue = ({
             <pre className="m-0 font-mono text-[11px] break-all whitespace-pre-wrap">
                 {stored}
             </pre>
-            {data && (
-                <p className="m-0 text-xs whitespace-pre-line text-muted-foreground">
-                    {namesIn(stored, data)}
-                </p>
-            )}
+            <p className="m-0 text-xs whitespace-pre-line text-muted-foreground">
+                {namesIn(stored, data)}
+            </p>
         </div>
     )
 }
@@ -164,44 +158,44 @@ export const RememberedControls = ({
     onEdit,
 }: {
     settings: LabSettings
-    /** The lab's clinics; none on a live instance, where the signed-in user's value shows. */
+    /** The lab's clinics; none on a live instance, where nobody's stored value shows. */
     data?: LabData
     seed: Seed
     onChange: Change
     /** After the lab writes storage, so the block reads it again. */
     onEdit: () => void
 }) => {
-    const user = data ? settings.userId : 'live'
-    const stored = useStored(user)
+    const stored = useStored(settings.userId)
     const edit = (raw?: string) => {
-        writeStored(user, raw)
+        writeStored(settings.userId, raw)
         onEdit()
     }
     const seeded = Object.entries(seed)
-    // On a live instance the user's key is known only once the block has stored something.
-    const editable = data !== undefined || stored !== null
+    if (!data) {
+        // The lab does not know who is signed in to a live instance, so it shows nobody's stored value.
+        return (
+            <Section title="Remembered">
+                <p className="m-0 text-xs text-muted-foreground">
+                    Stored values show for lab data only. On a live instance the
+                    block still remembers the clinic you pick.
+                </p>
+            </Section>
+        )
+    }
     return (
         <Section title="Remembered">
-            {data ? (
-                <>
-                    <SegmentedRow
-                        label="User"
-                        value={settings.userId}
-                        options={[
-                            ['u1', 'u1'],
-                            ['u2', 'u2'],
-                        ]}
-                        onChange={(userId) => onChange({ userId })}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                        Stored for {settings.userId}
-                    </span>
-                </>
-            ) : (
-                <span className="text-xs text-muted-foreground">
-                    Stored for the signed-in user
-                </span>
-            )}
+            <SegmentedRow
+                label="User"
+                value={settings.userId}
+                options={[
+                    ['u1', 'u1'],
+                    ['u2', 'u2'],
+                ]}
+                onChange={(userId) => onChange({ userId })}
+            />
+            <span className="text-xs text-muted-foreground">
+                Stored for {settings.userId}
+            </span>
             <StoredValue stored={stored} data={data} />
             {seeded.length > 0 && (
                 <p className="m-0 text-xs break-all text-muted-foreground">
@@ -218,12 +212,7 @@ export const RememberedControls = ({
                         ['Corrupt it', CORRUPT_VALUE],
                     ] as const
                 ).map(([name, raw]) => (
-                    <button
-                        key={name}
-                        type="button"
-                        disabled={!editable}
-                        onClick={() => edit(raw)}
-                    >
+                    <button key={name} type="button" onClick={() => edit(raw)}>
                         {name}
                     </button>
                 ))}

@@ -5,17 +5,7 @@ import {
     type Clinic,
 } from '@/components/clinic-selector'
 import { Button } from '@/components/dhis2/ui/button'
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarHeader,
-    SidebarItem,
-    SidebarItems,
-    SidebarLink,
-    SidebarNavigation,
-    SidebarProvider,
-    SidebarToggle,
-} from '@/components/sidebar'
+import { cn } from '@/components/dhis2/ui/cn'
 
 interface Props {
     collapsed: boolean
@@ -58,6 +48,8 @@ const ClinicPage = () => {
     )
 }
 
+const LINKS = ['Visits', 'Patients', 'Stock']
+
 export const ClinicCanvas = ({
     collapsed,
     label,
@@ -66,44 +58,43 @@ export const ClinicCanvas = ({
     onValueChange,
 }: Props) => (
     <ClinicProvider value={value} onValueChange={onValueChange}>
-        <SidebarProvider
-            collapsed={collapsed}
-            onCollapsedChange={onCollapsedChange}
-        >
-            <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
-                <Sidebar>
-                    {/* Outside the navigation, which is hidden while collapsed, so the tile stays. */}
-                    <SidebarHeader>
-                        <ClinicSelector collapsed={collapsed} label={label} />
-                    </SidebarHeader>
-                    <SidebarNavigation aria-label="Workspace navigation">
-                        <SidebarContent>
-                            <SidebarItems>
-                                <SidebarItem>
-                                    <SidebarLink
-                                        href="#visits"
-                                        aria-current="page"
-                                    >
-                                        Visits
-                                    </SidebarLink>
-                                </SidebarItem>
-                                <SidebarItem>
-                                    <SidebarLink href="#patients">
-                                        Patients
-                                    </SidebarLink>
-                                </SidebarItem>
-                                <SidebarItem>
-                                    <SidebarLink href="#stock">
-                                        Stock
-                                    </SidebarLink>
-                                </SidebarItem>
-                            </SidebarItems>
-                        </SidebarContent>
-                    </SidebarNavigation>
-                    <SidebarToggle />
-                </Sidebar>
-                <ClinicPage />
-            </div>
-        </SidebarProvider>
+        <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
+            {/* A plain navigation rail: the selector at the top, narrowed to its tile when collapsed. */}
+            <aside
+                className={cn(
+                    'flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0',
+                    collapsed ? 'md:w-13' : 'md:w-60'
+                )}
+            >
+                <ClinicSelector collapsed={collapsed} label={label} />
+                <nav
+                    aria-label="Workspace navigation"
+                    className={cn(
+                        'flex flex-col gap-1 text-sm',
+                        collapsed && 'md:hidden'
+                    )}
+                >
+                    {LINKS.map((link) => (
+                        <a
+                            key={link}
+                            href={`#${link.toLowerCase()}`}
+                            className="rounded-md px-2 py-1.5 text-foreground no-underline hover:bg-accent"
+                        >
+                            {link}
+                        </a>
+                    ))}
+                </nav>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-auto self-start max-md:hidden"
+                    aria-expanded={!collapsed}
+                    onClick={() => onCollapsedChange(!collapsed)}
+                >
+                    {collapsed ? '»' : '« Collapse'}
+                </Button>
+            </aside>
+            <ClinicPage />
+        </div>
     </ClinicProvider>
 )

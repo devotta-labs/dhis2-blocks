@@ -24,7 +24,7 @@ const Case = ({ scenario, title }: { scenario: Scenario; title: string }) => (
     <div className="min-w-0">
         <h3 className="mb-2 text-sm font-medium">{title}</h3>
         <ClinicProvider client={clients[scenario]}>
-            <div className="rounded-md bg-dhis2-sidebar px-3 py-4 text-dhis2-sidebar-foreground">
+            <div className="rounded-md border border-border bg-background px-3 py-4">
                 <ClinicSelector />
             </div>
             <Current />

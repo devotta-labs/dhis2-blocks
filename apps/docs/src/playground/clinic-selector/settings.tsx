@@ -30,7 +30,7 @@ export const ClinicsControls = ({
         <NumberRow
             label="Clinics per district"
             value={settings.clinicsPerDistrict}
-            max={200}
+            max={2000}
             onChange={(clinicsPerDistrict) => onChange({ clinicsPerDistrict })}
         />
         <Check

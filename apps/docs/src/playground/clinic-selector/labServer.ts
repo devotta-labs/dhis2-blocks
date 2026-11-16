@@ -63,10 +63,12 @@ export const answer =
                             .map(clinicJson),
                     }
                 }
-                if (params.query !== undefined) {
+                {
                     if (settings.failSearch) throw serverError()
-                    const query = String(params.query).toLowerCase()
+                    // No query pages through the whole hierarchy.
+                    const query = String(params.query ?? '').toLowerCase()
                     const pageSize = Number(params.pageSize ?? 50)
+                    const page = Number(params.page ?? 1)
                     const matches = data.units
                         .filter(
                             (unit) =>
@@ -77,7 +79,7 @@ export const answer =
                         .sort(byName)
                     return {
                         pager: {
-                            page: 1,
+                            page,
                             total: matches.length,
                             pageSize,
                             pageCount: Math.max(
@@ -86,13 +88,10 @@ export const answer =
                             ),
                         },
                         organisationUnits: matches
-                            .slice(0, pageSize)
+                            .slice((page - 1) * pageSize, page * pageSize)
                             .map(clinicJson),
                     }
                 }
-                throw new Error(
-                    'The clinic selector lab answers organisationUnits only for a query or an id filter'
-                )
             }
             default:
                 throw new Error(

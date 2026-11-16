@@ -1,7 +1,9 @@
 import i18n from '@dhis2/d2-i18n'
 import { storedDay, storedTime } from '@/components/dhis2-value-display'
 import { calendarDateToIso, isIsoDate, isoToCalendarDate } from './dates'
+import { coordinateToStored, parseCoordinate } from './coordinate'
 import { matchesFieldMask } from './fieldMask'
+import { canonicalNumber } from './numbers'
 import type {
     CellKind,
     Field,
@@ -41,13 +43,10 @@ const STORED_INTEGER_POSITIVE = /^[1-9]\d*$/
 const STORED_INTEGER_NEGATIVE = /^-[1-9]\d*$/
 const STORED_INTEGER_ZERO_OR_POSITIVE = /^(?:0|[1-9]\d*)$/
 const STORED_NUMBER = /^(?:-?0|-?[1-9]\d*)(?:\.\d+)?$/
-// A number as a person types it: `.5`, `5.` and `007` are all read.
-const TYPED_NUMBER = /^(?<sign>-?)(?<whole>\d*)(?:\.(?<fraction>\d*))?$/
 // The server may add a UTC or offset suffix to the time.
 const DATE_TIME =
     /^(?<day>\d{4}-\d{2}-\d{2})T(?<hours>\d{2}):(?<minutes>\d{2})(?::(?<seconds>\d{2})(?:\.\d{1,3})?)?(?:Z|[+-](?<offsetHours>\d{2}):?(?<offsetMinutes>\d{2}))?$/
 const TIME = /^(?<hours>\d{2}):(?<minutes>\d{2})$/
-const COORDINATE = /^\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]$/
 const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
 // The server's own character set, which allows extensions such as "555 ext 12".
 const PHONE = /^[\d\s+()#./ext-]{6,50}$/
@@ -59,40 +58,6 @@ const isClockTime = (hours: string, minutes: string, seconds = '0') =>
 
 const isNumber = (text: string) =>
     STORED_NUMBER.test(text) && Number.isFinite(Number(text))
-
-/**
- * A typed number in the form DHIS2 stores: no leading zeros, `-0` as `0`, a
- * digit before the point and none after a bare one. The fraction's digits stay
- * as typed. Text that is not a plain number comes back as `undefined`.
- */
-const canonicalNumber = (text: string): string | undefined => {
-    const groups = TYPED_NUMBER.exec(text)?.groups
-    if (groups === undefined || !/\d/.test(text)) {
-        return undefined
-    }
-    const integerPart = groups.whole.replace(/^0+/, '') || '0'
-    const digits = groups.fraction
-        ? `${integerPart}.${groups.fraction}`
-        : integerPart
-    return /[1-9]/.test(digits) ? `${groups.sign}${digits}` : digits
-}
-
-const COORDINATE_LIMITS = { latitude: 90, longitude: 180 }
-
-/**
- * A typed latitude or longitude in the form numbers are stored in (`.5` is `0.5`, `5.` is `5`), or `undefined` when
- * it is not a number, as in a number cell, or lies outside its limit: 90 degrees for a latitude, 180 for a longitude.
- */
-export const coordinateNumber = (
-    axis: keyof typeof COORDINATE_LIMITS,
-    text: string
-): string | undefined => {
-    const number = canonicalNumber(text.trim())
-    return number !== undefined &&
-        Math.abs(Number(number)) <= COORDINATE_LIMITS[axis]
-        ? number
-        : undefined
-}
 
 // The range of the Java `int` DHIS2 stores whole numbers in.
 const INTEGER_MIN = -2147483648
@@ -129,18 +94,6 @@ const matches =
 
 const notACoordinate = () =>
     problem('coordinate', i18n.t('Enter a valid coordinate'))
-
-/** A stored `[lng,lat]` as its numbers, or `undefined` when it is not one or is past a limit. */
-export const parseCoordinate = (
-    value: string
-): { longitude: string; latitude: string } | undefined => {
-    const match = COORDINATE.exec(value)
-    return match !== null &&
-        Math.abs(Number(match[1])) <= COORDINATE_LIMITS.longitude &&
-        Math.abs(Number(match[2])) <= COORDINATE_LIMITS.latitude
-        ? { longitude: match[1], latitude: match[2] }
-        : undefined
-}
 
 // What each value type accepts in its stored form.
 const CHECKS = new Map(
@@ -467,25 +420,6 @@ const dateTimeToStored = (
     }
     const day = calendarDateToIso(groups.day, settings)
     return day === undefined ? undefined : `${day}T${paddedTime(groups.time)}`
-}
-
-/**
- * A coordinate typed as `lat, lng`, or in the stored `[lng,lat]` order with brackets, as `[lng,lat]`; text that is
- * neither, or has a number outside its limit, as typed, for `checkStored` to refuse. Which number is which is never
- * guessed from its size.
- */
-const coordinateToStored = (text: string): string => {
-    const bracketed = text.startsWith('[') && text.endsWith(']')
-    const parts = (bracketed ? text.slice(1, -1) : text).split(',')
-    if (parts.length !== 2) {
-        return text
-    }
-    const [first, second] = parts
-    const longitude = coordinateNumber('longitude', bracketed ? first : second)
-    const latitude = coordinateNumber('latitude', bracketed ? second : first)
-    return longitude === undefined || latitude === undefined
-        ? text
-        : `[${longitude},${latitude}]`
 }
 
 /**

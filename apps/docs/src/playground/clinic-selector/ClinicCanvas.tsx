@@ -6,14 +6,11 @@ import {
 } from '@/components/clinic-selector'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import { useState } from 'react'
 
 interface Props {
     collapsed: boolean
     label: string
     value?: string
-    /** Holds the menu open, for looking at it while changing something else. */
-    keepOpen: boolean
     onCollapsedChange: (collapsed: boolean) => void
     onValueChange: (clinic: Clinic) => void
 }
@@ -57,11 +54,9 @@ export const ClinicCanvas = ({
     collapsed,
     label,
     value,
-    keepOpen,
     onCollapsedChange,
     onValueChange,
 }: Props) => {
-    const [open, setOpen] = useState(false)
     return (
         <ClinicProvider value={value} onValueChange={onValueChange}>
             <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
@@ -72,12 +67,7 @@ export const ClinicCanvas = ({
                         collapsed ? 'md:w-12' : 'md:w-60'
                     )}
                 >
-                    <ClinicSelector
-                        collapsed={collapsed}
-                        label={label}
-                        open={keepOpen || open}
-                        onOpenChange={setOpen}
-                    />
+                    <ClinicSelector collapsed={collapsed} label={label} />
                     <nav
                         aria-label="Workspace navigation"
                         className={cn(

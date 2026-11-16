@@ -5,7 +5,6 @@ import {
     useLayoutEffect,
     useMemo,
     useReducer,
-    useState,
 } from 'react'
 import { LivePreviewHost } from '../../preview/LivePreviewHost'
 import { PreviewSpinner } from '../../preview/PreviewShell'
@@ -27,13 +26,7 @@ import {
     SidebarControls,
 } from './settings'
 import { ClinicCanvas } from './ClinicCanvas'
-import { designCss, readDesign, writeDesign, type DesignValues } from './design'
-import { DesignControls } from './DesignControls'
 import canvasSource from './ClinicCanvas.tsx?canvas'
-
-// The short menu covers the page while it is open, so a click outside closes it; held open, the page must stay usable.
-const HELD_OPEN_CSS =
-    '[data-base-ui-inert][role="presentation"] { pointer-events: none !important; }'
 
 /** The clinic selector lab: every state of the switcher, one click each, beside the requests it makes and what it stores. */
 export const ClinicSelectorLab = () => {
@@ -79,14 +72,6 @@ export const ClinicSelectorLab = () => {
         [change]
     )
 
-    const [design, setDesign] = useState(readDesign)
-    const [force, setForce] = useState({ hovered: false, focused: false })
-    const [keepOpen, setKeepOpen] = useState(false)
-    const changeDesign = useCallback((values: DesignValues) => {
-        setDesign(values)
-        writeDesign(values)
-    }, [])
-
     const data = useMemo(() => generateLabData(settings), [settings])
     const respond = useMemo(() => answer(settings, data), [settings, data])
     const selected = PRESETS.find(({ name }) => name === state.preset)
@@ -100,7 +85,6 @@ export const ClinicSelectorLab = () => {
             (mode === 'live' && settings.value === 'follows'
                 ? undefined
                 : valueFor(settings, data)),
-        keepOpen,
         onCollapsedChange,
         onValueChange,
     }
@@ -139,19 +123,6 @@ export const ClinicSelectorLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    <DesignControls
-                        values={design}
-                        force={force}
-                        keepOpen={keepOpen}
-                        onChange={changeDesign}
-                        onForce={setForce}
-                        onKeepOpen={setKeepOpen}
-                    />
-                    {/* On top of the block's own styles, so an untouched value is the block as it ships. */}
-                    <style>
-                        {designCss(design, force)}
-                        {keepOpen && HELD_OPEN_CSS}
-                    </style>
                     {mode === 'lab' && (
                         <>
                             <PresetControls

@@ -132,9 +132,13 @@ export function ClinicSelector({
     onOpenChange,
     className,
 }: ClinicSelectorProps) {
-    const { status, clinic, assigned, recent, searchable, setClinic, retry } =
-        useClinicContext()
-    const { query, setQuery, search, browse } = useClinicSearch()
+    const { state, actions } = useClinicContext()
+    const { status, clinic, assigned, recent, searchable } = state
+    const { setClinic, retry } = actions
+    const { state: found, actions: searching } = useClinicSearch()
+    const { query } = found
+    const { setQuery, browse } = searching
+    const search = { ...found, ...searching }
     // A host that holds the menu open has opened it.
     useEffect(() => {
         if (open) {

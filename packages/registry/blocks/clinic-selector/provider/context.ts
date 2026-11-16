@@ -3,7 +3,7 @@ import type { AssignedClinic, Clinic } from '../api/schemas'
 
 export type ClinicStatus = 'pending' | 'ready' | 'failed' | 'none'
 
-export interface ClinicContextValue {
+export interface ClinicState {
     status: ClinicStatus
     clinic?: Clinic
     assigned: AssignedClinic[]
@@ -11,27 +11,41 @@ export interface ClinicContextValue {
     recent: Clinic[]
     searchable: boolean
     searchesServer: boolean
+}
+
+export interface ClinicActions {
     setClinic: (clinic: Clinic) => void
+    retry: () => void
+}
+
+export interface ClinicContextValue {
+    state: ClinicState
+    actions: ClinicActions
+}
+
+export interface ClinicSearchState {
+    query: string
+    status: 'pending' | 'ready' | 'failed'
+    /** Every page loaded so far; with a blank query, the user's whole hierarchy by name. */
+    clinics: Clinic[]
+    hasMore: boolean
+    loadingMore: boolean
+    /** The last try for the next page failed. */
+    moreFailed: boolean
+}
+
+export interface ClinicSearchActions {
+    setQuery: (query: string) => void
+    /** Asks for the hierarchy's first page, once the menu is first opened. */
+    browse: () => void
+    loadMore: () => void
     retry: () => void
 }
 
 /** Apart from the clinic, so typing in the search box re-renders the menu and not every page that reads the clinic. */
 export interface ClinicSearchValue {
-    query: string
-    setQuery: (query: string) => void
-    /** Asks for the hierarchy's first page, once the menu is first opened. */
-    browse: () => void
-    search: {
-        status: 'pending' | 'ready' | 'failed'
-        /** Every page loaded so far; with a blank query, the user's whole hierarchy by name. */
-        clinics: Clinic[]
-        hasMore: boolean
-        loadingMore: boolean
-        /** The last try for the next page failed. */
-        moreFailed: boolean
-        loadMore: () => void
-        retry: () => void
-    }
+    state: ClinicSearchState
+    actions: ClinicSearchActions
 }
 
 /** Internal: never exported from the block, so it cannot be swapped out. */

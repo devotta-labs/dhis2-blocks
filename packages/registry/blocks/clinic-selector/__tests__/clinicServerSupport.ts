@@ -27,9 +27,10 @@ interface ServerOptions {
     assigned?: AssignedClinic[]
     /** What the by-id check finds; ids not here come back missing. */
     known?: Clinic[]
+    /** What a query finds, whatever the query. */
     found?: Clinic[]
-    /** How many matches the search pager reports; `found.length` by default. */
-    total?: number
+    /** The hierarchy a blank query pages through. */
+    all?: Clinic[]
 }
 
 /** Who a later `me` request says the user is. */
@@ -56,7 +57,7 @@ export const createServer = ({
     assigned = [OCEAN, BRISTOL],
     known = [],
     found = [],
-    total = found.length,
+    all = [],
 }: ServerOptions = {}) => {
     const requests: ResourceRequest[] = []
     const me: FakeMe = { userId, assigned }
@@ -86,8 +87,13 @@ export const createServer = ({
             requests.filter((request) => request.resource === 'me'),
         byIdRequests: () =>
             requests.filter((request) => request.params?.filter !== undefined),
+        /** Pages of the hierarchy, with a query or without. */
         searchRequests: () =>
-            requests.filter((request) => request.params?.query !== undefined),
+            requests.filter(
+                (request) =>
+                    request.resource === 'organisationUnits' &&
+                    request.params?.filter === undefined
+            ),
         client: createClinicClient({
             query: async (query) => {
                 const [[key, request]] = Object.entries(query)
@@ -129,10 +135,19 @@ export const createServer = ({
                 if (fail.search !== undefined) {
                     throw failure(fail.search)
                 }
+                const page = Number(request.params?.page)
+                const pageSize = Number(request.params?.pageSize)
+                const matches =
+                    request.params?.query === undefined ? all : found
                 return {
                     [key]: {
-                        pager: { total },
-                        organisationUnits: plain(found),
+                        pager: { page, pageSize, total: matches.length },
+                        organisationUnits: plain(
+                            matches.slice(
+                                (page - 1) * pageSize,
+                                page * pageSize
+                            )
+                        ),
                     },
                 }
             },

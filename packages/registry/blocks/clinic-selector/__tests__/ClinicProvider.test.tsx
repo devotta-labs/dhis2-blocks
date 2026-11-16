@@ -301,19 +301,23 @@ describe('ClinicProvider', () => {
         expect(readRemembered('u1').recent).toEqual(newestFive.map((c) => c.id))
     })
 
-    it('a blank query makes no request', async () => {
-        const server = createServer({ assigned: [district('Root')] })
-        const rendered = await renderClinic(server)
-        await settled(rendered)
-        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-
-        await rendered.act(() =>
-            rendered.result.current.context.setQuery('   ')
+    it('a blank query pages through the hierarchy', async () => {
+        const root = district('Root')
+        const all = Array.from({ length: 21 }, (_, i) =>
+            unit(`Unit${String(i).padStart(2, '0')}`, root.path)
         )
-        await rendered.act(() => vi.advanceTimersByTimeAsync(300))
+        const server = createServer({ assigned: [root], all })
+        const rendered = await renderClinic(server)
+        const search = () => rendered.result.current.context.search
+        await expect.poll(() => search().clinics).toHaveLength(20)
+        expect(server.searchRequests()[0]?.params).not.toHaveProperty('query')
+        expect(search().hasMore).toBe(true)
 
-        expect(server.searchRequests()).toHaveLength(0)
-        expect(rendered.result.current.context.search.status).toBe('idle')
+        await rendered.act(() => search().loadMore())
+
+        await expect.poll(() => search().clinics).toEqual(all)
+        expect(server.searchRequests()[1]?.params?.page).toBe(2)
+        expect(search().hasMore).toBe(false)
     })
 
     it('searches the server after 250 ms', async () => {
@@ -323,17 +327,19 @@ describe('ClinicProvider', () => {
         const rendered = await renderClinic(server)
         await settled(rendered)
         vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        const queried = () =>
+            server.searchRequests().filter((r) => r.params?.query !== undefined)
 
         await rendered.act(() =>
             rendered.result.current.context.setQuery(' ngel ')
         )
         await rendered.act(() => vi.advanceTimersByTimeAsync(200))
-        expect(server.searchRequests()).toHaveLength(0)
+        expect(queried()).toHaveLength(0)
         expect(rendered.result.current.context.search.status).toBe('pending')
 
         await rendered.act(() => vi.advanceTimersByTimeAsync(50))
-        expect(server.searchRequests()).toHaveLength(1)
-        expect(server.searchRequests()[0]?.params?.query).toBe('ngel')
+        expect(queried()).toHaveLength(1)
+        expect(queried()[0]?.params?.query).toBe('ngel')
 
         // React Query delivers the answer on a timer too.
         await rendered.act(() => vi.advanceTimersByTimeAsync(10))

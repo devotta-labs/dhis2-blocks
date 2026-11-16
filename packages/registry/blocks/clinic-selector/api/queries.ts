@@ -1,5 +1,5 @@
 import type { Result } from 'better-result'
-import type { ClinicResourceClient } from './client'
+import type { ClinicResourceClient, ResourceRequest } from './client'
 import {
     ByIdSchema,
     MeSchema,
@@ -8,7 +8,7 @@ import {
     type Clinic,
 } from './schemas'
 
-export const SEARCH_PAGE_SIZE = 50
+export const SEARCH_PAGE_SIZE = 20
 
 export interface Me {
     userId: string
@@ -45,25 +45,29 @@ export const fetchMe = async (
     }))
 }
 
-/** One page of matches inside the user's hierarchy; `hasMore` says the page is not all of them. */
+/** One page of the user's hierarchy by name, narrowed by `query` unless it is blank; `hasMore` says a page follows. */
 export const searchClinics = (
     client: ClinicResourceClient,
     query: string,
+    page: number,
     signal?: AbortSignal
-): Promise<Result<SearchResult, Error>> =>
-    client.query(
-        {
-            resource: 'organisationUnits',
-            params: {
-                query,
-                withinUserHierarchy: true,
-                fields: CLINIC_FIELDS,
-                pageSize: SEARCH_PAGE_SIZE,
-            },
-        },
+): Promise<Result<SearchResult, Error>> => {
+    const params: ResourceRequest['params'] = {
+        withinUserHierarchy: true,
+        fields: CLINIC_FIELDS,
+        order: 'displayName:asc',
+        pageSize: SEARCH_PAGE_SIZE,
+        page,
+    }
+    if (query !== '') {
+        params.query = query
+    }
+    return client.query(
+        { resource: 'organisationUnits', params },
         SearchSchema,
         signal
     )
+}
 
 /** Remembered ids are checked against the hierarchy, so a unit the user lost access to drops out. */
 export const fetchClinicsById = (

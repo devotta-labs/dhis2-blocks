@@ -44,12 +44,19 @@ export const MeSchema = z
 
 export const SearchSchema = z
     .object({
-        pager: z.object({ total: z.number() }).optional(),
+        pager: z
+            .object({
+                page: z.number(),
+                pageSize: z.number(),
+                total: z.number(),
+            })
+            .optional(),
         organisationUnits: z.array(ClinicSchema),
     })
     .transform(({ pager, organisationUnits }) => ({
         clinics: organisationUnits.map(toClinic),
-        hasMore: (pager?.total ?? 0) > organisationUnits.length,
+        hasMore:
+            pager !== undefined && pager.page * pager.pageSize < pager.total,
     }))
 
 export const ByIdSchema = z

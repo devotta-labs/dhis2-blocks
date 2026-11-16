@@ -1,4 +1,4 @@
-import { Combobox as ComboboxPrimitive } from '@base-ui/react'
+import { Combobox as ComboboxPrimitive, type BaseUIEvent } from '@base-ui/react'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
@@ -28,7 +28,7 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
 import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
-import React, { type ReactElement } from 'react'
+import React, { type MouseEvent, type ReactElement } from 'react'
 import type { Clinic } from './api/schemas'
 import { AS_IS } from './asIs'
 import { useClinicContext } from './provider/context'
@@ -43,9 +43,13 @@ export interface ClinicSelectorProps {
 }
 
 interface ClinicGroup {
-    label?: string
+    key: string
+    label: string
     items: Clinic[]
 }
+
+/** Stands in the list for the row that loads the next page; no clinic has an empty id. */
+const MORE: Clinic = { id: '', displayName: '', path: '' }
 
 const triggerClassName =
     'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-md border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-inherit hover:bg-dhis2-sidebar-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-sidebar-ring data-popup-open:bg-dhis2-sidebar-accent [&_svg]:shrink-0 [&_svg]:fill-current'
@@ -273,16 +277,45 @@ export function ClinicSelector({
         )
     }
 
-    let groups: ClinicGroup[] = [{ items: search.clinics }]
-    if (query.trim() === '') {
-        // Headings only tell two lists apart, so one list goes without.
-        groups =
-            recent.length > 0
-                ? [
-                      { label: i18n.t('Recent'), items: recent },
-                      { label: i18n.t('Assigned'), items: assigned },
-                  ]
-                : [{ items: assigned }]
+    const blank = query.trim() === ''
+    const above = new Set([...recent, ...assigned].map((c) => c.id))
+    const lists: ClinicGroup[] = (
+        blank
+            ? [
+                  { key: 'recent', label: i18n.t('Recent'), items: recent },
+                  {
+                      key: 'assigned',
+                      label: i18n.t('Assigned'),
+                      items: assigned,
+                  },
+                  {
+                      key: 'all',
+                      label: i18n.t('All clinics'),
+                      // Once is enough for a clinic already listed above.
+                      items: search.clinics.filter((c) => !above.has(c.id)),
+                  },
+              ]
+            : [{ key: 'results', label: '', items: search.clinics }]
+    ).filter((group) => group.items.length > 0)
+    // Headings only tell lists apart, so one list goes without.
+    const headed = lists.length > 1
+    // The row that loads the next page is an item, so the arrow keys reach it.
+    const groups =
+        search.hasMore && lists.length > 0
+            ? [...lists, { key: 'more', label: '', items: [MORE] }]
+            : lists
+    let moreLabel = i18n.t('Show more')
+    if (search.loadingMore) {
+        moreLabel = i18n.t('Loading more clinics')
+    } else if (search.moreFailed) {
+        moreLabel = i18n.t('More clinics could not be loaded. Try again')
+    }
+    // Stops the list's own handler, which would choose the row and close the menu.
+    const loadMore = (event: BaseUIEvent<MouseEvent>) => {
+        event.preventBaseUIHandler()
+        if (!search.loadingMore) {
+            search.loadMore()
+        }
     }
 
     return (
@@ -330,37 +363,64 @@ export function ClinicSelector({
                 </ComboboxEmpty>
                 <ComboboxList>
                     {(group: ClinicGroup) => (
-                        <ComboboxGroup
-                            key={group.label ?? 'results'}
-                            items={group.items}
-                        >
-                            {group.label && (
+                        <ComboboxGroup key={group.key} items={group.items}>
+                            {headed && group.label !== '' && (
                                 <ComboboxLabel>{group.label}</ComboboxLabel>
                             )}
                             <ComboboxCollection>
-                                {(c: Clinic) => (
-                                    <ComboboxItem
-                                        key={c.id}
-                                        value={c}
-                                        // Its own leading check and selected tint give way to the menu's trailing check.
-                                        className="gap-2 ps-3 pe-9 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
-                                    >
-                                        <Row clinic={c} name={c.displayName} />
-                                        <span className="pointer-events-none absolute end-3 flex items-center justify-center">
-                                            <ComboboxPrimitive.ItemIndicator>
-                                                <IconCheckmark16 />
-                                            </ComboboxPrimitive.ItemIndicator>
-                                        </span>
-                                    </ComboboxItem>
-                                )}
+                                {(c: Clinic) =>
+                                    c === MORE ? (
+                                        <ComboboxItem
+                                            key="more"
+                                            value={c}
+                                            // Busy, it stays in place and says so, and a press does nothing.
+                                            aria-busy={search.loadingMore}
+                                            onClick={loadMore}
+                                            onMouseUp={loadMore}
+                                            className="justify-center px-3 font-medium text-dhis2-primary *:first:hidden"
+                                        >
+                                            {moreLabel}
+                                        </ComboboxItem>
+                                    ) : (
+                                        <ComboboxItem
+                                            key={c.id}
+                                            value={c}
+                                            // Its own leading check and selected tint give way to the menu's trailing check.
+                                            className="gap-2 ps-3 pe-9 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
+                                        >
+                                            <Row
+                                                clinic={c}
+                                                name={c.displayName}
+                                            />
+                                            <span className="pointer-events-none absolute end-3 flex items-center justify-center">
+                                                <ComboboxPrimitive.ItemIndicator>
+                                                    <IconCheckmark16 />
+                                                </ComboboxPrimitive.ItemIndicator>
+                                            </span>
+                                        </ComboboxItem>
+                                    )
+                                }
                             </ComboboxCollection>
                         </ComboboxGroup>
                     )}
                 </ComboboxList>
-                {search.hasMore && (
-                    <p className="m-0 px-3 py-2 text-[13px] leading-4 text-dhis2-muted-foreground">
-                        {i18n.t('Keep typing to narrow the results')}
-                    </p>
+                {/* With no query the assigned clinics always show, so the rest of the hierarchy reports below them. */}
+                {blank && search.status === 'pending' && (
+                    <div className="flex justify-center py-2">
+                        <Spinner label={i18n.t('Loading')} />
+                    </div>
+                )}
+                {blank && search.status === 'failed' && (
+                    <div className="flex flex-col items-center gap-2 px-3 py-2 text-sm">
+                        {i18n.t('Clinics could not be loaded')}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={search.retry}
+                        >
+                            {i18n.t('Retry')}
+                        </Button>
+                    </div>
                 )}
             </ComboboxContent>
         </Combobox>

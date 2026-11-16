@@ -1,6 +1,6 @@
 import { announce } from '@/components/dhis2/ui/announcer'
 import i18n from '@dhis2/d2-i18n'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Result } from 'better-result'
 import React, {
     useCallback,
@@ -61,6 +61,12 @@ const NO_ASSIGNED: AssignedClinic[] = []
 const NO_RECENT: Remembered = { recent: [] }
 const NO_CLINICS: ReadonlyMap<string, Clinic | null> = new Map()
 const noop = () => {}
+const NO_MORE = {
+    hasMore: false,
+    loadingMore: false,
+    moreFailed: false,
+    loadMore: noop,
+}
 
 const announceChange = (clinic: Clinic) =>
     announce(
@@ -321,14 +327,25 @@ export function ClinicProvider({
         const timeout = setTimeout(() => setDebounced(trimmed), SEARCH_DELAY_MS)
         return () => clearTimeout(timeout)
     }, [trimmed])
-    const server = useQuery({
+    // A blank query pages through the whole hierarchy, so the menu can be browsed without typing.
+    const server = useInfiniteQuery({
         queryKey: clinicQueryKeys.search(clientId, userId ?? '', debounced),
-        queryFn: async ({ signal }) =>
-            unwrap(await searchClinics(resourceClient, debounced, signal)),
-        enabled: searchesServer && userId !== undefined && debounced !== '',
+        queryFn: async ({ pageParam, signal }) =>
+            unwrap(
+                await searchClinics(
+                    resourceClient,
+                    debounced,
+                    pageParam,
+                    signal
+                )
+            ),
+        initialPageParam: 1,
+        getNextPageParam: (last, pages) =>
+            last.hasMore ? pages.length + 1 : undefined,
+        enabled: searchesServer && userId !== undefined,
         retry: shouldRetryClinicRequest,
     })
-    const { refetch: refetchSearch } = server
+    const { refetch: refetchSearch, fetchNextPage } = server
     const search = useMemo((): ClinicContextValue['search'] => {
         if (!searchesServer) {
             const lower = trimmed.toLowerCase()
@@ -337,19 +354,16 @@ export function ClinicProvider({
                 clinics: assigned.filter((a) =>
                     a.displayName.toLowerCase().includes(lower)
                 ),
-                hasMore: false,
+                ...NO_MORE,
                 retry: noop,
             }
         }
         const retrySearch = () => void refetchSearch()
-        if (trimmed === '') {
-            return { status: 'idle', clinics: [], hasMore: false, retry: noop }
-        }
         if (debounced !== trimmed || server.isPending) {
             return {
                 status: 'pending',
                 clinics: [],
-                hasMore: false,
+                ...NO_MORE,
                 retry: retrySearch,
             }
         }
@@ -357,17 +371,25 @@ export function ClinicProvider({
             return {
                 status: 'failed',
                 clinics: [],
-                hasMore: false,
+                ...NO_MORE,
                 retry: retrySearch,
             }
         }
+        // By id, so a clinic that moved between pages while they loaded shows once.
+        const loaded = new Map(
+            server.data.pages
+                .flatMap((page) => page.clinics)
+                // A server that ignores the scope filter must not list clinics a pick would drop.
+                .filter((c) => isWithinAssigned(c.path, assigned))
+                .map((c) => [c.id, c])
+        )
         return {
             status: 'ready',
-            // A server that ignores the scope filter must not list clinics a pick would drop.
-            clinics: server.data.clinics.filter((c) =>
-                isWithinAssigned(c.path, assigned)
-            ),
-            hasMore: server.data.hasMore,
+            clinics: [...loaded.values()],
+            hasMore: server.hasNextPage,
+            loadingMore: server.isFetchingNextPage,
+            moreFailed: server.isFetchNextPageError,
+            loadMore: () => void fetchNextPage(),
             retry: retrySearch,
         }
     }, [
@@ -377,7 +399,11 @@ export function ClinicProvider({
         assigned,
         server.isPending,
         server.data,
+        server.hasNextPage,
+        server.isFetchingNextPage,
+        server.isFetchNextPageError,
         refetchSearch,
+        fetchNextPage,
     ])
 
     const { refetch: refetchMe } = me

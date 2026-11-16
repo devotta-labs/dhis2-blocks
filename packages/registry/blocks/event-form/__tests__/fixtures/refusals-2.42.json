@@ -1,0 +1,131 @@
+{
+    "E1302": {
+        "errorCode": "E1302",
+        "message": "DataElement `INTEGER` is not valid: `Value type is INTEGER but the value `abc` is not.`.",
+        "trackerType": "EVENT",
+        "uid": "GyjlgHDwdrA",
+        "args": ["INTEGER", "Value type is INTEGER but the value `abc` is not."]
+    },
+    "E1125": {
+        "errorCode": "E1125",
+        "message": "Value `Nope` is not a valid option code in OptionSet `pC3N9N77UmT`.",
+        "trackerType": "EVENT",
+        "uid": "MQTfELGrmU7",
+        "args": ["Nope", "pC3N9N77UmT"]
+    },
+    "E1303": {
+        "errorCode": "E1303",
+        "message": "Mandatory DataElement `msodh3rEMJa` is not present.",
+        "trackerType": "EVENT",
+        "uid": "hPG1Jqf7gTA",
+        "args": [
+            "MetadataIdentifier(idScheme=UID, identifier=msodh3rEMJa, attributeValue=null)"
+        ]
+    },
+    "E1055": {
+        "errorCode": "E1055",
+        "message": "Default AttributeOptionCombo is not allowed as Program has non-default CategoryCombo.",
+        "trackerType": "EVENT",
+        "uid": "BRTIQtvfvJ0",
+        "args": []
+    },
+    "E1116": {
+        "errorCode": "E1116",
+        "message": "Could not find CategoryOption: `abcdefghijk`.",
+        "trackerType": "EVENT",
+        "uid": "V25d9t3H7Nv",
+        "args": [
+            "MetadataIdentifier(idScheme=UID, identifier=abcdefghijk, attributeValue=null)"
+        ]
+    },
+    "E1117": {
+        "errorCode": "E1117",
+        "message": "CategoryOptionCombo not found for CategoryCombo `O4VaNks6tta` and CategoryOptions `[C6nZpLKjEJr, qkPbeWaFsnU]`.",
+        "trackerType": "EVENT",
+        "uid": "ALL8Bq4dFjr",
+        "args": [
+            "{\"class\":\"class org.hisp.dhis.category.CategoryCombo\", \"id\":\"1153393\", \"uid\":\"O4VaNks6tta\", \"code\":\"null\", \"name\":\"Implementing Partner and Projects\", \"created\":\"null\", \"lastUpdated\":\"null\" }",
+            "[C6nZpLKjEJr, qkPbeWaFsnU]"
+        ]
+    },
+    "E1056": {
+        "errorCode": "E1056",
+        "message": "Event date: `2016-01-15` is before start date: `2016-04-01` for AttributeOption: `Improve access to clean water`.",
+        "trackerType": "EVENT",
+        "uid": "irn1mJOyHDX",
+        "args": ["2016-01-15", "2016-04-01", "Improve access to clean water"]
+    },
+    "E1057": {
+        "errorCode": "E1057",
+        "message": "Event date: `2026-11-16` is after end date: `2016-10-01` for AttributeOption: `Provide access to primary health care` in Program: `EF live test program (event-form check)`.",
+        "trackerType": "EVENT",
+        "uid": "huJT2UoBNWT",
+        "args": [
+            "2026-11-16",
+            "2016-10-01",
+            "Provide access to primary health care",
+            "EF live test program (event-form check)"
+        ]
+    },
+    "E1099": {
+        "errorCode": "E1099",
+        "message": "User: `EfLiveUser1` has no write access to CategoryOption: `yMj2MnmNI8L`.",
+        "trackerType": "EVENT",
+        "uid": "aG3kzmxgGOS",
+        "args": [
+            "org.hisp.dhis.user.UserDetailsImpl@c8cc7b5a",
+            "{\"class\":\"class org.hisp.dhis.category.CategoryOption\", \"hashCode\":\"-2043342659\", \"id\":\"1153389\", \"uid\":\"yMj2MnmNI8L\", \"code\":\"Project03\", \"name\":\"Improve access to medicines\", \"shortName\":\"Improve access to medicines\", \"description\":\"null\", \"created\":\"2013-12-20 22:14:27.023\", \"lastUpdated\":\"2026-11-16 13:39:19.565\" }"
+        ]
+    },
+    "E1000": {
+        "errorCode": "E1000",
+        "message": "User: `EfLiveUser1` has no write access to OrganisationUnit: `DiszpKrYNg8`.",
+        "trackerType": "EVENT",
+        "uid": "oem2E1pTYxM",
+        "args": [
+            "org.hisp.dhis.user.UserDetailsImpl@c8cc7b5a",
+            "{\"class\":\"class org.hisp.dhis.organisationunit.OrganisationUnit\", \"hashCode\":\"285803861\", \"id\":\"559\", \"uid\":\"DiszpKrYNg8\", \"code\":\"OU_559\", \"name\":\"Ngelehun CHC\", \"shortName\":\"null\", \"description\":\"null\", \"created\":\"Mon Nov 16 13:39:18 UTC 2026\", \"lastUpdated\":\"Mon Nov 16 13:39:18 UTC 2026\" }"
+        ]
+    },
+    "E1012": {
+        "errorCode": "E1012",
+        "message": "Geometry does not conform to FeatureType: `NONE`.",
+        "trackerType": "EVENT",
+        "uid": "QkJEMOa01WO",
+        "args": ["NONE"]
+    },
+    "E1326": {
+        "errorCode": "E1326",
+        "message": "Event `aLCIFp6Dior` is completed and its ProgramStage blocks the entry form after completion. Reopen the Event before updating.",
+        "trackerType": "EVENT",
+        "uid": "aLCIFp6Dior",
+        "args": ["aLCIFp6Dior"]
+    },
+    "E1083": {
+        "errorCode": "E1083",
+        "message": "User: `mUQjz04VdRm`, is not authorized to modify completed events.",
+        "trackerType": "EVENT",
+        "uid": "JYWJFA8KxmR",
+        "args": ["org.hisp.dhis.user.UserDetailsImpl@85e3d8ab"]
+    },
+    "E1091": {
+        "errorCode": "E1091",
+        "message": "User: `mUQjz04VdRm` has no data write access to Program: `bMcwwoVnbSR`.",
+        "trackerType": "EVENT",
+        "uid": "AtJjfs19Bt7",
+        "args": [
+            "org.hisp.dhis.user.UserDetailsImpl@85e3d8ab",
+            "{\"class\":\"class org.hisp.dhis.program.Program\", \"hashCode\":\"-112166941\", \"id\":\"890614\", \"uid\":\"bMcwwoVnbSR\", \"code\":\"null\", \"name\":\"Malaria testing and surveillance\", \"shortName\":\"null\", \"description\":\"null\", \"created\":\"null\", \"lastUpdated\":\"null\" }"
+        ]
+    },
+    "E1029": {
+        "errorCode": "E1029",
+        "message": "Event OrganisationUnit: `ImspTQPwCqd` and Program: `eBAyeGv0exc`, do not match.",
+        "trackerType": "EVENT",
+        "uid": "oRwmm2DZ8Mr",
+        "args": [
+            "{\"class\":\"class org.hisp.dhis.organisationunit.OrganisationUnit\", \"hashCode\":\"551970447\", \"id\":\"525\", \"uid\":\"ImspTQPwCqd\", \"code\":\"OU_525\", \"name\":\"Sierra Leone\", \"shortName\":\"null\", \"description\":\"null\", \"created\":\"Mon Nov 16 14:12:27 UTC 2026\", \"lastUpdated\":\"Mon Nov 16 14:12:27 UTC 2026\" }",
+            "{\"class\":\"class org.hisp.dhis.program.Program\", \"hashCode\":\"-954392554\", \"id\":\"1150221\", \"uid\":\"eBAyeGv0exc\", \"code\":\"null\", \"name\":\"Inpatient morbidity and mortality\", \"shortName\":\"null\", \"description\":\"null\", \"created\":\"null\", \"lastUpdated\":\"null\" }"
+        ]
+    }
+}

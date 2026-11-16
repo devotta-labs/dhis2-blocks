@@ -1039,6 +1039,11 @@
                     "target": "@components/dhis2-value-input/kinds/ownCalendar.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-input/messageText.tsx",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-input/messageText.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-input/search/serverSearch.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-input/search/serverSearch.ts"
@@ -1075,6 +1080,11 @@
                     "target": "@components/dhis2-value-types/age.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-types/coordinate.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/coordinate.ts"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-types/dates.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-types/dates.ts"
@@ -1090,6 +1100,11 @@
                     "target": "@components/dhis2-value-types/index.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/dhis2-value-types/numbers.ts",
+                    "type": "registry:file",
+                    "target": "@components/dhis2-value-types/numbers.ts"
+                },
+                {
                     "path": "packages/registry/blocks/dhis2-value-types/optionSearch.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-types/optionSearch.ts"
@@ -1103,6 +1118,172 @@
                     "path": "packages/registry/blocks/dhis2-value-types/valueTypes.ts",
                     "type": "registry:file",
                     "target": "@components/dhis2-value-types/valueTypes.ts"
+                }
+            ]
+        },
+        {
+            "name": "event-form",
+            "type": "registry:block",
+            "title": "Event Form",
+            "description": "Enter or edit one event of a program stage, with every program rule applied and said in place: which rule changed what, and why.",
+            "dependencies": [
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/multi-calendar-dates@3.2.1",
+                "@tanstack/react-query@^5.101.4",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/alert",
+                "devotta-labs/dhis2-blocks/alert-dialog",
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display",
+                "devotta-labs/dhis2-blocks/dhis2-value-input",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/program-rules",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/textarea"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useEventForm.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useEventForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useEventFormData.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useEventFormData.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useFocusMovesOn.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useFocusMovesOn.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useFormRules.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useFormRules.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useSaveEvent.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useSaveEvent.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/hooks/useStoredNames.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/hooks/useStoredNames.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/categories.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/categories.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/explain.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/explain.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/formState.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/formState.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/importReport.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/importReport.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/location.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/location.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/metadata.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/metadata.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/payload.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/payload.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/uid.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/uid.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/lib/validate.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/lib/validate.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/CategoryField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/CategoryField.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/EventForm.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventForm.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/EventFormActions.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormActions.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/EventFormFeedback.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormFeedback.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/EventFormFields.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormFields.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/EventFormNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/EventFormNotes.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/FormField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/FormField.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/HiddenByRules.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/HiddenByRules.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/LocationField.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/LocationField.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/Why.tsx",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/Why.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/event-form/ui/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/event-form/ui/context.ts"
                 }
             ]
         },
@@ -1346,6 +1527,11 @@
                     "target": "@components/program-rules/lib/evaluate.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/program-rules/lib/explain.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/explain.ts"
+                },
+                {
                     "path": "packages/registry/blocks/program-rules/lib/index.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/lib/index.ts"
@@ -1354,6 +1540,16 @@
                     "path": "packages/registry/blocks/program-rules/lib/manyEvents.ts",
                     "type": "registry:file",
                     "target": "@components/program-rules/lib/manyEvents.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/outsideReads.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/outsideReads.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/program-rules/lib/overlay.ts",
+                    "type": "registry:file",
+                    "target": "@components/program-rules/lib/overlay.ts"
                 },
                 {
                     "path": "packages/registry/blocks/program-rules/lib/scanExpression.ts",

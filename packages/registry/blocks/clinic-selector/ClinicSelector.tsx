@@ -39,6 +39,9 @@ export interface ClinicSelectorProps {
     collapsed?: boolean
     label?: string
     searchPlaceholder?: string
+    /** Whether the menu is open, when the host owns that. */
+    open?: boolean
+    onOpenChange?: (open: boolean) => void
     className?: string
 }
 
@@ -88,6 +91,7 @@ function Tile({ clinic }: { clinic?: Clinic }) {
     return (
         <span
             aria-hidden="true"
+            data-clinic-selector="tile"
             className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-dhis2-md text-sm leading-none font-medium',
                 tileClass(clinic?.id ?? '')
@@ -109,7 +113,10 @@ function Row({
     nameClassName?: string
 }) {
     return (
-        <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span
+            data-clinic-selector="row"
+            className="flex min-w-0 flex-1 items-center gap-2"
+        >
             <Tile clinic={clinic} />
             <span
                 title={name}
@@ -125,6 +132,8 @@ export function ClinicSelector({
     collapsed = false,
     label = i18n.t('Clinic'),
     searchPlaceholder = i18n.t('Search clinics'),
+    open,
+    onOpenChange,
     className,
 }: ClinicSelectorProps) {
     const {
@@ -161,7 +170,7 @@ export function ClinicSelector({
     if (status === 'failed') {
         const message = i18n.t('Clinics could not be loaded')
         return (
-            <div className={cn(box, 'flex-wrap')}>
+            <div data-clinic-selector="status" className={cn(box, 'flex-wrap')}>
                 <span className={cn('contents', wide)}>
                     <span>{message}</span>
                     <Button size="sm" variant="outline" onClick={retry}>
@@ -189,7 +198,7 @@ export function ClinicSelector({
     if (status === 'none') {
         const message = i18n.t('No clinic assigned')
         return (
-            <div className={box}>
+            <div data-clinic-selector="status" className={box}>
                 <p className={cn('m-0', wide)}>{message}</p>
                 {collapsed && (
                     <Tip show text={message}>
@@ -222,6 +231,8 @@ export function ClinicSelector({
     }
 
     const triggerProps = {
+        // Names for the parts, so a host's stylesheet can reach them.
+        'data-clinic-selector': 'trigger',
         'aria-label': i18n.t('{{label}}: {{name}}', {
             label,
             name,
@@ -235,7 +246,11 @@ export function ClinicSelector({
         children: (
             <>
                 <Row clinic={clinic} name={name} nameClassName={wide} />
-                <span aria-hidden="true" className={cn('flex', wide)}>
+                <span
+                    aria-hidden="true"
+                    data-clinic-selector="chevron"
+                    className={cn('flex', wide)}
+                >
                     <IconChevronDown16 />
                 </span>
             </>
@@ -245,11 +260,12 @@ export function ClinicSelector({
         side: collapsed ? ('right' as const) : ('bottom' as const),
         // Wide enough for clinic names whatever the sidebar's width, and never wider than the screen.
         className: 'w-100 max-w-[calc(100vw-1rem)]',
+        'data-clinic-selector': 'menu',
     }
 
     if (!searchable) {
         return (
-            <DropdownMenu>
+            <DropdownMenu open={open} onOpenChange={onOpenChange}>
                 <Tip show={collapsed} text={name}>
                     <DropdownMenuTrigger {...triggerProps} />
                 </Tip>
@@ -322,6 +338,8 @@ export function ClinicSelector({
 
     return (
         <Combobox
+            open={open}
+            onOpenChange={onOpenChange}
             items={groups}
             // The provider filters, on the server or over the assigned list.
             filter={null}
@@ -377,6 +395,7 @@ export function ClinicSelector({
                                             value={c}
                                             // Busy, it stays in place and says so, and a press does nothing.
                                             aria-busy={search.loadingMore}
+                                            data-clinic-selector="more"
                                             onClick={loadMore}
                                             onMouseUp={loadMore}
                                             className="justify-center px-3 font-medium text-dhis2-primary *:first:hidden"
@@ -394,7 +413,10 @@ export function ClinicSelector({
                                                 clinic={c}
                                                 name={c.displayName}
                                             />
-                                            <span className="pointer-events-none absolute end-3 flex items-center justify-center">
+                                            <span
+                                                data-clinic-selector="check"
+                                                className="pointer-events-none absolute end-3 flex items-center justify-center"
+                                            >
                                                 <ComboboxPrimitive.ItemIndicator>
                                                     <IconCheckmark16 />
                                                 </ComboboxPrimitive.ItemIndicator>

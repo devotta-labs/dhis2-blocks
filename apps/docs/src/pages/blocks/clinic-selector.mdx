@@ -121,7 +121,10 @@ function App() {
 Pages still read `useClinic().clinic`: it is the clinic for `value` once it has
 been checked. A `value` the user cannot work at leaves `clinic` unset, and the
 selector shows Choose a clinic. A host that calls clinics facilities or sites
-can set `label` and `searchPlaceholder` on `ClinicSelector`.
+can set `label` and `searchPlaceholder` on `ClinicSelector`. Pass `open` and
+`onOpenChange` to own whether the menu is open. Each part carries a
+`data-clinic-selector` name (`trigger`, `tile`, `row`, `chevron`, `menu`,
+`check`, `more`, `status`) for a stylesheet to reach.
 
 ## What it remembers
 

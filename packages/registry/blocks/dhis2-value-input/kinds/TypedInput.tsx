@@ -20,6 +20,7 @@ export const TypedInput = ({
     required,
     className,
     grouped = false,
+    tabIndex,
 }: {
     id: string
     inputRef?: Ref<HTMLInputElement>
@@ -30,6 +31,7 @@ export const TypedInput = ({
     className?: string
     /** Inside a house `InputGroup`, which draws the box. */
     grouped?: boolean
+    tabIndex?: number
 }) => {
     const Control = grouped ? InputGroupInput : Input
     return (
@@ -42,6 +44,7 @@ export const TypedInput = ({
             autoComplete="off"
             spellCheck={false}
             readOnly={readOnly}
+            tabIndex={tabIndex}
             aria-required={required || undefined}
             value={draft.text}
             onChange={(event) => draft.change(event.target.value)}

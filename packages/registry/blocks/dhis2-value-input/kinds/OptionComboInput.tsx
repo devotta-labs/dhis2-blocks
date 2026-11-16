@@ -27,6 +27,7 @@ export const OptionComboInput = ({
     draft,
     readOnly,
     required,
+    skipped,
 }: {
     id: string
     /** The options a person may choose, in the option set's order. */
@@ -36,6 +37,8 @@ export const OptionComboInput = ({
     draft: ReturnType<typeof useDraft>
     readOnly: boolean
     required: boolean
+    /** A read-only combobox's place in the Tab order, when Tab passes it. */
+    skipped?: { tabIndex?: number }
 }) => {
     const index = useMemo(() => optionIndex(offered), [offered])
     // Whether the text is being typed: only then is it searched. Typing alone never reports.
@@ -81,6 +84,7 @@ export const OptionComboInput = ({
         >
             <ComboboxInput
                 id={id}
+                {...skipped}
                 autoComplete="off"
                 spellCheck={false}
                 aria-required={required || undefined}

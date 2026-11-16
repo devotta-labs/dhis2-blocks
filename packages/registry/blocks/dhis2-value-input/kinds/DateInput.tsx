@@ -123,6 +123,7 @@ export const DateInput = ({
     readOnly,
     required,
     className,
+    tabIndex,
 }: {
     id: string
     field: Field
@@ -131,6 +132,8 @@ export const DateInput = ({
     readOnly: boolean
     required: boolean
     className?: string
+    /** For a read-only date. */
+    tabIndex?: number
 }) => {
     const input = useRef<HTMLInputElement>(null)
     const typed = parseTyped(field, draft.text, settings)
@@ -150,6 +153,7 @@ export const DateInput = ({
                 readOnly
                 required={required}
                 className={className}
+                tabIndex={tabIndex}
             />
         )
     }

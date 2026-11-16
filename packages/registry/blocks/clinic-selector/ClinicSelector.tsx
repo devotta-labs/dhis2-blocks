@@ -28,10 +28,10 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
 import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
-import React, { type MouseEvent, type ReactElement } from 'react'
+import React, { useEffect, type MouseEvent, type ReactElement } from 'react'
 import type { Clinic } from './api/schemas'
 import { AS_IS } from './asIs'
-import { useClinicContext } from './provider/context'
+import { useClinicContext, useClinicSearch } from './provider/context'
 import { tileClass, tileInitial } from './tile'
 
 export interface ClinicSelectorProps {
@@ -132,18 +132,21 @@ export function ClinicSelector({
     onOpenChange,
     className,
 }: ClinicSelectorProps) {
-    const {
-        status,
-        clinic,
-        assigned,
-        recent,
-        searchable,
-        query,
-        setQuery,
-        search,
-        setClinic,
-        retry,
-    } = useClinicContext()
+    const { status, clinic, assigned, recent, searchable, setClinic, retry } =
+        useClinicContext()
+    const { query, setQuery, search, browse } = useClinicSearch()
+    // A host that holds the menu open has opened it.
+    useEffect(() => {
+        if (open) {
+            browse()
+        }
+    }, [open, browse])
+    const changeOpen = (next: boolean) => {
+        if (next) {
+            browse()
+        }
+        onOpenChange?.(next)
+    }
     const box = cn(
         'flex min-h-9 items-center gap-2 text-sm text-dhis2-foreground',
         className
@@ -318,8 +321,10 @@ export function ClinicSelector({
         moreLabel = i18n.t('More clinics could not be loaded. Try again')
     }
     // Stops the list's own handler, which would choose the row and close the menu.
-    const loadMore = (event: BaseUIEvent<MouseEvent>) => {
+    const keepOpen = (event: BaseUIEvent<MouseEvent>) =>
         event.preventBaseUIHandler()
+    const loadMore = (event: BaseUIEvent<MouseEvent>) => {
+        keepOpen(event)
         if (!search.loadingMore) {
             search.loadMore()
         }
@@ -328,7 +333,7 @@ export function ClinicSelector({
     return (
         <Combobox
             open={open}
-            onOpenChange={onOpenChange}
+            onOpenChange={changeOpen}
             items={groups}
             // The provider filters, on the server or over the assigned list.
             filter={null}
@@ -388,7 +393,8 @@ export function ClinicSelector({
                                             // Busy, it stays in place and says so, and a press does nothing.
                                             aria-busy={search.loadingMore}
                                             onClick={loadMore}
-                                            onMouseUp={loadMore}
+                                            // A click follows the release and loads the page, once.
+                                            onMouseUp={keepOpen}
                                             className="justify-center px-3 text-[13px] font-medium text-dhis2-primary *:first:hidden"
                                         >
                                             {moreLabel}

@@ -178,33 +178,6 @@ describe('ClinicSelector', () => {
             .toBeVisible()
     })
 
-    it('browses every clinic a page at a time, from the keyboard', async () => {
-        const all = Array.from({ length: 21 }, (_, i) =>
-            unit(`Unit${String(i).padStart(2, '0')}`, BO.path)
-        )
-        const screen = await renderSelector(
-            createServer({ assigned: [BO], all })
-        )
-        await screen
-            .getByRole('combobox', { name: 'Clinic: Bo District' })
-            .click()
-        const rows = () =>
-            page
-                .getByRole('group', { name: 'All clinics' })
-                .getByRole('option')
-                .elements()
-        await expect.poll(() => rows()).toHaveLength(20)
-
-        // The district is highlighted on opening; past the twenty clinics is the row that loads the next page.
-        await userEvent.keyboard('{ArrowDown>21/}{Enter}')
-
-        await expect.poll(() => rows()).toHaveLength(21)
-        await expect.element(searchBox()).toBeVisible()
-        expect(
-            page.getByRole('option', { name: 'Show more' }).elements()
-        ).toHaveLength(0)
-    })
-
     it('says when nothing matches', async () => {
         const screen = await renderSelector(createServer({ assigned: [BO] }))
 

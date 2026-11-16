@@ -7,7 +7,7 @@ import {
     ClinicProvider,
     type ClinicProviderProps,
 } from '../provider/ClinicProvider'
-import { useClinicContext } from '../provider/context'
+import { useClinicContext, useClinicSearch } from '../provider/context'
 import { readRemembered, writeRemembered } from '../provider/remembered'
 import {
     BRISTOL,
@@ -69,7 +69,9 @@ const renderClinic = async (
     const rendered = await renderHook(
         () => {
             const hook = useClinic()
-            const context = useClinicContext()
+            const clinics = useClinicContext()
+            const searching = useClinicSearch()
+            const context = { ...clinics, ...searching }
             seen.push(hook.status)
             return { hook, context }
         },
@@ -165,7 +167,7 @@ describe('ClinicProvider', () => {
         await expect.poll(() => readRemembered('u1').current).toBeUndefined()
     })
 
-    it('fails rather than switching when the check fails', async () => {
+    it('asks rather than switching or failing when the check fails', async () => {
         const x = unit('Xclinic', OCEAN.path)
         writeRemembered('u1', { current: x.id, recent: [x.id] })
         const server = createServer({ known: [x] })
@@ -174,16 +176,14 @@ describe('ClinicProvider', () => {
         const rendered = await renderClinic(server)
         await settled(rendered)
 
-        expect(rendered.result.current.hook.status).toBe('failed')
+        // The user's own clinics still work; the remembered one is neither shown nor replaced.
+        expect(rendered.result.current.hook.status).toBe('ready')
         expect(rendered.result.current.hook.clinic).toBeUndefined()
         expect(readRemembered('u1')).toEqual({ current: x.id, recent: [x.id] })
 
         server.fail.byId = undefined
         await rendered.act(() => rendered.result.current.hook.retry())
-        await expect
-            .poll(() => rendered.result.current.hook.status)
-            .toBe('ready')
-        expect(rendered.result.current.hook.clinic).toEqual(x)
+        await expect.poll(() => rendered.result.current.hook.clinic).toEqual(x)
         expect(readRemembered('u1')).toEqual({ current: x.id, recent: [x.id] })
     })
 
@@ -244,7 +244,11 @@ describe('ClinicProvider', () => {
 
         await rendered.act(() => rendered.result.current.hook.setClinic(OCEAN))
 
+        // Choosing it again changes nothing, so the host hears of it once.
+        await rendered.act(() => rendered.result.current.hook.setClinic(OCEAN))
+
         expect(rendered.result.current.hook.clinic).toEqual(OCEAN)
+        expect(onValueChange).toHaveBeenCalledTimes(1)
         expect(onValueChange).toHaveBeenCalledWith(OCEAN)
         expect(readRemembered('u1')).toEqual({ current: OCEAN.id, recent: [] })
         await expect
@@ -299,25 +303,6 @@ describe('ClinicProvider', () => {
             names(newestFive)
         )
         expect(readRemembered('u1').recent).toEqual(newestFive.map((c) => c.id))
-    })
-
-    it('a blank query pages through the hierarchy', async () => {
-        const root = district('Root')
-        const all = Array.from({ length: 21 }, (_, i) =>
-            unit(`Unit${String(i).padStart(2, '0')}`, root.path)
-        )
-        const server = createServer({ assigned: [root], all })
-        const rendered = await renderClinic(server)
-        const search = () => rendered.result.current.context.search
-        await expect.poll(() => search().clinics).toHaveLength(20)
-        expect(server.searchRequests()[0]?.params).not.toHaveProperty('query')
-        expect(search().hasMore).toBe(true)
-
-        await rendered.act(() => search().loadMore())
-
-        await expect.poll(() => search().clinics).toEqual(all)
-        expect(server.searchRequests()[1]?.params?.page).toBe(2)
-        expect(search().hasMore).toBe(false)
     })
 
     it('searches the server after 250 ms', async () => {

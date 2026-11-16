@@ -22,7 +22,7 @@ const HARBOUR = facility('Harbour Clinic')
 const BO = district('Bo District')
 const NGELEHUN = unit('Ngelehun CHC', BO.path)
 
-/** The sidebar header: 240px wide expanded, 52px collapsed, with `px-3`. */
+/** The top of an app's navigation: 240px wide expanded, 52px collapsed, with `px-3`. */
 const renderSelector = async (
     server: ClinicServer,
     props: ClinicSelectorProps = {},
@@ -38,7 +38,7 @@ const renderSelector = async (
             <ClinicProvider client={server.client} {...provider}>
                 <div
                     data-testid="header"
-                    className={`${width} bg-dhis2-sidebar px-3 py-4 text-dhis2-sidebar-foreground`}
+                    className={`${width} bg-dhis2-background px-3 py-4 text-dhis2-foreground`}
                 >
                     <ClinicSelector {...props} />
                 </div>

@@ -8,26 +8,16 @@ recent ones in the browser, and shares the choice with every page through
 `useClinic()`.
 
 ```tsx
-function ClinicHeader() {
-    const { state } = useSidebar()
-    return (
-        <SidebarHeader>
-            <ClinicSelector collapsed={state.collapsed} />
-        </SidebarHeader>
-    )
-}
-
 export function AppShell({ children }: { children: React.ReactNode }) {
+    const [collapsed, setCollapsed] = useState(false)
     return (
         <ClinicProvider>
-            <SidebarProvider>
-                <Sidebar>
-                    {/* Before the navigation, which is hidden while collapsed */}
-                    <ClinicHeader />
-                    <SidebarNavigation>{/* links */}</SidebarNavigation>
-                </Sidebar>
-                {children}
-            </SidebarProvider>
+            <aside>
+                {/* At the top of the navigation, where it stays while the links collapse */}
+                <ClinicSelector collapsed={collapsed} />
+                <nav>{/* links */}</nav>
+            </aside>
+            {children}
         </ClinicProvider>
     )
 }
@@ -36,5 +26,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 const { clinic, status } = useClinic()
 ```
 
-The block does not depend on the sidebar, so the host passes `collapsed`. Pass
+The block brings no navigation of its own, so the host passes `collapsed`. Pass
 `value` and `onValueChange` to `ClinicProvider` to control the choice.

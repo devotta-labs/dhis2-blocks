@@ -33,6 +33,12 @@ its place.
 </FinderProvider>
 ```
 
+Pass `orgUnit={clinic.id}` to search only records owned by that unit in the
+program. DHIS2 enforces the signed-in user's access. The form and results
+reset when the clinic changes, and invalid UIDs disable searching. If a clinic
+is required, wait until one is selected to mount the finder: omitting
+`orgUnit` preserves the default search across all accessible units.
+
 Parts: `FinderProvider`, `FinderForm`, `FinderField`, `FinderRangeField`,
 `FinderHint`, `FinderSubmit`, `FinderResults`, `FinderSearching`,
 `FinderEmpty`, `FinderTooMany`, `FinderError`, `FinderList`, `FinderItem`,

@@ -101,13 +101,14 @@ describe('search query', () => {
     ] as const
     const search = seal(filters)
 
-    it('keys searches by server, program, canonical filters and page', () => {
+    it('keys searches by server, program, org unit, canonical filters and page', () => {
         const key = finderKeys.search(server, 'p', search, 2)
         expect(key).toEqual([
             'tracked-entity-finder',
             'search',
             server,
             'p',
+            null,
             ['artNumber:eq:A1', 'firstName:like:Amina'],
             2,
         ])
@@ -115,6 +116,11 @@ describe('search query', () => {
             finderKeys.search(server, 'p', seal([...filters].reverse()), 2)
         ).toEqual(key)
         expect(finderKeys.search(server, 'other', search, 2)).not.toEqual(key)
+        const scoped = finderKeys.search(server, 'p', search, 2, 'ClinicA0001')
+        expect(scoped).not.toEqual(key)
+        expect(
+            finderKeys.search(server, 'p', search, 2, 'ClinicB0001')
+        ).not.toEqual(scoped)
         expect(finderKeys.search(server, 'p', search, 1)).not.toEqual(key)
         expect(
             finderKeys.search(server, 'p', seal([filters[0]]), 2)

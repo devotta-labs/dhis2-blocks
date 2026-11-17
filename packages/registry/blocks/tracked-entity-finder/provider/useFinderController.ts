@@ -12,6 +12,8 @@ import type {
 } from './context'
 import { useSearchResults } from './useSearchResults'
 
+const ORG_UNIT_UID = /^[A-Za-z][A-Za-z0-9]{10}$/
+
 const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
     if (failed) return 'error'
     return ready ? 'ready' : 'loading'
@@ -19,16 +21,17 @@ const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
 
 export interface FinderControllerOptions {
     program: string
+    orgUnit?: string
     onSelect: (person: FinderPerson) => void
 }
 
 /**
  * Holds what the finder shares across its forms: program metadata, the last
- * submitted search and the page. Mount it under a
- * `key` of the program, so a new program starts from nothing.
+ * submitted search and the page. The provider resets it on scope changes.
  */
 export const useFinderController = ({
     program,
+    orgUnit,
     onSelect,
 }: FinderControllerOptions): FinderContextValue => {
     const engine = useDataEngine()
@@ -51,7 +54,9 @@ export const useFinderController = ({
     )
     // Dates need the server calendar, so the finder is ready only with both.
     const status = getFinderStatus(
-        metadata.isError || systemInfo.isError,
+        metadata.isError ||
+            systemInfo.isError ||
+            (orgUnit !== undefined && !ORG_UNIT_UID.test(orgUnit)),
         Boolean(model && systemInfo.data)
     )
 
@@ -60,6 +65,7 @@ export const useFinderController = ({
 
     const results = useSearchResults({
         program,
+        orgUnit,
         model,
         status,
         submission,
@@ -75,7 +81,14 @@ export const useFinderController = ({
             if (model && status === 'ready') {
                 // A repeated key does not remount its observer. Fetch only if stale.
                 void queryClient.prefetchQuery(
-                    searchQueryOptions(engine, baseUrl, model, search, 1)
+                    searchQueryOptions(
+                        engine,
+                        baseUrl,
+                        model,
+                        search,
+                        1,
+                        orgUnit
+                    )
                 )
             }
             setSubmission((current) => ({
@@ -84,7 +97,7 @@ export const useFinderController = ({
             }))
             setPage(1)
         },
-        [model, status, queryClient, engine, baseUrl]
+        [model, status, queryClient, engine, baseUrl, orgUnit]
     )
 
     const select = useCallback(

@@ -15,6 +15,7 @@ import type {
 
 export interface SearchResultsOptions {
     program: string
+    orgUnit?: string
     model?: ProgramModel
     status: FinderStatus
     submission?: FinderSubmission
@@ -29,6 +30,7 @@ const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
  */
 export const useSearchResults = ({
     program,
+    orgUnit,
     model,
     status: finderStatus,
     submission,
@@ -44,14 +46,16 @@ export const useSearchResults = ({
                   baseUrl,
                   model,
                   submission.search,
-                  page
+                  page,
+                  orgUnit
               )
             : ({
                   queryKey: finderKeys.search(
                       baseUrl,
                       program,
                       undefined,
-                      page
+                      page,
+                      orgUnit
                   ),
                   queryFn: skipToken,
               } as const)

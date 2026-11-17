@@ -237,6 +237,57 @@ describe('FinderResults paging and requests', () => {
         expect(page.getByRole('listitem').all()).toHaveLength(1)
     })
 
+    it('discards an in-flight answer and searches anew after changing clinics', async () => {
+        const server = createFakeServer({ deferSearches: true })
+        const onSelect = vi.fn()
+        const view = (orgUnit: string) =>
+            ui(server, 'hivProgram', onSelect, <FinderResults />, orgUnit)
+        const screen = await renderWithQueries(view('ClinicA0001'))
+
+        await searchFor('A1')
+        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        expect(server.pendingSearches[0].request.params).toMatchObject({
+            orgUnitMode: 'SELECTED',
+            orgUnits: 'ClinicA0001',
+        })
+        await expect.element(page.getByText('Searching…')).toBeVisible()
+
+        await screen.rerender(view('ClinicB0001'))
+        await expect
+            .element(page.getByRole('textbox', { name: 'ART number' }))
+            .toHaveValue('')
+        expect(page.getByText('Searching…').query()).toBeNull()
+        expect(searchRequests(server)).toHaveLength(1)
+        await searchFor('A1')
+        await expect.poll(() => server.pendingSearches.length).toBe(2)
+        expect(server.pendingSearches[1].request.params).toMatchObject({
+            orgUnitMode: 'SELECTED',
+            orgUnits: 'ClinicB0001',
+        })
+
+        server.pendingSearches[0].respond(answer([amina]))
+        server.pendingSearches[1].respond(
+            answer([entity('te2', { firstName: 'Zainab' })])
+        )
+        await page.getByRole('button', { name: /Zainab/ }).click()
+        expect(page.getByText('Amina').query()).toBeNull()
+        expect(onSelect).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({ trackedEntity: 'te2' })
+        )
+        expect(searchRequests(server)).toHaveLength(2)
+    })
+
+    it('never falls back to a broad search when the supplied org unit is invalid', async () => {
+        const server = createFakeServer()
+        await renderWithQueries(
+            ui(server, 'hivProgram', vi.fn(), <FinderResults />, '')
+        )
+        await expect
+            .element(page.getByRole('button', { name: 'Search' }))
+            .toBeDisabled()
+        expect(searchRequests(server)).toHaveLength(0)
+    })
+
     it('reuses a fresh answer for the same search after the finder remounts', async () => {
         const onSelect = vi.fn()
         const server = createFakeServer()

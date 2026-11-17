@@ -61,6 +61,31 @@ this program, when known), and `attributes`, a map from attribute uid to
 value. Searches cover every organisation unit the user
 can search.
 
+### Limit the search to the selected clinic
+
+Pass the selected clinic's organisation unit UID to `orgUnit`:
+
+```tsx
+<FinderProvider program={program} orgUnit={clinic.id} onSelect={onSelect}>
+    <FinderForm>
+        <FinderField attribute={idAttribute} />
+        <FinderHint />
+        <FinderSubmit />
+    </FinderForm>
+    <FinderResults />
+</FinderProvider>
+```
+
+DHIS2 searches records owned by that unit in the program, not its descendants.
+The server still checks the signed-in user's access and the program's search
+rules still apply. Changing clinics clears the form and results; the user
+submits a new search. An empty or malformed UID disables searching instead
+of falling back to all accessible units.
+
+Omit `orgUnit` only when you intend to search across all units the user can
+access. If a clinic is required, render the finder only after a clinic is
+selected. Your app controls any record already opened through `onSelect`.
+
 ## Finding attribute uids
 
 Fields name program attributes by uid. List a program's attributes, with

@@ -214,6 +214,8 @@ export interface RuleDependencyGraph {
     fieldReaders: Map<string, string[]>
     /** fieldId → ids of rules that write it */
     fieldWriters: Map<string, string[]>
+    /** Rules with no classifiable field read, which must run after every edit. */
+    alwaysRun: string[]
 }
 
 export interface RuleContextRequirements {

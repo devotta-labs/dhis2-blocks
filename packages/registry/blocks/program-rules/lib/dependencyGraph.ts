@@ -71,6 +71,7 @@ export const buildDependencyGraph = (
         rules: new Map(),
         fieldReaders: new Map(),
         fieldWriters: new Map(),
+        alwaysRun: [],
     }
     const actionReads = new Map<string, string[]>()
 
@@ -132,6 +133,19 @@ export const buildDependencyGraph = (
             ),
         }
         graph.rules.set(rule.id, dependencies)
+        const hasUnclassifiedVariable = union(
+            all.map((references) => references.variables)
+        ).some((name) => {
+            const variable = variablesByName.get(name)
+            return (
+                variable === undefined ||
+                (variableField(variable) === undefined &&
+                    (upstream.get(name)?.size ?? 0) === 0)
+            )
+        })
+        if (dependencies.readsFields.length === 0 || hasUnclassifiedVariable) {
+            graph.alwaysRun.push(rule.id)
+        }
         for (const field of dependencies.readsFields) {
             addTo(graph.fieldReaders, field, rule.id)
         }

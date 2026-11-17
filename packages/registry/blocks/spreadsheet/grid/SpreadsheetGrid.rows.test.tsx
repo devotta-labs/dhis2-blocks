@@ -112,6 +112,9 @@ test.each(['ltr', 'rtl'])(
                 ...region.querySelectorAll('thead tr:last-child th'),
             ]
             const cells = [...body.children]
+            const columns = cells.filter((cell) =>
+                cell.hasAttribute('data-column')
+            )
             const bodyActions = cells.at(-1)
             // The actions column's line is on its start side, the one facing the data, whichever way the page reads.
             const [start, end] =
@@ -129,7 +132,8 @@ test.each(['ltr', 'rtl'])(
                 last: [group, leaves.at(-1), cells.at(-2)].map((each) =>
                     width(each, end)
                 ),
-                between: [leaves.at(-2), cells.at(-3)].map((each) =>
+                // The column drawn before the last: the columns between them may be left out, their width a gap.
+                between: [leaves.at(-2), columns.at(-2)].map((each) =>
                     width(each, end)
                 ),
                 rowHeader: width(corner, end),

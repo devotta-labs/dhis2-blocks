@@ -23,7 +23,7 @@ import { rowsByRecord } from '../model/types'
 import type { TrackerRow } from '../model/types'
 import { FORM_MESSAGES } from '../logic/effects'
 import { useTrackerDataEntry, useTrackerContext } from '../provider/hooks'
-import { useRowLabel } from '../provider/TrackerRowLabel'
+import { useRowLabels } from '../provider/TrackerRowLabel'
 
 // Labels and messages are shown as DHIS2 and the rules give them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
@@ -37,6 +37,22 @@ const TONES = {
     unsent: 'border-dhis2-neutral-indicator',
 } satisfies Record<SummaryItem['kind'], string>
 
+/** The record an item is about: its key up to the field, or all of it for a message without one. */
+const recordOf = (key: string) => {
+    const dot = key.indexOf('.')
+    return dot < 0 ? key : key.slice(0, dot)
+}
+
+/** The name of the row that shows the item's record; the record's id for one no row shows. */
+const rowNameOf = (
+    key: string,
+    rows: ReadonlyMap<string, TrackerRow>,
+    labels: ReadonlyMap<string, string>
+) => {
+    const record = recordOf(key)
+    return labels.get(rows.get(record)?.id ?? '') ?? record
+}
+
 interface ItemProps {
     /** The item's cell, or its row for a message without a field. */
     itemKey: SummaryItem['key']
@@ -44,15 +60,16 @@ interface ItemProps {
     text: string
     namesField?: true
     idScope: string
-    rows: ReadonlyMap<string, TrackerRow>
+    /** The name of the row that shows the item's record, as the grid names it. */
+    row: string
     /** A cell's field's name. */
     nameOf(key: string): string
 }
 
 /**
  * One message, naming its row as the grid does (by the row's event date once it has one, a person by their name) and
- * its field by the heading of its column. It reads only the cells that name its row, and takes plain props, so it
- * draws again only when its own message or its row's name changes.
+ * its field by the heading of its column. It reads no store and takes plain props, so it draws again only when its
+ * own message or its row's name changes.
  */
 const Item = memo(function Item({
     itemKey: key,
@@ -60,15 +77,12 @@ const Item = memo(function Item({
     text,
     namesField,
     idScope,
-    rows,
+    row,
     nameOf,
 }: ItemProps) {
     const focusCell = useFocusCell()
     const dot = key.indexOf('.')
-    const rowId = dot < 0 ? key : key.slice(0, dot)
-    // The row that shows the record, named as the grid names it.
-    const label = useRowLabel(rows.get(rowId))
-    const row = label ?? rowId
+    const rowId = recordOf(key)
     const className = cn('border-s-2 ps-2', TONES[kind])
     // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
@@ -188,6 +202,18 @@ export const TrackerDataEntrySummary = ({
         }),
         [tables, fieldNames]
     )
+    // The rows the items are about, each once: their names are read here and handed down.
+    const named = useMemo(() => {
+        const about = new Set<TrackerRow>()
+        for (const { key } of summary.items) {
+            const row = rows.get(recordOf(key))
+            if (row !== undefined) {
+                about.add(row)
+            }
+        }
+        return [...about]
+    }, [summary.items, rows])
+    const labels = useRowLabels(named)
     return (
         <div
             className={cn(
@@ -206,7 +232,7 @@ export const TrackerDataEntrySummary = ({
                             text={item.text}
                             namesField={item.namesField}
                             idScope={idScope}
-                            rows={rows}
+                            row={rowNameOf(item.key, rows, labels)}
                             nameOf={nameOf}
                         />
                     ))}

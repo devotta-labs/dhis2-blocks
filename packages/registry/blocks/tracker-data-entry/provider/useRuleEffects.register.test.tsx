@@ -2,7 +2,7 @@
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
 import { userEvent } from 'vitest/browser'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control, shown } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import enrollments from '../register/__tests__/fixtures/immunisation-enrollments.json'
 import immunisation from '../register/__tests__/fixtures/immunisation-program.json'
@@ -359,7 +359,7 @@ test('a slot cleared back to empty loses what the rules said while it had a date
     const warned = () =>
         view().summary.items.some(({ text }) => text === 'Check the dose')
 
-    control(date).focus()
+    ;(await shown(date)).focus()
     await userEvent.keyboard('2026-10-30{Enter}')
     await expect
         .poll(() => effects().cells[dose]?.messages)

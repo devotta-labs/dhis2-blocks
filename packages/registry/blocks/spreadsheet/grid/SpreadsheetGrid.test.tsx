@@ -402,14 +402,19 @@ test('the option list opens above its cell when there is no room below, over the
     expect(list.contains(shown)).toBe(true)
 })
 
-/** Of the 50-row, 50-column grid, only the rows near the view are drawn, each whole; the table counts them all. */
+/**
+ * Of the 50-row, 50-column grid, only the rows and columns near the view are drawn, the same columns in every row; the
+ * table counts them all.
+ */
 const expectRowsNearTheView = () => {
     const drawn = page.getByRole('row').elements().length - 1
     expect(drawn).toBeLessThan(50)
-    expect(page.getByRole('textbox').elements()).toHaveLength(drawn * 50)
-    expect(
-        page.getByRole('table').element().getAttribute('aria-rowcount')
-    ).toBe('51')
+    const columns = page.getByRole('columnheader').elements().length
+    expect(columns).toBeLessThan(50)
+    expect(page.getByRole('textbox').elements()).toHaveLength(drawn * columns)
+    const table = page.getByRole('table').element()
+    expect(table.getAttribute('aria-rowcount')).toBe('51')
+    expect(table.getAttribute('aria-colcount')).toBe('52')
 }
 
 test('typing renders one cell, not the others or the table, in a 2,500-cell grid', async () => {
@@ -440,7 +445,8 @@ test('typing renders one cell, not the others or the table, in a 2,500-cell grid
         await devtools().send('Emulation.setCPUThrottlingRate', { rate: 1 })
     }
     expectRowsNearTheView()
-    control(cellKey('t1r5', 'c20')).focus()
+    // A column in view: one further along is not drawn until the region scrolls to it.
+    control(cellKey('t1r5', 'c3')).focus()
     // The focused cell is scrolled into view before the typing is counted.
     await nextFrame()
     await nextFrame()
@@ -454,7 +460,8 @@ test('typing renders one cell, not the others or the table, in a 2,500-cell grid
 
 test('a 2,500-cell grid mounts notes only for cells that have them, subscribes by row, and typing renders one cell', async () => {
     const noted = cellKey('t1r0', 'c0')
-    const typed = cellKey('t1r5', 'c20')
+    // A column in view: one further along is not drawn until the region scrolls to it.
+    const typed = cellKey('t1r5', 'c3')
     const check: CellMessage = {
         tone: 'warning',
         text: 'Low',
@@ -514,6 +521,6 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
     await nextFrame()
     rendered.length = 0
     await userEvent.keyboard('12{Enter}')
-    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r6', 'c20')))
+    expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r6', 'c3')))
     expect(new Set(rendered)).toEqual(new Set([typed]))
 })

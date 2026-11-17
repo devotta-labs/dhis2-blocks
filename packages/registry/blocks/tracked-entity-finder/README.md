@@ -48,6 +48,11 @@ Hooks, for custom layouts: `useFinderField`, `useFinderRangeField`,
 `useFinderForm`, `useFinderSearch`, `useFinderResults`, `useFinderPerson`,
 `useFinderProgram`.
 
+For one input mapped to multiple text attributes, use
+`useFinderTextSearch(textByAttribute, 'all' | 'any')`. AND sends one search;
+OR requires a selected clinic and sends up to three searches. See the
+one-field example and server-load warning in the docs.
+
 Each `FinderForm` is a TanStack Form, and each field checks its value with a
 Zod schema built from the attribute's metadata. `useFinderForm` returns the
 form; `useFinderField` returns the attribute's TanStack `field`, its `error`
@@ -58,7 +63,7 @@ The block reads DHIS2 app-runtime's `useDataEngine` and runs every request in
 a TanStack Query `queryFn`. Tests can use app-runtime's `CustomDataProvider`.
 
 Program metadata and system info stay fresh for 3 hours. Search results stay
-fresh for 5 minutes, keyed by server URL, program, filters and page, including
+fresh for 5 minutes, keyed by server URL, program, clinic, filters and page, including
 across repeated submissions and finder remounts within the same QueryClient.
 Different server URLs never share cached metadata or results. The host app must
 discard/reset its QueryClient on logout/login; that lifecycle isolates users,

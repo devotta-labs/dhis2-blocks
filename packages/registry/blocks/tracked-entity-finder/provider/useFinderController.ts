@@ -127,7 +127,7 @@ export const useFinderController = ({
                 results,
             },
             actions,
-            meta: { program, info: systemInfo.data },
+            meta: { program, orgUnit, info: systemInfo.data },
         }),
         [
             status,
@@ -137,6 +137,7 @@ export const useFinderController = ({
             results,
             actions,
             program,
+            orgUnit,
             systemInfo.data,
         ]
     )

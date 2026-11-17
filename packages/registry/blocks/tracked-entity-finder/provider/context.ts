@@ -53,6 +53,7 @@ interface FinderActions {
 
 interface FinderMeta {
     program: string
+    orgUnit?: string
     info?: FinderSystemInfo
 }
 

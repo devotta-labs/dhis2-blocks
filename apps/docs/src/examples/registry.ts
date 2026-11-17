@@ -56,6 +56,7 @@ import trackerDataEntryTrackerRegisterSource from './tracker-data-entry/TrackerR
 import trackerDataEntryValueTypesSource from './tracker-data-entry/ValueTypesGrid.tsx?raw'
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
+import finderOneFieldSearchSource from './tracked-entity-finder/OneFieldSearch.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
 
 /**
@@ -310,6 +311,14 @@ const examples = [
         Component: lazy(() => import('./tracked-entity-finder/ProgramPicker')),
         source: finderProgramPickerSource,
         minHeight: 520,
+    },
+    {
+        slug: 'tracked-entity-finder/one-field-search',
+        title: 'Search first and last name from one field',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-finder/OneFieldSearch')),
+        source: finderOneFieldSearchSource,
+        minHeight: 360,
     },
     {
         slug: 'alert/variants',

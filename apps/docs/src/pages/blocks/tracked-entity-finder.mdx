@@ -240,6 +240,8 @@ set up correctly" and the full message is logged to the console.
 ### FinderProvider
 
 - `program: string` — **required.** The tracker program to search.
+- `orgUnit?: string` — limit searches to the selected clinic. Omit to search
+  all accessible units.
 - `onSelect: (person: FinderPerson) => void` — **required.** Called with the
   person the user picks.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses
@@ -252,3 +254,34 @@ TanStack Query managing requests and caching. Use app-runtime's
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and
 the props of their HTML element.
+
+## One-field search with AND or OR
+
+Use `useFinderTextSearch(textByAttribute, match)` inside `FinderProvider`
+to map one input to multiple searchable, non-unique text attributes. Render
+your own form and results from the hook's `canSearch`, `submit`, `status`,
+`people`, and `select`. Keep the normal Finder form for exact ID lookup.
+
+> **Server load: use with caution.** OR can be extremely heavy: each
+> alternative runs a separate Tracker search. A small response page does not
+> limit the work DHIS2 must do to find matches. Prefer AND or exact ID lookup
+> where possible, require an explicit submit and a meaningful minimum input
+> length, and measure common terms under realistic load before enabling OR
+> in production. The hook requires a selected clinic for OR and allows at
+> most three alternatives.
+
+**AND (`'all'`):** Try `Linda Bailey`. The example splits the input into first
+and last name and sends both filters in one Tracker request on a cache miss.
+
+**OR (`'any'`):** Enable **Match either name** and try `Bailey`. On a cache
+miss, the example sends one Tracker request for first name and another for
+last name, each with the same term.
+
+<ExampleCard slug="tracked-entity-finder/one-field-search" />
+
+Every request is subject to DHIS2 access checks and the program's search
+rules. OR is unavailable if any single-attribute search falls short of the
+program's minimum. The hook waits for every request and deduplicates by
+tracked entity UID. If any request fails it shows no partial results; if
+any branch needs paging or the union exceeds the program's limit, it asks
+the user to refine instead of fetching more pages.

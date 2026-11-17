@@ -318,7 +318,7 @@ const examples = [
         live: true,
         Component: lazy(() => import('./tracked-entity-finder/OneFieldSearch')),
         source: finderOneFieldSearchSource,
-        minHeight: 360,
+        minHeight: 440,
     },
     {
         slug: 'alert/variants',

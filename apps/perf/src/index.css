@@ -1,0 +1,25 @@
+/*
+ * DHIS2 injects an unlayered reset, so keep Tailwind in the same cascade
+ * context and load it afterward, as apps/web does.
+ */
+@import 'tailwindcss/theme.css';
+@import '@dhis2-blocks/registry/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+
+/* The DHIS2 dev shell copies this stylesheet into .d2/shell/src/D2App. */
+@source '../../../packages/registry/components';
+@source '../../../../../../packages/registry/components';
+@source '../../../packages/registry/blocks/spreadsheet';
+@source '../../../../../../packages/registry/blocks/spreadsheet';
+@source '../../../packages/registry/blocks/tracker-data-entry';
+@source '../../../../../../packages/registry/blocks/tracker-data-entry';
+
+:root {
+    color: var(--dhis2-foreground);
+    font-family: Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+}

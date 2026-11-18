@@ -316,15 +316,16 @@ const SaveStatus = () => {
     if (failed > 0) {
         return <p>Changes that could not be saved: {failed}</p>
     }
-    return (
-        <p>
-            {unsent > 0
-                ? `Changes not in DHIS2 yet: ${unsent}`
-                : 'Everything is in DHIS2'}
-        </p>
-    )
+    if (unsent > 0) {
+        return <p>Changes not in DHIS2 yet: {unsent}</p>
+    }
+    return null
 }
 ```
+
+It says nothing when there is nothing to report, rather than "all saved": a
+form that is still loading, or locked, has no unsent changes of its own to
+count.
 
 To see it work, render `SaveStatus` inside `TrackerDataEntry`, turn the
 network off in your browser's developer tools and type a value. The line reads
@@ -361,6 +362,9 @@ If it is someone else, the form locks until the page is reloaded. Every cell
 is read-only and back to what DHIS2 had, nothing more is sent, and the summary
 says "Signed in as someone else. Reload to continue as that user." The first
 person's unsent changes stay on the device for them.
+
+A locked form sends nothing, so `sync` is `'idle'` and `summary.unsent` and
+`summary.failed` are zero. The message is in `summary.items`.
 
 ### When DHIS2 refuses a value
 

@@ -71,7 +71,7 @@ export const ContextStatus = ({
                 <h2>{i18n.t('Choose a program to start')}</h2>
                 <p>
                     {i18n.t(
-                        'Working lists query tracked entities and program-stage events for the selected tracker program.'
+                        'The patient list shows the tracked entities enrolled in the selected tracker program.'
                     )}
                 </p>
             </main>

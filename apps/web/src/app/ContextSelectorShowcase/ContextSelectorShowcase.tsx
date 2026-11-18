@@ -226,7 +226,7 @@ export const ContextSelectorShowcase = () => {
                         className="text-sm font-medium text-dhis2-primary underline-offset-2 hover:underline"
                         href="#/"
                     >
-                        Back to Working List
+                        Back to Patient List
                     </a>
                 </div>
 

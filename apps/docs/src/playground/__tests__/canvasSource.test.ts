@@ -1,24 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import { inspectCanvas } from '../../../canvasSourcePlugin'
 import { propValue, type CanvasSource } from '../canvasSource'
-import table from '../working-list/table/TableCanvas.tsx?canvas'
-import calendar from '../working-list/calendar/CalendarCanvas.tsx?canvas'
+import patientList from '../patient-list/PatientListCanvas.tsx?canvas'
 import observations from '../observation-cards/ObservationsCanvas.tsx?canvas'
 import timeline from '../timeline/TimelineCanvas.tsx?canvas'
 import finder from '../tracked-entity-finder/LabFinder.tsx?canvas'
-import tableCode from '../working-list/table/TableCanvas.tsx?raw'
+import patientListCode from '../patient-list/PatientListCanvas.tsx?raw'
 
 const source: CanvasSource = {
-    ...table,
-    props: { programId: 'labProgram1', view: { pageSize: 10 } },
+    ...patientList,
+    props: { program: 'IpHINAT79UW', view: { pageSize: 10 } },
 }
-const pageSize = table.references.find(
+const pageSize = patientList.references.find(
     ({ path }) => path.join('.') === 'view.pageSize'
 )!
 
 describe('canvas prop inspection', () => {
     it('preserves the actual composition source unchanged', () => {
-        expect(table.code).toBe(tableCode)
+        expect(patientList.code).toBe(patientListCode)
     })
 
     it('resolves nested current inputs and reflects changes', () => {
@@ -100,8 +99,7 @@ describe('canvas prop inspection', () => {
     })
 
     it.each([
-        ['TableCanvas', table, 'WorkingListTable'],
-        ['CalendarCanvas', calendar, 'CalendarGrid'],
+        ['PatientListCanvas', patientList, 'PatientList'],
         ['ObservationsCanvas', observations, 'ObservationCard'],
         ['TimelineCanvas', timeline, 'TimelineFeed'],
         ['LabFinder', finder, 'FinderProvider'],

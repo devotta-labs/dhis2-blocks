@@ -2,7 +2,7 @@
     "name": "@dhis2-blocks/web",
     "version": "1.0.0",
     "private": true,
-    "description": "DHIS2 wrapper application for developing Working List blocks",
+    "description": "DHIS2 wrapper application for developing DHIS2 blocks",
     "license": "BSD-3-Clause",
     "scripts": {
         "build": "d2-app-scripts build",

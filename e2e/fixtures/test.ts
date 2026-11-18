@@ -17,8 +17,18 @@ type BrowserDiagnostic = {
     location?: ReturnType<ConsoleMessage['location']>
 }
 
-type WorkingListFixtures = {
+/** An error response a test provokes on purpose: its status and URL path. */
+type ExpectedHttpFailure = {
+    status: number
+    path: RegExp
+}
+
+type DiagnosticAllowances = {
     allowOfflineRequestFailures: boolean
+    expectedHttpFailures: ExpectedHttpFailure[]
+}
+
+type E2EFixtures = DiagnosticAllowances & {
     dhis2: APIRequestContext
     e2eCredentials: E2ECredentials
     page: Page
@@ -33,7 +43,7 @@ export type E2ECredentials = {
     password: string
 }
 
-export const e2eEnvironment = {
+const e2eEnvironment = {
     appUrl: environment?.E2E_APP_URL,
     dhis2Url: environment?.E2E_DHIS2_URL,
     proxyUrl: environment?.E2E_PROXY_URL,
@@ -50,11 +60,32 @@ const urlPath = (value?: string) => {
     }
 }
 
+// Chrome logs each error response as "Failed to load resource: the server
+// responded with a status of 409 (Conflict)" besides the response itself.
+const isExpectedHttpFailure = (
+    diagnostic: BrowserDiagnostic,
+    path: string,
+    { status, path: pattern }: ExpectedHttpFailure
+) =>
+    pattern.test(path) &&
+    ((diagnostic.kind === 'http' && diagnostic.status === status) ||
+        (diagnostic.kind === 'console' &&
+            diagnostic.message.includes(
+                `the server responded with a status of ${status}`
+            )))
+
 const isKnownBenignDiagnostic = (
     diagnostic: BrowserDiagnostic,
-    allowOfflineRequestFailures: boolean
+    { allowOfflineRequestFailures, expectedHttpFailures }: DiagnosticAllowances
 ) => {
     const path = urlPath(diagnostic.url ?? diagnostic.location?.url)
+    if (
+        expectedHttpFailures.some((expected) =>
+            isExpectedHttpFailure(diagnostic, path ?? '', expected)
+        )
+    ) {
+        return true
+    }
     if (
         diagnostic.kind === 'http' &&
         diagnostic.status === 404 &&
@@ -145,8 +176,9 @@ const signInToApp = async (
     await signInDialog.waitFor({ state: 'hidden', timeout: 30_000 })
 }
 
-export const test = base.extend<WorkingListFixtures>({
+export const test = base.extend<E2EFixtures>({
     allowOfflineRequestFailures: [false, { option: true }],
+    expectedHttpFailures: [[], { option: true }],
     e2eCredentials: [{ username, password }, { option: true }],
     dhis2: async ({ playwright }, use) => {
         const baseURL = environment?.E2E_DHIS2_URL
@@ -168,7 +200,12 @@ export const test = base.extend<WorkingListFixtures>({
         await api.dispose()
     },
     page: async (
-        { allowOfflineRequestFailures, e2eCredentials, page },
+        {
+            allowOfflineRequestFailures,
+            expectedHttpFailures,
+            e2eCredentials,
+            page,
+        },
         use,
         testInfo
     ) => {
@@ -233,10 +270,10 @@ export const test = base.extend<WorkingListFixtures>({
 
         const unexpectedDiagnostics = diagnostics.filter(
             (diagnostic) =>
-                !isKnownBenignDiagnostic(
-                    diagnostic,
-                    allowOfflineRequestFailures
-                )
+                !isKnownBenignDiagnostic(diagnostic, {
+                    allowOfflineRequestFailures,
+                    expectedHttpFailures,
+                })
         )
         if (
             unexpectedDiagnostics.length > 0 ||
@@ -264,12 +301,5 @@ export const test = base.extend<WorkingListFixtures>({
         }
     },
 })
-
-export const testFromDhis2Version = (minimumVersion: number) => {
-    const targetMajor = Number(environment?.E2E_EXPECTED_MAJOR)
-    return !Number.isFinite(targetMajor) || targetMajor >= minimumVersion
-        ? test
-        : test.skip
-}
 
 export { expect }

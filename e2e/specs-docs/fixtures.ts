@@ -148,13 +148,17 @@ const isKnownBenignDiagnostic = (
     return false
 }
 
-const workingListReady = async (page: Page) => {
-    await expect(page.getByTestId('working-list-main')).toBeVisible({
+/** The live rows of every Patient List on the page. */
+export const resultRows = (page: Page) =>
+    page.locator('[data-block="patient-list"] [data-slot="data-table-row"]')
+
+const patientListReady = async (page: Page) => {
+    const list = page.locator('[data-block="patient-list"]').first()
+    await expect(list).toBeVisible({ timeout: 30_000 })
+    await expect(list).toHaveAttribute('data-status', 'ready', {
         timeout: 30_000,
     })
-    await expect(
-        page.locator('[data-testid="working-list-table"] tbody')
-    ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
+    await expect(resultRows(page).first()).toBeVisible()
 }
 
 /**
@@ -162,19 +166,17 @@ const workingListReady = async (page: Page) => {
  * credentials into every proxied request (DOCS_DHIS2_USERNAME/
  * DOCS_DHIS2_PASSWORD), so previews are already signed in — no dialog
  * appears and the example renders straight to live data. `ready` waits
- * until the example has loaded; by default, until the Working List has.
+ * until the example has loaded; by default, until the Patient List shows
+ * its first rows.
  */
 export const openLivePreview = async (
     page: Page,
     slug: string,
-    ready: (page: Page) => Promise<void> = workingListReady
+    ready: (page: Page) => Promise<void> = patientListReady
 ) => {
     await page.goto(`/preview/${slug}`)
     await ready(page)
 }
-
-export const resultRows = (page: Page) =>
-    page.locator('[data-testid^="working-list-row-"]')
 
 export const test = base.extend<DocsFixtures>({
     page: async ({ page }, use, testInfo) => {

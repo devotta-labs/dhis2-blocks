@@ -65,15 +65,19 @@ const router = createBrowserRouter([
                         element: <Navigate to="/installation" replace />,
                     },
                     docRoute(
-                        '/blocks/working-list',
-                        './pages/blocks/working-list.mdx'
+                        '/blocks/patient-list',
+                        './pages/blocks/patient-list.mdx'
                     ),
-                    // The calendar is now part of the Working List page.
+                    // Working List was replaced by Patient List.
+                    {
+                        path: '/blocks/working-list',
+                        element: <Navigate to="/blocks/patient-list" replace />,
+                    },
                     {
                         path: '/blocks/working-list-calendar',
                         element: (
                             <Navigate
-                                to="/blocks/working-list#calendar-view"
+                                to="/blocks/patient-list#calendar-view"
                                 replace
                             />
                         ),
@@ -102,6 +106,10 @@ const router = createBrowserRouter([
                     docRoute('/blocks/chart', './pages/blocks/chart.mdx'),
                     docRoute('/blocks/checkbox', './pages/blocks/checkbox.mdx'),
                     docRoute('/blocks/combobox', './pages/blocks/combobox.mdx'),
+                    docRoute(
+                        '/blocks/data-table',
+                        './pages/blocks/data-table.mdx'
+                    ),
                     docRoute('/blocks/dialog', './pages/blocks/dialog.mdx'),
                     docRoute(
                         '/blocks/dropdown-menu',

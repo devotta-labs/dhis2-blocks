@@ -258,7 +258,7 @@ export const SiteShell = () => {
                             Docs
                         </NavLink>
                         <NavLink
-                            to="/blocks/working-list"
+                            to="/blocks/patient-list"
                             className={primaryLink}
                         >
                             Blocks

@@ -12,7 +12,7 @@ username="${E2E_DHIS2_USERNAME:-admin}"
 password="${E2E_DHIS2_PASSWORD:-district}"
 timeout_seconds="${E2E_DHIS2_STARTUP_TIMEOUT_SECONDS:-900}"
 deadline=$((SECONDS + timeout_seconds))
-response_file="$(mktemp "${TMPDIR:-/tmp}/working-list-system-info.XXXXXX")"
+response_file="$(mktemp "${TMPDIR:-/tmp}/dhis2-blocks-system-info.XXXXXX")"
 trap 'rm -f "$response_file"' EXIT
 
 echo "Waiting up to ${timeout_seconds}s for $E2E_DHIS2_URL ..."

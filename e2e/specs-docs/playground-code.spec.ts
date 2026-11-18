@@ -5,18 +5,11 @@ import { expect, test } from './fixtures'
 test.describe('playground Canvas / Code', () => {
     for (const [path, composition, part, prop, value] of [
         [
-            'working-list',
-            'TableCanvas',
-            'WorkingListTable',
-            'programId',
-            '"labProgram1"',
-        ],
-        [
-            'working-list?display=calendar',
-            'CalendarCanvas',
-            'CalendarGrid',
-            'programId',
-            '"labProgram1"',
+            'patient-list',
+            'PatientListCanvas',
+            'PatientList',
+            'program',
+            '"IpHINAT79UW"',
         ],
         [
             'observation-cards',
@@ -78,13 +71,10 @@ test.describe('playground Canvas / Code', () => {
     }
 
     test('keeps the block mounted when switching views', async ({ page }) => {
-        await page.goto('/playground/working-list')
-        const table = page.getByTestId('working-list-table')
-        await expect(table.locator('tbody')).toHaveAttribute(
-            'aria-busy',
-            'false'
-        )
-        const original = await table.elementHandle()
+        await page.goto('/playground/patient-list')
+        const list = page.locator('[data-block="patient-list"]')
+        await expect(list).toHaveAttribute('data-status', 'ready')
+        const original = await list.elementHandle()
         expect(original).not.toBeNull()
 
         await page.getByRole('tab', { name: 'Code', exact: true }).click()
@@ -95,16 +85,17 @@ test.describe('playground Canvas / Code', () => {
         expect(await original!.evaluate((element) => element.isConnected)).toBe(
             true
         )
-        await expect(table.locator('tbody')).toHaveAttribute(
-            'aria-busy',
-            'false'
-        )
+        await expect(list).toHaveAttribute('data-status', 'ready')
     })
 
     test('inspects current props inline and supports keyboard navigation', async ({
         page,
     }, testInfo) => {
-        await page.goto('/playground/working-list')
+        await page.goto('/playground/patient-list')
+        // The table's own page size is labelled "Rows per page" too.
+        const pageSizeSetting = page
+            .getByRole('complementary')
+            .getByRole('combobox', { name: 'Rows per page' })
         const canvasTab = page.getByRole('tab', { name: 'Canvas', exact: true })
         await canvasTab.focus()
         await page.keyboard.press('ArrowRight')
@@ -113,24 +104,24 @@ test.describe('playground Canvas / Code', () => {
         await page.keyboard.press('Enter')
         await expect(codeTab).toHaveAttribute('aria-selected', 'true')
         const panel = page.getByRole('tabpanel', { name: 'Code' })
-        await page.getByLabel('Rows per page').selectOption('25')
+        await pageSizeSetting.selectOption('25')
         const pageSize = panel
             .getByRole('button', { name: 'Inspect view.pageSize', exact: true })
             .first()
         await pageSize.hover()
         await expect(page.getByRole('tooltip').locator('pre')).toHaveText('25')
         await codeTab.hover()
-        await page.getByLabel('Rows per page').selectOption('50')
+        await pageSizeSetting.selectOption('50')
         await pageSize.focus()
         await expect(page.getByRole('tooltip').locator('pre')).toHaveText('50')
-        const programId = panel.getByRole('button', {
-            name: 'Inspect programId',
+        const program = panel.getByRole('button', {
+            name: 'Inspect program',
             exact: true,
         })
-        await expect(programId).toHaveCount(2)
-        await programId.first().focus()
+        await expect(program).toHaveCount(2)
+        await program.first().focus()
         await expect(page.getByRole('tooltip').locator('pre')).toHaveText(
-            '"labProgram1"'
+            '"IpHINAT79UW"'
         )
         const view = panel.getByRole('button', {
             name: 'Inspect view',
@@ -153,16 +144,16 @@ test.describe('playground Canvas / Code', () => {
     }) => {
         await page.setViewportSize({ width: 375, height: 812 })
         await page.emulateMedia({ colorScheme: 'dark' })
-        await page.goto('/playground/working-list')
+        await page.goto('/playground/patient-list')
         await expect(page.locator('html')).toHaveClass(/dark/)
         await page.getByRole('tab', { name: 'Code', exact: true }).click()
         await page.keyboard.press('Tab')
         await page
-            .getByRole('button', { name: 'Inspect programId', exact: true })
+            .getByRole('button', { name: 'Inspect program', exact: true })
             .first()
             .focus()
         const tooltip = page.getByRole('tooltip')
-        await expect(tooltip.locator('pre')).toHaveText('"labProgram1"')
+        await expect(tooltip.locator('pre')).toHaveText('"IpHINAT79UW"')
         const bounds = await tooltip.boundingBox()
         expect(bounds).not.toBeNull()
         expect(bounds!.x).toBeGreaterThanOrEqual(0)
@@ -177,7 +168,7 @@ test.describe('playground Canvas / Code', () => {
         context,
     }) => {
         await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-        await page.goto('/playground/working-list')
+        await page.goto('/playground/patient-list')
         await page.getByRole('tab', { name: 'Code', exact: true }).click()
         const panel = page.getByRole('tabpanel', { name: 'Code' })
         await panel.getByRole('button', { name: 'Copy', exact: true }).click()
@@ -187,7 +178,7 @@ test.describe('playground Canvas / Code', () => {
         const expected = await readFile(
             resolve(
                 __dirname,
-                '../../apps/docs/src/playground/working-list/table/TableCanvas.tsx'
+                '../../apps/docs/src/playground/patient-list/PatientListCanvas.tsx'
             ),
             'utf8'
         )

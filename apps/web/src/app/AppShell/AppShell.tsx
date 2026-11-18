@@ -1,24 +1,10 @@
 import { useConfig, useDataEngine } from '@dhis2/app-runtime'
-import { Label } from '@/components/dhis2/ui/label'
-import { Switch } from '@/components/dhis2/ui/switch'
-import {
-    WorkingList,
-    WorkingListColumnSelector,
-    WorkingListFilterControls,
-    WorkingListTable,
-    WorkingListToolbar,
-    WorkingListToolbarActions,
-    WorkingListViewSwitcher,
-    useWorkingListMeta,
-    type WorkingListDataQualityMode,
-    type WorkingListResultTarget,
-} from '@/components/working-list'
-import { trackerProgramsQueryOptions } from '@/components/working-list/api/metadata'
 import { useQuery } from '@tanstack/react-query'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useBlocker } from 'react-router-dom'
-import { getGuardedOrganisationUnitState } from '../contextTransitions'
-import { DiscardChangesDialog } from '../DiscardChangesDialog'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+    getOrganisationUnitState,
+    getProgramState,
+} from '../contextTransitions'
 import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
 import {
     getCaptureOrganisationUnitPickerScope,
@@ -26,7 +12,8 @@ import {
     resolveCaptureOrganisationUnitRoots,
     type OrganisationUnitReference,
 } from '../organisationUnitScope'
-import { isGuardedAppUrlTransition, parseAppUrlState } from '../urlState'
+import { PatientListView } from '../PatientListView'
+import { parseAppPageSize } from '../urlState'
 import { useAppUrlState } from '../useAppUrlState'
 import i18n from '../../i18n'
 import {
@@ -36,32 +23,17 @@ import {
     ProgramOrganisationUnitsSchema,
     retryOperationalError,
 } from './contextSchemas'
+import { AppContextControls } from './AppContextControls'
+import { createAppClient } from './appClient'
 import { ContextStatus } from './ContextStatus'
-import { createAppWorkingListClient } from './createAppWorkingListClient'
 import {
     buildProgramOptions,
     hasCaptureProgramDataReadAccess,
 } from './programOptions'
+import { trackerProgramsQueryOptions } from './programsQuery'
 import { RecordDetailsModal } from './RecordDetailsModal'
-import { WorkingListContextControls } from './WorkingListContextControls'
 import { useDebouncedOrganisationUnitSearch } from './useDebouncedOrganisationUnitSearch'
 import { useOrganisationUnitSearch } from './useOrganisationUnitSearch'
-
-const WorkingListDirtyBridge = ({
-    onChange,
-}: {
-    onChange(dirty: boolean): void
-}) => {
-    const dirty = useWorkingListMeta((meta) => meta.dirty)
-
-    useEffect(() => onChange(dirty), [dirty, onChange])
-    return null
-}
-
-interface PendingTransition {
-    proceed: () => void
-    cancel?: () => void
-}
 
 export const AppShell = () => {
     const engine = useDataEngine()
@@ -70,7 +42,7 @@ export const AppShell = () => {
         () => AppRuntimeConfigSchema.parse(config),
         [config]
     )
-    const client = useMemo(() => createAppWorkingListClient(engine), [engine])
+    const client = useMemo(() => createAppClient(engine), [engine])
     const [programSelectorOpen, setProgramSelectorOpen] = useState(false)
     const [orgUnitSelectorOpen, setOrgUnitSelectorOpen] = useState(false)
     const [organisationUnitSearch, setOrganisationUnitSearch] = useState('')
@@ -78,67 +50,17 @@ export const AppShell = () => {
         debouncedOrganisationUnitSearch,
         setDebouncedOrganisationUnitSearch,
     ] = useDebouncedOrganisationUnitSearch(organisationUnitSearch)
-    const [dirty, setDirty] = useState(false)
-    const [pendingTransition, setPendingTransition] =
-        useState<PendingTransition>()
-    const [openedRecord, setOpenedRecord] = useState<WorkingListResultTarget>()
-    const [dataQualityMode, setDataQualityMode] =
-        useState<WorkingListDataQualityMode>('hidden')
-    const requestTransition = useCallback(
-        (proceed: () => void) => {
-            if (dirty) {
-                setPendingTransition({ proceed })
-            } else {
-                proceed()
-            }
-        },
-        [dirty]
-    )
+    const [openedTrackedEntityId, setOpenedTrackedEntityId] = useState<
+        string | undefined
+    >()
     const [urlState, setUrlState] = useAppUrlState()
-
-    // Guard browser back/forward (and manual hash edits, which the router
-    // also receives as POP) against discarding unsaved working-list changes.
-    // In-app navigations confirm before writing the URL, so PUSH/REPLACE
-    // must pass through unblocked to avoid a double confirmation.
-    const externalTransitionBlocker = useBlocker(
-        ({ currentLocation, nextLocation, historyAction }) => {
-            if (historyAction !== 'POP' || !dirty) {
-                return false
-            }
-            try {
-                return isGuardedAppUrlTransition(
-                    parseAppUrlState(
-                        new URLSearchParams(currentLocation.search)
-                    ),
-                    parseAppUrlState(new URLSearchParams(nextLocation.search))
-                )
-            } catch {
-                return false
-            }
-        }
-    )
-    useEffect(() => {
-        if (externalTransitionBlocker.state !== 'blocked') {
-            return
-        }
-        // The latest guarded navigation wins; its reset must always be wired
-        // so canceling the dialog restores the popped history entry.
-        setPendingTransition({
-            proceed: () => {
-                setDirty(false)
-                setOpenedRecord(undefined)
-                externalTransitionBlocker.proceed()
-            },
-            cancel: externalTransitionBlocker.reset,
-        })
-    }, [externalTransitionBlocker])
 
     const programsQuery = useQuery(
         trackerProgramsQueryOptions(client, runtimeConfig.apiVersion)
     )
 
     const currentUserQuery = useQuery({
-        queryKey: ['working-list', 'shell', 'current-user-org-units'],
+        queryKey: ['app-shell', 'current-user-org-units'],
         queryFn: ({ signal }) =>
             client.query(
                 {
@@ -169,12 +91,7 @@ export const AppShell = () => {
     )
 
     const programOrgUnitsQuery = useQuery({
-        queryKey: [
-            'working-list',
-            'shell',
-            'program-org-units',
-            urlState.programId,
-        ],
+        queryKey: ['app-shell', 'program-org-units', urlState.programId],
         queryFn: ({ signal }) =>
             client.query(
                 {
@@ -194,12 +111,7 @@ export const AppShell = () => {
     })
 
     const selectedOrgUnitQuery = useQuery({
-        queryKey: [
-            'working-list',
-            'shell',
-            'selected-org-unit',
-            urlState.orgUnitId,
-        ],
+        queryKey: ['app-shell', 'selected-org-unit', urlState.orgUnitId],
         queryFn: ({ signal }) =>
             client.query(
                 {
@@ -281,19 +193,6 @@ export const AppShell = () => {
         compatibleProgramOptions.length < programs.length
 
     useEffect(() => {
-        if (!dirty) {
-            return
-        }
-        const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-            event.preventDefault()
-            event.returnValue = ''
-        }
-        window.addEventListener('beforeunload', warnBeforeUnload)
-        return () =>
-            window.removeEventListener('beforeunload', warnBeforeUnload)
-    }, [dirty])
-
-    useEffect(() => {
         if (
             !urlState.programId ||
             programsQuery.isPending ||
@@ -301,60 +200,32 @@ export const AppShell = () => {
         ) {
             return
         }
-        setUrlState({ orgUnitId: urlState.orgUnitId })
+        setUrlState(getProgramState(urlState, undefined))
     }, [programs, programsQuery.isPending, setUrlState, urlState])
 
     const updateProgram = (programId: string) => {
-        requestTransition(() => {
-            setProgramSelectorOpen(false)
-            setOrgUnitSelectorOpen(false)
-            setOrganisationUnitSearch('')
-            setDebouncedOrganisationUnitSearch('')
-            setOpenedRecord(undefined)
-            setDirty(false)
-            setUrlState(
-                programId
-                    ? {
-                          programId,
-                          orgUnitId: urlState.orgUnitId,
-                          page: 1,
-                          pageSize: 15,
-                      }
-                    : { orgUnitId: urlState.orgUnitId }
-            )
-        })
+        setProgramSelectorOpen(false)
+        setOrgUnitSelectorOpen(false)
+        setOrganisationUnitSearch('')
+        setDebouncedOrganisationUnitSearch('')
+        setOpenedTrackedEntityId(undefined)
+        setUrlState(getProgramState(urlState, programId))
     }
 
     const updateOrgUnit = (organisationUnit: OrganisationUnitReference) => {
         setOrgUnitSelectorOpen(false)
         setOrganisationUnitSearch('')
         setDebouncedOrganisationUnitSearch('')
-        requestTransition(() => {
-            const next = getGuardedOrganisationUnitState(
-                urlState,
-                organisationUnit.id,
-                () => true
-            )
-            setOpenedRecord(undefined)
-            setDirty(false)
-            setUrlState(next)
-        })
+        setOpenedTrackedEntityId(undefined)
+        setUrlState(getOrganisationUnitState(urlState, organisationUnit.id))
     }
 
     const clearOrganisationUnit = () => {
-        requestTransition(() => {
-            const next = getGuardedOrganisationUnitState(
-                urlState,
-                undefined,
-                () => true
-            )
-            setOrgUnitSelectorOpen(false)
-            setOrganisationUnitSearch('')
-            setDebouncedOrganisationUnitSearch('')
-            setOpenedRecord(undefined)
-            setDirty(false)
-            setUrlState(next)
-        })
+        setOrgUnitSelectorOpen(false)
+        setOrganisationUnitSearch('')
+        setDebouncedOrganisationUnitSearch('')
+        setOpenedTrackedEntityId(undefined)
+        setUrlState(getOrganisationUnitState(urlState, undefined))
     }
 
     const loading =
@@ -370,19 +241,16 @@ export const AppShell = () => {
 
     return (
         <div className="min-h-screen w-full min-w-0 max-w-full pb-10">
-            <WorkingListContextControls
+            <AppContextControls
                 clearDisabled={!selectedProgramSummary && !urlState.orgUnitId}
-                onClear={() =>
-                    requestTransition(() => {
-                        setProgramSelectorOpen(false)
-                        setOrgUnitSelectorOpen(false)
-                        setOrganisationUnitSearch('')
-                        setDebouncedOrganisationUnitSearch('')
-                        setDirty(false)
-                        setOpenedRecord(undefined)
-                        setUrlState({})
-                    })
-                }
+                onClear={() => {
+                    setProgramSelectorOpen(false)
+                    setOrgUnitSelectorOpen(false)
+                    setOrganisationUnitSearch('')
+                    setDebouncedOrganisationUnitSearch('')
+                    setOpenedTrackedEntityId(undefined)
+                    setUrlState({})
+                }}
                 programOptions={programOptions}
                 programValue={selectedProgramSummary?.id}
                 programOpen={programSelectorOpen}
@@ -452,9 +320,9 @@ export const AppShell = () => {
             />
             <h1
                 className="absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!"
-                data-testid="working-list-heading"
+                data-testid="patient-list-heading"
             >
-                {i18n.t('Working lists')}
+                {i18n.t('Patient list')}
             </h1>
 
             <ContextStatus
@@ -486,78 +354,30 @@ export const AppShell = () => {
                 selectedOrgUnitIsAllowed && (
                     <main
                         className="mx-auto mt-4 w-full min-w-0 max-w-[1440px] px-6 [@media(max-width:900px)]:px-3"
-                        data-testid="working-list-layout"
+                        data-testid="patient-list-layout"
                     >
-                        <div className="flex justify-end pb-3">
-                            <Label data-test="data-quality-mode-toggle">
-                                <Switch
-                                    checked={dataQualityMode === 'highlighted'}
-                                    onCheckedChange={(checked) =>
-                                        setDataQualityMode(
-                                            checked ? 'highlighted' : 'hidden'
-                                        )
-                                    }
-                                />
-                                {i18n.t('Highlight data quality issues')}
-                            </Label>
-                        </div>
-                        <WorkingList
+                        <PatientListView
+                            client={client}
                             programId={selectedProgramSummary.id}
                             orgUnitId={urlState.orgUnitId}
-                            viewId={urlState.selectedTemplateId ?? null}
-                            pagination={{
-                                page: urlState.page ?? 1,
-                                pageSize: urlState.pageSize ?? 15,
-                            }}
+                            page={urlState.page ?? 1}
+                            pageSize={urlState.pageSize ?? 15}
                             onPaginationChange={({ page, pageSize }) =>
                                 setUrlState((current) => ({
                                     ...current,
                                     page,
-                                    pageSize,
+                                    pageSize: parseAppPageSize(pageSize),
                                 }))
                             }
-                            onViewChange={(viewId) =>
-                                setUrlState((current) => ({
-                                    ...current,
-                                    selectedTemplateId: viewId,
-                                    page: 1,
-                                }))
-                            }
-                        >
-                            <WorkingListDirtyBridge onChange={setDirty} />
-                            <WorkingListViewSwitcher />
-                            <WorkingListToolbar>
-                                <WorkingListColumnSelector />
-                                <WorkingListFilterControls />
-                                <WorkingListToolbarActions />
-                            </WorkingListToolbar>
-                            <WorkingListTable
-                                dataQualityMode={dataQualityMode}
-                                onRowClick={setOpenedRecord}
-                            />
-                        </WorkingList>
+                            onRowOpen={setOpenedTrackedEntityId}
+                        />
                     </main>
                 )}
 
-            <DiscardChangesDialog
-                open={Boolean(pendingTransition)}
-                onCancel={() => {
-                    const transition = pendingTransition
-                    setPendingTransition(undefined)
-                    transition?.cancel?.()
-                }}
-                onDiscard={() => {
-                    const transition = pendingTransition
-                    setPendingTransition(undefined)
-                    setDirty(false)
-                    transition?.proceed()
-                }}
-            />
-
-            {openedRecord && (
+            {openedTrackedEntityId && (
                 <RecordDetailsModal
-                    record={openedRecord}
-                    onClose={() => setOpenedRecord(undefined)}
+                    trackedEntityId={openedTrackedEntityId}
+                    onClose={() => setOpenedTrackedEntityId(undefined)}
                 />
             )}
 

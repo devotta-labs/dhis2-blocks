@@ -1,0 +1,775 @@
+---
+title: Data Table
+description: Sort, filter, page, select and reshape any rows, on the client or from a server.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+The data table is [TanStack Table](https://tanstack.com/table) v9 with the
+DHIS2 look. You bring the rows and the column definitions; it sorts, filters,
+pages, selects, groups and exports them. It never fetches, and it knows nothing
+about DHIS2 metadata, so the same table lists facilities, people or anything
+else.
+
+<ExampleCard slug="data-table/basic" />
+
+Every example on this page lists the same made-up facilities. Open the Code
+tab to copy one.
+
+## Add to your app
+
+<InstallCommand item="data-table" />
+
+Describe the columns once, outside the component, then create the table and
+place its parts:
+
+```tsx
+import {
+    createDataTableColumnHelper,
+    DataTable,
+    DataTableContent,
+    DataTablePagination,
+    useDataTable,
+} from '@/components/data-table'
+
+interface Facility {
+    id: string
+    name: string
+    district: string
+    beds: number
+}
+
+const column = createDataTableColumnHelper<Facility>()
+
+const columns = column.columns([
+    column.accessor('name', { header: 'Name' }),
+    column.accessor('district', { header: 'District' }),
+    column.accessor('beds', { header: 'Beds', meta: { align: 'end' } }),
+])
+
+export const Facilities = ({ facilities }: { facilities: Facility[] }) => {
+    const table = useDataTable({
+        data: facilities,
+        columns,
+        getRowId: (facility) => facility.id,
+    })
+
+    return (
+        <DataTable table={table} label="Facilities">
+            <DataTableContent />
+            <DataTablePagination />
+        </DataTable>
+    )
+}
+```
+
+`getRowId` is required: a stable id per row keeps selection and expansion on
+the right rows when the data changes. Keep `data` and `columns` stable between
+renders too, by defining them outside the component or in a `useMemo`. New
+`data` collapses every expanded row and goes back to the first page; set
+`autoResetPageIndex: false` when an edit to a row should keep the user on
+their page, as in the selection example below.
+
+`useDataTable` takes every TanStack Table option, such as `initialState`, `state`, `enableRowSelection` or `autoResetPageIndex`.
+It returns the TanStack table, a `DataTableInstance`, which `DataTable` hands
+to the parts inside it.
+
+## Columns
+
+`createDataTableColumnHelper<Row>()` gives a helper typed for your rows. Each
+column is either:
+
+- an **accessor column**, `column.accessor('field', { … })` or
+  `column.accessor((row) => value, { id, … })`, which reads a value from the
+  row and can be sorted, filtered, grouped and exported; or
+- a **display column**, `column.display({ id, header, cell })`, for buttons and
+  other content that is not a value of the row.
+
+`cell` formats a value. It receives the TanStack cell context, so
+`getValue()` and `row.original` are both there:
+
+```tsx
+column.accessor('reportingRate', {
+    header: 'Reporting',
+    cell: ({ getValue }) => <Badge>{getValue()}%</Badge>,
+})
+```
+
+`meta` holds the table's own column options, typed as `DataTableColumnMeta`:
+
+- `align` — `'start'` (default), `'center'` or `'end'`, for the header and the
+  cells. Align numbers to the end so their digits line up.
+- `nowrap` — keep the cells on one line, for dates and codes.
+- `label` — the column's plain name in menus, column settings and the CSV,
+  when `header` is not a string. `dataTableColumnLabel(column)` reads it.
+
+Sizes apply in the fixed layout (see below): `size` defaults to 180 pixels,
+between a `minSize` of 64 and a `maxSize` of 640. In the default layout the
+browser sizes the columns to their content. Other column options, such as
+`enableSorting: false`, `enableHiding: false` or `sortingFn`, are TanStack's.
+
+## Search and filters
+
+<ExampleCard slug="data-table/filtering" />
+
+Put the tools in a `DataTableToolbar` above the content.
+`DataTableSearch` searches every column; its `placeholder` (default "Search")
+is also its name for screen readers, so make it say what it searches.
+
+`DataTableFilters` takes a list of filters, each a `DataTableFilter` with an
+`id` (a column id in client mode), a `label` and a `kind`. A `pinned` filter
+always shows as a chip; the others wait under **Filter** until the user adds
+them. A chip opens the control for its kind, and the user applies it with
+**Apply** or Enter:
+
+- `text` — `operators` from `contains` (default), `equals`, `startsWith`,
+  `empty` and `notEmpty`, a `DataTableTextOperator` each. With more than one,
+  the control shows a **Match** select. `placeholder` is optional.
+- `number` — a range, with optional `min`, `max` and `step`.
+- `date` — a From and To range of ISO dates.
+- `options` — the `options` (`{ value, label }`, a `DataTableFilterOption`),
+  as checkboxes when `multiple` and radios otherwise. Past eight options the
+  list can be searched.
+- `boolean` — two choices, labelled `trueLabel` and `falseLabel` (default Yes
+  and No).
+- `custom` — your own `Control`, with `summarize` for the chip text.
+
+```tsx
+const filters: DataTableFilter[] = [
+    { id: 'name', kind: 'text', label: 'Name', pinned: true },
+    {
+        id: 'type',
+        kind: 'options',
+        label: 'Type',
+        multiple: true,
+        options: [
+            { value: 'Hospital', label: 'Hospital' },
+            { value: 'CHC', label: 'CHC' },
+        ],
+    },
+    { id: 'beds', kind: 'number', label: 'Beds', min: 0 },
+    { id: 'openedOn', kind: 'date', label: 'Opened' },
+]
+```
+
+Each filter stores a `DataTableFilterValue` in TanStack's `columnFilters`. The
+values are plain, serialisable objects:
+
+```ts
+{ kind: 'text', operator: 'contains', text: 'bo' }
+{ kind: 'number', min: 10, max: 100 }
+{ kind: 'date', from: '2010-01-01', to: '2014-12-31' }
+{ kind: 'options', values: ['Hospital', 'CHC'] }
+{ kind: 'boolean', value: true }
+{ kind: 'custom', value: 'below' }
+```
+
+In client mode every column filters with `dataTableFilterFn`, which reads them
+like this:
+
+- **text** ignores case and surrounding spaces. `empty` and `notEmpty` look
+  only at whether the cell has a value.
+- **number** keeps cells inside the range, both ends included. An empty cell
+  never matches.
+- **date** compares the first ten characters of the cell, so the cell must
+  start with an ISO date (`yyyy-mm-dd`). Both ends are included.
+- **options** keeps a cell that equals any of the values. A cell that holds an
+  array matches when any of its entries does.
+- **boolean** matches `true` and `false`, and the strings `'true'` and
+  `'false'`.
+- **custom** keeps every row. Give the column its own `filterFn`.
+
+A value with nothing to filter on, such as a text filter with no text, removes
+itself (`isDataTableFilterValueEmpty`). **Clear filters** removes every column
+filter; the search stays.
+
+### Custom filters
+
+A `custom` filter renders your `Control` inside the chip's popover. It gets
+the `filter`, the current `value` (a string, or `undefined`) and `onChange`,
+typed as `DataTableCustomFilterControlProps`. Calling `onChange` applies the
+value, or clears the filter with `undefined`, and closes the popover. The
+control sits inside the popover's form, so it must not render a `<form>` of
+its own.
+
+```tsx
+const ReportingControl = ({
+    value,
+    onChange,
+}: DataTableCustomFilterControlProps) => (
+    <Select
+        items={reportingOptions}
+        value={value ?? null}
+        onValueChange={(next) => onChange(next ?? undefined)}
+    >
+        …
+    </Select>
+)
+
+const reporting: DataTableCustomFilter = {
+    id: 'reportingRate',
+    kind: 'custom',
+    label: 'Reporting',
+    Control: ReportingControl,
+    summarize: (value) => (value === 'below' ? 'Below 80%' : '80% and above'),
+}
+```
+
+The column then decides what the value means:
+
+```tsx
+column.accessor('reportingRate', {
+    header: 'Reporting',
+    filterFn: (row, columnId, filterValue) => {
+        const value = parseDataTableFilterValue({
+            id: columnId,
+            value: filterValue,
+        })
+        if (value?.kind !== 'custom') return true
+        const rate = row.original.reportingRate
+        return value.value === 'below' ? rate < 80 : rate >= 80
+    },
+})
+```
+
+`summarizeDataTableFilter(filter, value)` gives the chip text for any filter,
+if you show the active filters somewhere else.
+
+### Filters on the server
+
+In server mode the table does not filter. Read `columnFilters`, parse each
+value with `parseDataTableFilterValue`, which returns `undefined` for anything
+that is not a filter value, and turn it into your API's parameters:
+
+```ts
+const params = new URLSearchParams()
+for (const entry of columnFilters) {
+    const value = parseDataTableFilterValue(entry)
+    if (value?.kind === 'text') params.set(entry.id, value.text)
+    if (value?.kind === 'options') params.set(entry.id, value.values.join(','))
+}
+```
+
+`dataTableFilterValueSchema` is the Zod schema behind it, for checking values
+you read back from a URL or storage.
+
+## Selection and row actions
+
+<ExampleCard slug="data-table/selection" />
+
+Put `dataTableSelectionColumn<Row>()` first in `columns` for a column of
+checkboxes, with the id `DATA_TABLE_SELECT_COLUMN_ID` (`'select'`). The header
+checkbox selects the page, and Shift-click selects a range. Each row's
+checkbox is named after its place on the page, "Select row 3", the same number
+as its open button.
+
+`DataTableSelectionBar` appears once a row is selected. It shows the count,
+**Clear selection** and its children. A function child gets the selected row
+ids:
+
+```tsx
+<DataTableSelectionBar>
+    {(ids) => (
+        <Button
+            onClick={() => {
+                markInactive(ids)
+                table.resetRowSelection(true)
+            }}
+        >
+            Mark inactive
+        </Button>
+    )}
+</DataTableSelectionBar>
+```
+
+For actions on one row, add a display column with the id `'actions'` and a
+`DataTableRowActions` in its cell. It is a "more" button whose menu holds your
+`DropdownMenuItem`s. Name each one after its row, since a screen reader user
+hears many of them:
+
+```tsx
+column.display({
+    id: 'actions',
+    header: () => <span className="sr-only">Actions</span>,
+    meta: { label: 'Actions' },
+    size: 56,
+    enableHiding: false,
+    cell: ({ row }) => (
+        <DataTableRowActions label={`Actions for ${row.original.name}`}>
+            <DropdownMenuItem onClick={() => open(row.original)}>
+                Open
+            </DropdownMenuItem>
+        </DataTableRowActions>
+    ),
+})
+```
+
+### Selecting every match on the server
+
+In server mode only the loaded page can be selected. Pass the number of rows
+that match on the server as `totalMatching`, and the bar offers "Select all
+48" once the whole page is selected. The choice is yours to keep: hold
+`allMatching` in state, and act on the query instead of the ids when it is
+true. Any change to the selection by hand sets it back to `false`.
+
+```tsx
+const [allMatching, setAllMatching] = useState(false)
+
+<DataTableSelectionBar
+    totalMatching={query.data?.total}
+    allMatching={allMatching}
+    onAllMatchingChange={setAllMatching}
+>
+    {(ids) => (
+        <Button
+            onClick={() =>
+                allMatching ? archiveMatching(params) : archive(ids)
+            }
+        >
+            Archive
+        </Button>
+    )}
+</DataTableSelectionBar>
+```
+
+## Column settings, pinning, resizing and density
+
+The selection example above shows these too.
+
+- `DataTableColumnSettings` is a **Columns** button (`label` changes it) that
+  lists the columns in the table's order, each with a checkbox to show or hide
+  it and buttons to move it up or down. A pinned column shows "Pinned" instead
+  of the buttons and stays at its edge; the others move past each other.
+  **Reset** restores the starting columns. The `select`, `expand` and
+  `actions` columns, and those with `enableHiding: false`, are not listed and
+  keep their place. One column always stays visible.
+- **Pinning** keeps columns at the start or end while the rest scroll sideways.
+  Set `columnPinning: { start: ['select', 'name'], end: ['actions'] }` in
+  `initialState`, or let users pin from the column menu.
+- **Resizing**: each header gets a handle. Drag it, or double-click it to
+  reset. With the keyboard, Tab to it and use the arrow keys, 16 pixels at a
+  time; Home resets it.
+- `DataTableDensityToggle` switches the rows between compact, normal and
+  comfortable. `DataTable` keeps the density, starting from `defaultDensity`;
+  pass `density` and `onDensityChange` to keep it yourself, as a
+  `DataTableDensity`.
+
+Pinning and resizing need `layout="fixed"` on `DataTable`. In the fixed
+layout every column takes its `size`, and the table is as wide as its columns
+together. In the default `'auto'` layout pinned columns move to their edge but
+don't stick, and there are no resize handles.
+
+`columnMenu` on `DataTableContent` adds an "Options for …" menu to each
+header, to sort, pin (fixed layout), group (columns with
+`enableGrouping: true`) and hide the column.
+
+## Grouping and totals
+
+<ExampleCard slug="data-table/grouping" />
+
+Set `enableGrouping: true` on the columns users may group by, and `grouping`
+in `initialState` to start grouped. Each group row has a toggle with the value
+and its number of rows. A column's `aggregationFn` and `aggregatedCell` show a
+total in the group row:
+
+```tsx
+column.accessor('beds', {
+    header: 'Beds',
+    aggregationFn: 'sum',
+    aggregatedCell: ({ getValue }) => getValue().toLocaleString(),
+})
+```
+
+The aggregations are `sum`, `min`, `max`, `mean`, `count`, `uniqueCount` and
+`extent`, or a function of your own. With `columnMenu`, users group and stop
+grouping from the column menu.
+
+The example shows every group on one page with
+`pagination: { pageIndex: 0, pageSize: Infinity }`. A page size of `Infinity`
+turns pagination off; leave out `DataTablePagination` then.
+
+## Row details
+
+<ExampleCard slug="data-table/row-detail" />
+
+Put `dataTableExpanderColumn<Row>()` first in `columns`, with the id
+`DATA_TABLE_EXPAND_COLUMN_ID` (`'expand'`), set `getRowCanExpand` in
+`useDataTable`, and pass `renderExpandedRow` to `DataTableContent`. It draws a
+full-width row under each expanded row:
+
+```tsx
+const table = useDataTable({
+    data,
+    columns,
+    getRowId: (facility) => facility.id,
+    getRowCanExpand: () => true,
+})
+
+<DataTableContent<Facility>
+    renderExpandedRow={(row) => <FacilityDetails facility={row.original} />}
+    onRowOpen={(row) => navigate(`/facilities/${row.original.id}`)}
+    rowOpenLabel={(row) => `Open ${row.original.name}`}
+/>
+```
+
+`onRowOpen` makes the rows open on click, except a click on a button, checkbox
+or other control in the row. For the keyboard each row gets a hidden button,
+named "Open row 3" or by `rowOpenLabel`; the row shows a focus ring while it
+has focus. Group rows don't open. The expand button of that row is named
+"Expand row 3", or "Collapse row 3" while it is open.
+
+Pass the row type, as in `DataTableContent<Facility>`, when you use these
+props: TypeScript can't infer it from them.
+
+## Server-side data
+
+<ExampleCard slug="data-table/server" />
+
+With `mode: 'server'`, `data` is one page that the server has already
+filtered, sorted and cut. The table then leaves the rows as they are, and you
+fetch the page that matches its sorting, filters, search and pagination.
+
+Keep those four in your own state with `state` and the matching `on…Change`
+options, so you can build the query before the table exists. The table keeps
+the rest of its state, such as column visibility, itself. With TanStack Query:
+
+```tsx
+const [sorting, setSorting] = useState<DataTableState['sorting']>([])
+const [columnFilters, setColumnFilters] = useState<
+    DataTableState['columnFilters']
+>([])
+const [globalFilter, setGlobalFilter] = useState('')
+const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+
+const params = { ...pagination, sorting, columnFilters, globalFilter }
+const query = useQuery({
+    queryKey: ['facilities', params],
+    queryFn: () => fetchFacilities(params),
+    placeholderData: keepPreviousData,
+})
+
+const table = useDataTable({
+    mode: 'server',
+    data: query.data?.rows ?? noRows,
+    rowCount: query.data?.total,
+    columns,
+    getRowId: (facility) => facility.id,
+    state: { sorting, columnFilters, globalFilter, pagination },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+})
+```
+
+`noRows` is an empty array defined outside the component, so the table gets
+the same array while nothing has loaded.
+
+- **The total.** Pass `rowCount` when the server tells you how many rows
+  match. Pagination then shows "11–20 of 48" and knows the last page. Without
+  it, pagination shows "Page 2", and Next follows `DataTable`'s `hasNextPage`,
+  or, if you leave that out too, whether the page came back full.
+- **Back to page 1.** A change to sorting, a filter or the search moves the
+  table to the first page in the same update, so you never fetch page 3 of a
+  new search.
+- **Status.** Tell `DataTable` where the request is with `status`, a
+  `DataTableStatus`: `'loading'` draws placeholder rows for the first load,
+  `'updating'` dims the old rows while the next page loads, and `'error'`
+  shows `error` (default "The list could not be loaded.") with a **Retry**
+  button that calls `onRetry`. The default is `'ready'`.
+
+```tsx
+const statusOf = (query: UseQueryResult): DataTableStatus => {
+    if (query.isError) return 'error'
+    if (query.isPending) return 'loading'
+    if (query.isFetching) return 'updating'
+    return 'ready'
+}
+
+<DataTable
+    table={table}
+    label="Facilities"
+    status={statusOf(query)}
+    onRetry={() => query.refetch()}
+>
+```
+
+## Large tables
+
+<ExampleCard slug="data-table/virtual" />
+
+`virtualized` draws only the rows in and near the view, so a page of ten
+thousand rows scrolls smoothly. It needs `maxHeight`, the height of the
+scrolling area (a number is in pixels). `stickyHeader` keeps the header in
+view while the rows scroll, and also needs `maxHeight`. `estimateRowHeight`
+(default 48) sizes the rows that aren't drawn yet.
+
+```tsx
+<DataTableContent virtualized stickyHeader maxHeight={420} />
+```
+
+Virtual rows work within a page. The example turns pagination off with a page
+size of `Infinity`.
+
+## Saving the view
+
+A user's view is the sorting, filters, search, column visibility, order,
+pinning and sizes, grouping and page size. `getDataTableViewState(table)`
+returns it as a `DataTableViewState`: a versioned object that is safe to store
+as JSON. Selection, expanded rows and the current page are never part of it.
+
+```tsx
+const KEY = 'facilities-view'
+
+const [saved] = useState(() =>
+    parseDataTableViewState(localStorage.getItem(KEY) ?? '')
+)
+
+const table = useDataTable({
+    data,
+    columns,
+    getRowId: (facility) => facility.id,
+    initialState: dataTableViewInitialState(saved),
+})
+
+const save = () =>
+    localStorage.setItem(KEY, JSON.stringify(getDataTableViewState(table)))
+
+const restore = () => {
+    const view = parseDataTableViewState(localStorage.getItem(KEY) ?? '')
+    if (view) applyDataTableViewState(table, view)
+}
+```
+
+- `parseDataTableViewState(json)` returns `undefined` for anything that is not
+  a saved view: bad JSON, another version or a value of the wrong shape.
+  `dataTableViewStateSchema` is its Zod schema.
+- `dataTableViewInitialState(view)` turns a view into `initialState`, so the
+  table starts on it. It accepts `undefined`.
+- `applyDataTableViewState(table, view)` switches a table that is already on
+  screen to the view. Whatever the view leaves out goes back to the starting
+  state, and the table goes to the first page.
+
+A page size of `Infinity` isn't saved, since JSON can't hold it.
+
+## Export
+
+`DataTableExportButton` downloads the table as a CSV file named `filename`:
+
+```tsx
+<DataTableExportButton filename="facilities" />
+```
+
+`rows` picks what goes in: `'all'` (default) is every row after filtering and
+sorting, before pagination; `'page'` is the current page; `'selected'` is the
+selected rows. In server mode `'all'` is the loaded page. The file has the
+visible data columns in their current order, under their plain names, and
+leaves out the `select`, `expand` and `actions` columns.
+
+The cells are the column values, not what `cell` draws: a yes/no column
+exports as `true` and `false`. To write something else, pass `formatValue`;
+`delimiter` changes the comma:
+
+```tsx
+<DataTableExportButton
+    filename="facilities"
+    formatValue={(cell) => {
+        const value = cell.getValue()
+        if (cell.column.id === 'active') return value ? 'Active' : 'Inactive'
+        return String(value ?? '')
+    }}
+/>
+```
+
+From your own button, `downloadDataTableCsv(table, filename, options)` does
+the same, and `dataTableToCsv(table, options)` returns the text instead, to
+send or store. The options, a `DataTableCsvOptions`, are `rows`,
+`formatValue` and `delimiter` (default a comma). The file follows RFC 4180, opens in Excel with
+its accents intact, and escapes cells that a spreadsheet would run as a
+formula.
+
+## Custom layouts
+
+The parts are small, and you can place your own beside them. Inside
+`DataTable`, `useDataTableInstance()` returns the table and
+`useDataTableView()` the view: `label`, `status`, `error`, `onRetry`,
+`hasNextPage`, `layout`, `density` and `setDensity`. A toolbar button that
+shows only inactive facilities:
+
+```tsx
+const InactiveOnly = () => {
+    const table = useDataTableInstance()
+    const column = table.getColumn('active')
+    const pressed = column?.getFilterValue() !== undefined
+
+    return (
+        <Button
+            aria-pressed={pressed}
+            onClick={() =>
+                column?.setFilterValue(
+                    pressed ? undefined : { kind: 'boolean', value: false }
+                )
+            }
+        >
+            Inactive only
+        </Button>
+    )
+}
+```
+
+Anything in TanStack's table API works the same way: `table.getColumn('district')`, `table.setSorting(...)`,
+`table.getSelectedRowModel()`, `table.setPageIndex(0)`. The table's features
+are `dataTableFeatures`; type your own helpers with its type,
+`DataTableFeatures`, or with `DataTableRow`, `DataTableCell`,
+`DataTableColumn`, `DataTableHeaderCell`, `DataTableColumnDef` and
+`DataTableState`.
+
+`DataTableContent` draws `DataTableHeader`, `DataTableBody` and
+`DataTableFooter` (column `footer`s, when a column has one) inside its
+scrolling area. Pass them as children to change one; props on `DataTableBody`
+win over those on `DataTableContent`:
+
+```tsx
+<DataTableContent maxHeight={480} stickyHeader>
+    <DataTableHeader />
+    <DataTableBody emptyState="No facilities in this district yet" />
+    <DataTableFooter />
+</DataTableContent>
+```
+
+## Accessibility
+
+- `label` names the table for screen readers.
+- A sortable header is a button. The header cell's `aria-sort` says the
+  direction, and the button cycles ascending, descending and none.
+- The table sets `aria-rowcount` and each row's `aria-rowindex`, so screen
+  readers tell where a row sits in the whole list, across pages and virtual
+  rows.
+- When rows finish loading the table announces "10 rows shown", and when
+  loading fails, "The list could not be loaded.". `'loading'` and
+  `'updating'` set `aria-busy`.
+- Every control has a name: the checkboxes ("Select all rows on this page",
+  "Select row 3"), the column menus ("Options for Beds"), the resize handles
+  ("Resize Beds"), the expand buttons ("Expand row 3") and the hidden open
+  buttons ("Open row 3"). The number is the row's place on the page. The tools
+  sit in a toolbar named "Table tools".
+- Resize handles work with the arrow keys and Home, and rows open with Enter
+  on their hidden button.
+
+You still name what only you know: the row actions (`label`), the open
+buttons (`rowOpenLabel`), a column with no string `header` (`meta.label`) and
+what the search searches (`placeholder`).
+
+## API reference
+
+### useDataTable
+
+Takes TanStack's table options, a `UseDataTableOptions`, and returns a
+`DataTableInstance`:
+
+- `data: Row[]` — **required.** The rows, or in server mode one page.
+- `columns` — **required.** From `createDataTableColumnHelper`.
+- `getRowId: (row) => string` — **required.** A stable id per row.
+- `mode?: 'client' | 'server'` — a `DataTableMode`. `'client'` (default) sorts,
+  filters and pages `data`; `'server'` shows it as it is.
+- `rowCount?: number` — server mode: how many rows match on the server.
+- `initialState`, `state` and the `on…Change` callbacks, `defaultColumn`,
+  `getRowCanExpand`, `enableRowSelection`, `autoResetPageIndex` and the rest —
+  as in TanStack Table.
+
+Defaults that differ from TanStack's: columns are 180 pixels wide, between 64
+and 640, and filter with `dataTableFilterFn`; the search matches any column
+that contains the text; sorting starts ascending and its third click removes
+it.
+
+### DataTable
+
+- `table: DataTableInstance` — **required.** From `useDataTable`.
+- `label: string` — **required.** The table's name for screen readers.
+- `children: ReactNode` — **required.** The parts.
+- `status?: DataTableStatus` — `'loading'`, `'updating'`, `'error'` or
+  `'ready'` (default).
+- `error?: ReactNode` — the error message. Default "The list could not be
+  loaded.".
+- `onRetry?: () => void` — shows **Retry** in the error state.
+- `hasNextPage?: boolean` — server mode without `rowCount`: whether Next is
+  enabled.
+- `layout?: DataTableLayout` — `'auto'` (default) or `'fixed'`, which uses the
+  column sizes and enables pinning and resizing.
+- `density?`, `defaultDensity?`, `onDensityChange?` — `'compact'`, `'normal'`
+  (default) or `'comfortable'`.
+
+It also takes the props of a `div`. `DataTableProps` is its props type.
+
+### DataTableContent
+
+The header, body and footer in a scrolling area. Its props are
+`DataTableContentProps`:
+
+- `columnMenu?: boolean` — an options menu on each header. Default `false`.
+- `maxHeight?: number | string` — the height of the scrolling area; a number
+  is in pixels.
+- `stickyHeader?: boolean` — keep the header in view. Needs `maxHeight`.
+- `virtualized?: boolean` — draw only the rows in view. Needs `maxHeight`.
+- `estimateRowHeight?: number` — for `virtualized`. Default 48.
+- `onRowOpen?: (row) => void` — open a row on click or Enter.
+- `rowOpenLabel?: (row) => string` — the name of a row's open button. Default
+  "Open row 3".
+- `renderExpandedRow?: (row) => ReactNode` — the detail under an expanded row.
+- `emptyState?: ReactNode` — replaces "No items to display". While a filter
+  or the search is set, an empty table shows "No results match your filters"
+  and **Clear filters** instead.
+- `children?: ReactNode` — your own `DataTableHeader`, `DataTableBody` and
+  `DataTableFooter`.
+- `className?: string`
+
+`DataTableBody` takes the row props above, as `DataTableBodyProps`.
+`DataTableHeader` and `DataTableFooter` take `className`.
+
+### Tools
+
+- `DataTableToolbar` — a `div` with `role="toolbar"`, named "Table tools"
+  unless you give an `aria-label`.
+- `DataTableSearch` — `placeholder?` (default "Search", also its name),
+  `debounce?` in milliseconds (default 300), `className?`. Props type
+  `DataTableSearchProps`.
+- `DataTableFilters` — `filters: DataTableFilter[]`, `className?`. Props type
+  `DataTableFiltersProps`. The filter types are `DataTableTextFilter`,
+  `DataTableNumberFilter`, `DataTableDateFilter`, `DataTableOptionsFilter`,
+  `DataTableBooleanFilter` and `DataTableCustomFilter`.
+- `DataTableColumnSettings` — `label?` (default "Columns"), `className?`.
+  Props type `DataTableColumnSettingsProps`.
+- `DataTableDensityToggle` — no props.
+- `DataTableExportButton` — `filename: string`, `rows?`, `formatValue?`,
+  `delimiter?` (as in `DataTableCsvOptions`), `children?` (default "Download
+  CSV"), `className?`. Props type `DataTableExportButtonProps`.
+- `DataTablePagination` — `pageSizes?` (default `[10, 25, 50, 100]`; the
+  current size is always offered), `className?`. Props type
+  `DataTablePaginationProps`.
+
+### Selection and rows
+
+- `dataTableSelectionColumn<Row>()` — the checkbox column, id
+  `DATA_TABLE_SELECT_COLUMN_ID`.
+- `DataTableSelectionBar` — `children?` (nodes, or a function of the selected
+  ids), `totalMatching?`, `allMatching?`, `onAllMatchingChange?`,
+  `className?`. Props type `DataTableSelectionBarProps`.
+- `DataTableRowActions` — `children` (`DropdownMenuItem`s), `label?` (default
+  "Row actions"). Props type `DataTableRowActionsProps`.
+- `dataTableExpanderColumn<Row>()` — the expand column, id
+  `DATA_TABLE_EXPAND_COLUMN_ID`.
+
+### Functions
+
+- `parseDataTableFilterValue(columnFilter)`, `isDataTableFilterValueEmpty(value)`,
+  `dataTableFilterValueSchema`, `dataTableFilterFn`,
+  `summarizeDataTableFilter(filter, value)` — filter values.
+- `dataTableToCsv(table, options?)`, `downloadDataTableCsv(table, filename, options?)`
+  — CSV export.
+- `getDataTableViewState(table)`, `parseDataTableViewState(json)`,
+  `dataTableViewInitialState(view)`, `applyDataTableViewState(table, view)`,
+  `dataTableViewStateSchema` — saved views.
+- `dataTableColumnLabel(column)` — a column's plain name.
+- `useDataTableInstance()`, `useDataTableView()` — the table and the view
+  inside `DataTable`. `DataTableViewContextValue` is the view's type.

@@ -12,9 +12,9 @@ import { LabPicker } from './labPicker'
 
 /** Each block's lab, loaded when its page opens, so the docs never carry a lab they do not show. */
 const LABS = {
-    'working-list': lazy(() =>
-        import('./working-list/WorkingListLab').then(({ WorkingListLab }) => ({
-            default: WorkingListLab,
+    'patient-list': lazy(() =>
+        import('./patient-list/PatientListLab').then(({ PatientListLab }) => ({
+            default: PatientListLab,
         }))
     ),
     'observation-cards': lazy(() =>

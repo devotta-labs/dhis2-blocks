@@ -74,8 +74,8 @@ const isRealIsoDate = ({ year, month, day }: DateParts) => {
 }
 
 // The Ethiopian and Coptic calendars have twelve 30-day months and a short
-// 13th (Pagume / Nasie). Temporal's era handling for them is unreliable, so,
-// as working-list does, they convert through the Julian day number.
+// 13th (Pagume / Nasie). Temporal's era handling for them is unreliable, so
+// they convert through the Julian day number.
 const EPAGOMENAL_EPOCHS = {
     coptic: 1825030,
     ethiopian: 1724221,

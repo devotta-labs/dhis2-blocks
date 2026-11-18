@@ -77,10 +77,10 @@ either, so pick what suits the rest of your app.
 
 ### Add a block
 
-<InstallCommand item="working-list" />
+<InstallCommand item="patient-list" />
 
-This installs the Working List. Each [block page](/blocks/working-list) shows
-its own command.
+This installs the Patient List and the Data Table it is built on. Each
+[block page](/blocks/patient-list) shows its own command.
 
 ### Use the block
 
@@ -88,27 +88,41 @@ Import the block from your components folder:
 
 ```tsx
 import {
-    WorkingList,
-    WorkingListTable,
-    WorkingListToolbar,
-    WorkingListFilterControls,
-    WorkingListViewSwitcher,
-} from '@/components/working-list'
+    PatientList,
+    attributeColumn,
+    attributeTextFilter,
+    usePatientList,
+} from '@/components/patient-list'
 
-export const ChildProgrammeList = () => (
-    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
-        <WorkingListViewSwitcher />
-        <WorkingListToolbar>
-            <WorkingListFilterControls />
-        </WorkingListToolbar>
-        <WorkingListTable />
-    </WorkingList>
-)
+// Defined once, outside the component, so the list keeps them.
+const columns = [
+    attributeColumn('w75KJ2mc4zz', { header: 'First name' }),
+    attributeColumn('zDhUuAYrxNC', { header: 'Last name' }),
+]
+const filters = [
+    attributeTextFilter({
+        attribute: 'w75KJ2mc4zz',
+        label: 'First name',
+        pinned: true,
+    }),
+]
+
+export const ChildProgrammeList = () => {
+    const list = usePatientList({
+        program: 'IpHINAT79UW',
+        orgUnit: 'DiszpKrYNg8',
+        columns,
+        filters,
+    })
+    return <PatientList list={list} />
+}
 ```
 
-Program `IpHINAT79UW` and organisation unit `y77LiPqLMoq` exist on the DHIS2
-demo database; use IDs from your own instance otherwise. Each
-[block page](/blocks/working-list) documents its full API.
+Patient List reads through the DHIS2 app runtime and TanStack Query, so render
+it inside your app's `QueryClientProvider`. Program `IpHINAT79UW`, organisation
+unit `DiszpKrYNg8` and the two name attributes exist on the DHIS2 demo
+database; use IDs from your own instance otherwise. Each
+[block page](/blocks/patient-list) documents its full API.
 
 </Steps>
 

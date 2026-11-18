@@ -1,1 +1,0 @@
-export { ConfigureMenu } from './ConfigureMenu'

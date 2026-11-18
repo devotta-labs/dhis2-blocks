@@ -38,6 +38,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                         title: 'Context Selector',
                         href: '/blocks/context-selector',
                     },
+                    { title: 'Data Table', href: '/blocks/data-table' },
                     { title: 'Dialog', href: '/blocks/dialog' },
                     { title: 'Dropdown Menu', href: '/blocks/dropdown-menu' },
                     { title: 'Field', href: '/blocks/field' },
@@ -58,7 +59,7 @@ export const docsNavigation: readonly NavigationSection[] = [
             {
                 title: 'EMR',
                 links: [
-                    { title: 'Working List', href: '/blocks/working-list' },
+                    { title: 'Patient List', href: '/blocks/patient-list' },
                     { title: 'Calendar', href: '/blocks/calendar' },
                     {
                         title: 'Observation Cards',

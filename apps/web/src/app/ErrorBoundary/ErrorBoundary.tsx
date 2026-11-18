@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<
         return (
             <main className="grid min-h-[min(100vh,640px)] w-full min-w-0 max-w-full place-items-center p-6">
                 <ErrorAlert
-                    title={i18n.t('The working list could not be loaded')}
+                    title={i18n.t('The patient list could not be loaded')}
                 >
                     <p>
                         {i18n.t(

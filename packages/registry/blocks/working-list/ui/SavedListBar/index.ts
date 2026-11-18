@@ -1,1 +1,0 @@
-export { SavedListBar } from './SavedListBar'

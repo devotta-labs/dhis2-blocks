@@ -53,7 +53,7 @@ if (root !== null) {
                 <CardHeader>
                     <CardTitle>Standalone shared controls</CardTitle>
                     <CardDescription>
-                        No Working List dependencies
+                        No tracker block dependencies
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-start gap-4">

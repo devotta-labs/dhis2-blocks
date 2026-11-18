@@ -6,13 +6,17 @@ import {
     ObservationCard,
     ObservationsProvider,
 } from '@/components/observation-cards'
-import { WorkingList } from '@/components/working-list'
+import {
+    PatientList,
+    attributeColumn,
+    usePatientList,
+} from '@/components/patient-list'
 import {
     CalendarGrid,
     CalendarNavigation,
     CalendarDayRecords,
 } from '@/components/calendar'
-import { ListCalendar } from './ListCalendar'
+import { PatientCalendar } from './PatientCalendar'
 import {
     Sidebar,
     SidebarContent,
@@ -30,6 +34,29 @@ import { Host } from './host'
 import './index.css'
 
 const events = eventSource({ programId: 'program', orgUnitId: 'orgUnit' })
+
+const patientColumns = [attributeColumn('attribute', { header: 'Name' })]
+
+const Patients = () => {
+    const list = usePatientList({
+        program: 'program',
+        orgUnit: 'orgUnit',
+        columns: patientColumns,
+    })
+    return (
+        <>
+            <PatientList list={list} />
+            <PatientCalendar
+                query={list.query}
+                recordLabel={(row) => row.trackedEntity}
+            >
+                <CalendarNavigation />
+                <CalendarGrid />
+                <CalendarDayRecords />
+            </PatientCalendar>
+        </>
+    )
+}
 
 // Type-level use only: the check compiles and bundles this file, never runs it.
 const root = document.getElementById('root')
@@ -67,13 +94,7 @@ if (root !== null) {
             <ObservationsProvider trackedEntity="person" program="program">
                 <ObservationCard dataElement="dataElement" unit="kg" />
             </ObservationsProvider>
-            <WorkingList programId="program" orgUnitId="orgUnit">
-                <ListCalendar>
-                    <CalendarNavigation />
-                    <CalendarGrid />
-                    <CalendarDayRecords />
-                </ListCalendar>
-            </WorkingList>
+            <Patients />
             <TrackerDataEntry source={events}>
                 <SpreadsheetGrid />
             </TrackerDataEntry>

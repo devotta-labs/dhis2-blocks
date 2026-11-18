@@ -138,7 +138,7 @@ const checkInstall = (workDirectory: string): void => {
         fail(1, 'shadcn build produced no item JSON')
     }
 
-    step('3a. Install standalone UI items and Calendar without Working List')
+    step('3a. Install standalone UI items and Calendar without Patient List')
     const uiAppDirectory = join(workDirectory, 'ui-app')
     cpSync(CONSUMER_TEMPLATE, uiAppDirectory, { recursive: true })
     cpSync(
@@ -172,8 +172,12 @@ const checkInstall = (workDirectory: string): void => {
         ],
         REPO_ROOT
     )
-    if (existsSync(join(uiAppDirectory, 'src', 'components', 'working-list'))) {
-        fail(3, 'Calendar must install without Working List')
+    if (
+        ['patient-list', 'data-table'].some((name) =>
+            existsSync(join(uiAppDirectory, 'src', 'components', name))
+        )
+    ) {
+        fail(3, 'Calendar must install without Patient List or Data Table')
     }
     run('pnpm', ['exec', 'tsc', '--noEmit'], uiAppDirectory)
     run('pnpm', ['exec', 'vite', 'build'], uiAppDirectory)
@@ -187,7 +191,8 @@ const checkInstall = (workDirectory: string): void => {
             'exec',
             'shadcn',
             'add',
-            join(registryOutput, 'working-list.json'),
+            join(registryOutput, 'data-table.json'),
+            join(registryOutput, 'patient-list.json'),
             join(registryOutput, 'calendar.json'),
             join(registryOutput, 'context-selector.json'),
             join(registryOutput, 'sidebar.json'),
@@ -207,14 +212,12 @@ const checkInstall = (workDirectory: string): void => {
     )
 
     cpSync(
-        join(REPO_ROOT, 'apps/docs/src/examples/working-list/ListCalendar.tsx'),
-        join(appDirectory, 'src/ListCalendar.tsx')
+        join(
+            REPO_ROOT,
+            'apps/docs/src/examples/patient-list/PatientCalendar.tsx'
+        ),
+        join(appDirectory, 'src/PatientCalendar.tsx')
     )
-    if (
-        existsSync(join(appDirectory, 'src/components/working-list-calendar'))
-    ) {
-        fail(3, 'Working List + Calendar must not install the removed adapter')
-    }
 
     step('4. No files land in components/ui')
     if (existsSync(join(appDirectory, 'src', 'components', 'ui'))) {

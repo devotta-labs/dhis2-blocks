@@ -1,0 +1,473 @@
+---
+title: Patient List
+description: List the people in a program and organisation unit, with columns and filters you define.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+Patient List shows the tracked entities in one program and one organisation
+unit on the [Data Table](/blocks/data-table). You choose the columns, how each
+value is shown and which filters exist; the block asks DHIS2 only for the
+rows, one page at a time. Sorting, filters and paging go to the server.
+
+<ExampleCard slug="patient-list/default" />
+
+The examples use the Sierra Leone demo data.
+
+```tsx
+const list = usePatientList({
+    program: 'IpHINAT79UW',
+    orgUnit: 'DiszpKrYNg8',
+    columns,
+    filters,
+})
+return <PatientList list={list} onRowOpen={(row) => open(row.trackedEntity)} />
+```
+
+Define `columns` and `filters` outside the component, or in a `useMemo`, so
+they stay the same between renders. The list keeps sorting, filters and
+pagination itself, starting from `initialState` (15 rows a page unless you set
+it). A new sort or filter, program or organisation unit goes back to the first
+page; a new program or organisation unit also clears the selection.
+
+## Columns
+
+`attributeColumn(uid, options)` shows one attribute's stored value.
+`fieldColumn(field, options)` shows a field of the tracked entity or its
+enrollment in the program: `createdAt`, `updatedAt`, `enrolledAt`,
+`occurredAt`, `enrollmentStatus`, `orgUnit`, `inactive` or `trackedEntity`.
+
+```tsx
+import { formatDhis2Value } from '@/components/dhis2-value-display'
+import { attributeColumn, fieldColumn } from '@/components/patient-list'
+
+const columns = [
+    attributeColumn('w75KJ2mc4zz', { header: 'First name' }),
+    attributeColumn('zDhUuAYrxNC', { header: 'Last name' }),
+    fieldColumn('enrolledAt', {
+        header: 'Enrolled',
+        nowrap: true,
+        format: (value) =>
+            formatDhis2Value(
+                value,
+                { valueType: 'DATE' },
+                { calendar: 'iso8601' }
+            ),
+    }),
+]
+```
+
+Values are shown as stored. `format(value, row)` returns what the cell shows,
+so dates, option names and badges are yours to choose. `formatDhis2Value`
+from the `dhis2-value-display` block formats any DHIS2 value type in your
+instance's calendar.
+
+A column's id is the tracker `order` field, so sorting a column asks the
+server to order by it. Attribute columns and `createdAt`, `updatedAt`,
+`enrolledAt`, `inactive` and `trackedEntity` sort by default; `occurredAt`,
+`enrollmentStatus` and `orgUnit` do not. Set `sortable` to change that.
+Without a sort the list uses `defaultOrder` (`['createdAt:desc']`).
+
+For anything else, such as row actions or a value built from several
+attributes, write a column with `patientListColumn`, the data table column
+helper for `PatientListRow`.
+
+## Filters
+
+Each filter factory returns a data table filter with a `toQuery` that turns
+the applied value into tracker query parameters. Values are escaped: `/`, `:`
+and `,` get a leading `/`.
+
+- `attributeTextFilter`: `filter=A:like:v` (contains), `A:eq:v` (equals) or
+  `A:sw:v` (starts with); `A:null` (empty) and `A:!null` (not empty). It offers
+  "contains" unless you pass `operators`.
+- `attributeNumberFilter` and `attributeDateFilter`: `filter=A:ge:from:le:to`,
+  or the one bound that is set.
+- `attributeOptionsFilter`: `filter=A:eq:v` for one value, `A:in:v1;v2` for
+  several.
+- `attributeBooleanFilter`: `filter=A:eq:true` or `A:eq:false`.
+- `enrollmentStatusFilter`: `enrollmentStatus` (Active, Completed, Cancelled).
+- `enrollmentDateFilter` with `field: 'enrolledAt'` or `'occurredAt'`:
+  `enrollmentEnrolledAfter` and `enrollmentEnrolledBefore`, or
+  `enrollmentOccurredAfter` and `enrollmentOccurredBefore`.
+
+```tsx
+const filters = [
+    attributeTextFilter({
+        attribute: 'w75KJ2mc4zz',
+        label: 'First name',
+        pinned: true,
+    }),
+    attributeTextFilter({ attribute: 'zDhUuAYrxNC', label: 'Last name' }),
+    enrollmentStatusFilter({ pinned: true }),
+    enrollmentDateFilter({ field: 'enrolledAt', label: 'Enrolled' }),
+]
+```
+
+A pinned filter always shows as a chip; the others are offered under
+"Filter". For a filter the factories don't cover, write a data table `custom`
+filter with a `toQuery` of your own:
+
+```tsx
+import type { PatientListFilter } from '@/components/patient-list'
+
+const followUp: PatientListFilter = {
+    id: 'followUp',
+    kind: 'custom',
+    label: 'Follow-up',
+    Control: ({ value, onChange }) => (
+        <button
+            type="button"
+            onClick={() => onChange(value ? undefined : 'true')}
+        >
+            {value ? 'Show everyone' : 'Only marked for follow-up'}
+        </button>
+    ),
+    summarize: () => 'Marked for follow-up',
+    toQuery: (value) =>
+        value.kind === 'custom' ? { params: { followUp: value.value } } : {},
+}
+```
+
+`params` cannot replace a parameter the block sets itself. To narrow every
+request, whatever the user applies, pass `baseQuery`, for example
+`baseQuery: { enrollmentStatus: 'ACTIVE' }`.
+
+## Use your program's metadata
+
+The block never reads program metadata and never guesses a column or a
+filter. Your app reads what it needs, decides what to show, and passes the
+result as `columns` and `filters`. This example lists the attributes a program
+marks "Display in list", and gives each one a filter that suits its value
+type.
+
+<ExampleCard slug="patient-list/from-metadata" />
+
+Build the columns and filters in a `useMemo` that depends on the metadata, and
+key the component that calls `usePatientList` by program, so a new program
+starts with a fresh list.
+
+## Custom layout
+
+Children replace the default layout (filters, column settings, rows and
+pagination). Compose the [Data Table](/blocks/data-table) parts instead. There
+is no search box: the tracker API has no search across all attributes, so use
+filters.
+
+```tsx
+import { DropdownMenuItem } from '@/components/dhis2/ui/dropdown-menu'
+import {
+    DataTableContent,
+    DataTableDensityToggle,
+    DataTableFilters,
+    DataTablePagination,
+    DataTableRowActions,
+    DataTableSelectionBar,
+    DataTableToolbar,
+    dataTableSelectionColumn,
+} from '@/components/data-table'
+import {
+    PATIENT_LIST_PAGE_SIZES,
+    PatientList,
+    attributeColumn,
+    patientListColumn,
+    usePatientList,
+    type PatientListRow,
+} from '@/components/patient-list'
+
+const columns = [
+    dataTableSelectionColumn<PatientListRow>(),
+    attributeColumn('w75KJ2mc4zz', { header: 'First name' }),
+    attributeColumn('zDhUuAYrxNC', { header: 'Last name' }),
+    patientListColumn.display({
+        id: 'actions',
+        size: 56,
+        enableHiding: false,
+        header: () => <span className="sr-only">Actions</span>,
+        cell: ({ row }) => (
+            <DataTableRowActions label="Actions">
+                <DropdownMenuItem
+                    onClick={() => openDashboard(row.original.trackedEntity)}
+                >
+                    Open dashboard
+                </DropdownMenuItem>
+            </DataTableRowActions>
+        ),
+    }),
+]
+
+export const ReferralList = () => {
+    const list = usePatientList({
+        program: 'IpHINAT79UW',
+        orgUnit: 'DiszpKrYNg8',
+        columns,
+        filters,
+    })
+    return (
+        <PatientList list={list} defaultDensity="compact">
+            <DataTableToolbar>
+                <DataTableFilters filters={list.filters} />
+                <DataTableDensityToggle />
+            </DataTableToolbar>
+            <DataTableSelectionBar>
+                {(ids) => (
+                    <button type="button" onClick={() => refer(ids)}>
+                        Refer
+                    </button>
+                )}
+            </DataTableSelectionBar>
+            <DataTableContent
+                stickyHeader
+                maxHeight={600}
+                onRowOpen={(row) => openDashboard(row.original.trackedEntity)}
+            />
+            <DataTablePagination pageSizes={PATIENT_LIST_PAGE_SIZES} />
+        </PatientList>
+    )
+}
+```
+
+The selection holds tracked entity ids. With your own children, pass
+`onRowOpen` to `DataTableContent`; on `PatientList` it applies to the default
+layout only.
+
+## Calendar view
+
+Show the same list on the [Calendar](/blocks/calendar) by enrollment date,
+and switch between table and calendar without losing the filters.
+
+<ExampleCard slug="patient-list/calendar" />
+
+`PatientCalendar` is a recipe, not part of the block: copy it from the
+example's Code tab and change its labels and colours. It takes the list's
+`query`, keeps its program, organisation unit and filters, and asks for the
+weeks in view with `usePatientListQuery`. Each tracked entity is a record on
+its enrollment date (`dateField="occurredAt"` uses the incident date), coloured
+by its enrollment status.
+
+It loads up to 1,000 records for the weeks in view, in one request, and the
+calendar says so when there are more; set `limit` to change that. It reads
+dates as ISO (Gregorian) dates, so it suits instances on the ISO calendar
+only. Install the [Calendar](/blocks/calendar) block too.
+
+## Rows without the table
+
+`usePatientListQuery(query, options)` returns the TanStack Query result for
+one page, without a table, for a summary card or a list of your own:
+
+```tsx
+const { data } = usePatientListQuery({
+    program: 'IpHINAT79UW',
+    orgUnit: 'DiszpKrYNg8',
+    page: 1,
+    pageSize: 5,
+    order: ['enrolledAt:desc'],
+})
+// data?.rows, data?.hasNextPage
+```
+
+`patientListQueryOptions(engine, baseUrl, apiVersion, query)` gives the same
+query to `useQueries`, `prefetchQuery` or `ensureQueryData`. Pages stay fresh
+for 20 seconds, keyed by server, API version and request parameters. After a
+change that affects a list, such as a new enrollment, invalidate them all:
+
+```ts
+queryClient.invalidateQueries({ queryKey: patientListKeys.all })
+```
+
+## State in the URL
+
+Control a slice by passing both `state.<slice>` and its `on…Change`. Here the
+page and page size live in the URL, so a reload or a shared link opens the
+same page:
+
+```tsx
+import { useSearchParams } from 'react-router-dom'
+
+export const ChildProgrammeList = () => {
+    const [search, setSearch] = useSearchParams()
+    const pagination = {
+        pageIndex: Number(search.get('page') ?? '1') - 1,
+        pageSize: Number(search.get('pageSize') ?? '15'),
+    }
+    const list = usePatientList({
+        program: 'IpHINAT79UW',
+        orgUnit: 'DiszpKrYNg8',
+        columns,
+        filters,
+        state: { pagination },
+        onPaginationChange: (updater) => {
+            const next =
+                updater instanceof Function ? updater(pagination) : updater
+            setSearch({
+                page: String(next.pageIndex + 1),
+                pageSize: String(next.pageSize),
+            })
+        },
+    })
+    return <PatientList list={list} />
+}
+```
+
+Sorting and column filters work the same way, with `state.sorting` and
+`onSortingChange`, and `state.columnFilters` and `onColumnFiltersChange`.
+
+## Add to your app
+
+<InstallCommand item="patient-list" />
+
+It brings the [Data Table](/blocks/data-table) with it. For the calendar view,
+also install Calendar:
+
+<InstallCommand item="calendar" />
+
+Patient List reads through the DHIS2 app runtime (`useDataEngine` and
+`useConfig`) and TanStack Query, so render it inside your app's
+`QueryClientProvider`. It works with DHIS2 2.41 and later. On 2.41 the
+enrollment status is sent as `programStatus`, and a full page is taken to mean
+there is another; the empty and not-empty text operators need 2.42.
+
+## Coming from Working List
+
+Working List was removed; Patient List replaces it.
+
+- Columns and filters were derived from the program's metadata; now you
+  declare them, or build them from metadata in your app as in
+  [Use your program's metadata](#use-your-program-s-metadata).
+- Saved views are gone. Capture the table's state with
+  `getDataTableViewState(list.table)` and keep the `DataTableViewState`
+  wherever your app stores preferences, such as the data store; start from one
+  with `initialState: dataTableViewInitialState(view)`.
+- Event lists, data-quality highlighting and metadata-derived columns are not
+  part of this block.
+- The calendar is now the `PatientCalendar` recipe in
+  [Calendar view](#calendar-view).
+
+[Try the playground](/playground/patient-list) to see the list with
+different options, page sizes and server answers.
+
+## API reference
+
+### usePatientList(options)
+
+Every `useDataTable` option except `data`, `mode`, `getRowId` and `rowCount`,
+and:
+
+- `program: string` — **required.** The tracker program.
+- `orgUnit: string` — **required.** The organisation unit.
+- `orgUnitMode?: 'SELECTED' | 'CHILDREN' | 'DESCENDANTS' | 'ACCESSIBLE' | 'CAPTURE'`
+  — default `'SELECTED'`.
+- `columns` — **required.** Columns from `attributeColumn`, `fieldColumn` and
+  `patientListColumn`. Keep the array stable.
+- `filters?: readonly PatientListFilter[]` — the filters the user can apply.
+  Keep the array stable.
+- `baseQuery?: PatientListFilterQuery` — sent with every request, before the
+  user's filters.
+- `defaultOrder?: readonly string[]` — the order while nothing is sorted.
+  Default `['createdAt:desc']`.
+- `enabled?: boolean` — default `true`. While `false` nothing is requested.
+- `initialState`, `state` and the `on…Change` callbacks — as on the data
+  table. A slice is controlled only when `state.<slice>` is passed.
+
+It returns a `PatientListController`:
+
+- `table` — the data table instance.
+- `filters` — the filters, for `DataTableFilters`.
+- `status: 'loading' | 'updating' | 'ready' | 'error'` and
+  `error: Error | null`.
+- `hasNextPage: boolean`.
+- `refetch: () => void`.
+- `query: PatientListQuery` — the query for the page being shown.
+
+`PATIENT_LIST_PAGE_SIZES` is `[10, 15, 25, 50, 100]`, the page sizes the
+default layout offers.
+
+### PatientList
+
+Every `DataTable` prop except `table`, `status`, `error`, `onRetry`,
+`hasNextPage` and `children`, such as `density`, `defaultDensity`,
+`onDensityChange` and `layout`, and:
+
+- `list: PatientListController` — **required.** From `usePatientList`.
+- `label?: string` — the table's accessible name. Default "Patient list".
+- `onRowOpen?: (row: PatientListRow) => void` — called when a row is opened,
+  in the default layout.
+- `children?: ReactNode` — replaces the default layout.
+
+A failed request shows the server's message when it sent one, with a retry
+button. The root element has `data-block="patient-list"`.
+
+### Columns
+
+- `attributeColumn(attribute: string, options)` — one attribute's value.
+- `fieldColumn(field: PatientListField, options)` — `createdAt`, `updatedAt`,
+  `enrolledAt`, `occurredAt`, `enrollmentStatus`, `orgUnit`, `inactive` or
+  `trackedEntity`.
+- `patientListColumn` — the data table column helper for `PatientListRow`.
+
+`PatientListColumnOptions`:
+
+- `header: string` — **required.**
+- `format?: (value: string | undefined, row: PatientListRow) => ReactNode` —
+  the cell content. Default: the stored value as text.
+- `sortable?: boolean` — default `true` for attributes and the fields the
+  server can order by.
+- `align?: 'start' | 'center' | 'end'`.
+- `nowrap?: boolean`.
+- `size?: number` — the column width in pixels.
+
+### Filters
+
+Each takes `label: string` and `pinned?: boolean`; the attribute filters also
+take `attribute: string`.
+
+- `attributeTextFilter({ attribute, label, pinned, operators?, placeholder? })`
+  — `operators` from `contains`, `equals`, `startsWith`, `empty`, `notEmpty`.
+- `attributeNumberFilter({ attribute, label, pinned, min?, max?, step? })`.
+- `attributeDateFilter({ attribute, label, pinned })`.
+- `attributeOptionsFilter({ attribute, label, pinned, options, multiple? })` —
+  `options` as `{ value, label }`, where `value` is the option code.
+- `attributeBooleanFilter({ attribute, label, pinned, trueLabel?, falseLabel? })`.
+- `enrollmentStatusFilter({ label?, pinned? })` — label default "Enrollment
+  status"; its id is `enrollmentStatus`.
+- `enrollmentDateFilter({ field, label, pinned })` — `field` is `enrolledAt`
+  or `occurredAt`, which is also its id.
+- `toPatientListFilterQuery(filters, columnFilters, baseQuery?)` — the query
+  parts of `baseQuery` and every applied filter.
+
+`PatientListFilter` is a data table filter with
+`toQuery: (value: DataTableFilterValue) => PatientListFilterQuery`.
+
+### Query and rows
+
+- `usePatientListQuery(query, { enabled?, keepPrevious? })` — one page as a
+  TanStack Query result. `keepPrevious` (default `true`) keeps the previous
+  page while the next one loads.
+- `patientListQueryOptions(engine, baseUrl, apiVersion, query)` — the same
+  query's options. `patientListKeys.all` is the key every page starts with.
+- `toTrackerParams(query, apiVersion)` — the request parameters;
+  `PATIENT_LIST_FIELDS` is the `fields` it asks for.
+- `PatientListRequestError` — a failed request, with the server's message.
+
+`PatientListFilterQuery`:
+
+- `filters?: readonly string[]` — tracker `filter` entries,
+  `<attribute>:<operator>:<value>`.
+- `enrollmentStatus?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'`.
+- `enrolledAfter?`, `enrolledBefore?`, `occurredAfter?`,
+  `occurredBefore?: string` — inclusive ISO dates.
+- `params?: Record<string, string>` — any other parameters, sent as given.
+
+`PatientListQuery` adds `program`, `orgUnit`, `orgUnitMode?`, `page` (from 1),
+`pageSize` and `order?` (`<field>:<asc|desc>` entries).
+
+`PatientListPage` is `{ rows: PatientListRow[], hasNextPage: boolean }`.
+`PatientListRow`:
+
+- `trackedEntity: string`.
+- `orgUnit?`, `createdAt?`, `updatedAt?: string`.
+- `inactive: boolean`.
+- `attributes: Record<string, string>` — values by attribute uid.
+- `enrollment?: PatientListEnrollment` — the enrollment in the list's program:
+  `enrollment`, `status`, `enrolledAt?`, `occurredAt?`, `orgUnit?`.

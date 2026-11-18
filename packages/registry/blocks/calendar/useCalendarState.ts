@@ -14,7 +14,7 @@ export type CalendarSystem = keyof typeof PICKER_CALENDARS
 
 // useDatePicker maps DHIS2 calendar ids at runtime, but its types accept only
 // Temporal ids and the library does not export its map.
-export const PICKER_CALENDARS = {
+const PICKER_CALENDARS = {
     coptic: 'coptic',
     ethiopian: 'ethiopic',
     gregorian: 'gregory',

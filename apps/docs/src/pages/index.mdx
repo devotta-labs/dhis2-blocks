@@ -13,8 +13,8 @@ command that installs the block.
 
 ## Blocks
 
-- [Working List](/blocks/working-list) — a filtered, sortable list for finding
-  and reviewing tracker records, with saved views.
+- [Patient List](/blocks/patient-list) — a tracked entity list with your own
+  columns and filters.
 - [Context Selector](/blocks/context-selector) — the Capture-style bar for
   choosing a program, organisation unit, and the rest of the working context.
 - [Sidebar](/blocks/sidebar) — navigation with expandable groups, footer
@@ -34,7 +34,7 @@ command that installs the block.
 2. Set up Tailwind CSS and shadcn, then add a block:
 
     ```bash
-    pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
+    pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/patient-list
     ```
 
 3. Import it from your components folder and render it.
@@ -44,8 +44,9 @@ command that installs the block.
 ## Using an AI coding agent
 
 The commands and code on these pages are complete and can be followed as
-written. A prompt such as _"Install the DHIS2 Blocks Working List from
-`devotta-labs/dhis2-blocks/working-list` with the shadcn CLI and render it for
-program `IpHINAT79UW` in organisation unit `y77LiPqLMoq`"_ gives an agent
+written. A prompt such as _"Install the DHIS2 Blocks Patient List from
+`devotta-labs/dhis2-blocks/patient-list` with the shadcn CLI and render it for
+program `IpHINAT79UW` in organisation unit `DiszpKrYNg8`, with columns for the
+first and last name"_ gives an agent
 everything it needs. After installation, the block's source in your
 project is the most accurate reference for its API.

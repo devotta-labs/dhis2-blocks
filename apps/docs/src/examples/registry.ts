@@ -2,6 +2,14 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import dataTableBasicSource from './data-table/DataTableBasic.tsx?raw'
+import dataTableFilteringSource from './data-table/DataTableFiltering.tsx?raw'
+import dataTableGroupingSource from './data-table/DataTableGrouping.tsx?raw'
+import dataTableRowDetailSource from './data-table/DataTableRowDetail.tsx?raw'
+import dataTableSelectionSource from './data-table/DataTableSelection.tsx?raw'
+import dataTableServerSource from './data-table/DataTableServer.tsx?raw'
+import dataTableVirtualSource from './data-table/DataTableVirtual.tsx?raw'
+import facilitiesSource from './data-table/facilities.ts?raw'
 import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
 import valueInputKindsSource from './dhis2-value-input/ValueInputKinds.tsx?raw'
 import { fieldExamples } from './fieldExamples'
@@ -9,14 +17,11 @@ import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPla
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
 import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
 import { PersonBannerPlaceholder } from './tracked-entity-header/TrackedEntityHeaderPlaceholders'
-import {
-    WorkingListDefaultPlaceholder,
-    WorkingListProgramPickerPlaceholder,
-} from './working-list/WorkingListPlaceholders'
-import workingListDefaultSource from './working-list/WorkingListDefault.tsx?raw'
-import workingListProgramPickerSource from './working-list/WorkingListProgramPicker.tsx?raw'
-import workingListCalendarTabsSource from './working-list/WorkingListCalendarTabs.tsx?raw'
-import listCalendarSource from './working-list/ListCalendar.tsx?raw'
+import patientCalendarSource from './patient-list/PatientCalendar.tsx?raw'
+import patientListCalendarTabsSource from './patient-list/PatientListCalendarTabs.tsx?raw'
+import patientListDefaultSource from './patient-list/PatientListDefault.tsx?raw'
+import patientListFromMetadataSource from './patient-list/PatientListFromMetadata.tsx?raw'
+import { PatientListPlaceholder } from './patient-list/PatientListPlaceholders'
 import alertVariantsSource from './ui/AlertVariants.tsx?raw'
 import badgeStatusSource from './ui/BadgeStatus.tsx?raw'
 import buttonVariantsSource from './ui/ButtonVariants.tsx?raw'
@@ -87,6 +92,15 @@ export interface ExampleDefinition {
     Placeholder?: ComponentType
 }
 
+/** A data table example's Code tab: its own file and the facilities it lists. */
+const dataTableSources = (name: string, code: string) => ({
+    source: code,
+    sourceFiles: [
+        { name, code },
+        { name: 'facilities.ts', code: facilitiesSource },
+    ],
+})
+
 const examples = [
     {
         slug: 'calendar/visits',
@@ -113,40 +127,94 @@ const examples = [
         minHeight: 360,
     },
     {
-        slug: 'working-list/default',
-        title: 'Default Working List',
-        live: true,
-        Component: lazy(() => import('./working-list/WorkingListDefault')),
-        source: workingListDefaultSource,
-        minHeight: 730,
-        Placeholder: WorkingListDefaultPlaceholder,
+        slug: 'data-table/basic',
+        title: 'Sortable, paginated table',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableBasic')),
+        ...dataTableSources('DataTableBasic.tsx', dataTableBasicSource),
+        minHeight: 620,
     },
     {
-        slug: 'working-list/program-picker',
-        title: 'Metadata-driven Working List',
-        live: true,
-        Component: lazy(
-            () => import('./working-list/WorkingListProgramPicker')
-        ),
-        source: workingListProgramPickerSource,
-        minHeight: 730,
-        Placeholder: WorkingListProgramPickerPlaceholder,
+        slug: 'data-table/filtering',
+        title: 'Search and filters',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableFiltering')),
+        ...dataTableSources('DataTableFiltering.tsx', dataTableFilteringSource),
+        minHeight: 700,
     },
     {
-        slug: 'working-list/calendar',
-        title: 'Working List as a calendar',
+        slug: 'data-table/selection',
+        title: 'Selection, actions and column settings',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableSelection')),
+        ...dataTableSources('DataTableSelection.tsx', dataTableSelectionSource),
+        minHeight: 720,
+    },
+    {
+        slug: 'data-table/grouping',
+        title: 'Grouped rows with totals',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableGrouping')),
+        ...dataTableSources('DataTableGrouping.tsx', dataTableGroupingSource),
+        minHeight: 640,
+    },
+    {
+        slug: 'data-table/row-detail',
+        title: 'Expandable row details',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableRowDetail')),
+        ...dataTableSources('DataTableRowDetail.tsx', dataTableRowDetailSource),
+        minHeight: 640,
+    },
+    {
+        slug: 'data-table/server',
+        title: 'Server-side data',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableServer')),
+        ...dataTableSources('DataTableServer.tsx', dataTableServerSource),
+        minHeight: 680,
+    },
+    {
+        slug: 'data-table/virtual',
+        title: 'Ten thousand rows',
+        live: false,
+        Component: lazy(() => import('./data-table/DataTableVirtual')),
+        ...dataTableSources('DataTableVirtual.tsx', dataTableVirtualSource),
+        minHeight: 560,
+    },
+    {
+        slug: 'patient-list/default',
+        title: 'Patient list',
         live: true,
-        Component: lazy(() => import('./working-list/WorkingListCalendarTabs')),
-        source: workingListCalendarTabsSource,
+        Component: lazy(() => import('./patient-list/PatientListDefault')),
+        source: patientListDefaultSource,
+        minHeight: 730,
+        Placeholder: PatientListPlaceholder,
+    },
+    {
+        slug: 'patient-list/from-metadata',
+        title: 'Columns from program metadata',
+        live: true,
+        Component: lazy(() => import('./patient-list/PatientListFromMetadata')),
+        source: patientListFromMetadataSource,
+        minHeight: 760,
+        Placeholder: PatientListPlaceholder,
+    },
+    {
+        slug: 'patient-list/calendar',
+        title: 'Patient list as a calendar',
+        live: true,
+        Component: lazy(() => import('./patient-list/PatientListCalendarTabs')),
+        source: patientListCalendarTabsSource,
         sourceFiles: [
             {
-                name: 'WorkingListCalendarTabs.tsx',
-                code: workingListCalendarTabsSource,
+                name: 'PatientListCalendarTabs.tsx',
+                code: patientListCalendarTabsSource,
             },
-            { name: 'ListCalendar.tsx', code: listCalendarSource },
+            { name: 'PatientCalendar.tsx', code: patientCalendarSource },
         ],
         minHeight: 900,
-        Placeholder: WorkingListDefaultPlaceholder,
+        Placeholder: PatientListPlaceholder,
     },
     {
         slug: 'observation-cards/person-vitals',

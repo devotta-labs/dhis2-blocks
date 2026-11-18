@@ -1,6 +1,6 @@
 ---
 name: block-playground
-description: Add a block to the docs playground (/playground/<block>), or extend its lab, where the block runs against a fake DHIS2 with controllable delays, failures and data, and every request shows on a waterfall. Use when asked to make a playground, lab or test bench for a block (data entry, tracked-entity finder, working list, …), or to try a block's states without a real server.
+description: Add a block to the docs playground (/playground/<block>), or extend its lab, where the block runs against a fake DHIS2 with controllable delays, failures and data, and every request shows on a waterfall. Use when asked to make a playground, lab or test bench for a block (data entry, tracked-entity finder, patient list, …), or to try a block's states without a real server.
 ---
 
 # Block playground
@@ -23,10 +23,10 @@ parts and how to write the fake server. Then follow it:
 - Generate the data from settings in code; do not record fixtures.
 - Keep the fake server a plain function in its own file, with a Vitest test
   next to it.
-- Look at `apps/docs/src/playground/working-list/` for a full lab: one page
-  with two displays (`table/`, `calendar/`), each with generated data, many
-  presets, a live DHIS2 mode and a log of its callbacks. `table/` has a server
-  that honours filters and sort, and keeps what the block writes.
+- Look at `apps/docs/src/playground/tracked-entity-header/` for a full lab:
+  several canvases with generated data, many presets, a live DHIS2 mode and a
+  log of its callbacks. For a list, look at `patient-list/`: its server
+  honours paging, filters and sort, and its canvas logs the block's callbacks.
 
 Before finishing, run `pnpm dev:docs`, open `/playground/<block>` and check
 that the block renders, a failing endpoint shows its error, a hanging one shows

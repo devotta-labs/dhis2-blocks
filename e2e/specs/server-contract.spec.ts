@@ -133,27 +133,4 @@ test.describe('real DHIS2 server contract', () => {
         expect(response.ok()).toBe(true)
         expect(await response.text()).toContain(SEEDED_EVENT)
     })
-
-    test('provides both saved working-list metadata resources', async ({
-        dhis2,
-    }) => {
-        const trackedEntityLists = await dhis2.get(
-            '/api/trackedEntityInstanceFilters',
-            {
-                params: {
-                    filter: `program.id:eq:${SEEDED_PROGRAM}`,
-                    fields: 'id,displayName,entityQueryCriteria',
-                },
-            }
-        )
-        const stageLists = await dhis2.get('/api/programStageWorkingLists', {
-            params: {
-                filter: `program.id:eq:${SEEDED_PROGRAM}`,
-                fields: 'id,displayName,programStage,programStageQueryCriteria',
-            },
-        })
-
-        expect(trackedEntityLists.ok()).toBe(true)
-        expect(stageLists.ok()).toBe(true)
-    })
 })

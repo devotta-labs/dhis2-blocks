@@ -37,6 +37,47 @@ export const OrganisationUnitsResponseSchema = z
     })
     .passthrough()
 
+export const TrackerProgramsResponseSchema = z
+    .object({
+        programs: z.array(
+            z
+                .object({
+                    id: z.string().min(1),
+                    displayName: z.string(),
+                    programType: z.string(),
+                    style: z
+                        .object({
+                            color: z.string().optional(),
+                            icon: z.string().optional(),
+                        })
+                        .passthrough()
+                        .optional(),
+                    organisationUnits: z
+                        .array(
+                            z
+                                .object({
+                                    id: z.string().min(1),
+                                    displayName: z.string(),
+                                    path: z.string().min(1),
+                                })
+                                .passthrough()
+                        )
+                        .optional(),
+                    access: z
+                        .object({
+                            data: z
+                                .object({ read: z.boolean().optional() })
+                                .passthrough()
+                                .optional(),
+                        })
+                        .passthrough()
+                        .optional(),
+                })
+                .passthrough()
+        ),
+    })
+    .passthrough()
+
 export const AppRuntimeConfigSchema = z
     .object({
         apiVersion: z.coerce.number().int().positive(),

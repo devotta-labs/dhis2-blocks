@@ -1,0 +1,5 @@
+{
+    "title": "Data Table",
+    "description": "A composable data table on TanStack Table with sorting, filters, pagination, selection, column settings, pinning, resizing, grouping and virtual rows.",
+    "docs": "Define columns with createDataTableColumnHelper and create the table with useDataTable, in client or server mode. Wrap the parts in DataTable: DataTableToolbar with DataTableSearch, DataTableFilters and DataTableColumnSettings, then DataTableContent and DataTablePagination. The table never reads DHIS2 metadata: columns, cell formatters and filters are yours. In server mode, read sorting, filters and pagination from the table state, run your own query, and pass status and hasNextPage to DataTable. See the data table docs page for examples."
+}

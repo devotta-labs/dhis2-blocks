@@ -56,7 +56,8 @@
             "entry": [
                 "d2.config.js",
                 "src/AppWrapper.tsx",
-                "src/workingListTranslationCatalog.ts",
+                "src/dataTableTranslationCatalog.ts",
+                "src/patientListTranslationCatalog.ts",
                 "src/sidebarTranslationCatalog.ts",
                 "src/dataEntryTranslationCatalog.ts",
                 "src/trackedEntityFinderTranslationCatalog.ts",
@@ -82,7 +83,15 @@
                     "enumMembers",
                     "namespaceMembers"
                 ],
-                "src/workingListTranslationCatalog.ts": [
+                "src/dataTableTranslationCatalog.ts": [
+                    "exports",
+                    "types",
+                    "nsExports",
+                    "nsTypes",
+                    "enumMembers",
+                    "namespaceMembers"
+                ],
+                "src/patientListTranslationCatalog.ts": [
                     "exports",
                     "types",
                     "nsExports",

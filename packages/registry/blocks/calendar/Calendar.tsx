@@ -143,7 +143,7 @@ const ReadyCalendar = (props: CalendarProps) => {
     )
 }
 
-/** A calendar for any dated records. No data provider or Working List required. */
+/** A calendar for any dated records. No data provider required. */
 export const Calendar = ({
     calendar = 'gregorian',
     ...props

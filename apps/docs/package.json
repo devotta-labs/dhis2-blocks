@@ -41,7 +41,6 @@
         "typeface-roboto": "^1.1.13"
     },
     "devDependencies": {
-        "@dhis2/multi-calendar-dates": "3.2.1",
         "@mdx-js/rollup": "^3.1.1",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.3.3",
@@ -51,7 +50,6 @@
         "@types/react-dom": "^18.3.7",
         "@vitejs/plugin-react": "^5.1.1",
         "@vitest/browser-playwright": "4.1.11",
-        "better-result": "^3.0.1",
         "playwright": "1.62.1",
         "remark-frontmatter": "^5.0.0",
         "remark-mdx-frontmatter": "^5.2.0",

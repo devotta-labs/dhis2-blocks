@@ -1,0 +1,5 @@
+{
+    "title": "DHIS2 Patient List",
+    "description": "A tracked entity list for one program and organisation unit, on the data table, with columns, formatters and filters you define.",
+    "docs": "Call usePatientList with a program, an organisation unit, your columns (attributeColumn, fieldColumn) and your filters (attributeTextFilter, enrollmentStatusFilter and others), then render PatientList with the result. Nothing is read from program metadata: you name each attribute uid, give it a header and a format function, and each filter states the tracker query parameters it produces. Compose the data table parts inside PatientList for a custom layout, or use usePatientListQuery alone for the rows. Needs the DHIS2 app runtime and a TanStack QueryClient. See the patient list docs page for examples."
+}

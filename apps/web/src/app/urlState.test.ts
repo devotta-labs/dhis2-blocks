@@ -1,26 +1,18 @@
-import {
-    isGuardedAppUrlTransition,
-    parseAppUrlState,
-    serializeAppUrlState,
-    type AppUrlState,
-} from './urlState'
+import { parseAppUrlState, serializeAppUrlState } from './urlState'
 
 describe('URL state privacy boundary', () => {
-    it('serializes only context, selected view, and pagination preferences', () => {
+    it('serializes only context and pagination preferences', () => {
         expect(
             serializeAppUrlState({
                 programId: 'IpHINAT79UW',
                 orgUnitId: 'DiszpKrYNg8',
-                selectedTemplateId: 'active',
                 page: 2,
                 pageSize: 25,
             })
-        ).toBe(
-            'programId=IpHINAT79UW&orgUnitId=DiszpKrYNg8&selectedTemplateId=active&page=2&pageSize=25'
-        )
+        ).toBe('programId=IpHINAT79UW&orgUnitId=DiszpKrYNg8&page=2&pageSize=25')
     })
 
-    it('omits an absent selected view', () => {
+    it('omits an absent organisation unit', () => {
         expect(
             serializeAppUrlState({
                 programId: 'IpHINAT79UW',
@@ -42,6 +34,25 @@ describe('URL state privacy boundary', () => {
         expect(JSON.stringify(parsed)).not.toContain('secret')
     })
 
+    it('ignores a saved-list key left in an old URL', () => {
+        expect(
+            parseAppUrlState(
+                new URLSearchParams(
+                    'programId=IpHINAT79UW&selectedTemplateId=x&page=2'
+                )
+            )
+        ).toEqual({ programId: 'IpHINAT79UW', page: 2 })
+    })
+
+    it('accepts only the patient list page sizes', () => {
+        expect(
+            parseAppUrlState(new URLSearchParams('pageSize=100')).pageSize
+        ).toBe(100)
+        expect(() =>
+            parseAppUrlState(new URLSearchParams('pageSize=20'))
+        ).toThrow()
+    })
+
     it('fails fast when a known URL preference is malformed', () => {
         expect(() =>
             parseAppUrlState(
@@ -57,36 +68,5 @@ describe('URL state privacy boundary', () => {
         expect(() =>
             parseAppUrlState(new URLSearchParams('orgUnitId='))
         ).toThrow()
-    })
-
-    it('guards external program and list changes, but not OU or paging', () => {
-        const current: AppUrlState = {
-            programId: 'Program0001',
-            orgUnitId: 'OrgUnit0001',
-            selectedTemplateId: 'List0000001',
-            page: 1,
-            pageSize: 15,
-        }
-
-        expect(
-            isGuardedAppUrlTransition(current, {
-                ...current,
-                programId: 'Program0002',
-            })
-        ).toBe(true)
-        expect(
-            isGuardedAppUrlTransition(current, {
-                ...current,
-                selectedTemplateId: 'List0000002',
-            })
-        ).toBe(true)
-        expect(
-            isGuardedAppUrlTransition(current, {
-                ...current,
-                orgUnitId: 'OrgUnit0002',
-                page: 4,
-                pageSize: 50,
-            })
-        ).toBe(false)
     })
 })

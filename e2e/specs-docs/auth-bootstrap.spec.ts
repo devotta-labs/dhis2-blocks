@@ -1,4 +1,12 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+import { resultRows } from './fixtures'
+
+// The Patient List page has three live examples: the default list, the list
+// built from metadata, and the calendar, which shows no table rows.
+const LIVE_EXAMPLES = 3
+const TABLE_ROWS = 20
+
+const patientLists = (page: Page) => page.locator('[data-block="patient-list"]')
 
 test.describe('preview authentication bootstrap', () => {
     test('loads the inline previews without ever mounting a login dialog', async ({
@@ -37,13 +45,14 @@ test.describe('preview authentication bootstrap', () => {
             }).observe(document, { childList: true, subtree: true })
         })
 
-        await page.goto('/blocks/working-list')
+        await page.goto('/blocks/patient-list')
 
-        const lists = page.getByTestId('working-list-main')
+        const lists = patientLists(page)
 
-        await expect(lists).toHaveCount(2)
-        await expect(lists.nth(0)).toBeVisible()
-        await expect(lists.nth(1)).toBeVisible()
+        await expect(lists).toHaveCount(LIVE_EXAMPLES, { timeout: 30_000 })
+        for (const list of await lists.all()) {
+            await expect(list).toBeVisible()
+        }
         await expect(page.locator('html')).not.toHaveAttribute(
             'data-docs-login-mounted',
             'true'
@@ -66,11 +75,11 @@ test.describe('preview authentication bootstrap', () => {
             })
         )
 
-        await page.goto('/preview/working-list/default')
+        await page.goto('/preview/patient-list/default')
         await expect(
             page.getByRole('heading', { name: 'Please sign in' })
         ).toBeVisible()
-        await expect(page.getByTestId('working-list-main')).toHaveCount(0)
+        await expect(patientLists(page)).toHaveCount(0)
     })
 
     for (const failure of ['network', 'unavailable', 'unauthorized']) {
@@ -90,10 +99,10 @@ test.describe('preview authentication bootstrap', () => {
                 })
             })
 
-            await page.goto('/blocks/working-list')
+            await page.goto('/blocks/patient-list')
             await expect(
                 page.getByText('Live preview unavailable.', { exact: true })
-            ).toHaveCount(2)
+            ).toHaveCount(LIVE_EXAMPLES)
             await expect(
                 page.getByRole('heading', { name: 'Please sign in' })
             ).toHaveCount(0)
@@ -108,10 +117,13 @@ test.describe('preview authentication bootstrap', () => {
                 await surface
                     .getByRole('button', { name: 'Retry preview' })
                     .click()
-                await expect(
-                    surface.locator('[data-testid^="working-list-row-"]')
-                ).toHaveCount(10, { timeout: 30_000 })
             }
+            await expect(patientLists(page)).toHaveCount(LIVE_EXAMPLES, {
+                timeout: 30_000,
+            })
+            await expect(resultRows(page)).toHaveCount(TABLE_ROWS, {
+                timeout: 30_000,
+            })
             await expect(
                 page.getByText('Live preview unavailable.', { exact: true })
             ).toHaveCount(0)

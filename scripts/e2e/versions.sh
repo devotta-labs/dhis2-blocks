@@ -50,7 +50,7 @@ e2e_load_version() {
             ;;
     esac
 
-    E2E_COMPOSE_PROJECT="${E2E_COMPOSE_PROJECT:-working-list-e2e-${E2E_VERSION_SLUG}}"
+    E2E_COMPOSE_PROJECT="${E2E_COMPOSE_PROJECT:-dhis2-blocks-e2e-${E2E_VERSION_SLUG}}"
     E2E_DHIS2_URL="${E2E_DHIS2_URL:-http://127.0.0.1:${DHIS2_HTTP_PORT}}"
     # The app-platform development proxy emits CORS headers for localhost.
     # Keep the DHIS2 container host-only, while using that canonical browser

@@ -26,7 +26,7 @@ describe('EventsResponseSchema', () => {
 
     // events.v41.json is NOT a 2.41 recording: no reachable 2.41 instance was
     // available, so it is the dev recording with the envelope key renamed from
-    // `events` to `instances` (the legacy shape Working List also accepts).
+    // `events` to `instances`.
     it('parses the legacy 2.41 `instances` envelope to the same records', () => {
         expect(EventsResponseSchema.parse(fixture('events.v41.json'))).toEqual(
             EventsResponseSchema.parse(fixture('events.dev.json'))

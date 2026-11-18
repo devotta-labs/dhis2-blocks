@@ -6,8 +6,7 @@ import {
 import React, { useState } from 'react'
 import { render } from 'vitest-browser-react'
 import { ContextStatus } from '../AppShell/ContextStatus'
-import { WorkingListContextControls } from '../AppShell/WorkingListContextControls'
-import { DiscardChangesDialog } from '../DiscardChangesDialog'
+import { AppContextControls } from '../AppShell/AppContextControls'
 
 const ContextSelectorHarness = () => {
     const [programOpen, setProgramOpen] = useState(false)
@@ -16,7 +15,7 @@ const ContextSelectorHarness = () => {
     const [organisationUnit, setOrganisationUnit] = useState<string>()
 
     return (
-        <ContextSelector ariaLabel="Working list context">
+        <ContextSelector ariaLabel="Patient list context">
             <ProgramSelector
                 label="Program"
                 placeholder="Choose a program"
@@ -58,48 +57,6 @@ const ContextSelectorHarness = () => {
     )
 }
 
-const DirtyTransitionHarness = () => {
-    const [programOpen, setProgramOpen] = useState(false)
-    const [program, setProgram] = useState('Program0001')
-    const [dirty, setDirty] = useState(true)
-    const [pendingProgram, setPendingProgram] = useState<string>()
-
-    return (
-        <>
-            <ContextSelector ariaLabel="Working list context">
-                <ProgramSelector
-                    label="Program"
-                    placeholder="Choose a program"
-                    searchPlaceholder="Search for a program"
-                    options={[
-                        { value: 'Program0001', label: 'Program A' },
-                        { value: 'Program0002', label: 'Program B' },
-                    ]}
-                    value={program}
-                    open={programOpen}
-                    onOpenChange={setProgramOpen}
-                    onChange={(value) => {
-                        if (dirty) {
-                            setPendingProgram(value)
-                        } else {
-                            setProgram(value)
-                        }
-                    }}
-                />
-            </ContextSelector>
-            <DiscardChangesDialog
-                open={Boolean(pendingProgram)}
-                onCancel={() => setPendingProgram(undefined)}
-                onDiscard={() => {
-                    setDirty(false)
-                    setProgram(pendingProgram!)
-                    setPendingProgram(undefined)
-                }}
-            />
-        </>
-    )
-}
-
 const IncompatibleContextHarness = () => {
     const [program, setProgram] = useState<string | undefined>('Program0001')
     const [organisationUnit, setOrganisationUnit] = useState<
@@ -121,7 +78,7 @@ const IncompatibleContextHarness = () => {
 
     return (
         <>
-            <WorkingListContextControls
+            <AppContextControls
                 onClear={() => {
                     setProgram(undefined)
                     setOrganisationUnit(undefined)
@@ -162,58 +119,9 @@ const IncompatibleContextHarness = () => {
     )
 }
 
-const DirtyOrganisationUnitHarness = () => {
-    const [organisationUnitOpen, setOrganisationUnitOpen] = useState(false)
-    const [organisationUnit, setOrganisationUnit] = useState('Organisation A')
-    const [dirty, setDirty] = useState(true)
-    const [pendingTransition, setPendingTransition] = useState<() => void>()
-    const requestTransition = (proceed: () => void) => {
-        if (dirty) {
-            setPendingTransition(() => proceed)
-        } else {
-            proceed()
-        }
-    }
-
-    return (
-        <>
-            <ContextSelector ariaLabel="Working list context">
-                <OrganisationUnitSelector
-                    value={organisationUnit}
-                    open={organisationUnitOpen}
-                    onOpenChange={setOrganisationUnitOpen}
-                >
-                    <button
-                        type="button"
-                        onClick={(event) => {
-                            event.stopPropagation()
-                            event.preventDefault()
-                            setOrganisationUnitOpen(false)
-                            requestTransition(() =>
-                                setOrganisationUnit('Organisation B')
-                            )
-                        }}
-                    >
-                        Select Organisation B
-                    </button>
-                </OrganisationUnitSelector>
-            </ContextSelector>
-            <DiscardChangesDialog
-                open={Boolean(pendingTransition)}
-                onCancel={() => setPendingTransition(undefined)}
-                onDiscard={() => {
-                    setDirty(false)
-                    pendingTransition?.()
-                    setPendingTransition(undefined)
-                }}
-            />
-        </>
-    )
-}
-
-describe('working-list context-selector integration', () => {
+describe('app context-selector integration', () => {
     it('updates the program notice status and gives empty menus precedence over filtering', async () => {
-        const props: React.ComponentProps<typeof WorkingListContextControls> = {
+        const props: React.ComponentProps<typeof AppContextControls> = {
             onClear: vi.fn(),
             clearDisabled: false,
             programOptions: [{ value: 'Program0001', label: 'Program A' }],
@@ -234,7 +142,7 @@ describe('working-list context-selector integration', () => {
             organisationUnitDisabled: false,
             organisationUnitContent: null,
         }
-        const screen = await render(<WorkingListContextControls {...props} />)
+        const screen = await render(<AppContextControls {...props} />)
         const filteredNotice = screen.getByText(
             'Some programs are being filtered by the chosen organisation unit'
         )
@@ -246,16 +154,13 @@ describe('working-list context-selector integration', () => {
         expect(props.onShowAllPrograms).toHaveBeenCalledOnce()
 
         await screen.rerender(
-            <WorkingListContextControls
-                {...props}
-                programsAreFiltered={false}
-            />
+            <AppContextControls {...props} programsAreFiltered={false} />
         )
         await expect.element(filteredNotice).not.toBeInTheDocument()
         await expect.element(emptyNotice).not.toBeInTheDocument()
 
         await screen.rerender(
-            <WorkingListContextControls
+            <AppContextControls
                 {...props}
                 programOptions={[
                     {
@@ -276,7 +181,7 @@ describe('working-list context-selector integration', () => {
         await expect
             .element(
                 screen.getByRole('navigation', {
-                    name: 'Working list context',
+                    name: 'Patient list context',
                 })
             )
             .toBeVisible()
@@ -306,33 +211,6 @@ describe('working-list context-selector integration', () => {
                     name: /Organisation unit.*Ngelehun CHC/,
                 })
             )
-            .toBeVisible()
-    })
-
-    it('cancels or commits a dirty context transition through the Capture dialog', async () => {
-        const screen = await render(<DirtyTransitionHarness />)
-
-        await screen.getByRole('button', { name: /Program.*Program A/ }).click()
-        await screen.getByText('Program B').click()
-        await expect
-            .element(
-                screen.getByRole('heading', {
-                    name: 'Discard unsaved changes?',
-                })
-            )
-            .toBeVisible()
-        await screen.getByRole('button', { name: 'No, cancel' }).click()
-        await expect
-            .element(screen.getByRole('button', { name: /Program.*Program A/ }))
-            .toBeVisible()
-
-        await screen.getByRole('button', { name: /Program.*Program A/ }).click()
-        await screen.getByText('Program B').click()
-        await screen
-            .getByRole('button', { name: 'Yes, discard changes' })
-            .click()
-        await expect
-            .element(screen.getByRole('button', { name: /Program.*Program B/ }))
             .toBeVisible()
     })
 
@@ -380,38 +258,6 @@ describe('working-list context-selector integration', () => {
             .toHaveTextContent('')
         await expect
             .element(screen.getByText('Incompatible program'))
-            .toBeVisible()
-    })
-
-    it('closes the OU popup before dirty confirmation and retains the old OU on cancel', async () => {
-        const screen = await render(<DirtyOrganisationUnitHarness />)
-
-        await screen
-            .getByRole('button', { name: /Organisation unit.*Organisation A/ })
-            .click()
-        await screen
-            .getByRole('button', { name: 'Select Organisation B' })
-            .click()
-        await expect
-            .element(
-                screen.getByRole('heading', {
-                    name: 'Discard unsaved changes?',
-                })
-            )
-            .toBeVisible()
-        expect(
-            screen
-                .getByRole('button', { name: 'Select Organisation B' })
-                .query()
-        ).toBeNull()
-
-        await screen.getByRole('button', { name: 'No, cancel' }).click()
-        await expect
-            .element(
-                screen.getByRole('button', {
-                    name: /Organisation unit.*Organisation A/,
-                })
-            )
             .toBeVisible()
     })
 })

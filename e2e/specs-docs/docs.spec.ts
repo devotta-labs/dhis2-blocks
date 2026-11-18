@@ -20,43 +20,34 @@ test.describe('documentation catalog', () => {
         })
 
         await expect(
-            docsNav.getByRole('link', { name: 'Working List' })
+            docsNav.getByRole('link', { name: 'Patient List' })
+        ).toBeVisible()
+        await expect(
+            docsNav.getByRole('link', { name: 'Data Table' })
         ).toBeVisible()
         await expect(
             docsNav.getByRole('link', { name: 'Context Selector' })
         ).toBeVisible()
     })
 
-    test('shows installation and API guidance on the Working List page', async ({
+    test('sends the old Working List address to Patient List', async ({
         page,
     }) => {
+        // The redirect needs no DHIS2: every DHIS2 request is answered as
+        // signed out, so the live previews on the page stay out of it.
+        await page.route('**/dhis2/**', (route) =>
+            route.fulfill({
+                status: 401,
+                contentType: 'application/json',
+                body: JSON.stringify({ httpStatusCode: 401 }),
+            })
+        )
         await page.goto('/blocks/working-list')
 
+        await expect(page).toHaveURL(/\/blocks\/patient-list$/)
         await expect(
-            page.getByRole('heading', { name: 'Working List' })
+            page.getByRole('heading', { name: 'Patient List', level: 1 })
         ).toBeVisible()
-        await expect(
-            page.getByText('pnpm dlx shadcn@latest add').first()
-        ).toBeVisible()
-
-        // The Code tab renders the same example source the preview executes.
-        await page.getByRole('tab', { name: 'code' }).first().click()
-
-        const codePanel = page
-            .locator('pre code')
-            .filter({ hasText: 'WorkingList' })
-            .first()
-
-        await expect(codePanel).toBeVisible()
-
-        const fullscreen = page.getByRole('link', {
-            name: 'Open full screen',
-        })
-
-        await expect(fullscreen.first()).toHaveAttribute(
-            'href',
-            '/preview/working-list/default'
-        )
     })
 
     test('renders controlled examples without a backend', async ({ page }) => {
@@ -89,8 +80,45 @@ test.describe('documentation catalog', () => {
             page.getByRole('heading', { name: 'Initialize shadcn' })
         ).toBeVisible()
         await expect(
-            page.getByText('add devotta-labs/dhis2-blocks/working-list').first()
+            page.getByText('add devotta-labs/dhis2-blocks/patient-list').first()
         ).toBeVisible()
+    })
+})
+
+/**
+ * The Patient List page's three examples are live, so it needs the docs DHIS2.
+ */
+test.describe('Patient List page with live previews', () => {
+    test('shows installation and API guidance on the Patient List page', async ({
+        page,
+    }) => {
+        await page.goto('/blocks/patient-list')
+
+        await expect(
+            page.getByRole('heading', { name: 'Patient List', level: 1 })
+        ).toBeVisible()
+        await expect(
+            page.getByText('pnpm dlx shadcn@latest add').first()
+        ).toBeVisible()
+
+        // The Code tab renders the same example source the preview executes.
+        await page.getByRole('tab', { name: 'code' }).first().click()
+
+        const codePanel = page
+            .locator('pre code')
+            .filter({ hasText: 'PatientList' })
+            .first()
+
+        await expect(codePanel).toBeVisible()
+
+        const fullscreen = page.getByRole('link', {
+            name: 'Open full screen',
+        })
+
+        await expect(fullscreen.first()).toHaveAttribute(
+            'href',
+            '/preview/patient-list/default'
+        )
     })
 })
 

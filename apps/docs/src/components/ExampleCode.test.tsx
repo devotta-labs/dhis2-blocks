@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render } from 'vitest-browser-react'
-import calendarSource from '../examples/working-list/WorkingListCalendarTabs.tsx?raw'
-import compositionSource from '../examples/working-list/ListCalendar.tsx?raw'
-import listSource from '../examples/working-list/WorkingListDefault.tsx?raw'
+import calendarSource from '../examples/patient-list/PatientListCalendarTabs.tsx?raw'
+import compositionSource from '../examples/patient-list/PatientCalendar.tsx?raw'
+import listSource from '../examples/patient-list/PatientListDefault.tsx?raw'
 import { getExample } from '../examples/registry'
 import { ExampleCode } from './ExampleCode'
 
@@ -23,66 +23,66 @@ describe('example source code', () => {
         const copy = vi
             .spyOn(navigator.clipboard, 'writeText')
             .mockResolvedValue()
-        const view = await renderCode('working-list/calendar')
+        const view = await renderCode('patient-list/calendar')
         await expect
             .element(view.getByRole('group', { name: 'Source files' }))
             .toBeVisible()
         await expect
             .element(
                 view.getByRole('button', {
-                    name: 'WorkingListCalendarTabs.tsx',
+                    name: 'PatientListCalendarTabs.tsx',
                     exact: true,
                 })
             )
             .toHaveAttribute('aria-pressed', 'true')
         await expect
             .element(view.getByRole('tabpanel'))
-            .toHaveTextContent('const WorkingListCalendarTabs =')
+            .toHaveTextContent('const PatientListCalendarTabs =')
         await view.getByRole('button', { name: 'Copy', exact: true }).click()
         expect(copy).toHaveBeenLastCalledWith(calendarSource.trimEnd())
 
         await view
-            .getByRole('button', { name: 'ListCalendar.tsx', exact: true })
+            .getByRole('button', { name: 'PatientCalendar.tsx', exact: true })
             .click()
         await expect
             .element(
                 view.getByRole('button', {
-                    name: 'ListCalendar.tsx',
+                    name: 'PatientCalendar.tsx',
                     exact: true,
                 })
             )
             .toHaveAttribute('aria-pressed', 'true')
         await expect
             .element(view.getByRole('tabpanel'))
-            .toHaveTextContent('useWorkingListDateRange')
+            .toHaveTextContent('usePatientListQuery')
         await expect
             .element(view.getByRole('tabpanel'))
-            .toHaveTextContent('export const ListCalendar =')
+            .toHaveTextContent('export const PatientCalendar =')
         await view.getByRole('button', { name: 'Copy', exact: true }).click()
         expect(copy).toHaveBeenLastCalledWith(compositionSource.trimEnd())
 
         await view
             .getByRole('button', {
-                name: 'WorkingListCalendarTabs.tsx',
+                name: 'PatientListCalendarTabs.tsx',
                 exact: true,
             })
             .click()
         await expect
             .element(view.getByRole('tabpanel'))
-            .toHaveTextContent('const WorkingListCalendarTabs =')
+            .toHaveTextContent('const PatientListCalendarTabs =')
     })
 
     it('keeps single-file examples directly copyable without a file picker', async () => {
         const copy = vi
             .spyOn(navigator.clipboard, 'writeText')
             .mockResolvedValue()
-        const view = await renderCode('working-list/default')
+        const view = await renderCode('patient-list/default')
         await expect
             .element(view.getByRole('group', { name: 'Source files' }))
             .not.toBeInTheDocument()
         await expect
             .element(view.getByRole('tabpanel'))
-            .toHaveTextContent('const WorkingListDefault =')
+            .toHaveTextContent('const PatientListDefault =')
         await view.getByRole('button', { name: 'Copy', exact: true }).click()
         expect(copy).toHaveBeenLastCalledWith(listSource.trimEnd())
     })

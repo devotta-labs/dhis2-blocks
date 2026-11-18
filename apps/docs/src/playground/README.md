@@ -11,9 +11,7 @@ pnpm dev:docs   # then open /playground
 ```
 
 Each block's page is a **lab**: its own controls, presets and fake server on
-the shared parts below. A lab is loaded only when its page opens. The working
-list's page shows its records as a table or on a calendar, a block setting in
-its own Display section (`?display=calendar`); each display is a lab of its own.
+the shared parts below. A lab is loaded only when its page opens.
 
 The canvas header switches between **Canvas** and **Code** without unmounting
 the block. Code shows the actual canvas composition (read-only, with syntax
@@ -82,8 +80,8 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
   `presets.ts` do this.
 - A block that writes gets the request's type (`create`, `update`, `replace`,
   `delete`) as `respond`'s second argument, and the log shows it. Keep what it
-  writes until the next run, as `working-list/table/savedViews.ts` does for saved
-  views, so the block's refresh after a write finds it.
+  writes until the next run, as `tracker-data-entry/labServer.ts` does for the
+  events and values it saves, so the block's refresh after a write finds it.
 - Read the requests in the waterfall: a lab is the cheapest place to see a
   waterfall, a duplicate request or a missing abort.
 

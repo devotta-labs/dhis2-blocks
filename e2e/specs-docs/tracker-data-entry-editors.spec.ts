@@ -52,12 +52,12 @@ const CHILD_PROGRAMME = {
 const BIRTH = 'A03MvHHogjR'
 const APGAR_COMMENT = 'H6uSAMO5WLD'
 
-const WORKING_LIST_E2E = {
+const SEEDED_E2E = {
     program: 'WlE2ePrg001',
     trackedEntityType: 'WlE2eTet001',
     orgUnit: INPATIENT.orgUnit,
 }
-const WORKING_LIST_E2E_STAGE = 'WlE2eStg001'
+const SEEDED_E2E_STAGE = 'WlE2eStg001'
 const MULTI_SELECT = 'WlDeMult001'
 
 /** The editor dialog, named by its column (and row). */
@@ -290,17 +290,17 @@ test('one child: a long text Apgar comment saves with its line break', async ({
         .toBe('Apgar 9 at five minutes\nNo concerns')
 })
 
-test('working list E2E program: a multi-select saves its codes in the option set order', async ({
+test('seeded E2E program: a multi-select saves its codes in the option set order', async ({
     page,
     request,
     shared,
 }) => {
-    const person = await shared.newPerson(WORKING_LIST_E2E)
+    const person = await shared.newPerson(SEEDED_E2E)
     // The program has no rules.
     await openPerson(
         page,
-        { ...WORKING_LIST_E2E, enrollment: person.enrollment },
-        WORKING_LIST_E2E_STAGE,
+        { ...SEEDED_E2E, enrollment: person.enrollment },
+        SEEDED_E2E_STAGE,
         formReady
     )
     // Before the event date, so nothing is sent, and announced, while the editor is open.

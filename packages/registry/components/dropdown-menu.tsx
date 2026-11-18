@@ -7,8 +7,7 @@ import { cn } from './cn'
 
 /*
  * shadcn Dropdown Menu (Base UI) restyled to match @dhis2/ui FlyoutMenu,
- * MenuItem, MenuSectionHeader and MenuDivider in their `dense` form, which
- * is what the working list uses everywhere.
+ * MenuItem, MenuSectionHeader and MenuDivider in their `dense` form.
  */
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {

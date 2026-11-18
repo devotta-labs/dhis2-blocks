@@ -11,8 +11,10 @@
 /* The DHIS2 dev shell copies this stylesheet into .d2/shell/src/D2App. */
 @source '../../../packages/registry/components';
 @source '../../../../../../packages/registry/components';
-@source '../../../packages/registry/blocks/working-list';
-@source '../../../../../../packages/registry/blocks/working-list';
+@source '../../../packages/registry/blocks/data-table';
+@source '../../../../../../packages/registry/blocks/data-table';
+@source '../../../packages/registry/blocks/patient-list';
+@source '../../../../../../packages/registry/blocks/patient-list';
 @source '../../../packages/registry/blocks/context-selector';
 @source '../../../../../../packages/registry/blocks/context-selector';
 

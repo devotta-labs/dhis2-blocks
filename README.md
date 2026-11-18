@@ -14,7 +14,8 @@ packages/
     components/         DHIS2-styled shadcn primitives (one file per item) and theme
     blocks/
       context-selector/ Capture-style controlled context-selector primitives
-      working-list/     Working List block
+      data-table/       Data Table block
+      patient-list/     Patient List block
       calendar/         Generic month calendar for any dated records
       sidebar/          Composable modeling-app navigation with a collapse rail
       data-entry/       Grid data entry for DHIS2 events
@@ -44,10 +45,11 @@ pnpm install
 pnpm start
 ```
 
-This starts the DHIS2 custom wrapper from `apps/web`. Working List source
-changes receive hot updates without a separate library build. By default the
-DHIS2 Application Platform opens the application at
-[http://localhost:3000](http://localhost:3000).
+This starts the DHIS2 custom wrapper from `apps/web`, which shows a patient
+list for a chosen program and organisation unit; the app builds its columns
+and filters from program metadata. Block source changes receive hot updates
+without a separate library build. By default the DHIS2 Application Platform
+opens the application at [http://localhost:3000](http://localhost:3000).
 
 The interactive Context Selector primitive showcase is available at
 `#/context-selector-showcase` and from the link at the bottom of the demo.
@@ -201,7 +203,7 @@ renders each entry. See [the block's README](packages/registry/blocks/timeline/R
 ## Calendar block
 
 A standalone month calendar for any dated records, with navigation, selection,
-status counts, weekend columns and a selected-day list. No Working List or
+status counts, weekend columns and a selected-day list. No other block or
 data provider is required.
 
 ```sh
@@ -215,134 +217,164 @@ For remote data, `useCalendarState` exposes the visible range and
 `CalendarProvider` connects it to your query results.
 See the standalone project-milestones example at `/blocks/calendar`.
 
-## Working List + Calendar composition
+## Patient List + Calendar composition
 
-Show a Working List's records on a month calendar by composing the two blocks.
-
-```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list devotta-labs/dhis2-blocks/calendar
-```
-
-Copy the tested recipe from `/blocks/working-list#calendar-view`. It connects
-`useWorkingListDateBounds` and `useWorkingListDateRange` to Calendar's visible
-range, maps records and forwards tracker targets without changing the saved
-view. The same recipe runs in `/playground/working-list?display=calendar`.
-Calendar stays independent of Working List.
-
-## Working List block
-
-The Working List is distributed to consumers as a source registry block.
-Installation copies its production source and required dependencies into the
-consumer repository, where the block can be edited in place. The installed
-source entry point provides the documented compound component and hooks.
-
-Install it from the GitHub registry in a project with Tailwind CSS enabled and
-a valid shadcn `components.json` configuration. The installer uses the
-configured `aliases.components` directory as its target:
+Show a Patient List's tracked entities on a month calendar by composing the two
+blocks.
 
 ```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/working-list
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/patient-list devotta-labs/dhis2-blocks/calendar
 ```
 
-Import the installed source through the project's components alias:
+Copy the tested recipe from `/blocks/patient-list#calendar-view`. Its
+`PatientCalendar.tsx` takes the list's query and passes Calendar's visible
+range to `usePatientListQuery`. Calendar stays independent of Patient List.
+
+## Data Table block
+
+A generic table for any row type, built on TanStack Table v9 and the
+DHIS2-styled primitives. It sorts, filters, searches and pages, selects rows,
+lets people show, hide, reorder, pin and resize columns, groups rows, opens a
+detail panel under a row, draws only the rows in view for large pages, and
+exports CSV. In client mode the table filters, sorts and pages your `data`; in
+server mode `data` is one page and you run the query from the table state. It
+knows nothing about DHIS2 metadata: the columns, cell formatters and filters
+are yours.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/data-table
+```
+
+Import from `@/components/data-table`. `useDataTable` creates the table, and
+every part renders inside `DataTable`, which names the table with `label`:
 
 ```tsx
 import {
-    WorkingList,
-    WorkingListColumnSelector,
-    WorkingListFilterControls,
-    WorkingListTable,
-    WorkingListToolbar,
-    WorkingListToolbarActions,
-    WorkingListViewSwitcher,
-    useWorkingListActions,
-    useWorkingListMeta,
-    useWorkingListState,
-} from '@/components/working-list'
+    DataTable,
+    DataTableContent,
+    DataTablePagination,
+    createDataTableColumnHelper,
+    useDataTable,
+} from '@/components/data-table'
+
+type Facility = { id: string; name: string; beds: number }
+
+const column = createDataTableColumnHelper<Facility>()
+const columns = column.columns([
+    column.accessor('name', { header: 'Name' }),
+    column.accessor('beds', { header: 'Beds', meta: { align: 'end' } }),
+])
+
+export const FacilityTable = ({ facilities }: { facilities: Facility[] }) => {
+    const table = useDataTable({
+        data: facilities,
+        columns,
+        getRowId: (facility) => facility.id,
+    })
+    return (
+        <DataTable table={table} label="Facilities">
+            <DataTableContent />
+            <DataTablePagination />
+        </DataTable>
+    )
+}
 ```
 
-The installed components own their styling through Tailwind utility classes;
-the block does not require a separate stylesheet import. Adjust the import path
-above if the project's components alias differs from `@/components`.
+Keep `data` and `columns` stable (module constants, `useMemo` or query data):
+new `data` collapses expanded rows and, in client mode, goes back to the first
+page. The tools (`DataTableToolbar`, `DataTableSearch`, `DataTableFilters`,
+`DataTableColumnSettings`, `DataTableSelectionBar`, `DataTableExportButton`)
+render inside `DataTable` too. See `/blocks/data-table` for each feature and
+for server mode.
 
-The install also pulls in the shared UI primitives the block uses, copied to
-`components/dhis2/ui/` (never `components/ui/`), plus the `dhis2-theme` item.
-The theme is namespaced (`bg-dhis2-primary`, `border-dhis2-input`,
-`rounded-dhis2-sm`, and so on) and does not override Tailwind's defaults, so it
-does not restyle the rest of the host application.
+## Patient List block
 
-Render `WorkingList` beneath the DHIS2 app-runtime provider and a TanStack
-`QueryClientProvider`. The minimal complete composition is:
+The tracked entities in one program and organisation unit, on the Data Table
+in server mode: one page per request to `tracker/trackedEntities`, with
+sorting, filters and paging done by the server. You define the columns, how
+each value is formatted and the filters, and each filter states the tracker
+query parameters it sends. Nothing is derived from program metadata; the
+block never requests programs, attributes or option sets.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/patient-list
+```
+
+The install also pulls in `data-table`. Import from
+`@/components/patient-list`, and render the list beneath the DHIS2 app-runtime
+provider and a TanStack `QueryClientProvider`:
 
 ```tsx
-<WorkingList programId={programId} orgUnitId={orgUnitId}>
-    <WorkingListViewSwitcher />
+import {
+    PatientList,
+    attributeColumn,
+    attributeTextFilter,
+    enrollmentStatusFilter,
+    fieldColumn,
+    usePatientList,
+} from '@/components/patient-list'
 
-    <WorkingListToolbar>
-        <WorkingListColumnSelector />
-        <WorkingListFilterControls />
-        <WorkingListToolbarActions />
-    </WorkingListToolbar>
+const columns = [
+    attributeColumn('w75KJ2mc4zz', { header: 'First name' }),
+    attributeColumn('zDhUuAYrxNC', { header: 'Last name' }),
+    fieldColumn('enrolledAt', {
+        header: 'Enrolled',
+        format: (value) => (value ? value.slice(0, 10) : ''),
+    }),
+]
+const filters = [
+    attributeTextFilter({
+        attribute: 'w75KJ2mc4zz',
+        label: 'First name',
+        pinned: true,
+    }),
+    enrollmentStatusFilter({ pinned: true }),
+]
 
-    <WorkingListTable onRowClick={openRecord} />
-</WorkingList>
+export function ChildProgrammeList() {
+    const list = usePatientList({
+        program: 'IpHINAT79UW',
+        orgUnit: 'DiszpKrYNg8',
+        columns,
+        filters,
+        initialState: { pagination: { pageIndex: 0, pageSize: 15 } },
+    })
+    return (
+        <PatientList list={list} onRowOpen={(row) => open(row.trackedEntity)} />
+    )
+}
 ```
 
-View selection and pagination are uncontrolled by default. `WorkingList`
-starts with the generated default view, page 1, and 15 rows per page. Use
-`defaultViewId` and `defaultPagination` to change those initial values. Optional
-change callbacks observe locally managed changes:
+`attributeColumn` shows an attribute's stored value and `fieldColumn` a tracked
+entity or enrollment field; format values in `format`. Keep `columns` and
+`filters` stable: define them outside the component or in a `useMemo`.
+`usePatientList` takes every `useDataTable` option except `data`, `mode`,
+`getRowId` and `rowCount`.
+
+The hook keeps sorting, column filters and pagination itself, starting from
+`initialState` (15 rows a page by default). A new sort, filter, program or
+organisation unit goes back to the first page. To keep a slice yourself, pass
+both `state.<slice>` and its `on…Change`; a change handler alone is ignored.
+Hold a controlled page in React state, not directly in a router URL, so a new
+sort or filter and the return to the first page reach the request in the same
+update:
 
 ```tsx
-<WorkingList
-    programId={programId}
-    orgUnitId={orgUnitId}
-    defaultViewId={initialViewId}
-    defaultPagination={{ page: 1, pageSize: 25 }}
-    onViewChange={persistRecentView}
-    onPaginationChange={persistRecentPage}
->
-    {/* composition above */}
-</WorkingList>
+const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 25 })
+const list = usePatientList({
+    program,
+    orgUnit,
+    columns,
+    filters,
+    state: { pagination },
+    onPaginationChange: setPagination,
+})
 ```
 
-Control either state independently when it belongs in a URL, router, or parent
-store. A controlled value must include its callback:
-
-```tsx
-<WorkingList
-    programId={programId}
-    orgUnitId={orgUnitId}
-    viewId={viewId}
-    onViewChange={setViewId}
-    pagination={pagination}
-    onPaginationChange={setPagination}
->
-    {/* composition above */}
-</WorkingList>
-```
-
-`WorkingListViewSwitcher`, `WorkingListToolbar`, and `WorkingListTable` own safe
-localized accessible names. Structural components forward native element props
-and `className` for application-specific labeling and layout. `onRowClick` is
-optional: without it rows are static; providing it adds mouse and keyboard row
-opening. `WorkingListTable` also accepts
-`dataQualityMode="hidden" | "highlighted"`.
-
-The public API intentionally exposes only the flat root-prefixed composition
-shown above. The earlier compound members and saved-list-named root props are
-not supported.
-
-`WorkingList` defaults its instance lifetime to `programId`, so changing the
-program resets its uncontrolled state. When rendering multiple working lists,
-use React's reserved `key` to give each instance a stable identity:
-
-```tsx
-<WorkingList key={workingListKey ?? programId} {...props} />
-```
-
-A supplied React key overrides the outer instance identity; changing it replaces
-that instance even when `programId` stays the same.
+When the program or organisation unit changes, reset your page with it, or
+give the component that calls the hook a new `key`. See `/blocks/patient-list`
+for formatting values, every filter, your own layout from the data table parts,
+and `usePatientListQuery` for the rows without a table.
 
 The `packages/registry` workspace is a development and test harness only; it is not
 compiled or published as an npm package.
@@ -494,8 +526,8 @@ shows the same source the preview executes, so examples import blocks from
 are wrapped in the app-adapter host at `/preview/<slug>`.
 
 `pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
-catalog browsing without a backend and live Working List
-filtering, sorting, pagination, event mode, and saved-view persistence.
+catalog browsing without a backend and live Patient List filtering, sorting
+and pagination.
 
 ## Quality checks
 
@@ -620,8 +652,7 @@ pnpm docs:e2e --grep 'documentation catalog'
 
 Playwright schedules independent tests across files and within each file in
 parallel, using two workers in CI and its CPU-based default locally. Each test
-gets its own browser context; saved-list tests clean up their own created
-records and restore the stale-list fixture. With a running E2E stack, use
+gets its own browser context. With a running E2E stack, use
 `pnpm exec playwright test --workers=1` to debug serially.
 
 See the [DHIS2 Application Platform documentation](https://platform.dhis2.nu/)

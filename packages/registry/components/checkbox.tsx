@@ -7,17 +7,18 @@ import { cn } from './cn'
 
 /**
  * The @dhis2/ui checkbox box: a 1px grey800 ring that turns teal when
- * checked. State comes from `data-checked` / `data-disabled`, so any element
- * can wear it, e.g. the non-interactive box in a multi-select option.
+ * checked or indeterminate. State comes from `data-checked` /
+ * `data-indeterminate` / `data-disabled`, so any element can wear it, e.g. the
+ * non-interactive box in a multi-select option.
  */
 const checkboxBoxVariants = cva(
-    'flex shrink-0 items-center justify-center border border-dhis2-control bg-dhis2-background text-dhis2-primary-foreground data-checked:border-dhis2-selected-foreground data-checked:bg-dhis2-selected-strong [&_svg]:fill-current',
+    'flex shrink-0 items-center justify-center border border-dhis2-control bg-dhis2-background text-dhis2-primary-foreground data-checked:border-dhis2-selected-foreground data-checked:bg-dhis2-selected-strong data-indeterminate:border-dhis2-selected-foreground data-indeterminate:bg-dhis2-selected-strong [&_svg]:fill-current',
     {
         variants: {
             size: {
                 regular:
-                    'size-[18px] rounded-[3px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong',
-                dense: 'size-[14px] rounded-[2px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong',
+                    'size-[18px] rounded-[3px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong data-disabled:data-indeterminate:border-dhis2-border-strong data-disabled:data-indeterminate:bg-dhis2-accent-strong',
+                dense: 'size-[14px] rounded-[2px] data-disabled:border-dhis2-border-strong data-disabled:bg-dhis2-accent-strong data-disabled:data-checked:border-dhis2-border-strong data-disabled:data-checked:bg-dhis2-accent-strong data-disabled:data-indeterminate:border-dhis2-border-strong data-disabled:data-indeterminate:bg-dhis2-accent-strong',
             },
         },
         defaultVariants: { size: 'regular' },
@@ -76,9 +77,10 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
         >
             <CheckboxPrimitive.Indicator
                 data-slot="checkbox-indicator"
-                className="grid place-content-center text-current transition-none"
+                className="grid place-content-center text-current transition-none data-indeterminate:[&>span]:block data-indeterminate:[&>svg]:hidden"
             >
                 <CheckboxCheckmark />
+                <span className="hidden h-0.5 w-2.5 rounded-full bg-current" />
             </CheckboxPrimitive.Indicator>
         </CheckboxPrimitive.Root>
     )

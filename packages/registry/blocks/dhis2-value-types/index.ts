@@ -1,6 +1,7 @@
 export { ageFromBirth, birthFromAge, futureBirth } from './age'
 export type { Age } from './age'
 export { addDaysIso, addMonthsIso, parseDateFormat, todayIso } from './dates'
+export { coordinateNumber, parseCoordinate } from './coordinate'
 export { OPTION_LIMIT, optionIndex, searchOptions } from './optionSearch'
 export type { OptionIndex } from './optionSearch'
 export type {
@@ -16,10 +17,9 @@ export type {
 export {
     cellKind,
     checkStored,
-    coordinateNumber,
     inputModeFor,
+    languageTags,
     textDirectionFor,
-    parseCoordinate,
     parseTyped,
     typedText,
 } from './valueTypes'

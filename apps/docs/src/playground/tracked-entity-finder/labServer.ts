@@ -4,6 +4,7 @@ import {
     searchJson,
     type LabSettings,
 } from './labData'
+import { httpError } from '../network'
 
 /** One request as the finder sends it through app-runtime. */
 export interface LabRequest {
@@ -20,11 +21,6 @@ export const RESOURCES = ['programs', 'system/info', 'tracker/trackedEntities']
 export const RECORDS = ['tracker/trackedEntities']
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
 /** What the lab's DHIS2 answers; how slowly, or whether at all, is the lab network's call. */
 export const answer =
     ({ program, server }: Pick<LabSettings, 'program' | 'server'>) =>

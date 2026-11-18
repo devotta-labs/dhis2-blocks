@@ -1,0 +1,213 @@
+---
+title: Event form
+description: 'Enter or edit one event of a program stage, with every program rule applied and a marker on each field a rule changed, saying why.'
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="event-form/first-anc-visit" />
+
+This preview edits one first antenatal care visit in the WHO RMNCH Tracker of
+the Sierra Leone demo database, with the stage's program rules applied. The
+preview is live: what you save is saved to the demo database behind this site.
+
+## Installation
+
+<InstallCommand item="event-form" />
+
+It installs `dhis2-value-input` (one control per value type),
+`dhis2-value-types`, `dhis2-value-display` (the calendar) and `program-rules`
+with it. The form needs the DHIS2 app-runtime provider and a React Query
+`QueryClientProvider` above it. The text goes through `@dhis2/d2-i18n` as
+literal `i18n.t` calls.
+
+## Usage
+
+```tsx
+import { EventForm } from '@/components/event-form'
+
+;<EventForm
+    programId={programId}
+    programStageId={stageId}
+    orgUnitId={orgUnitId}
+    enrollmentId={enrollmentId}
+    onSaved={({ eventId, status }) => close(eventId, status)}
+    onDirtyChange={setDirty}
+/>
+```
+
+| Prop                              | Meaning                                                                                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `programId`, `programStageId`     | The program and the stage whose event is entered.                                                                                                                              |
+| `orgUnitId`                       | Where a new event is created. An edited event keeps its own.                                                                                                                   |
+| `eventId`                         | The event to edit. Without it the form creates one.                                                                                                                            |
+| `enrollmentId`, `trackedEntityId` | The enrollment and the person, for a tracker program.                                                                                                                          |
+| `blame`                           | `markers` (the default) marks each field a rule set, made required or gave fewer options beside its label, and lists what rules hid; `off` applies the rules quietly.          |
+| `confirmSaved`                    | `status` (the default) shows a short **Saved** by the buttons after a save, until the next edit; `off` says nothing, for a host that confirms its own way.                     |
+| `locationWarnKm`                  | Checks a location against the event's org unit: how far it is from a point org unit, warning past this many kilometres, or whether it is inside an area. Without it, no check. |
+| `onSaved({ eventId, status })`    | Called after DHIS2 has saved the event, with its status.                                                                                                                       |
+| `onDirtyChange(dirty)`            | Called when the form gains or loses changes it has not saved.                                                                                                                  |
+| `onUnsavedRuleChanges(count)`     | Called when the number of answers the rules alone changed since DHIS2 last saved the event changes; 0 once there are none or the user changes anything.                        |
+| `children`                        | The parts, placed. Without them the form shows all four.                                                                                                                       |
+
+## Parts
+
+`EventFormFields` holds the form's status, the event date, the program's
+categories, the location of a point stage and the stage's sections. `EventFormFeedback` holds what the rules say of the whole form: texts,
+key-value pairs and form-level warnings. `EventFormNotes` holds the event's
+notes and a box for one more. `EventFormActions` holds what to fix, Save,
+Complete and Reopen. Without children the form shows them in that order; place them
+yourself to put something between them, or leave out the notes.
+
+```tsx
+<EventForm programId={programId} programStageId={stageId} orgUnitId={orgUnitId}>
+    <EventFormFields />
+    <VisitChecklist />
+    <EventFormFeedback />
+    <EventFormNotes />
+    <EventFormActions />
+</EventForm>
+```
+
+## Notes
+
+`EventFormNotes` lists the event's notes, oldest first, each with who wrote it
+and when, in the system calendar. Under them, **Add a note** takes one more.
+The note goes with the next Save or Complete, makes the form dirty, and once
+DHIS2 has saved it shows in the list, as yours, and the box empties; a failed
+save keeps it. DHIS2 only adds notes: the note is sent in the import with an id
+made for it (sent again after a failure, it is added once), and the notes listed
+are never changed, removed or sent back. A read-only form lists the notes
+without the box, and a new event shows only the heading and the box.
+
+## Rules and blame
+
+The stage's program rules run on every committed value, never on each
+keystroke. They hide fields and sections, set values, make fields required,
+remove options and show messages. What a person entered is kept apart from
+what the rules make of it: a field hidden and shown again gets its answer
+back, and only the person's own edits make the form dirty.
+
+The rules run again on the values they set or clear until the answers settle,
+at most 4 times. So in a chain such as weight sets the dose, the dose sets the
+daily total and a third rule reads the daily total, the third rule sees the
+new total. Rules that hide or set each other's fields stop at 4 runs, with a
+warning in development.
+
+A field a rule set, made required or gave fewer options has one marker beside
+its label, saying what the rules did most: **Set automatically**, **Required
+here** or **Fewer options**. A rule's messages show under the field, without the
+rule's name, and a field the rules only give messages has no marker. A warning
+or an error says so in words (`Warning: Fever: test for malaria`). A set field is
+read-only, its reason read with it by screen readers (`Set by rule "Paracetamol
+dose" because Weight (kg) is 150`), and Tab passes it for its marker.
+
+The marker opens the explanation, one part per rule: what it did and why in
+plain words (`Set to 300 because Weight (kg) is 150.`), the answers it read, the
+rule's name, and **Show rule**, which shows its condition as written. Each
+answer whose field is on the form is a button to that field; what a rule read
+outside the form is named with where it came from (`Birth date (from the
+enrolment)`). Fields and sections a rule hid are listed at the end of their
+section, closed until pressed, each line naming the rule with its own **Why?**.
+A field or section that a rule stops hiding simply appears. Fields are named by
+their labels and options by their names, never by ids. With `blame="off"` the
+rules apply the same, a set field reads `Set by a program rule`, and hidden
+fields simply leave the form.
+
+## Categories
+
+A program with a category combination other than the default asks for one
+option of each of its categories, after the event date: one required choice
+per category, named after it. The choices offer only the options the user may
+enter data for, that apply to the form's org unit (an option limited to org
+units must list it or one of its ancestors) and whose dates include the event
+date. When the event date changes so that a chosen option no longer applies,
+the choice stays, its field says why (`Mobile clinic starts on Jan 1, 2026`),
+and Save waits until it is changed. An edit opens with the options the event
+holds, even one no longer offered. Choosing an option makes the form dirty.
+The categories are required on Save and Complete whatever the stage's
+validation strategy, as DHIS2 refuses an event without them, and they go in the
+import as `attributeCategoryOptions`, from which DHIS2 finds the attribute
+option combo. DHIS2's errors that name an option or the combo land on the
+category's field. Programs with the default combination show no categories.
+
+## Location
+
+A stage whose feature type is a point asks where the event took place, after
+the categories: a Location field of latitude and longitude, not required. Either
+field takes a whole coordinate, typed or pasted: `8.4871, -13.2356` (latitude
+first), degrees, minutes and seconds with hemisphere letters
+(`8°29'13.6"N 13°14'08.2"W`), or a maps link holding `lat,lng`
+(`…/maps/@8.4871,-13.2356,15z`); it is shown as its latitude and longitude.
+`Use my location` asks the browser for the device's position, only when
+pressed, says how close it is (`Your location, within 12 m`), or why there is
+none, and leaves the field as it was. `At Ngelehun CHC` fills the org unit's own
+point, when it has one. With `locationWarnKm`, the form says under the field how
+far the point is from a point org unit (`3.2 km from Ngelehun CHC`), warning past
+that distance that the latitude and longitude may be the wrong way round, or
+whether it is inside an org unit's area. These never hold back Save. A pair
+pasted into either field replaces what both held, and undo brings it back; one
+number with a decimal comma (`8,48`) stays that field's number. The location makes the form dirty,
+goes in the import as the event's `geometry` (a GeoJSON point, longitude first)
+and as `null` when a stored one is cleared, and DHIS2's errors about the
+geometry land on it. A read-only form shows it read-only, without the buttons.
+A polygon stage draws nothing: an edit shows a stored area as `Area recorded`
+and sends it back as it is.
+
+## Saving
+
+Save sends the event in one tracker import; Complete sends it completed, after
+asking when a rule warns on completing. Before either, the form checks required
+fields, values that are not valid yet and the rules' errors, as the stage's
+validation strategy says, and lists what to fix. A date or date-and-time data
+element the stage does not allow future dates for says _A date in the future is
+not allowed_ under a day after today and holds back either button whatever the
+strategy, though DHIS2 would store it; the event date takes any day, as in the
+Capture app. An edit sends back the event's
+own fields as they were opened, so DHIS2 keeps them. When DHIS2 refuses the
+import, its errors land on the shown fields they name, with the field's label
+in place of its id, and the alert lists them as buttons to each field, with
+the rest below. Three refusals that name no field are said in plain words with
+the names the form knows (or the ones DHIS2 gives in the error), DHIS2's code
+after: _You do not have access to enter data for Child Programme. (E1091)_,
+_Ngelehun CHC is not set up for Child Programme. (E1029)_ and _You do not have
+access to enter data at Ngelehun CHC. (E1000)_; without every name, DHIS2's own
+text. A completed event in a stage that blocks entry, a stage the user
+cannot write to, and rules that failed to load make every field read-only, with
+the reason on each.
+
+A completed event offers **Reopen** to a user who holds `F_UNCOMPLETE_EVENT` (or
+`ALL`) and may enter data in the stage, as the Capture app does; DHIS2 refuses
+anyone else (`E1083`). On a stage that blocks entry it is the one action, beside
+_This event is completed and locked_; on any other stage it sits with Save.
+Reopen sends the event as DHIS2 holds it, as active: its values and own fields as
+last saved, never what was typed since (a note included) or what the rules
+changed. What was typed stays in the form, unsaved, for the next Save. It saves as Save does,
+locked until DHIS2 answers, with **Stop waiting** and the refusal in the alert,
+and then the form is an active event, `onSaved` called with `ACTIVE`.
+
+From Save or Complete until DHIS2 answers, every field, the location's buttons
+and the note box are read-only, drawn as they were, so nothing moves, and the
+pressed button says "Saving…". A refusal unlocks the form with the values as
+typed. After 15 seconds without an answer the form says **Still saving…** with
+**Stop waiting**, which unlocks it and enables Save again; the late answer is
+then ignored. The event's id is made once per form, so a later Save updates the
+same event. After a save, **Saved** shows by the buttons until the next edit. The stage and its rules load together, and the form shows a
+skeleton until both are in, so it opens ready to type in.
+
+## Accessibility
+
+The form is a `form` built from [Value input](/blocks/dhis2-value-input)
+fields. Enter in a field commits it and does not save; Save is the button.
+While saving, the form is `aria-busy`, each field is read-only rather than
+disabled and says "Saving" to screen readers, focus stays where it was, and the
+buttons stay focusable. "Saved", "Reopened" and "Still saving…" are announced
+politely, and **Stop waiting** gives focus to the button it enables again. After
+a reopen, focus on Reopen goes to Save. After a failed attempt focus goes to the first field to fix. When a commit
+removes the focused element (a field a rule now hides, or a marker that no
+longer applies), focus goes on to the next field. Each marker is named after its
+field, such as "Set automatically, Paracetamol dose (mg): why". An empty
+required field says **Required** only after a Save or Complete it held back. After each change, a live region says
+what the rules changed (`Pregnant hidden.`, `Pregnant shown.`), with `blame="off"` too. Colours are the house tokens,
+so the dark and high-contrast themes work.

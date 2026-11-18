@@ -43,6 +43,7 @@ typedText(field, value, settings): string // a stored value -> what an editable 
 coordinateNumber(axis, text): string | undefined // a typed latitude or longitude as numbers are stored, within its limit (90, 180)
 checkStored(field, value): ValueProblem | undefined // a stored value today's rules reject
 parseDateFormat(systemInfoDateFormat): DateFormat
+languageTags(): string[] // the language set as tags Intl reads (DHIS2 writes `pt_BR`); none when Intl reads none
 optionIndex(options): OptionIndex // the search text for an option list, built once per list and cached
 searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every word must match; exact code first, then code starts, then word starts
 ```
@@ -60,5 +61,5 @@ searchOptions(index, query, limit = OPTION_LIMIT): { codes, total } // every wor
 - A date is converted through the system calendar by `@dhis2/multi-calendar-dates` and must convert back to itself, so a day the calendar does not have is refused. The library cannot convert Coptic yet, so on a Coptic server a date is shown as the ISO date and every typed date is refused. A date time is typed as the date, a space and `HH:mm`; a time may have a one-digit hour (`9:30` is stored `09:30`).
 - Search types (`ORGANISATION_UNIT`, `USERNAME`) and pop-up types (`LONG_TEXT`, `MULTI_TEXT`, `AGE`, `COORDINATE`, `FILE_RESOURCE`, `IMAGE`) are checked and shown in their stored form. A value type this block does not know is `readOnly`.
 - An age is its date of birth: typed, pasted and shown as a date is, in the system calendar and date format, and stored as the ISO date.
-- A coordinate is typed or pasted as `lat, lng`, or with brackets as the stored `[lng,lat]`, and is stored as `[lng,lat]` (latitude within ±90, longitude within ±180). Its numbers are read as numbers are (`.5` is `0.5`, `+8` is refused), and which number is which is never guessed from its size.
+- A coordinate is typed or pasted as `lat, lng`, with brackets as the stored `[lng,lat]`, in degrees, minutes and seconds with hemisphere letters (`8°29'13.6"N 13°14'08.2"W`, either order), or as a `lat,lng` pair of decimals inside other text such as a maps link (`…/maps/@8.4871,-13.2356,15z`), and is stored as `[lng,lat]` (latitude within ±90, longitude within ±180). Its numbers are read as numbers are (`.5` is `0.5`, `+8` is refused), and which number is which is never guessed from its size.
 - It does not format values for reading; `dhis2-value-display` does.

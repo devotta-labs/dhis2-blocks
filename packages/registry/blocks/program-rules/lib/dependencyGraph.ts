@@ -21,6 +21,9 @@ export const actionField = (
     action: ProgramRuleActionMetadata
 ): string | undefined => action.dataElementId ?? action.attributeId
 
+/** Actions that can change a field's value: an ASSIGN sets it, a HIDEFIELD clears it, a required field is never hidden. */
+const VALUE_ACTIONS = new Set(['ASSIGN', 'HIDEFIELD', 'SETMANDATORYFIELD'])
+
 const variableField = (variable: ProgramRuleVariableMetadata | undefined) =>
     variable?.dataElementId ?? variable?.attributeId
 
@@ -103,6 +106,21 @@ export const buildDependencyGraph = (
             ]),
             writesFields: union(
                 rule.actions.map((action) => {
+                    const assigned = assignedVariable(action)
+                    const backing =
+                        assigned === undefined
+                            ? undefined
+                            : variableField(variablesByName.get(assigned))
+                    return [actionField(action), backing].filter(
+                        (field): field is string => field !== undefined
+                    )
+                })
+            ),
+            writesValues: union(
+                rule.actions.map((action) => {
+                    if (!VALUE_ACTIONS.has(action.type)) {
+                        return []
+                    }
                     const assigned = assignedVariable(action)
                     const backing =
                         assigned === undefined

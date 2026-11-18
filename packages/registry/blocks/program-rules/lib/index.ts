@@ -7,6 +7,15 @@ export {
     explainField,
 } from './evaluate'
 export {
+    EVENT_DATE,
+    explain,
+    fieldDisplay,
+    type Blame,
+    type BlameContext,
+    type RuleReason,
+    type RuleValueMeta,
+} from './explain'
+export {
     crossEventFields,
     evaluateEventsRules,
     rowsAffectedBy,
@@ -14,6 +23,18 @@ export {
     type EventsRuleRow,
     type EventsRulesEvaluation,
 } from './manyEvents'
+export { outsideReads } from './outsideReads'
+export {
+    overlay,
+    runRules,
+    sameValues,
+    settleRules,
+    type RuleForm,
+    type RuleOutcome,
+    type RuleSettled,
+    type RuleSettleEvent,
+    type RuleValues,
+} from './overlay'
 export {
     expressionReferences,
     scanExpression,
@@ -47,4 +68,5 @@ export type {
     RuleOptionGroupEffects,
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
+    RuleOutsideRead,
 } from './types'

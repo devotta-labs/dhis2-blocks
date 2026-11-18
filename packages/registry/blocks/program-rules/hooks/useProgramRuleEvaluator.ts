@@ -3,11 +3,13 @@ import { Result } from 'better-result'
 import { useMemo } from 'react'
 import {
     evaluateEventRules,
+    outsideReads,
     type InvalidRule,
     type RuleDependencyGraph,
     type RuleEffects,
     type RuleEnrollmentInput,
     type RuleEventInput,
+    type RuleOutsideRead,
 } from '../lib'
 import { shouldRetryProgramRulesRequest } from './client'
 import { fetchRuleEnrollment } from './enrollment'
@@ -44,6 +46,11 @@ export interface UseProgramRuleEvaluatorResult {
      * the enrollment data change.
      */
     evaluate?: (event: RuleEventInput) => RuleEvaluation
+    /**
+     * The attributes and data elements the rules read, by field id, with their names and the values the rules read for
+     * `event` from the enrollment and its other events (see `outsideReads`). Present with `evaluate`.
+     */
+    outsideReads?: (event: RuleEventInput) => Map<string, RuleOutsideRead>
     invalidRules: InvalidRule[]
     error?: Error
     graph?: RuleDependencyGraph
@@ -104,7 +111,7 @@ export const useProgramRuleEvaluator = ({
     const waiting = fetchEnrollment && fetched === undefined
 
     const supplementKey = supplementContentKey({ enrollment, otherEvents })
-    const evaluate = useMemo(() => {
+    const evaluator = useMemo(() => {
         if (context === undefined || engine === undefined || waiting) {
             return undefined
         }
@@ -113,7 +120,7 @@ export const useProgramRuleEvaluator = ({
             otherEvents: otherEvents ?? fetched?.events ?? [],
         }
         const recent = new Map<string, RuleEvaluation>()
-        return (event: RuleEventInput): RuleEvaluation => {
+        const evaluate = (event: RuleEventInput): RuleEvaluation => {
             const key = eventContentKey(event)
             const cached = recent.get(key)
             if (cached !== undefined) {
@@ -136,6 +143,11 @@ export const useProgramRuleEvaluator = ({
             }
             return evaluation
         }
+        return {
+            evaluate,
+            outsideReads: (event: RuleEventInput) =>
+                outsideReads(context, { event, ...supplement }),
+        }
         // `enrollment` and `otherEvents` are read through their content key, so new objects with
         // the same content keep the function and its recent results.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,10 +158,11 @@ export const useProgramRuleEvaluator = ({
     const error =
         contextError ?? neededFailure(enrollmentQuery, fetchEnrollment)
 
-    const progress = evaluate === undefined ? 'loading' : 'ready'
+    const progress = evaluator === undefined ? 'loading' : 'ready'
     return {
         status: error === undefined ? progress : 'error',
-        evaluate,
+        evaluate: evaluator?.evaluate,
+        outsideReads: evaluator?.outsideReads,
         invalidRules: context?.invalidRules ?? NO_INVALID_RULES,
         error,
         graph: context?.graph,

@@ -56,3 +56,9 @@ export const hint: string = dateFormatHint('date', {
 })
 export const control = (props: ValueInputProps): ReactNode =>
     createElement(ValueInput, props)
+export const marked = (props: ValueInputProps, marker: ReactNode): ReactNode =>
+    createElement(ValueInput, {
+        ...props,
+        labelAside: marker,
+        readOnlyReason: 'described',
+    })

@@ -46,6 +46,13 @@ test.describe('playground Canvas / Code', () => {
             'trackedEntity',
             '"labPerson01"',
         ],
+        [
+            'event-form',
+            'EventFormCanvas',
+            'EventForm',
+            'programId',
+            '"labChildVis"',
+        ],
     ]) {
         test(`shows the actual ${composition} source`, async ({ page }) => {
             await page.goto(`/playground/${path}`)

@@ -1,3 +1,4 @@
+import { httpError } from '../network'
 import type { LabNetwork } from '../network'
 import {
     generateLabData,
@@ -79,11 +80,6 @@ export const labNetwork = (
 })
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
 const paged = <T>(items: readonly T[], params: LabRequest['params'] = {}) => {
     const page = Number(params.page ?? 1)
     const pageSize = Number(params.pageSize ?? 50)

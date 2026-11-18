@@ -74,6 +74,7 @@ export const offeredOptions = (
 export const ChoiceInput = ({
     id,
     title,
+    titleAside,
     field,
     value,
     hiddenOptions,
@@ -82,10 +83,13 @@ export const ChoiceInput = ({
     readOnly,
     required,
     onChange,
+    tabIndex,
 }: {
     id: string
     /** A radio group's name, shown above it. */
     title: ReactNode
+    /** Shown beside the title, such as a host's marker; not part of the group's name. */
+    titleAside?: ReactNode
     field: Field
     value: string | undefined
     settings: ValueSettings
@@ -95,9 +99,13 @@ export const ChoiceInput = ({
     readOnly: boolean
     required: boolean
     onChange(value: string | null): void
+    /** For a read-only choice: its controls' place in the Tab order. */
+    tabIndex?: number
 }) => {
     const box = useRef<HTMLDivElement>(null)
     const titleId = useId()
+    // Given only when set: Base UI's own Tab order stands unless it is overridden.
+    const skipped = tabIndex === undefined ? {} : { tabIndex }
     const kind = cellKind(field)
     const options = useMemo(
         () => (kind === 'boolean' ? yesNo() : (field.options ?? NO_OPTIONS)),
@@ -115,6 +123,7 @@ export const ChoiceInput = ({
                 id={id}
                 checked={value === 'true'}
                 readOnly={readOnly}
+                {...skipped}
                 aria-required={required || undefined}
                 onCheckedChange={(checked) => onChange(checked ? 'true' : null)}
             />
@@ -168,7 +177,7 @@ export const ChoiceInput = ({
         >
             {offered.map(({ code, name, description }) => (
                 <FieldItem key={code}>
-                    <RadioGroupItem value={code} />
+                    <RadioGroupItem value={code} {...skipped} />
                     {description === undefined ? (
                         <FieldLabel className="cursor-pointer">
                             {name}
@@ -185,6 +194,15 @@ export const ChoiceInput = ({
             ))}
         </RadioGroup>
     ) : undefined
+    const titleRow =
+        titleAside === undefined ? (
+            <FieldTitle id={titleId}>{title}</FieldTitle>
+        ) : (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <FieldTitle id={titleId}>{title}</FieldTitle>
+                {titleAside}
+            </div>
+        )
     return (
         <div ref={box} className="flex flex-col gap-2">
             {radios === undefined ? (
@@ -195,9 +213,10 @@ export const ChoiceInput = ({
                     draft={draft}
                     readOnly={readOnly}
                     required={required}
+                    skipped={skipped}
                 />
             ) : (
-                <FieldTitle id={titleId}>{title}</FieldTitle>
+                titleRow
             )}
             {radios}
             {value !== undefined && !known ? (

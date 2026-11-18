@@ -30,6 +30,18 @@ describe('the dependency graph', () => {
         )
     })
 
+    it('records the fields whose value a rule can change, not those it only messages', () => {
+        expect(
+            [...rmnchRule('Hide all fields for chronic').writesValues].sort()
+        ).toEqual([...RMNCH.chronicFollowUps].sort())
+        expect(rmnchRule('Calculate gestational age').writesValues).toEqual([
+            RMNCH.gestationalAge,
+        ])
+        const lmpCheck = rmnchRule('Check that LMP date given is before')
+        expect(lmpCheck.writesFields).toEqual([RMNCH.lmp])
+        expect(lmpCheck.writesValues).toEqual([])
+    })
+
     it('records program variables and assigned fields', () => {
         const gestationalAge = rmnchRule('Calculate gestational age')
         expect(gestationalAge.readsFields).toEqual([RMNCH.lmp])

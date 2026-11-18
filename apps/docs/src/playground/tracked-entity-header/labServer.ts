@@ -8,6 +8,7 @@ import { viewAttribute } from './labRelationships'
 import { SUBJECTS } from './labSubjects'
 import { answer as answerObservations } from '../observation-cards/labServer'
 import { DEFAULT_SETTINGS as OBSERVATION_DEFAULTS } from '../observation-cards/presets'
+import { httpError } from '../network'
 
 /** One request as the block sends it through app-runtime. */
 export interface LabRequest {
@@ -36,11 +37,6 @@ const idsOf = (filter: string | number | boolean | undefined) =>
         .split(',')
 
 /** An error shaped like the ones app-runtime throws for an HTTP failure. */
-const httpError = (status: number, message: string) =>
-    Object.assign(new Error(message), {
-        details: { httpStatusCode: status, message },
-    })
-
 /** What the lab's DHIS2 answers; how slowly, or whether at all, is the lab network's call. */
 export const answer = (
     settings: LabSettings,

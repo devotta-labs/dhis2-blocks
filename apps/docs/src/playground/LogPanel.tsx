@@ -72,6 +72,11 @@ const RequestLog = ({ entries }: { entries: RequestLogEntry[] }) => (
                             {params}
                         </div>
                     )}
+                    {entry.request.type && entry.request.data !== undefined && (
+                        <pre className="break-all whitespace-pre-wrap text-(--lab-ink-3)">
+                            {JSON.stringify(entry.request.data, null, 1)}
+                        </pre>
+                    )}
                     {entry.detail && (
                         <div className="text-(--lab-fault)">{entry.detail}</div>
                     )}

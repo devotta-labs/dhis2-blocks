@@ -19,6 +19,7 @@ import {
     FieldLabel,
     FieldLegend,
     FieldSet,
+    FieldTitle,
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import { Textarea } from '@/components/dhis2/ui/textarea'
@@ -37,9 +38,9 @@ import { DateInput, dateFormatHint } from './kinds/DateInput'
 import { EditorInput, useEditorCommits } from './kinds/EditorInput'
 import { SearchInput, unknownName } from './kinds/SearchInput'
 import { READ_ONLY_CLASS, TypedInput } from './kinds/TypedInput'
+import { MessageText, TONES } from './messageText'
+import type { Tone } from './messageText'
 import { keyOf, useDraft } from './useDraft'
-
-type Tone = 'error' | 'warning' | 'info'
 
 export interface ValueInputProps {
     /** Another value type, field mask or option set is another field, and replaces what was typed. */
@@ -54,6 +55,16 @@ export interface ValueInputProps {
     required?: boolean
     /** Why the field cannot be edited; absent means it can. */
     readOnly?: string
+    /**
+     * Where the `readOnly` reason is given: under the field (`'visible'`, the default), or only in the control's
+     * accessible description (`'described'`), for a host that shows it another way, such as a marker in `labelAside`;
+     * Tab then passes the control for that, which a script can still focus. `'held'` describes it too and keeps
+     * the field drawn as when it can be edited, its pop-up editor, search or calendar button there but inert, for a host that locks it
+     * for a moment, such as while it saves, so nothing moves.
+     */
+    readOnlyReason?: 'visible' | 'described' | 'held'
+    /** Shown on the label's row, after the label, such as a host's marker; not part of the control's name. */
+    labelAside?: ReactNode
     /** Option codes a rule hides. */
     hiddenOptions?: ReadonlySet<string>
     /** Rule or host messages, shown under the field. */
@@ -70,28 +81,6 @@ export interface ValueInputProps {
 
 /** Why a value type no control edits is read-only, as the data entry grid says it too. */
 export const editedElsewhere = () => i18n.t('Edit this field in its own form')
-
-// Messages are shown as the rules and the host give them, not HTML-escaped.
-const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
-
-// The tone in words as well as colour.
-const TONES = {
-    error: {
-        border: 'border-dhis2-destructive-indicator',
-        say: (message: string) =>
-            i18n.t('Error: {{message}}', { ...AS_IS, message }),
-    },
-    warning: {
-        border: 'border-dhis2-warning-indicator',
-        say: (message: string) =>
-            i18n.t('Warning: {{message}}', { ...AS_IS, message }),
-    },
-    info: {
-        border: 'border-dhis2-neutral-indicator',
-        say: (message: string) =>
-            i18n.t('Information: {{message}}', { ...AS_IS, message }),
-    },
-} satisfies Record<Tone, { border: string; say: (message: string) => string }>
 
 interface PartProps {
     /** A pop-up editor's: plain, see `ValueInput`. */
@@ -172,6 +161,8 @@ export const ValueInput = ({
     onChange,
     required = false,
     readOnly,
+    readOnlyReason = 'visible',
+    labelAside,
     messages = [],
     hiddenOptions,
     valueName,
@@ -194,6 +185,14 @@ export const ValueInput = ({
         kind === 'popup' && formEditorFor(field.valueType) !== undefined
     const edited = typed || dated || choice || popup || kind === 'search'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
+    // Locked for a moment: drawn as when it can be edited.
+    const held = readOnly !== undefined && readOnlyReason === 'held'
+    const drawnEditable = reason === undefined || held
+    // The host shows why it is read-only, and Tab stops there; a script or a host's button still reaches the control.
+    const tabIndex =
+        readOnly !== undefined && readOnlyReason === 'described'
+            ? -1
+            : undefined
     // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
     const options = field.options
     const offeredList = useMemo(
@@ -213,7 +212,7 @@ export const ValueInput = ({
     // A pop-up editor names and describes its own controls, so its field's parts are plain: in a Field, Base UI would
     // link them a second time. An editor of one control (a text area, a combobox of chips) is a field with a label; one
     // of several (an age, a coordinate, a list of boxes, a file) is a fieldset with a legend.
-    const editor = reason === undefined && popup
+    const editor = drawnEditable && popup
     const oneControl =
         field.valueType === 'LONG_TEXT' ||
         (field.valueType === 'MULTI_TEXT' &&
@@ -247,9 +246,9 @@ export const ValueInput = ({
     // every commit.
     // Written out, so the effect runs when what is said changes, not for each array a host builds.
     const sayable = JSON.stringify(
-        messages
-            .filter(({ tone }) => tone !== 'info')
-            .map(({ tone, text }) => [tone, TONES[tone].say(text)])
+        messages.flatMap(({ tone, text }) =>
+            tone === 'info' ? [] : [[tone, TONES[tone].say(text)]]
+        )
     )
     const said = useRef(new Set<string>())
     const opened = useRef(true)
@@ -304,6 +303,20 @@ export const ValueInput = ({
             ) : null}
         </span>
     )
+    // The label and `labelAside` on one row; a legend stays first in its fieldset, so the row shows a copy of its text.
+    const besideLabel = (label: ReactNode) =>
+        labelAside === undefined ? (
+            label
+        ) : (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {label}
+                {labelAside}
+            </div>
+        )
+    const legendRow =
+        labelAside === undefined
+            ? null
+            : besideLabel(<FieldTitle aria-hidden="true">{title}</FieldTitle>)
     let control: ReactNode
     if (editor) {
         control = (
@@ -320,7 +333,7 @@ export const ValueInput = ({
                 commits={commits}
             />
         )
-    } else if (reason === undefined && kind === 'search') {
+    } else if (drawnEditable && kind === 'search') {
         control = (
             <SearchInput
                 id={id}
@@ -339,8 +352,10 @@ export const ValueInput = ({
                 settings={settings}
                 draft={draft}
                 readOnly={reason !== undefined}
+                held={held}
                 required={required}
                 className={WIDTHS.get(kind)}
+                tabIndex={tabIndex}
             />
         )
     } else if (typed) {
@@ -352,6 +367,7 @@ export const ValueInput = ({
                 readOnly={reason !== undefined}
                 required={required}
                 className={WIDTHS.get(kind)}
+                tabIndex={tabIndex}
             />
         )
     } else if (choice) {
@@ -359,6 +375,7 @@ export const ValueInput = ({
             <ChoiceInput
                 id={id}
                 title={title}
+                titleAside={labelAside}
                 field={field}
                 value={value}
                 hiddenOptions={hiddenOptions}
@@ -367,6 +384,7 @@ export const ValueInput = ({
                 readOnly={reason !== undefined}
                 required={required}
                 onChange={onChange}
+                tabIndex={tabIndex}
             />
         )
     } else {
@@ -383,6 +401,7 @@ export const ValueInput = ({
                         id={id}
                         dir="auto"
                         readOnly
+                        tabIndex={tabIndex}
                         aria-required={required || undefined}
                         value={shown}
                         className={READ_ONLY_CLASS}
@@ -392,6 +411,7 @@ export const ValueInput = ({
                         id={id}
                         type="text"
                         readOnly
+                        tabIndex={tabIndex}
                         aria-required={required || undefined}
                         value={shown}
                         dir={textDirectionFor(field)}
@@ -408,6 +428,14 @@ export const ValueInput = ({
             </>
         )
     }
+    if (held && (editor || kind === 'search')) {
+        // Its own controls cannot be read-only, so they cannot be reached until the field is unlocked.
+        control = (
+            <div className="contents" {...{ inert: '' }}>
+                {control}
+            </div>
+        )
+    }
 
     const parts = (
         <>
@@ -416,14 +444,21 @@ export const ValueInput = ({
                     {description}
                 </Description>
             )}
-            {reason === undefined &&
-            (kind === 'date' || kind === 'dateTime') ? (
+            {drawnEditable && (kind === 'date' || kind === 'dateTime') ? (
                 <FieldDescription>
                     {dateFormatHint(kind, settings)}
                 </FieldDescription>
             ) : null}
             {reason === undefined ? null : (
-                <FieldDescription>{reason}</FieldDescription>
+                <FieldDescription
+                    className={
+                        readOnly !== undefined && readOnlyReason !== 'visible'
+                            ? 'sr-only'
+                            : undefined
+                    }
+                >
+                    {reason}
+                </FieldDescription>
             )}
             {problem === undefined ? null : (
                 // An alert, said when it appears or changes: not again while more is typed.
@@ -439,7 +474,7 @@ export const ValueInput = ({
                     id={`${id}-message-${index}`}
                     className={cn('border-s-2 ps-1.5', TONES[tone].border)}
                 >
-                    {TONES[tone].say(text)}
+                    <MessageText tone={tone} text={text} />
                 </Description>
             ))}
         </>
@@ -460,9 +495,14 @@ export const ValueInput = ({
                 data-invalid={invalid || undefined}
                 className="gap-2 data-invalid:text-dhis2-destructive"
             >
-                <FieldLegend id={labelId} variant="label">
+                <FieldLegend
+                    id={labelId}
+                    variant="label"
+                    className={labelAside === undefined ? undefined : 'sr-only'}
+                >
                     {title}
                 </FieldLegend>
+                {legendRow}
                 {control}
                 {parts}
             </FieldSet>
@@ -471,7 +511,7 @@ export const ValueInput = ({
     if (editor) {
         return (
             <FieldRoot invalid={invalid} {...focusable}>
-                <FieldLabel id={labelId}>{title}</FieldLabel>
+                {besideLabel(<FieldLabel id={labelId}>{title}</FieldLabel>)}
                 {control}
                 {parts}
             </FieldRoot>
@@ -483,7 +523,7 @@ export const ValueInput = ({
             <FieldRoot invalid={invalid} orientation="horizontal">
                 {control}
                 <FieldContent>
-                    <FieldLabel id={labelId}>{title}</FieldLabel>
+                    {besideLabel(<FieldLabel id={labelId}>{title}</FieldLabel>)}
                     {parts}
                 </FieldContent>
             </FieldRoot>
@@ -491,7 +531,9 @@ export const ValueInput = ({
     }
     return (
         <FieldRoot invalid={invalid}>
-            {radios ? null : <FieldLabel id={labelId}>{title}</FieldLabel>}
+            {radios
+                ? null
+                : besideLabel(<FieldLabel id={labelId}>{title}</FieldLabel>)}
             {control}
             {parts}
         </FieldRoot>

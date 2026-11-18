@@ -411,25 +411,29 @@ test('a required field says so to everyone', async () => {
         .toHaveAttribute('aria-hidden', 'true')
 })
 
-test('messages show under the field and describe it', async () => {
+test('messages show under the field and describe it, a warning or an error after its word', async () => {
     const { input } = await mount({
         description: 'Under the tongue',
         messages: [
+            { tone: 'info', text: 'BMI 22' },
             { tone: 'warning', text: 'Unusually high' },
             { tone: 'error', text: 'Must be below 45' },
         ],
     })
-    // The tone is written out, not only coloured.
-    await expect
-        .element(page.getByText('Warning: Unusually high'))
-        .toBeVisible()
-    await expect
-        .element(page.getByText('Error: Must be below 45'))
-        .toBeVisible()
+    const lines = [0, 1, 2].map(
+        (index) =>
+            document.getElementById(`${input.element().id}-message-${index}`)
+                ?.textContent
+    )
+    expect(lines).toEqual([
+        'BMI 22',
+        'Warning: Unusually high',
+        'Error: Must be below 45',
+    ])
     await expect
         .element(input)
         .toHaveAccessibleDescription(
-            'Under the tongue Warning: Unusually high Error: Must be below 45'
+            'Under the tongue BMI 22 Warning: Unusually high Error: Must be below 45'
         )
     await expect.element(input).toHaveAttribute('aria-invalid', 'true')
 })

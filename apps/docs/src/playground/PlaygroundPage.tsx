@@ -49,6 +49,11 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
+    'event-form': lazy(() =>
+        import('./event-form/EventFormLab').then(({ EventFormLab }) => ({
+            default: EventFormLab,
+        }))
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

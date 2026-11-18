@@ -1,9 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
 import { useId, useState } from 'react'
+import type { ClipboardEvent, KeyboardEvent } from 'react'
 import {
     coordinateNumber,
     parseCoordinate,
+    parseTyped,
 } from '@/components/dhis2-value-types'
+import type { ValueSettings } from '@/components/dhis2-value-types'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
@@ -15,10 +18,37 @@ type Texts = Record<Axis, string>
 
 const AXES: ReadonlyArray<Axis> = ['latitude', 'longitude']
 
-/** What the fields would save as `[lng,lat]` (null clears), and the fields whose number is wrong. */
-const read = (texts: Texts) => {
+// One number with a decimal comma, as `8,48` is typed where the comma is the decimal mark: a latitude or a longitude
+// alone, not the pair 8, 48.
+const DECIMAL_COMMA = /^\s*-?\d+,\d+\s*$/
+
+/** A whole coordinate typed or pasted in one field (`lat, lng`, degrees with hemispheres, a maps link) as its numbers. */
+const wholeIn = (text: string, settings: ValueSettings) => {
+    if (DECIMAL_COMMA.test(text)) {
+        return undefined
+    }
+    const typed = parseTyped({ valueType: 'COORDINATE' }, text, settings)
+    return typed.ok && typed.value !== undefined
+        ? parseCoordinate(typed.value)
+        : undefined
+}
+
+/**
+ * What the fields would save as `[lng,lat]` (null clears), and the fields whose number is wrong. A field holding a
+ * whole coordinate is that coordinate.
+ */
+const read = (texts: Texts, settings: ValueSettings) => {
     if (AXES.every((axis) => texts[axis].trim() === '')) {
         return { value: null, wrong: [] }
+    }
+    for (const axis of AXES) {
+        const whole = wholeIn(texts[axis], settings)
+        if (whole !== undefined) {
+            return {
+                value: `[${whole.longitude},${whole.latitude}]`,
+                wrong: [],
+            }
+        }
     }
     const numbers = {
         latitude: coordinateNumber('latitude', texts.latitude),
@@ -37,9 +67,10 @@ const read = (texts: Texts) => {
 /** The two fields' texts, each change reported; a refused save marks the fields that are wrong. */
 const useCoordinate = ({
     value,
+    settings,
     save,
     report,
-}: Pick<PopupEditorProps, 'value' | 'save' | 'report'>) => {
+}: Pick<PopupEditorProps, 'value' | 'settings' | 'save' | 'report'>) => {
     const id = useId()
     const messages = {
         latitude: i18n.t('Enter a latitude between -90 and 90'),
@@ -55,12 +86,13 @@ const useCoordinate = ({
     })
     // The fields a refused save found wrong, until the next change.
     const [shown, setShown] = useState<ReadonlyArray<Axis>>([])
+    // What both fields held before a pasted coordinate filled them, until the next change: what undo brings back.
+    const [beforeFill, setBeforeFill] = useState<Texts>()
 
-    const change = (axis: Axis, text: string) => {
-        const next = { ...texts, [axis]: text }
+    const show = (next: Texts) => {
         setTexts(next)
         setShown([])
-        const { value: reading, wrong } = read(next)
+        const { value: reading, wrong } = read(next, settings)
         report(
             reading,
             wrong.length === 0
@@ -72,8 +104,41 @@ const useCoordinate = ({
                   }
         )
     }
+    const change = (axis: Axis, text: string) => {
+        setBeforeFill(undefined)
+        show({ ...texts, [axis]: text })
+    }
+    /** A whole coordinate pasted in one field fills both, whatever they held; other text is pasted as it is. */
+    const paste = (event: ClipboardEvent) => {
+        const whole = wholeIn(event.clipboardData.getData('text'), settings)
+        if (whole !== undefined) {
+            event.preventDefault()
+            setBeforeFill(texts)
+            show(whole)
+        }
+    }
+    /** Undo straight after a paste filled both fields brings back what they held: the browser keeps no undo for it. */
+    const undo = (event: KeyboardEvent) => {
+        if (
+            beforeFill !== undefined &&
+            (event.ctrlKey || event.metaKey) &&
+            !event.shiftKey &&
+            event.key.toLowerCase() === 'z'
+        ) {
+            event.preventDefault()
+            setBeforeFill(undefined)
+            show(beforeFill)
+        }
+    }
+    /** A whole coordinate typed in one field, spread over both. */
+    const spread = (axis: Axis) => {
+        const whole = wholeIn(texts[axis], settings)
+        if (whole !== undefined) {
+            setTexts(whole)
+        }
+    }
     const commit = () => {
-        const { value: reading, wrong } = read(texts)
+        const { value: reading, wrong } = read(texts, settings)
         if (wrong.length === 0) {
             save(reading)
             return
@@ -82,12 +147,12 @@ const useCoordinate = ({
         // Back to the first field a message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
-    return { id, messages, texts, shown, change, commit }
+    return { id, messages, texts, shown, change, paste, undo, spread, commit }
 }
 
 /** One axis: its label, its field, and the message of a refused save. Classes size it for a dialog or a form. */
 const CoordinateAxis = ({
-    editor: { id, messages, texts, shown, change, commit },
+    editor: { id, messages, texts, shown, change, paste, undo, spread, commit },
     axis,
     describedBy,
     invalid = false,
@@ -124,7 +189,12 @@ const CoordinateAxis = ({
                     describedBy
                 )}
                 onChange={({ target }) => change(axis, target.value)}
-                onKeyDown={saveOnCtrlEnter(commit)}
+                onPaste={paste}
+                onBlur={() => spread(axis)}
+                onKeyDown={(event) => {
+                    undo(event)
+                    saveOnCtrlEnter(commit)(event)
+                }}
                 className={cn('rtl:text-right', inputClassName)}
             />
             {wrong ? (
@@ -141,8 +211,10 @@ const CoordinateAxis = ({
 }
 
 /**
- * A coordinate as a latitude and a longitude field (no map, no location from the device), saved as `[lng,lat]`. Each
- * change is reported, not saved: Save, Ctrl+Enter or ⌘+Enter saves it, and numbers out of range keep the editor open
+ * A coordinate as a latitude and a longitude field (no map, no location from the device), saved as `[lng,lat]`. A whole
+ * coordinate typed or pasted in either field (`8.4871, -13.2356`, `8°29'13.6"N 13°14'08.2"W`, a maps link) fills both,
+ * at once when pasted, replacing what they held (undo brings it back), and when the field is left when typed. One
+ * number with a decimal comma (`8,48`) is that axis's number, not a pair. Each change is reported, not saved: Save, Ctrl+Enter or ⌘+Enter saves it, and numbers out of range keep the editor open
  * with a message for each field that is wrong. Both fields empty save no value.
  */
 export const CoordinateEditor = (props: PopupEditorProps) => {

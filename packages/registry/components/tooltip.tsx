@@ -21,9 +21,18 @@ function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
     return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-    return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
+// React 18 drops `ref` from function component props; shadcn targets React 19.
+const TooltipTrigger = React.forwardRef<
+    HTMLButtonElement,
+    TooltipPrimitive.Trigger.Props
+>((props, ref) => (
+    <TooltipPrimitive.Trigger
+        ref={ref}
+        data-slot="tooltip-trigger"
+        {...props}
+    />
+))
+TooltipTrigger.displayName = 'TooltipTrigger'
 
 /** shadcn TooltipContent restyled to match @dhis2/ui Tooltip. */
 function TooltipContent({

@@ -69,6 +69,7 @@ const browserProject = {
             '@base-ui/react/alert-dialog',
             '@base-ui/react/button',
             '@base-ui/react/checkbox',
+            '@base-ui/react/collapsible',
             '@base-ui/react/dialog',
             '@base-ui/react/field',
             '@base-ui/react/fieldset',

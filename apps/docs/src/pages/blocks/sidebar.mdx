@@ -1,99 +1,165 @@
 ---
 title: Sidebar
-description: Navigation with expandable groups, footer actions, and a collapsible sidebar.
+description: An app's main navigation, which folds to icons and becomes a sheet on a phone.
 ---
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
 
-<ExampleCard slug="sidebar/basic" />
+<ExampleCard slug="sidebar/app" />
+
+The sidebar holds an app's pages, grouped under labels, with the current page
+filled. On a desktop it folds to a rail of icons; on a window narrower than
+768 pixels it becomes a sheet that slides over the page. It is the shadcn
+Sidebar on the DHIS2 theme roles.
 
 ## Installation
 
-<InstallCommand item="sidebar" />
+<InstallCommand item="sidebar-menu" />
 
-## Navigation links
+`sidebar-menu` holds the menu parts and installs `sidebar`, the frame, with
+it. Install `collapsible` as well for groups of pages that open and close.
 
-Pass a `NavLink` to `SidebarLink` through `render` to highlight the current page
-with a leading selection marker.
+## Usage
 
 ```tsx
-import { NavLink } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import {
     Sidebar,
     SidebarContent,
-    SidebarItem,
-    SidebarItems,
-    SidebarLink,
-    SidebarNavigation,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarInset,
     SidebarProvider,
-    SidebarToggle,
-} from '@/components/sidebar'
+    SidebarTrigger,
+} from '@/components/dhis2/ui/sidebar'
+import {
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/dhis2/ui/sidebar-menu'
+import { IconCalendar16, IconSearch16 } from '@dhis2/ui-icons'
 
-export function AppNavigation() {
-    return (
-        <SidebarProvider>
-            <Sidebar>
-                <SidebarNavigation aria-label="Application navigation">
-                    <SidebarContent>
-                        <SidebarItems>
-                            <SidebarItem>
-                                <SidebarLink
-                                    render={<NavLink to="/dashboard" end />}
-                                >
-                                    Dashboard
-                                </SidebarLink>
-                            </SidebarItem>
-                            <SidebarItem>
-                                <SidebarLink
-                                    render={<NavLink to="/projects" />}
-                                >
-                                    Projects
-                                </SidebarLink>
-                            </SidebarItem>
-                        </SidebarItems>
-                    </SidebarContent>
-                </SidebarNavigation>
-                <SidebarToggle />
-            </Sidebar>
-        </SidebarProvider>
-    )
-}
+export const AppLayout = () => (
+    <SidebarProvider className="h-full">
+        <Sidebar collapsible="icon">
+            <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Patients</SidebarGroupLabel>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<NavLink to="/today" />}
+                                tooltip="Today"
+                            >
+                                <IconCalendar16 />
+                                <span>Today</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                render={<NavLink to="/find" />}
+                                tooltip="Find patient"
+                            >
+                                <IconSearch16 />
+                                <span>Find patient</span>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroup>
+            </SidebarContent>
+        </Sidebar>
+        <SidebarInset>
+            <header>
+                <SidebarTrigger />
+            </header>
+            <Outlet />
+        </SidebarInset>
+    </SidebarProvider>
+)
 ```
 
-For other routers, set `aria-current="page"` on the active link. Keep it on a
-link, an `<a>`: the marker takes the link colour in Windows forced colours, so
-on a button it could show a colour that doesn't match the text.
+`SidebarProvider` fills its parent rather than the window, so the sidebar sits
+below the DHIS2 header bar. Give the parent a height; the page scrolls inside
+`SidebarInset`.
 
-## Nested navigation and actions
+A router's `NavLink` sets `aria-current="page"` on the current link, which the
+sidebar fills. Without a router, set `isActive` on the button. In Windows
+forced colours the fill disappears, so the current page is outlined instead.
 
-Use `SidebarGroup`, `SidebarGroupTrigger`, and `SidebarGroupContent` for nested
-links. Set `defaultOpen` to start a group expanded, or use `open` and
-`onOpenChange` to control it.
+## Folding
 
-Keep frequently used actions in `SidebarFooter` with `SidebarButton`. Place
-icons, badges, and custom labels directly inside links and buttons.
+Users fold the sidebar with `SidebarTrigger`, by clicking its edge
+(`SidebarRail`), or with Ctrl or ⌘ and B. Set `collapsible` on `Sidebar`:
 
-## Collapse controls
+- `icon` folds it to a rail of icons. Give each `SidebarMenuButton` an icon
+  and a `tooltip`, which names it while folded.
+- `offcanvas`, the default, slides it out of view.
+- `none` keeps it open.
 
-Add `SidebarToggle` to collapse and expand the navigation. To start collapsed,
-set `defaultCollapsed` on `SidebarProvider`; to control it, use `collapsed` and
-`onCollapsedChange` instead. Collapsing preserves expanded groups and the selected page.
+It starts open; set `defaultOpen={false}` on `SidebarProvider` to start
+folded, or `open` and `onOpenChange` to hold the state in your app. Read it
+anywhere inside the provider with `useSidebar()`.
 
-To add a page-toolbar control, place it under the same `SidebarProvider` and
-use `useSidebar()`. Give separate sidebars their own providers, with one
-`SidebarNavigation` each.
+On a narrow window the trigger opens the sheet instead. Close it when a link
+is followed: call `setOpenMobile(false)` from `useSidebar()` in the link's
+`onClick`.
 
-<ExampleCard slug="sidebar/controlled" />
+## Groups of pages
 
-Use `collapseLabel` and `expandLabel` on `SidebarToggle` to customize its accessible labels.
+Wrap a menu item in a `Collapsible` to open and close its sub-pages:
 
-## Layout
+```tsx
+<Collapsible defaultOpen render={<SidebarMenuItem />}>
+    <CollapsibleTrigger render={<SidebarMenuButton tooltip="Reports" />}>
+        <IconVisualizationColumn16 />
+        <span>Reports</span>
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+        <SidebarMenuSub>
+            <SidebarMenuSubItem>
+                <SidebarMenuSubButton render={<NavLink to="/reports/stock" />}>
+                    <span>Stock</span>
+                </SidebarMenuSubButton>
+            </SidebarMenuSubItem>
+        </SidebarMenuSub>
+    </CollapsibleContent>
+</Collapsible>
+```
 
-The sidebar becomes a full-width bar on smaller screens. Use a
-`flex-col md:flex-row` layout to keep it above the page on mobile and beside it on
-desktop. Give the desktop layout a bounded height to scroll long menus while
-keeping the header and footer visible.
+Sub-pages hide while the sidebar is folded to icons.
 
-Set `dir="rtl"` on the layout for right-to-left navigation; the selection marker
-and toggle direction follow it.
+## Right to left
+
+`side` follows the text direction: `left`, the default, is where a line
+starts. Under `dir="rtl"` the sidebar docks on the right, and the trigger's
+arrow and the rail turn with it.
+
+## API reference
+
+From `sidebar`:
+
+- `SidebarProvider` — `defaultOpen`, `open` and `onOpenChange`.
+- `Sidebar` — `side?: 'left' | 'right'`; `variant?: 'sidebar' | 'floating' |
+'inset'`; `collapsible?: 'offcanvas' | 'icon' | 'none'`; `mobileTitle`, the
+  sheet's accessible name ("Navigation").
+- `SidebarHeader`, `SidebarContent` (scrolls), `SidebarFooter`,
+  `SidebarSeparator`, `SidebarInput`.
+- `SidebarGroup`, `SidebarGroupLabel`, `SidebarGroupAction`,
+  `SidebarGroupContent`.
+- `SidebarTrigger` and `SidebarRail` — `label` for their accessible name
+  ("Toggle sidebar").
+- `SidebarInset` — the page beside the sidebar.
+- `useSidebar()` — `state`, `open`, `setOpen`, `openMobile`,
+  `setOpenMobile`, `isMobile` and `toggleSidebar`.
+
+From `sidebar-menu`:
+
+- `SidebarMenu`, `SidebarMenuItem`.
+- `SidebarMenuButton` — `isActive`; `tooltip`, shown while folded to icons;
+  `variant?: 'default' | 'outline'`; `size?: 'default' | 'sm' | 'lg'`. Pass a
+  link through `render`.
+- `SidebarMenuAction` (`showOnHover`), `SidebarMenuBadge`,
+  `SidebarMenuSkeleton` (`showIcon`).
+- `SidebarMenuSub`, `SidebarMenuSubItem`, `SidebarMenuSubButton` (`isActive`,
+  `size?: 'sm' | 'md'`).

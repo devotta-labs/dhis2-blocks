@@ -31,6 +31,26 @@ import {
     DropdownMenuTrigger,
 } from '@/components/dhis2/ui/dropdown-menu'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/dhis2/ui/collapsible'
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarInset,
+    SidebarProvider,
+    SidebarTrigger,
+} from '@/components/dhis2/ui/sidebar'
+import {
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarMenuSub,
+    SidebarMenuSubButton,
+    SidebarMenuSubItem,
+} from '@/components/dhis2/ui/sidebar-menu'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import { Switch } from '@/components/dhis2/ui/switch'
 import { Toggle } from '@/components/dhis2/ui/toggle'
@@ -42,6 +62,38 @@ if (root !== null) {
     createRoot(root).render(
         <>
             <Host />
+            <SidebarProvider>
+                <Sidebar collapsible="icon">
+                    <SidebarContent>
+                        <SidebarMenu>
+                            <Collapsible render={<SidebarMenuItem />}>
+                                <CollapsibleTrigger
+                                    render={
+                                        <SidebarMenuButton tooltip="Reports" />
+                                    }
+                                >
+                                    Reports
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                    <SidebarMenuSub>
+                                        <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton
+                                                href="/reports"
+                                                aria-current="page"
+                                            >
+                                                Overview
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                    </SidebarMenuSub>
+                                </CollapsibleContent>
+                            </Collapsible>
+                        </SidebarMenu>
+                    </SidebarContent>
+                </Sidebar>
+                <SidebarInset>
+                    <SidebarTrigger />
+                </SidebarInset>
+            </SidebarProvider>
             <Calendar
                 records={[{ id: 'task', date: '2026-11-14', label: 'Launch' }]}
             >

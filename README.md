@@ -16,7 +16,6 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
-      sidebar/          Composable modeling-app navigation with a collapse rail
       data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
@@ -98,23 +97,6 @@ A program-first application can initially render only
 `ProgramSelector`, then add organisation-unit, enrollment, stage, and event
 children as its own context policy makes them relevant. All values, direct
 callbacks, and metadata-derived labels are supplied by the host.
-
-## Sidebar block
-
-Build navigation with expandable groups, footer actions, and a collapsible sidebar.
-
-```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
-```
-
-Import from `@/components/sidebar`. Use `SidebarLink` with
-`render={<NavLink to="/projects" />}` to highlight the current page. Add
-`SidebarGroup` for nested links and `SidebarButton` for footer actions.
-Use `SidebarToggle` in the sidebar, or `useSidebar()` for a page-toolbar control.
-Collapsing preserves the open groups and selected page.
-
-See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
-examples.
 
 ## Value input block
 
@@ -403,11 +385,12 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 ```
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
-`combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
-`spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
-`tooltip`. Items that import siblings (for example `combobox` imports `select`
-and `input-group`) install them too.
+`collapsible`, `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`,
+`input`, `input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`,
+`separator`, `sheet`, `sidebar`, `sidebar-menu`, `spinner`, `switch`, `table`,
+`textarea`, `toggle`, `toggle-group`, `tooltip`, and `use-mobile`. Items that
+import siblings (for example `combobox` imports `select` and `input-group`)
+install them too.
 
 Every design token is namespaced (`--dhis2-*`, `--color-dhis2-*`,
 `--radius-dhis2-*`, `--shadow-dhis2-*`, `--font-dhis2`), so utilities such as

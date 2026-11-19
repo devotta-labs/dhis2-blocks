@@ -71,13 +71,6 @@
                     "color-dhis2-destructive-indicator": "var(--dhis2-destructive-indicator)",
                     "color-dhis2-destructive-strong": "var(--dhis2-destructive-strong)",
                     "color-dhis2-background-subtle": "var(--dhis2-background-subtle)",
-                    "color-dhis2-sidebar": "var(--dhis2-sidebar)",
-                    "color-dhis2-sidebar-foreground": "var(--dhis2-sidebar-foreground)",
-                    "color-dhis2-sidebar-accent": "var(--dhis2-sidebar-accent)",
-                    "color-dhis2-sidebar-accent-foreground": "var(--dhis2-sidebar-accent-foreground)",
-                    "color-dhis2-sidebar-border": "var(--dhis2-sidebar-border)",
-                    "color-dhis2-sidebar-primary": "var(--dhis2-sidebar-primary)",
-                    "color-dhis2-sidebar-ring": "var(--dhis2-sidebar-ring)",
                     "shadow-dhis2-card": "var(--dhis2-shadow-card)",
                     "shadow-dhis2-popover": "var(--dhis2-shadow-popover)"
                 },
@@ -140,13 +133,6 @@
                     "dhis2-destructive-indicator": "#c62828",
                     "dhis2-destructive-strong": "#330202",
                     "dhis2-background-subtle": "#fbfcfd",
-                    "dhis2-sidebar": "#212934",
-                    "dhis2-sidebar-foreground": "#e8edf2",
-                    "dhis2-sidebar-accent": "#404b5a",
-                    "dhis2-sidebar-accent-foreground": "#fbfcfd",
-                    "dhis2-sidebar-border": "#4a5768",
-                    "dhis2-sidebar-primary": "#009688",
-                    "dhis2-sidebar-ring": "#fbfcfd",
                     "dhis2-shadow-card": "0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
                     "dhis2-shadow-popover": "0 4px 12px rgba(12, 14, 16, 0.15), 0 0 0 1px rgba(12, 14, 16, 0.05)",
                     "dhis2-control-height": "40px",
@@ -195,11 +181,6 @@
                         "--dhis2-destructive-border": "#891515",
                         "--dhis2-destructive-indicator": "#891515",
                         "--dhis2-background-subtle": "#f8f9fa",
-                        "--dhis2-sidebar-foreground": "#fbfcfd",
-                        "--dhis2-sidebar-accent-foreground": "#ffffff",
-                        "--dhis2-sidebar-border": "#a0adba",
-                        "--dhis2-sidebar-primary": "#b2dfdb",
-                        "--dhis2-sidebar-ring": "#ffffff",
                         "--dhis2-shadow-card": "0 0 0 1px #404b5a, 0px 1px 2px rgba(33, 41, 52, 0.06), 0px 1px 3px rgba(33, 41, 52, 0.1)",
                         "--dhis2-shadow-popover": "0 0 0 1px #404b5a, 0 4px 12px rgba(12, 14, 16, 0.15)"
                     }
@@ -355,6 +336,19 @@
                     "path": "packages/registry/components/cn.ts",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/cn.ts"
+                }
+            ]
+        },
+        {
+            "name": "collapsible",
+            "type": "registry:ui",
+            "dependencies": ["@base-ui/react@^1.9.0"],
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/collapsible.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/collapsible.tsx"
                 }
             ]
         },
@@ -594,6 +588,74 @@
             ]
         },
         {
+            "name": "sheet",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/portal-root"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/sheet.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/sheet.tsx"
+                }
+            ]
+        },
+        {
+            "name": "sidebar-menu",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "class-variance-authority@^0.7.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/sidebar",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/sidebar-menu.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/sidebar-menu.tsx"
+                }
+            ]
+        },
+        {
+            "name": "sidebar",
+            "type": "registry:ui",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/separator",
+                "devotta-labs/dhis2-blocks/sheet",
+                "devotta-labs/dhis2-blocks/use-mobile"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/components/sidebar.tsx",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/sidebar.tsx"
+                }
+            ]
+        },
+        {
             "name": "skeleton",
             "type": "registry:ui",
             "registryDependencies": [
@@ -722,6 +784,18 @@
                     "path": "packages/registry/components/tooltip.tsx",
                     "type": "registry:ui",
                     "target": "@components/dhis2/ui/tooltip.tsx"
+                }
+            ]
+        },
+        {
+            "name": "use-mobile",
+            "type": "registry:ui",
+            "registryDependencies": ["devotta-labs/dhis2-blocks/dhis2-theme"],
+            "files": [
+                {
+                    "path": "packages/registry/components/use-mobile.ts",
+                    "type": "registry:ui",
+                    "target": "@components/dhis2/ui/use-mobile.ts"
                 }
             ]
         },
@@ -1376,45 +1450,6 @@
                     "target": "@components/program-rules/lib/valueTypes.ts"
                 }
             ]
-        },
-        {
-            "name": "sidebar",
-            "type": "registry:block",
-            "title": "Sidebar",
-            "description": "Navigation with expandable groups, footer actions and a collapsible sidebar.",
-            "dependencies": [
-                "@base-ui/react@^1.9.0",
-                "@dhis2/d2-i18n@1.2.0",
-                "@dhis2/ui-icons@^10.17.0",
-                "prop-types@^15.8.1"
-            ],
-            "registryDependencies": [
-                "devotta-labs/dhis2-blocks/cn",
-                "devotta-labs/dhis2-blocks/dhis2-theme"
-            ],
-            "files": [
-                {
-                    "path": "packages/registry/blocks/sidebar/context.ts",
-                    "type": "registry:file",
-                    "target": "@components/sidebar/context.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/sidebar/index.ts",
-                    "type": "registry:file",
-                    "target": "@components/sidebar/index.ts"
-                },
-                {
-                    "path": "packages/registry/blocks/sidebar/items.tsx",
-                    "type": "registry:file",
-                    "target": "@components/sidebar/items.tsx"
-                },
-                {
-                    "path": "packages/registry/blocks/sidebar/sidebar.tsx",
-                    "type": "registry:file",
-                    "target": "@components/sidebar/sidebar.tsx"
-                }
-            ],
-            "docs": "Use SidebarLink with render={<NavLink to=\"/projects\" />} to highlight the current page. Add SidebarGroup for nested links and SidebarButton for footer actions. Use SidebarToggle in the sidebar or useSidebar() for a page-toolbar control. Give each sidebar its own SidebarProvider and SidebarNavigation. Collapsing preserves expanded groups and the selected page."
         },
         {
             "name": "spreadsheet",

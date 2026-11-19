@@ -20,6 +20,11 @@ packages/
       data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
+api/                    Vercel serverless function proxying the docs site's /dhis2 requests
+docker/e2e/             Docker Compose stack (DHIS2 and its config) for the e2e tests
+tools/
+  oxlint/anti-slop/     Custom oxlint rules for the repo's lint setup
+  registry/             Registry build, manifest and install-check tooling, with a consumer app
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
 scripts/docs/           Documentation site backend lifecycle

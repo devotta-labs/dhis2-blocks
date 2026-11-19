@@ -17,7 +17,7 @@ import { usePresetParam } from '../usePresetParam'
 import { generateLabData, valueFor, type LabSettings } from './labData'
 import { answer, RESOURCES } from './labServer'
 import { initialLabState, labReducer } from './labState'
-import { breakStorage, clearStored, seedStored } from './labStorage'
+import { writeStored } from './labStorage'
 import { PRESETS } from './presets'
 import {
     ClinicsControls,
@@ -42,13 +42,9 @@ export const ClinicSelectorLab = () => {
 
     // Before the block's first read, which waits for the user request; cleared again when the lab closes.
     useLayoutEffect(() => {
-        seedStored(seeding.seed)
-        return clearStored
+        writeStored(seeding.seed)
+        return () => writeStored()
     }, [seeding])
-    useLayoutEffect(
-        () => (settings.storageThrows ? breakStorage() : undefined),
-        [settings.storageThrows]
-    )
 
     const change = useCallback(
         (changes: Partial<LabSettings>) =>
@@ -149,10 +145,10 @@ export const ClinicSelectorLab = () => {
                         onChange={change}
                     />
                     <RememberedControls
-                        settings={settings}
                         data={mode === 'lab' ? data : undefined}
-                        seed={edited || mode === 'live' ? {} : seeding.seed}
-                        onChange={change}
+                        seed={
+                            edited || mode === 'live' ? undefined : seeding.seed
+                        }
                         onEdit={() => dispatch({ type: 'editStorage' })}
                     />
                     {mode === 'lab' && (

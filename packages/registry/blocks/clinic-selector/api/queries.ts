@@ -1,23 +1,21 @@
-import type { Result } from 'better-result'
+import { Result } from 'better-result'
+import type { z } from 'zod'
 import type { ClinicResourceClient, ResourceRequest } from './client'
-import {
-    ByIdSchema,
-    MeSchema,
-    SearchSchema,
-    type AssignedClinic,
-    type Clinic,
-} from './schemas'
+import { ByIdSchema, MeSchema, SearchSchema, type Clinic } from './schemas'
 
 export const SEARCH_PAGE_SIZE = 20
+// A user's units rarely change mid-session, so returning to the tab does not ask for every loaded page again.
+export const FRESH_MS = 5 * 60_000
 
-export interface Me {
-    userId: string
-    assigned: AssignedClinic[]
-}
+type Me = z.output<typeof MeSchema>
+type SearchResult = z.output<typeof SearchSchema>
 
-export interface SearchResult {
-    clinics: Clinic[]
-    hasMore: boolean
+/** Unwraps a Result so React Query owns the error state. */
+export const unwrap = <T>(result: Result<T, Error>): T => {
+    if (Result.isError(result)) {
+        throw result.error
+    }
+    return result.value
 }
 
 const CLINIC_FIELDS = 'id,displayName,path'

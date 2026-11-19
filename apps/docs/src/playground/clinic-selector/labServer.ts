@@ -57,8 +57,7 @@ export const answer =
                             .filter(
                                 (unit) =>
                                     ids.includes(unit.id) &&
-                                    (settings.ignoreScopeFilter ||
-                                        isInScope(unit, data))
+                                    isInScope(unit, data)
                             )
                             .map(clinicJson),
                     }
@@ -72,8 +71,7 @@ export const answer =
                     const matches = data.units
                         .filter(
                             (unit) =>
-                                (settings.ignoreScopeFilter ||
-                                    isInScope(unit, data)) &&
+                                isInScope(unit, data) &&
                                 unit.displayName.toLowerCase().includes(query)
                         )
                         .sort(byName)

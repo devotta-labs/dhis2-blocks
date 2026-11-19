@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { RequestLogEntry } from '../../network'
-import { generateLabData, GONE, valueFor } from '../labData'
+import { generateLabData, valueFor } from '../labData'
 import { answer } from '../labServer'
 import { initialLabState, labReducer, type LabAction } from '../labState'
 import { PRESETS } from '../presets'
@@ -44,14 +44,14 @@ describe('the clinic selector lab state', () => {
         expect(state.settings).toEqual(presetNamed('District nurse').settings)
         expect(state.run).toBe(withRequest.run + 1)
         expect(state.seeding).not.toBe(withRequest.seeding)
-        expect(Object.keys(state.seeding.seed)).toEqual(['u1'])
+        expect(state.seeding.seed).toBeDefined()
         expect(state.requests).toEqual([])
 
         const plain = labReducer(state, {
             type: 'pickPreset',
             preset: presetNamed('Three clinics'),
         })
-        expect(plain.seeding.seed).toEqual({})
+        expect(plain.seeding.seed).toBeUndefined()
         expect(plain.seeding).not.toBe(state.seeding)
     })
 
@@ -73,10 +73,6 @@ describe('the clinic selector lab state', () => {
         [
             'the sidebar collapses',
             { type: 'changeSettings', changes: { collapsed: true } },
-        ],
-        [
-            'the user switches',
-            { type: 'changeSettings', changes: { userId: 'u2' } },
         ],
         ['the block restarts', { type: 'restart' }],
     ] satisfies Array<[string, LabAction]>)(
@@ -102,7 +98,7 @@ describe('the clinic selector lab state', () => {
         for (const changes of [
             { collapsed: true },
             { label: 'Facility' as const },
-            { value: 'outside' as const },
+            { value: 'follows' as const },
             { rtl: true },
         ]) {
             const state = labReducer(withRequest, {
@@ -216,9 +212,7 @@ describe('the clinic selector lab state', () => {
     it('drops a value that names a lab clinic when switching to live DHIS2', () => {
         for (const [value, live] of [
             ['valid', 'uncontrolled'],
-            ['outside', 'uncontrolled'],
             ['follows', 'follows'],
-            ['missing', 'missing'],
         ] as const) {
             const lab = labReducer(withRequest, {
                 type: 'changeSettings',
@@ -265,32 +259,26 @@ describe('the clinic selector lab state', () => {
             PRESETS.length
         )
         const folded = PRESETS.filter(({ folded }) => folded)
-        expect(folded).toHaveLength(21)
+        expect(folded).toHaveLength(8)
         // PresetControls already heads them Edge cases.
         expect(folded.some(({ group }) => group === 'Edge cases')).toBe(false)
     })
 
     it.each(PRESETS.map((preset) => [preset.name, preset] as const))(
         '%s seeds only ids its own data has, and the server answers it',
-        (name, preset) => {
+        (_, preset) => {
             const data = generateLabData(preset.settings)
-            const seeded = Object.values(preset.seed ?? {}).flatMap(
-                (raw) => raw.match(/\b[A-Za-z][A-Za-z0-9]{10}\b/g) ?? []
-            )
-            const missing = seeded.filter(
-                (id) => !data.units.some((unit) => unit.id === id)
-            )
-            expect(missing).toEqual(
-                name === 'Remembered clinic no longer exists'
-                    ? [GONE, GONE]
-                    : []
-            )
-            // The host's value names a unit of the data, except where the preset passes one no unit has.
+            const seeded =
+                preset.seed?.match(/\b[A-Za-z][A-Za-z0-9]{10}\b/g) ?? []
+            expect(
+                seeded.filter(
+                    (id) => !data.units.some((unit) => unit.id === id)
+                )
+            ).toEqual([])
+            // The host's value names a unit of the data.
             const value = valueFor(preset.settings, data)
             if (value !== undefined) {
-                expect(data.units.some((unit) => unit.id === value)).toBe(
-                    name !== 'Controlled, value does not exist'
-                )
+                expect(data.units.some((unit) => unit.id === value)).toBe(true)
             }
 
             const respond = answer(preset.settings, data)

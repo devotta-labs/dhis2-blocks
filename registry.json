@@ -862,11 +862,6 @@
                     "target": "@components/clinic-selector/api/scope.ts"
                 },
                 {
-                    "path": "packages/registry/blocks/clinic-selector/asIs.ts",
-                    "type": "registry:file",
-                    "target": "@components/clinic-selector/asIs.ts"
-                },
-                {
                     "path": "packages/registry/blocks/clinic-selector/hooks.ts",
                     "type": "registry:file",
                     "target": "@components/clinic-selector/hooks.ts"
@@ -890,6 +885,11 @@
                     "path": "packages/registry/blocks/clinic-selector/provider/remembered.ts",
                     "type": "registry:file",
                     "target": "@components/clinic-selector/provider/remembered.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/clinic-selector/search.ts",
+                    "type": "registry:file",
+                    "target": "@components/clinic-selector/search.ts"
                 },
                 {
                     "path": "packages/registry/blocks/clinic-selector/tile.ts",

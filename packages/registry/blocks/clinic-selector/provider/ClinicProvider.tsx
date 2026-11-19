@@ -1,7 +1,6 @@
 import { announce } from '@/components/dhis2/ui/announcer'
 import i18n from '@dhis2/d2-i18n'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { Result } from 'better-result'
+import { useQuery } from '@tanstack/react-query'
 import React, {
     useCallback,
     useEffect,
@@ -16,19 +15,14 @@ import {
     shouldRetryClinicRequest,
     type ClinicClient,
 } from '../api/client'
-import { AS_IS } from '../asIs'
-import { fetchClinicsById, fetchMe, searchClinics } from '../api/queries'
+import { fetchClinicsById, fetchMe, FRESH_MS, unwrap } from '../api/queries'
 import { clinicQueryKeys } from '../api/queryKeys'
 import { useClinicClient } from '../api/runtimeClient'
 import type { AssignedClinic, Clinic } from '../api/schemas'
 import { isWithinAssigned } from '../api/scope'
 import {
     ClinicContext,
-    ClinicSearchContext,
     type ClinicContextValue,
-    type ClinicSearchActions,
-    type ClinicSearchState,
-    type ClinicSearchValue,
     type ClinicStatus,
 } from './context'
 import {
@@ -48,49 +42,23 @@ export interface ClinicProviderProps {
     children?: ReactNode
 }
 
-/** Unwraps a Result so React Query owns the error state. */
-const unwrap = <T,>(result: Result<T, Error>): T => {
-    if (Result.isError(result)) {
-        throw result.error
-    }
-    return result.value
-}
-
 // Stored ids are untrusted: only a uid may go into the by-id filter.
 const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
-const SEARCH_DELAY_MS = 250
-// A user's units rarely change mid-session, so returning to the tab does not ask for every loaded page again.
-const FRESH_MS = 5 * 60_000
-// More than this many facilities is too many to scan without a filter.
-const MAX_UNFILTERED = 8
 const NO_ASSIGNED: AssignedClinic[] = []
-const NO_RECENT: Remembered = { recent: [] }
-const NO_CLINICS: ReadonlyMap<string, Clinic | null> = new Map()
-const noop = () => {}
 
-/** What a search has found and how to go on, before it is split into state and actions. */
-type SearchView = Omit<ClinicSearchState, 'query'> &
-    Pick<ClinicSearchActions, 'loadMore' | 'retry'>
-const NO_MORE = {
-    hasMore: false,
-    loadingMore: false,
-    moreFailed: false,
-    loadMore: noop,
+/** Everything that belongs to one user, so a different user starts afresh. */
+interface UserState {
+    userId?: string
+    remembered: Remembered
+    /** Every id picked or checked: its clinic, or null when the server did not return it. */
+    known: ReadonlyMap<string, Clinic | null>
 }
 
-const announceChange = (clinic: Clinic) =>
-    announce(
-        i18n.t('Clinic changed to {{name}}', {
-            name: clinic.displayName,
-            interpolation: AS_IS,
-        })
-    )
-
-/** State that belongs to one user, so a different user never sees it. */
-interface ForUser<T> {
-    userId: string
-    value: T
-}
+const startFor = (userId?: string): UserState => ({
+    userId,
+    remembered: userId === undefined ? { recent: [] } : readRemembered(userId),
+    known: new Map(),
+})
 
 const statusOf = ({
     failed,
@@ -112,7 +80,7 @@ const statusOf = ({
 
 /**
  * Knows the user's assigned clinics, which one is current and which they
- * used recently, and searches their hierarchy. It renders only its children.
+ * used recently. It renders only its children.
  */
 export function ClinicProvider({
     value,
@@ -123,10 +91,10 @@ export function ClinicProvider({
     const runtimeClient = useClinicClient()
     const chosen = client ?? runtimeClient
     const resourceClient = useMemo(() => resourceClientOf(chosen), [chosen])
-    const clientId = cacheIdOf(chosen)
+    const cacheId = cacheIdOf(chosen)
 
     const me = useQuery({
-        queryKey: clinicQueryKeys.me(clientId),
+        queryKey: clinicQueryKeys.me(cacheId),
         queryFn: async ({ signal }) =>
             unwrap(await fetchMe(resourceClient, signal)),
         retry: shouldRetryClinicRequest,
@@ -135,58 +103,52 @@ export function ClinicProvider({
     const userId = me.data?.userId
     const assigned = me.data?.assigned ?? NO_ASSIGNED
 
-    // What storage held for this user, and what this provider has since written.
-    const stored = useMemo(
-        () => (userId === undefined ? NO_RECENT : readRemembered(userId)),
+    const [user, setUser] = useState(() => startFor(userId))
+    if (user.userId !== userId) {
+        setUser(startFor(userId))
+    }
+    const { remembered, known } = user
+    const update = useCallback(
+        (change: (before: UserState) => Partial<UserState>) =>
+            setUser((before) =>
+                before.userId === userId
+                    ? { ...before, ...change(before) }
+                    : before
+            ),
         [userId]
     )
-    const [written, setWritten] = useState<{
-        userId: string
-        remembered: Remembered
-    }>()
-    const remembered =
-        written !== undefined && written.userId === userId
-            ? written.remembered
-            : stored
     const remember = useCallback(
         (next: Remembered) => {
             if (userId === undefined) {
                 return
             }
-            setWritten({ userId, remembered: next })
+            update(() => ({ remembered: next }))
             writeRemembered(userId, next)
         },
-        [userId]
+        [userId, update]
     )
-    // Clinics picked here need no request, but still only count inside the assigned paths.
-    const [picked, setPicked] = useState<ForUser<ReadonlyMap<string, Clinic>>>()
-    // Every id already checked: its clinic, or null when the server did not return it, so it stays invalid for the session.
-    const [known, setKnown] =
-        useState<ForUser<ReadonlyMap<string, Clinic | null>>>()
-    const pickedClinics =
-        picked !== undefined && picked.userId === userId
-            ? picked.value
-            : NO_CLINICS
-    const knownClinics =
-        known !== undefined && known.userId === userId
-            ? known.value
-            : NO_CLINICS
+    const isAssigned = useCallback(
+        (id: string) => assigned.some((a) => a.id === id),
+        [assigned]
+    )
 
     // Only ids never checked, so an id leaving the set never starts a new check.
-    const toCheck = useMemo(() => {
-        const ids = new Set([stored.current, ...stored.recent, value])
-        return [...ids].filter(
-            (id): id is string =>
-                id !== undefined &&
-                UID.test(id) &&
-                !assigned.some((a) => a.id === id) &&
-                !pickedClinics.has(id) &&
-                !knownClinics.has(id)
-        )
-    }, [stored, value, pickedClinics, knownClinics, assigned])
+    const toCheck = useMemo(
+        () =>
+            [
+                ...new Set([remembered.current, ...remembered.recent, value]),
+            ].filter(
+                (id): id is string =>
+                    id !== undefined &&
+                    UID.test(id) &&
+                    !isAssigned(id) &&
+                    !known.has(id)
+            ),
+        [remembered, value, known, isAssigned]
+    )
     const checking = userId !== undefined && toCheck.length > 0
     const byId = useQuery({
-        queryKey: clinicQueryKeys.byId(clientId, userId ?? '', toCheck),
+        queryKey: clinicQueryKeys.byId(cacheId, userId ?? '', toCheck),
         queryFn: async ({ signal }) =>
             unwrap(await fetchClinicsById(resourceClient, toCheck, signal)),
         enabled: checking,
@@ -200,29 +162,24 @@ export function ClinicProvider({
     const answer =
         byId.isFetchedAfterMount && byId.isSuccess ? byId.data : undefined
     useEffect(() => {
-        if (answer === undefined || userId === undefined) {
-            return
+        if (answer !== undefined) {
+            update((before) => {
+                const next = new Map(before.known)
+                toCheck.forEach((id) => next.set(id, null))
+                answer.forEach((c) => next.set(c.id, c))
+                return { known: next }
+            })
         }
-        setKnown((before) => {
-            const next = new Map(before?.userId === userId ? before.value : [])
-            toCheck.forEach((id) => next.set(id, null))
-            answer.forEach((c) => next.set(c.id, c))
-            return { userId, value: next }
-        })
-    }, [answer, toCheck, userId])
+    }, [answer, toCheck, update])
 
     const valid = useMemo(() => {
-        const inScope = [
-            ...pickedClinics.values(),
-            ...knownClinics.values(),
-            ...(answer ?? []),
-        ].filter(
+        const inScope = [...known.values(), ...(answer ?? [])].filter(
             (c): c is Clinic => c !== null && isWithinAssigned(c.path, assigned)
         )
         return new Map<string, Clinic>(
             [...inScope, ...assigned].map((c) => [c.id, c])
         )
-    }, [pickedClinics, knownClinics, answer, assigned])
+    }, [known, answer, assigned])
 
     // Data held through a failed refetch still counts: a background failure never blanks the clinic.
     // A check that cannot be made leaves its clinics unknown; the user's own clinics still work.
@@ -267,20 +224,10 @@ export function ClinicProvider({
         }
     }, [validated, unchecked, valid, remembered, remember])
 
-    const isAssigned = useCallback(
-        (id: string) => assigned.some((a) => a.id === id),
-        [assigned]
-    )
-    // The host's clinic is remembered, and announced when it changes, whether a pick or the host itself changed it.
-    const shown = useRef<ForUser<string>>()
+    // The host's clinic is remembered, whether a pick or the host itself changed it.
     useEffect(() => {
-        if (controlled === undefined || userId === undefined) {
+        if (controlled === undefined) {
             return
-        }
-        const before = shown.current
-        shown.current = { userId, value: controlled.id }
-        if (before?.userId === userId && before.value !== controlled.id) {
-            announceChange(controlled)
         }
         const recent =
             isAssigned(controlled.id) || remembered.recent[0] === controlled.id
@@ -292,25 +239,40 @@ export function ClinicProvider({
         ) {
             remember({ current: controlled.id, recent })
         }
-    }, [controlled, userId, isAssigned, remembered, remember])
+    }, [controlled, isAssigned, remembered, remember])
+
+    // Every change after the first clinic is announced, whoever made it.
+    const said = useRef<{ userId?: string; id: string }>()
+    useEffect(() => {
+        if (clinic === undefined) {
+            return
+        }
+        const before = said.current
+        said.current = { userId, id: clinic.id }
+        if (before && before.userId === userId && before.id !== clinic.id) {
+            announce(
+                i18n.t('Clinic changed to {{name}}', {
+                    name: clinic.displayName,
+                    interpolation: { escapeValue: false },
+                })
+            )
+        }
+    }, [clinic, userId])
 
     const setClinic = useCallback(
         (next: Clinic) => {
             // Nothing to pick from before the clinics load, and nothing from outside the user's.
             if (
                 status !== 'ready' ||
-                userId === undefined ||
                 // Choosing the current clinic again changes nothing, so nothing is said or called.
                 next.id === clinic?.id ||
                 !isWithinAssigned(next.path, assigned)
             ) {
                 return
             }
-            setPicked((before) => ({
-                userId,
-                value: new Map(
-                    before?.userId === userId ? before.value : []
-                ).set(next.id, next),
+            // A picked clinic needs no check.
+            update((before) => ({
+                known: new Map(before.known).set(next.id, next),
             }))
             if (value === undefined) {
                 remember({
@@ -319,16 +281,15 @@ export function ClinicProvider({
                         ? remembered.recent
                         : withRecent(remembered.recent, next.id),
                 })
-                announceChange(next)
             }
             onValueChange?.(next)
         },
         [
             status,
-            userId,
             clinic,
             assigned,
             value,
+            update,
             remember,
             remembered,
             isAssigned,
@@ -345,102 +306,6 @@ export function ClinicProvider({
         [remembered, valid, isAssigned]
     )
 
-    const searchesServer = assigned.some((a) => a.hasChildren)
-    const searchable = searchesServer || assigned.length > MAX_UNFILTERED
-    const [query, setQuery] = useState('')
-    const [browsed, setBrowsed] = useState(false)
-    const browse = useCallback(() => setBrowsed(true), [])
-    const trimmed = query.trim()
-    const [debounced, setDebounced] = useState('')
-    useEffect(() => {
-        const timeout = setTimeout(() => setDebounced(trimmed), SEARCH_DELAY_MS)
-        return () => clearTimeout(timeout)
-    }, [trimmed])
-    // A blank query pages through the whole hierarchy, so the menu can be browsed without typing.
-    const server = useInfiniteQuery({
-        queryKey: clinicQueryKeys.search(clientId, userId ?? '', debounced),
-        queryFn: async ({ pageParam, signal }) =>
-            unwrap(
-                await searchClinics(
-                    resourceClient,
-                    debounced,
-                    pageParam,
-                    signal
-                )
-            ),
-        initialPageParam: 1,
-        getNextPageParam: (last, pages) =>
-            last.hasMore ? pages.length + 1 : undefined,
-        // Nothing is asked for until the menu is opened or the user types.
-        enabled:
-            searchesServer &&
-            userId !== undefined &&
-            (browsed || debounced !== ''),
-        retry: shouldRetryClinicRequest,
-        staleTime: FRESH_MS,
-    })
-    const { refetch: refetchSearch, fetchNextPage } = server
-    const search = useMemo((): SearchView => {
-        if (!searchesServer) {
-            const lower = trimmed.toLowerCase()
-            return {
-                status: 'ready',
-                clinics: assigned.filter((a) =>
-                    a.displayName.toLowerCase().includes(lower)
-                ),
-                ...NO_MORE,
-                retry: noop,
-            }
-        }
-        const retrySearch = () => void refetchSearch()
-        if (debounced !== trimmed || server.isPending) {
-            return {
-                status: 'pending',
-                clinics: [],
-                ...NO_MORE,
-                retry: retrySearch,
-            }
-        }
-        if (server.data === undefined) {
-            return {
-                status: 'failed',
-                clinics: [],
-                ...NO_MORE,
-                retry: retrySearch,
-            }
-        }
-        // By id, so a clinic that moved between pages while they loaded shows once.
-        const loaded = new Map(
-            server.data.pages
-                .flatMap((page) => page.clinics)
-                // A server that ignores the scope filter must not list clinics a pick would drop.
-                .filter((c) => isWithinAssigned(c.path, assigned))
-                .map((c) => [c.id, c])
-        )
-        return {
-            status: 'ready',
-            clinics: [...loaded.values()],
-            hasMore: server.hasNextPage,
-            loadingMore: server.isFetchingNextPage,
-            moreFailed: server.isFetchNextPageError,
-            // A second press while the page loads joins it rather than starting over.
-            loadMore: () => void fetchNextPage({ cancelRefetch: false }),
-            retry: retrySearch,
-        }
-    }, [
-        searchesServer,
-        trimmed,
-        debounced,
-        assigned,
-        server.isPending,
-        server.data,
-        server.hasNextPage,
-        server.isFetchingNextPage,
-        server.isFetchNextPageError,
-        refetchSearch,
-        fetchNextPage,
-    ])
-
     const { refetch: refetchMe } = me
     const { refetch: refetchById } = byId
     const meFailed = me.isError
@@ -456,40 +321,26 @@ export function ClinicProvider({
 
     const context = useMemo<ClinicContextValue>(
         () => ({
-            state: {
-                status,
-                clinic,
-                assigned,
-                recent,
-                searchable,
-                searchesServer,
-            },
+            state: { status, clinic, assigned, recent },
             actions: { setClinic, retry },
+            source: { client: resourceClient, cacheId, userId },
         }),
         [
             status,
             clinic,
             assigned,
             recent,
-            searchable,
-            searchesServer,
             setClinic,
             retry,
+            resourceClient,
+            cacheId,
+            userId,
         ]
     )
-    const searching = useMemo<ClinicSearchValue>(() => {
-        const { loadMore, retry: retrySearch, ...found } = search
-        return {
-            state: { query, ...found },
-            actions: { setQuery, browse, loadMore, retry: retrySearch },
-        }
-    }, [query, browse, search])
 
     return (
         <ClinicContext.Provider value={context}>
-            <ClinicSearchContext.Provider value={searching}>
-                {children}
-            </ClinicSearchContext.Provider>
+            {children}
         </ClinicContext.Provider>
     )
 }

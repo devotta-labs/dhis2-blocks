@@ -3,7 +3,6 @@ import { NetworkControls } from '../NetworkControls'
 import { type LabData, type LabSettings } from './labData'
 import { RESOURCES } from './labServer'
 import { UNAVAILABLE, useStored, writeStored } from './labStorage'
-import { CORRUPT_VALUE, GONE_VALUE, NOT_UID_VALUE, type Seed } from './presets'
 
 type Change = (changes: Partial<LabSettings>) => void
 
@@ -39,12 +38,6 @@ export const ClinicsControls = ({
         >
             120-character names
         </Check>
-        <Check
-            checked={settings.sameInitials}
-            onChange={(sameInitials) => onChange({ sameInitials })}
-        >
-            Every name starts with B
-        </Check>
     </Section>
 )
 
@@ -52,16 +45,7 @@ const VALUE_OPTIONS: ReadonlyArray<readonly [LabSettings['value'], string]> = [
     ['uncontrolled', 'Uncontrolled'],
     ['valid', 'Controlled, a valid clinic'],
     ['follows', 'Controlled, follows picks'],
-    ['outside', 'Controlled, an id outside scope'],
-    ['missing', 'Controlled, id that does not exist'],
 ]
-
-// A live instance has none of the lab's clinics, so only values that need none are offered there.
-const LIVE_VALUES: ReadonlySet<string> = new Set([
-    'uncontrolled',
-    'follows',
-    'missing',
-])
 
 export const SidebarControls = ({
     settings,
@@ -85,8 +69,9 @@ export const SidebarControls = ({
         <SelectRow
             label="Value"
             value={settings.value}
+            // A live instance has none of the lab's clinics to hold.
             options={VALUE_OPTIONS.filter(
-                ([value]) => !live || LIVE_VALUES.has(value)
+                ([value]) => !live || value !== 'valid'
             )}
             onChange={(value) => onChange({ value })}
         />
@@ -151,26 +136,21 @@ const StoredValue = ({
 }
 
 export const RememberedControls = ({
-    settings,
     data,
     seed,
-    onChange,
     onEdit,
 }: {
-    settings: LabSettings
     /** The lab's clinics; none on a live instance, where nobody's stored value shows. */
     data?: LabData
-    seed: Seed
-    onChange: Change
+    seed?: string
     /** After the lab writes storage, so the block reads it again. */
     onEdit: () => void
 }) => {
-    const stored = useStored(settings.userId)
-    const edit = (raw?: string) => {
-        writeStored(settings.userId, raw)
+    const stored = useStored()
+    const clear = () => {
+        writeStored()
         onEdit()
     }
-    const seeded = Object.entries(seed)
     if (!data) {
         // The lab does not know who is signed in to a live instance, so it shows nobody's stored value.
         return (
@@ -184,45 +164,15 @@ export const RememberedControls = ({
     }
     return (
         <Section title="Remembered">
-            <SegmentedRow
-                label="User"
-                value={settings.userId}
-                options={[
-                    ['u1', 'u1'],
-                    ['u2', 'u2'],
-                ]}
-                onChange={(userId) => onChange({ userId })}
-            />
-            <span className="text-xs text-muted-foreground">
-                Stored for {settings.userId}
-            </span>
             <StoredValue stored={stored} data={data} />
-            {seeded.length > 0 && (
+            {seed !== undefined && (
                 <p className="m-0 text-xs break-all text-muted-foreground">
-                    The example stored, before the block started:{' '}
-                    {seeded.map(([user, raw]) => `${user} ${raw}`).join('; ')}
+                    The example stored, before the block started: {seed}
                 </p>
             )}
-            <div className="flex flex-wrap gap-1">
-                {(
-                    [
-                        ['Clear', undefined],
-                        ['Remember a clinic that no longer exists', GONE_VALUE],
-                        ['Remember an id that is not a uid', NOT_UID_VALUE],
-                        ['Corrupt it', CORRUPT_VALUE],
-                    ] as const
-                ).map(([name, raw]) => (
-                    <button key={name} type="button" onClick={() => edit(raw)}>
-                        {name}
-                    </button>
-                ))}
-            </div>
-            <Check
-                checked={settings.storageThrows}
-                onChange={(storageThrows) => onChange({ storageThrows })}
-            >
-                Storage throws
-            </Check>
+            <button type="button" className="self-start" onClick={clear}>
+                Clear
+            </button>
         </Section>
     )
 }
@@ -236,14 +186,6 @@ export const ServerControls = ({
 }) => (
     <>
         <Section title="Server">
-            <Check
-                checked={settings.ignoreScopeFilter}
-                onChange={(ignoreScopeFilter) =>
-                    onChange({ ignoreScopeFilter })
-                }
-            >
-                Server ignores the scope filter
-            </Check>
             <Check
                 checked={settings.failSearch}
                 onChange={(failSearch) => onChange({ failSearch })}

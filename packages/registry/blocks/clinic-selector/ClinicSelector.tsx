@@ -30,8 +30,8 @@ import i18n from '@dhis2/d2-i18n'
 import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
 import React, { useEffect, type MouseEvent, type ReactElement } from 'react'
 import type { Clinic } from './api/schemas'
-import { AS_IS } from './asIs'
-import { useClinicContext, useClinicSearch } from './provider/context'
+import { useClinicContext } from './provider/context'
+import { useClinicSearch } from './search'
 import { tileClass, tileInitial } from './tile'
 
 export interface ClinicSelectorProps {
@@ -56,10 +56,6 @@ const MORE: Clinic = { id: '', displayName: '', path: '' }
 
 const triggerClassName =
     'flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-dhis2-sm border-0 bg-transparent p-1 text-start text-sm leading-5 font-medium text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring data-popup-open:bg-dhis2-accent [&_svg]:shrink-0 [&_svg]:fill-current'
-
-// The shared radio item sets its check on the right; in RTL it moves to the inline end, as in the search form.
-const radioRowClassName =
-    'pr-8 rtl:pr-3 rtl:pl-8 rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:right-auto rtl:*:data-[slot=dropdown-menu-radio-item-indicator]:left-3'
 
 const tileOnly =
     'hidden size-6 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
@@ -133,12 +129,10 @@ export function ClinicSelector({
     className,
 }: ClinicSelectorProps) {
     const { state, actions } = useClinicContext()
-    const { status, clinic, assigned, recent, searchable } = state
+    const { status, clinic, assigned, recent } = state
     const { setClinic, retry } = actions
-    const { state: found, actions: searching } = useClinicSearch()
-    const { query } = found
-    const { setQuery, browse } = searching
-    const search = { ...found, ...searching }
+    const search = useClinicSearch()
+    const { query, setQuery, browse, searchable } = search
     // A host that holds the menu open has opened it.
     useEffect(() => {
         if (open) {
@@ -237,7 +231,7 @@ export function ClinicSelector({
         'aria-label': i18n.t('{{label}}: {{name}}', {
             label,
             name,
-            interpolation: AS_IS,
+            interpolation: { escapeValue: false },
         }),
         className: cn(
             triggerClassName,
@@ -280,7 +274,7 @@ export function ClinicSelector({
                                 key={a.id}
                                 value={a.id}
                                 closeOnClick
-                                className={radioRowClassName}
+                                className="pe-8"
                             >
                                 <Row clinic={a} name={a.displayName} />
                             </DropdownMenuRadioItem>
@@ -318,6 +312,20 @@ export function ClinicSelector({
         search.hasMore && lists.length > 0
             ? [...lists, { key: 'more', label: '', items: [MORE] }]
             : lists
+    // Where the search stands: shown in place of an empty list, or below the assigned clinics.
+    let searchStatus: ReactElement | undefined
+    if (search.status === 'pending') {
+        searchStatus = <Spinner label={i18n.t('Loading')} />
+    } else if (search.status === 'failed') {
+        searchStatus = (
+            <>
+                {i18n.t('Clinics could not be loaded')}
+                <Button size="sm" variant="outline" onClick={search.retry}>
+                    {i18n.t('Retry')}
+                </Button>
+            </>
+        )
+    }
     let moreLabel = i18n.t('Show more')
     if (search.loadingMore) {
         moreLabel = i18n.t('Loading more clinics')
@@ -363,22 +371,7 @@ export function ClinicSelector({
                     aria-label={searchPlaceholder}
                 />
                 <ComboboxEmpty className="flex-col items-center gap-2">
-                    {search.status === 'pending' && (
-                        <Spinner label={i18n.t('Loading')} />
-                    )}
-                    {search.status === 'failed' && (
-                        <>
-                            {i18n.t('Clinics could not be loaded')}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={search.retry}
-                            >
-                                {i18n.t('Retry')}
-                            </Button>
-                        </>
-                    )}
-                    {search.status === 'ready' && i18n.t('No clinics found')}
+                    {searchStatus ?? i18n.t('No clinics found')}
                 </ComboboxEmpty>
                 <ComboboxList className="max-h-[min(300px,calc(var(--available-height)---spacing(11)))]">
                     {(group: ClinicGroup) => (
@@ -427,21 +420,9 @@ export function ClinicSelector({
                     )}
                 </ComboboxList>
                 {/* With no query the assigned clinics always show, so the rest of the hierarchy reports below them. */}
-                {blank && search.status === 'pending' && (
-                    <div className="flex justify-center py-2">
-                        <Spinner label={i18n.t('Loading')} />
-                    </div>
-                )}
-                {blank && search.status === 'failed' && (
+                {blank && searchStatus && (
                     <div className="flex flex-col items-center gap-2 px-3 py-2 text-sm">
-                        {i18n.t('Clinics could not be loaded')}
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={search.retry}
-                        >
-                            {i18n.t('Retry')}
-                        </Button>
+                        {searchStatus}
                     </div>
                 )}
             </ComboboxContent>

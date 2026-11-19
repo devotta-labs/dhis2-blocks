@@ -1,6 +1,6 @@
 import type { RequestLogEntry } from '../network'
 import type { LabSettings } from './labData'
-import { DEFAULT_PRESET, PRESETS, type Preset, type Seed } from './presets'
+import { DEFAULT_PRESET, PRESETS, type Preset } from './presets'
 
 export interface LabState {
     mode: 'lab' | 'live'
@@ -11,7 +11,7 @@ export interface LabState {
      * What the example writes to storage. The lab clears storage and writes it whenever this object is replaced, and
      * only picking an example replaces it, so a value written by hand survives until the block reads it.
      */
-    seeding: { seed: Seed }
+    seeding: { seed?: string }
     /** Storage was changed by hand since the example wrote it. */
     edited: boolean
     /** The clinic a host that follows picks adopted last; until then it holds its first value. */
@@ -59,12 +59,6 @@ const endsFailure = (changes: Partial<LabSettings>, key: string) => {
     return false
 }
 
-/** Values that name a lab clinic, which a live instance does not have. */
-const LAB_ONLY_VALUES: ReadonlySet<LabSettings['value']> = new Set([
-    'valid',
-    'outside',
-])
-
 const restarted = (state: LabState): LabState => ({
     ...state,
     run: state.run + 1,
@@ -80,7 +74,7 @@ export const initialLabState = (linkedPreset?: string): LabState => {
         mode: 'lab',
         preset: preset.name,
         settings: preset.settings,
-        seeding: { seed: preset.seed ?? {} },
+        seeding: { seed: preset.seed },
         edited: false,
         run: 0,
         requests: [],
@@ -96,7 +90,8 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 ...state,
                 mode: action.mode,
                 settings:
-                    action.mode === 'live' && LAB_ONLY_VALUES.has(value)
+                    // A value that names a lab clinic, which a live instance does not have.
+                    action.mode === 'live' && value === 'valid'
                         ? { ...state.settings, value: 'uncontrolled' }
                         : state.settings,
             })
@@ -106,7 +101,7 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 ...state,
                 preset: action.preset.name,
                 settings: action.preset.settings,
-                seeding: { seed: action.preset.seed ?? {} },
+                seeding: { seed: action.preset.seed },
                 edited: false,
             })
         case 'changeSettings': {

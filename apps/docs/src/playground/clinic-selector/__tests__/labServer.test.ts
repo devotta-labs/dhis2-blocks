@@ -5,11 +5,10 @@ import {
 } from '@/components/clinic-selector/api/schemas'
 import { describe, expect, it } from 'vitest'
 import {
+    districtClinicId,
     districtId,
     flatClinicId,
     generateLabData,
-    GONE,
-    OUTSIDE,
     type LabSettings,
 } from '../labData'
 import { answer } from '../labServer'
@@ -79,12 +78,6 @@ describe('the clinic selector lab server', () => {
         expect(assigned.every(({ id }) => UID.test(id))).toBe(true)
     })
 
-    it('answers a different id for the second user', () => {
-        expect(me({ userId: 'u1' }).userId).not.toBe(
-            me({ userId: 'u2' }).userId
-        )
-    })
-
     it('assigns nothing when the settings assign nothing', () => {
         expect(
             me({ assignedClinics: 0, assignedDistricts: 0 }).assigned
@@ -125,47 +118,18 @@ describe('the clinic selector lab server', () => {
         expect(raw).toMatchObject({ pager: { total: 150 } })
     })
 
-    it('drops an id outside the assigned subtrees from the validity check', () => {
-        const ids = [flatClinicId(1), OUTSIDE, GONE]
-        expect(byId(ids).map(({ id }) => id)).toEqual([flatClinicId(1)])
+    it('drops an id outside the assigned subtrees, or that no unit has, from the validity check', () => {
+        // The second district exists but is not assigned.
+        const ids = [flatClinicId(1), districtClinicId(2, 1), 'labGone0001']
+        expect(
+            byId(ids, { clinicsPerDistrict: 5 }).map(({ id }) => id)
+        ).toEqual([flatClinicId(1)])
     })
 
-    it('returns the outside id when told to ignore the scope filter', () => {
-        const ids = [flatClinicId(1), OUTSIDE, GONE]
-        expect(
-            byId(ids, { ignoreScopeFilter: true })
-                .map(({ id }) => id)
-                .sort()
-        ).toEqual([flatClinicId(1), OUTSIDE].sort())
-    })
-
-    it('searches outside the assigned subtrees too when told to ignore the scope filter', () => {
-        const nurse = {
-            assignedClinics: 0,
-            assignedDistricts: 1,
-            clinicsPerDistrict: 40,
-        }
-        expect(
-            search('hospital', nurse).parsed.clinics.map(({ id }) => id)
-        ).not.toContain(OUTSIDE)
-        expect(
-            search('hospital', {
-                ...nurse,
-                ignoreScopeFilter: true,
-            }).parsed.clinics.map(({ id }) => id)
-        ).toContain(OUTSIDE)
-    })
-
-    it('gives every name 120 characters, or a B, when asked', () => {
+    it('gives every name 120 characters when asked', () => {
         const long = me({ longNames: true, assignedDistricts: 1 }).assigned
         expect(
             long.every(({ displayName }) => displayName.length === 120)
-        ).toBe(true)
-        const bees = generateLabData(
-            settings({ sameInitials: true, assignedDistricts: 3 })
-        ).units
-        expect(
-            bees.every(({ displayName }) => displayName.startsWith('B'))
         ).toBe(true)
     })
 

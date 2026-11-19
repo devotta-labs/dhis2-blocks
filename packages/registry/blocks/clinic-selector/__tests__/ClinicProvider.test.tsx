@@ -7,8 +7,9 @@ import {
     ClinicProvider,
     type ClinicProviderProps,
 } from '../provider/ClinicProvider'
-import { useClinicContext, useClinicSearch } from '../provider/context'
+import { useClinicContext } from '../provider/context'
 import { readRemembered, writeRemembered } from '../provider/remembered'
+import { useClinicSearch } from '../search'
 import {
     BRISTOL,
     createServer,
@@ -70,11 +71,13 @@ const renderClinic = async (
         () => {
             const hook = useClinic()
             const clinics = useClinicContext()
-            const searching = useClinicSearch()
+            const search = useClinicSearch()
             const context = {
                 ...clinics.state,
-                ...searching.actions,
-                search: { ...searching.state, ...searching.actions },
+                setQuery: search.setQuery,
+                searchable: search.searchable,
+                searchesServer: search.searchesServer,
+                search,
             }
             seen.push(hook.status)
             return { hook, context }

@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { act, useEffect } from 'react'
 import { render } from 'vitest-browser-react'
 import { ClinicProvider, useClinic } from '..'
-import { useClinicSearch } from '../provider/context'
+import { useClinicSearch } from '../search'
 import type { Clinic } from '../api/schemas'
 import { readRemembered, writeRemembered } from '../provider/remembered'
 import {
@@ -15,8 +15,8 @@ import {
 
 /** Stands for a menu that has been opened. */
 const Opened = () => {
-    const { actions } = useClinicSearch()
-    useEffect(actions.browse, [actions.browse])
+    const { browse } = useClinicSearch()
+    useEffect(browse, [browse])
     return null
 }
 
@@ -58,8 +58,8 @@ describe('ClinicProvider freshness', () => {
             return null
         }
         const Box = () => {
-            const { actions } = useClinicSearch()
-            type = actions.setQuery
+            const { setQuery } = useClinicSearch()
+            type = setQuery
             return null
         }
         await render(

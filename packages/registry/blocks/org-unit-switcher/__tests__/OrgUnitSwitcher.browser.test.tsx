@@ -372,7 +372,19 @@ describe('OrgUnitSwitcher', () => {
             })
             await expect.element(trigger).toBeVisible()
             await expect.element(screen.getByText(name)).not.toBeVisible()
-            expect(trigger.element().getBoundingClientRect().width).toBe(24)
+            // The tile sits in the middle of the column, in line with the navigation's icons.
+            const column = screen
+                .getByTestId('header')
+                .element()
+                .getBoundingClientRect()
+            const tile = trigger
+                .element()
+                .querySelector(TILE)
+                ?.getBoundingClientRect()
+            expect(tile?.width).toBe(24)
+            expect(tile && tile.left + tile.width / 2).toBe(
+                column.left + column.width / 2
+            )
             await trigger.hover()
             await expect.poll(tooltipText, { timeout: 2000 }).toBe(name)
 

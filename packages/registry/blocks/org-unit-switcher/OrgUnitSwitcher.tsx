@@ -157,6 +157,7 @@ function Row({
     nameRef,
     title,
     decorative,
+    collapsed = false,
 }: {
     orgUnit?: OrgUnit
     name: string
@@ -165,12 +166,17 @@ function Row({
     title?: string
     /** Hidden from assistive technology, which reads the full name elsewhere. */
     decorative?: boolean
+    /** From `md` up only the tile shows, centred by its container. */
+    collapsed?: boolean
 }) {
     return (
         <span
             title={title}
             aria-hidden={decorative}
-            className="flex min-w-0 flex-1 items-center gap-2"
+            className={cn(
+                'flex min-w-0 flex-1 items-center gap-2',
+                collapsed && 'md:flex-none'
+            )}
         >
             <Tile orgUnit={orgUnit} />
             <span ref={nameRef} className={cn('min-w-0', nameClassName)}>
@@ -229,9 +235,10 @@ export function OrgUnitSwitcher({
     }
     const box = cn(
         'flex min-h-9 items-center gap-2 text-sm text-dhis2-foreground',
+        collapsed && 'md:justify-center',
         className
     )
-    // From `md` up a collapsed selector has 24px, so text there gives way to a tile.
+    // From `md` up a collapsed switcher has a narrow column, so text there gives way to a tile centred in it, in line with the navigation's icons.
     const wide = collapsed ? 'md:hidden' : undefined
 
     if (status === 'pending') {
@@ -307,6 +314,7 @@ export function OrgUnitSwitcher({
                     <span className="sr-only">{fullLabel}</span>
                     <Row
                         decorative
+                        collapsed={collapsed}
                         orgUnit={orgUnit}
                         name={shownName}
                         nameRef={nameRef}
@@ -321,12 +329,13 @@ export function OrgUnitSwitcher({
         'aria-label': fullLabel,
         className: cn(
             triggerClassName,
-            collapsed && 'md:size-6 md:p-0',
+            collapsed && 'md:h-8 md:justify-center md:p-0',
             className
         ),
         children: (
             <>
                 <Row
+                    collapsed={collapsed}
                     orgUnit={orgUnit}
                     name={shownName}
                     nameRef={nameRef}

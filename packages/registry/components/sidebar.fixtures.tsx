@@ -73,6 +73,14 @@ export const AppNavigation = ({
                                 <CollapsibleContent>
                                     <SidebarMenuSub>
                                         <SidebarMenuSubItem>
+                                            <SidebarMenuSubButton
+                                                href="#help"
+                                                target="_blank"
+                                            >
+                                                <span>Help</span>
+                                            </SidebarMenuSubButton>
+                                        </SidebarMenuSubItem>
+                                        <SidebarMenuSubItem>
                                             <SidebarMenuSubButton href="#stock">
                                                 <span>Stock</span>
                                             </SidebarMenuSubButton>

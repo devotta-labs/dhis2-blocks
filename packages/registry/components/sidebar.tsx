@@ -29,6 +29,8 @@ type SidebarContextProps = {
     setOpenMobile: (open: boolean) => void
     isMobile: boolean
     toggleSidebar: () => void
+    /** The provider's text direction, for the sheet, which renders in a portal outside it. */
+    dir: 'ltr' | 'rtl'
 }
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
@@ -60,14 +62,26 @@ function SidebarProvider({
     const open = openProp ?? localOpen
     const setOpen = React.useCallback(
         (nextOpen: boolean) => {
-            if (onOpenChange) {
-                onOpenChange(nextOpen)
-            } else {
+            if (openProp === undefined) {
                 setLocalOpen(nextOpen)
             }
+            onOpenChange?.(nextOpen)
         },
-        [onOpenChange]
+        [openProp, onOpenChange]
     )
+
+    const wrapper = React.useRef<HTMLDivElement>(null)
+    const [dir, setDir] = React.useState<'ltr' | 'rtl'>('ltr')
+    // Read as the sheet opens, before it paints.
+    React.useLayoutEffect(() => {
+        if (openMobile && wrapper.current !== null) {
+            setDir(
+                getComputedStyle(wrapper.current).direction === 'rtl'
+                    ? 'rtl'
+                    : 'ltr'
+            )
+        }
+    }, [openMobile])
 
     const toggleSidebar = React.useCallback(() => {
         if (isMobile) {
@@ -104,8 +118,9 @@ function SidebarProvider({
             openMobile,
             setOpenMobile,
             toggleSidebar,
+            dir,
         }),
-        [state, open, setOpen, isMobile, openMobile, toggleSidebar]
+        [state, open, setOpen, isMobile, openMobile, toggleSidebar, dir]
     )
 
     return (
@@ -117,6 +132,7 @@ function SidebarProvider({
                     className
                 )}
                 {...props}
+                ref={wrapper}
             >
                 {children}
             </div>
@@ -139,7 +155,7 @@ function Sidebar({
     /** Accessible name of the sheet the sidebar becomes on a narrow window. */
     mobileTitle?: string
 }) {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, dir } = useSidebar()
 
     if (collapsible === 'none') {
         return (
@@ -158,12 +174,14 @@ function Sidebar({
 
     if (isMobile) {
         // A link followed from the sheet leads to a new page, so the sheet
-        // gets out of the way. A click that opens a new tab leaves it open.
+        // gets out of the way. A link that opens elsewhere (a new tab or
+        // window, or a download) leaves it open. A router's link prevents the
+        // default to navigate itself, so that is not a reason to stay open.
         const closeOnLink = (event: React.MouseEvent<HTMLDivElement>) => {
             props.onClick?.(event)
             const link =
                 event.target instanceof Element
-                    ? event.target.closest('a[href]')
+                    ? event.target.closest<HTMLAnchorElement>('a[href]')
                     : null
             const plainClick =
                 event.button === 0 &&
@@ -171,7 +189,11 @@ function Sidebar({
                 !event.ctrlKey &&
                 !event.shiftKey &&
                 !event.altKey
-            if (link !== null && plainClick) {
+            const opensElsewhere =
+                link !== null &&
+                ((link.target !== '' && link.target !== '_self') ||
+                    link.hasAttribute('download'))
+            if (link !== null && plainClick && !opensElsewhere) {
                 setOpenMobile(false)
             }
         }
@@ -180,6 +202,7 @@ function Sidebar({
             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                 <SheetContent
                     {...props}
+                    dir={props.dir ?? dir}
                     onClick={closeOnLink}
                     data-sidebar="sidebar"
                     data-slot="sidebar"

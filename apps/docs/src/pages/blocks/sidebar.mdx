@@ -102,8 +102,9 @@ folded, or `open` and `onOpenChange` to hold the state in your app. Read it
 anywhere inside the provider with `useSidebar()`.
 
 On a narrow window the trigger opens the sheet instead. The sheet closes when
-a link in it is followed, unless the click opens a new tab; buttons, such as a
-group's trigger, leave it open.
+a link in it is followed, unless the link opens a new tab or window, or a
+download; buttons, such as a group's trigger, leave it open. It slides in from
+the side the text starts on, even when only part of the page is right to left.
 
 ## Groups of pages
 

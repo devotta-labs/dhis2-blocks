@@ -57,6 +57,16 @@ describe('sidebar', () => {
         expect(sidebar().getAttribute('data-state')).toBe('collapsed')
     })
 
+    it('folds when the app only listens for changes', async () => {
+        const changes: boolean[] = []
+        await render(
+            <AppNavigation onOpenChange={(open) => changes.push(open)} />
+        )
+        await trigger().click()
+        expect(changes).toEqual([false])
+        expect(sidebar().getAttribute('data-state')).toBe('collapsed')
+    })
+
     it('marks the current page with the accent fill', async () => {
         await render(<AppNavigation />)
         const today = page.getByRole('link', { name: 'Today' }).element()
@@ -150,11 +160,37 @@ describe('sidebar', () => {
         await expect.element(sheet).not.toBeInTheDocument()
     })
 
-    it('closes the sheet when a link is followed, not when a group opens', async () => {
+    it('slides the sheet in from the start of a right-to-left page', async () => {
+        await page.viewport(375, 700)
+        await render(<AppNavigation dir="rtl" />)
+        await trigger().click()
+        const sheet = page.getByRole('dialog', { name: 'Navigation' })
+        await expect.element(sheet).toBeVisible()
+        expect(sheet.element().getAttribute('dir')).toBe('rtl')
+        await expect
+            .poll(() =>
+                Math.round(sheet.element().getBoundingClientRect().right)
+            )
+            .toBe(375)
+    })
+
+    it('closes the sheet when a link is followed, not for a group or a new tab', async () => {
         await page.viewport(375, 700)
         await render(<AppNavigation />)
         await trigger().click()
         const sheet = page.getByRole('dialog', { name: 'Navigation' })
+
+        // Stop the new tab itself; the sheet still sees the click.
+        const stay = (event: Event) => event.preventDefault()
+        window.addEventListener('click', stay, { capture: true })
+        sheet
+            .getByRole('link', { name: 'Help' })
+            .element()
+            .dispatchEvent(
+                new MouseEvent('click', { bubbles: true, cancelable: true })
+            )
+        window.removeEventListener('click', stay, { capture: true })
+        await expect.element(sheet).toBeVisible()
 
         await sheet.getByRole('button', { name: 'Reports' }).click()
         await expect.element(sheet).toBeVisible()

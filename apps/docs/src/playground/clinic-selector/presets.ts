@@ -167,7 +167,8 @@ export const PRESETS: readonly Preset[] = [
         'Very long names',
         { longNames: true },
         {
-            description: '120-character names, in the trigger and the menu.',
+            description:
+                'The trigger shows the short name, with the full one on hover or focus. The menu wraps each 120-character name over two lines.',
         }
     ),
     edge('Server', 'Clinics fail to load', ME_FAILS, {

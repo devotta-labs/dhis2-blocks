@@ -24,6 +24,8 @@ export interface LabSettings {
 export interface LabUnit {
     id: string
     displayName: string
+    /** DHIS2's short name: the place and type, whatever the full name's length. */
+    displayShortName: string
     path: string
     hasChildren: boolean
 }
@@ -99,6 +101,7 @@ export const generateLabData = (settings: LabSettings) => {
     ): LabUnit => ({
         id,
         displayName: named(name, settings),
+        displayShortName: name,
         path: `${parentPath}/${id}`,
         hasChildren,
     })

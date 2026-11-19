@@ -89,7 +89,9 @@ describe('ClinicSelector', () => {
             createServer({ assigned: [BRISTOL] })
         )
 
-        await expect.element(screen.getByText('Bristol Clinic')).toBeVisible()
+        await expect
+            .element(screen.getByText('Bristol Clinic', { exact: true }))
+            .toBeVisible()
         expect(screen.getByRole('button').elements()).toHaveLength(0)
         expect(screen.getByRole('combobox').elements()).toHaveLength(0)
     })
@@ -386,29 +388,6 @@ describe('ClinicSelector', () => {
         await expect.element(screen.getByText('Bristol')).toBeVisible()
     })
 
-    it('truncates a long name', async () => {
-        const long = 'Ocean Beach Community Health Centre and Maternity Unit '
-            .repeat(3)
-            .slice(0, 120)
-        const screen = await renderSelector(
-            createServer({ assigned: [facility(long), BRISTOL] })
-        )
-
-        await screen
-            .getByRole('button', { name: 'Clinic: Bristol Clinic' })
-            .click()
-        await page.getByRole('menuitemradio', { name: long }).click()
-        const name = screen.getByText(long, { exact: true })
-        await expect.element(name).toBeVisible()
-
-        const header = screen.getByTestId('header').element()
-        expect(header.getBoundingClientRect().width).toBe(240)
-        expect(name.element().scrollWidth).toBeGreaterThan(
-            name.element().clientWidth
-        )
-        expect(name.element().getAttribute('title')).toBe(long)
-    })
-
     it('pending shows a skeleton and no button', async () => {
         const server = createServer()
         server.holdMe()
@@ -496,7 +475,7 @@ describe('ClinicSelector', () => {
             'w-13'
         )
 
-        const row = screen.getByText('Bristol Clinic')
+        const row = screen.getByText('Bristol Clinic', { exact: true })
         await expect.element(row).toBeInTheDocument()
         const tile = screen.getByTestId('header').element().querySelector(TILE)
         if (!tile) {

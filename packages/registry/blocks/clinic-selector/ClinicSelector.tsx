@@ -28,7 +28,12 @@ import {
 } from '@/components/dhis2/ui/tooltip'
 import i18n from '@dhis2/d2-i18n'
 import { IconCheckmark16, IconChevronDown16, IconSync16 } from '@dhis2/ui-icons'
-import React, { useEffect, type MouseEvent, type ReactElement } from 'react'
+import React, {
+    useEffect,
+    useState,
+    type MouseEvent,
+    type ReactElement,
+} from 'react'
 import type { Clinic } from './api/schemas'
 import { useClinicContext } from './provider/context'
 import { useClinicSearch } from './search'
@@ -60,14 +65,19 @@ const triggerClassName =
 const tileOnly =
     'hidden size-6 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
 
-/** Collapsed from `md` up, the text a tile stands for shows beside it on hover. */
+/**
+ * The full text beside a tile or a shortened name, on hover and focus. A
+ * collapsed tile only needs it from `md` up, where the text is hidden.
+ */
 function Tip({
     show,
     text,
+    wideOnly = false,
     children,
 }: {
     show: boolean
     text: string
+    wideOnly?: boolean
     children: ReactElement
 }) {
     if (!show) {
@@ -76,11 +86,31 @@ function Tip({
     return (
         <Tooltip>
             <TooltipTrigger render={children} />
-            <TooltipContent side="right" className="max-md:hidden">
+            <TooltipContent
+                side="right"
+                className={wideOnly ? 'max-md:hidden' : undefined}
+            >
                 {text}
             </TooltipContent>
         </Tooltip>
     )
+}
+
+/** Whether an element's text is cut off, checked again as it resizes or the text changes. */
+function useCutOff(text: string) {
+    const [element, setElement] = useState<HTMLElement | null>(null)
+    const [cutOff, setCutOff] = useState(false)
+    useEffect(() => {
+        if (!element) {
+            return
+        }
+        const check = () => setCutOff(element.scrollWidth > element.clientWidth)
+        check()
+        const observer = new ResizeObserver(check)
+        observer.observe(element)
+        return () => observer.disconnect()
+    }, [element, text])
+    return [setElement, cutOff] as const
 }
 
 function Tile({ clinic }: { clinic?: Clinic }) {
@@ -102,21 +132,41 @@ function Row({
     clinic,
     name,
     nameClassName,
+    nameRef,
+    title,
+    decorative,
 }: {
     clinic?: Clinic
     name: string
     nameClassName?: string
+    nameRef?: (element: HTMLElement | null) => void
+    title?: string
+    /** Hidden from assistive technology, which reads the full name elsewhere. */
+    decorative?: boolean
 }) {
     return (
-        <span className="flex min-w-0 flex-1 items-center gap-2">
+        <span
+            title={title}
+            aria-hidden={decorative}
+            className="flex min-w-0 flex-1 items-center gap-2"
+        >
             <Tile clinic={clinic} />
-            <span
-                title={name}
-                className={cn('min-w-0 truncate', nameClassName)}
-            >
+            <span ref={nameRef} className={cn('min-w-0', nameClassName)}>
                 {name}
             </span>
         </span>
+    )
+}
+
+/** A menu row: the full name over two lines, and on hover when longer still. */
+function MenuRow({ clinic }: { clinic: Clinic }) {
+    return (
+        <Row
+            clinic={clinic}
+            name={clinic.displayName}
+            nameClassName="line-clamp-2 break-words"
+            title={clinic.displayName}
+        />
     )
 }
 
@@ -133,6 +183,11 @@ export function ClinicSelector({
     const { setClinic, retry } = actions
     const search = useClinicSearch()
     const { query, setQuery, browse, searchable } = search
+    // The trigger shows the short name; the full one is its label and tooltip.
+    const fullName = clinic?.displayName ?? i18n.t('Choose a clinic')
+    const shownName = clinic?.displayShortName ?? fullName
+    const [nameRef, cutOff] = useCutOff(shownName)
+    const partHidden = cutOff || shownName !== fullName
     // A host that holds the menu open has opened it.
     useEffect(() => {
         if (open) {
@@ -175,7 +230,7 @@ export function ClinicSelector({
                     </Button>
                 </span>
                 {collapsed && (
-                    <Tip show text={message}>
+                    <Tip show wideOnly text={message}>
                         <button
                             type="button"
                             aria-label={i18n.t('Retry')}
@@ -198,7 +253,7 @@ export function ClinicSelector({
             <div className={box}>
                 <p className={cn('m-0', wide)}>{message}</p>
                 {collapsed && (
-                    <Tip show text={message}>
+                    <Tip show wideOnly text={message}>
                         <span
                             role="img"
                             aria-label={message}
@@ -210,17 +265,29 @@ export function ClinicSelector({
         )
     }
 
-    const name = clinic?.displayName ?? i18n.t('Choose a clinic')
+    const fullLabel = i18n.t('{{label}}: {{name}}', {
+        label,
+        name: fullName,
+        interpolation: { escapeValue: false },
+    })
+    // Collapsed, the tile needs its name from `md` up; a shortened name needs the full one everywhere.
+    const tip = {
+        show: collapsed || partHidden,
+        text: fullName,
+        wideOnly: !partHidden,
+    }
     const [only] = assigned
     if (!searchable && assigned.length === 1 && clinic?.id === only?.id) {
         return (
-            <Tip show={collapsed} text={name}>
+            <Tip {...tip}>
                 <div className={cn(box, 'p-1', collapsed && 'md:p-0')}>
-                    <span className="sr-only">{`${label}: `}</span>
+                    <span className="sr-only">{fullLabel}</span>
                     <Row
+                        decorative
                         clinic={clinic}
-                        name={name}
-                        nameClassName={collapsed ? 'md:sr-only' : undefined}
+                        name={shownName}
+                        nameRef={nameRef}
+                        nameClassName={cn('truncate', collapsed && 'md:hidden')}
                     />
                 </div>
             </Tip>
@@ -228,11 +295,7 @@ export function ClinicSelector({
     }
 
     const triggerProps = {
-        'aria-label': i18n.t('{{label}}: {{name}}', {
-            label,
-            name,
-            interpolation: { escapeValue: false },
-        }),
+        'aria-label': fullLabel,
         className: cn(
             triggerClassName,
             collapsed && 'md:size-6 md:p-0',
@@ -240,7 +303,12 @@ export function ClinicSelector({
         ),
         children: (
             <>
-                <Row clinic={clinic} name={name} nameClassName={wide} />
+                <Row
+                    clinic={clinic}
+                    name={shownName}
+                    nameRef={nameRef}
+                    nameClassName={cn('truncate', wide)}
+                />
                 <span aria-hidden="true" className={cn('flex', wide)}>
                     <IconChevronDown16 />
                 </span>
@@ -256,7 +324,7 @@ export function ClinicSelector({
     if (!searchable) {
         return (
             <DropdownMenu open={open} onOpenChange={onOpenChange}>
-                <Tip show={collapsed} text={name}>
+                <Tip {...tip}>
                     <DropdownMenuTrigger {...triggerProps} />
                 </Tip>
                 <DropdownMenuContent {...popup}>
@@ -276,7 +344,7 @@ export function ClinicSelector({
                                 closeOnClick
                                 className="pe-8"
                             >
-                                <Row clinic={a} name={a.displayName} />
+                                <MenuRow clinic={a} />
                             </DropdownMenuRadioItem>
                         ))}
                     </DropdownMenuRadioGroup>
@@ -360,7 +428,7 @@ export function ClinicSelector({
             isItemEqualToValue={(a: Clinic, b: Clinic) => a.id === b.id}
             itemToStringLabel={(c: Clinic) => c.displayName}
         >
-            <Tip show={collapsed} text={name}>
+            <Tip {...tip}>
                 <ComboboxPrimitive.Trigger {...triggerProps} />
             </Tip>
             <ComboboxContent {...popup}>
@@ -403,10 +471,7 @@ export function ClinicSelector({
                                             // Its own leading check and selected tint give way to the menu's trailing check.
                                             className="gap-2 ps-3 pe-8 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
                                         >
-                                            <Row
-                                                clinic={c}
-                                                name={c.displayName}
-                                            />
+                                            <MenuRow clinic={c} />
                                             <span className="pointer-events-none absolute end-3 flex items-center justify-center">
                                                 <ComboboxPrimitive.ItemIndicator>
                                                     <IconCheckmark16 />

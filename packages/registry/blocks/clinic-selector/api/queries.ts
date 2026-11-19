@@ -18,7 +18,7 @@ export const unwrap = <T>(result: Result<T, Error>): T => {
     return result.value
 }
 
-const CLINIC_FIELDS = 'id,displayName,path'
+const CLINIC_FIELDS = 'id,displayName,displayShortName,path'
 
 /** The user's id and assigned units; a unit with children is a district, not a facility. */
 export const fetchMe = async (
@@ -29,7 +29,7 @@ export const fetchMe = async (
         {
             resource: 'me',
             params: {
-                fields: 'id,organisationUnits[id,displayName,path,children::isNotEmpty]',
+                fields: `id,organisationUnits[${CLINIC_FIELDS},children::isNotEmpty]`,
             },
         },
         MeSchema,

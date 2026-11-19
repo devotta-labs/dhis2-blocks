@@ -126,10 +126,16 @@ describe('the clinic selector lab server', () => {
         ).toEqual([flatClinicId(1)])
     })
 
-    it('gives every name 120 characters when asked', () => {
+    it('gives every name 120 characters when asked, and keeps short names short', () => {
         const long = me({ longNames: true, assignedDistricts: 1 }).assigned
         expect(
             long.every(({ displayName }) => displayName.length === 120)
+        ).toBe(true)
+        expect(
+            long.every(
+                ({ displayShortName = '' }) =>
+                    displayShortName.length > 0 && displayShortName.length <= 50
+            )
         ).toBe(true)
     })
 

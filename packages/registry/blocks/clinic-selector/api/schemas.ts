@@ -3,6 +3,8 @@ import { z } from 'zod'
 export interface Clinic {
     id: string
     displayName: string
+    /** DHIS2's short name, at most 50 characters; the trigger shows it in place of the full name. */
+    displayShortName?: string
     path: string
 }
 
@@ -10,10 +12,11 @@ export interface AssignedClinic extends Clinic {
     hasChildren: boolean
 }
 
-/** Unknown fields are dropped, so a clinic is only these three. */
+/** Unknown fields are dropped, so a clinic is only these. */
 const ClinicSchema = z.object({
     id: z.string(),
     displayName: z.string(),
+    displayShortName: z.string().optional(),
     path: z.string(),
 })
 

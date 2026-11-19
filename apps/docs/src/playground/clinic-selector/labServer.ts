@@ -15,9 +15,10 @@ export interface LabRequest {
 /** Every resource the block asks for. */
 export const RESOURCES = ['me', 'organisationUnits']
 
-const clinicJson = ({ id, displayName, path }: LabUnit) => ({
+const clinicJson = ({ id, displayName, displayShortName, path }: LabUnit) => ({
     id,
     displayName,
+    displayShortName,
     path,
 })
 

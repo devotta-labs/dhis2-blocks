@@ -38,10 +38,13 @@ describe.each(versions)(
             expect(parsed.assigned[0]?.hasChildren).toBe(false)
         })
 
-        it('parses a search page', () => {
+        it('parses a search page, with short names', () => {
             const parsed = SearchSchema.parse(search)
 
             expect(parsed.clinics).toHaveLength(search.organisationUnits.length)
+            expect(parsed.clinics[0]?.displayShortName).toBe(
+                search.organisationUnits[0]?.displayShortName
+            )
             expect(parsed.hasMore).toBe(false)
         })
 

@@ -42,7 +42,7 @@ describe('fetchMe', () => {
         expect(requestOf(query)).toEqual({
             resource: 'me',
             params: {
-                fields: 'id,organisationUnits[id,displayName,path,children::isNotEmpty]',
+                fields: 'id,organisationUnits[id,displayName,displayShortName,path,children::isNotEmpty]',
             },
         })
         expect(result.unwrap()).toEqual({
@@ -79,7 +79,7 @@ describe('searchClinics', () => {
             params: {
                 query: 'ngel',
                 withinUserHierarchy: true,
-                fields: 'id,displayName,path',
+                fields: 'id,displayName,displayShortName,path',
                 order: 'displayName:asc',
                 pageSize: SEARCH_PAGE_SIZE,
                 page: 2,
@@ -117,7 +117,7 @@ describe('fetchClinicsById', () => {
             params: {
                 filter: 'id:in:[b,a]',
                 withinUserHierarchy: true,
-                fields: 'id,displayName,path',
+                fields: 'id,displayName,displayShortName,path',
                 paging: false,
             },
         })

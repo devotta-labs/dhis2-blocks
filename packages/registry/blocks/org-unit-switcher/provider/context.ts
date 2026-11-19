@@ -18,7 +18,7 @@ export interface OrgUnitActions {
 }
 
 /** What the selector's search asks the server with. */
-export interface OrgUnitSource {
+interface OrgUnitSource {
     client: OrgUnitResourceClient
     cacheId: number
     userId?: string

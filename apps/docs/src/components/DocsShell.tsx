@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from 'lucide-react'
+import { ArrowUpIcon, ChevronDownIcon } from 'lucide-react'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { useCallback, useEffect, useId, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -310,6 +310,36 @@ export const SiteShell = () => {
     )
 }
 
+/**
+ * Appears once the reader is a couple of screens down. Scrolling without an
+ * explicit behavior follows the CSS `scroll-behavior`, which index.css smooths
+ * and turns off under prefers-reduced-motion.
+ */
+const BackToTop = () => {
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        const update = () =>
+            setVisible(window.scrollY > window.innerHeight * 1.5)
+        update()
+        window.addEventListener('scroll', update, { passive: true })
+        return () => window.removeEventListener('scroll', update)
+    }, [])
+
+    if (!visible) return null
+
+    return (
+        <button
+            type="button"
+            aria-label="Back to top"
+            onClick={() => window.scrollTo({ top: 0 })}
+            className="fixed right-4 bottom-4 z-40 inline-flex size-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring md:right-6 md:bottom-6"
+        >
+            <ArrowUpIcon aria-hidden="true" className="size-4" />
+        </button>
+    )
+}
+
 /** A docs page: the documentation sidebar beside the page. */
 export const DocsLayout = () => (
     <div className="mx-auto flex max-w-[1536px]">
@@ -320,5 +350,7 @@ export const DocsLayout = () => (
         <main className="min-w-0 flex-1 px-4 py-8 md:pl-72 md:pr-8 lg:pr-12">
             <Outlet />
         </main>
+
+        <BackToTop />
     </div>
 )

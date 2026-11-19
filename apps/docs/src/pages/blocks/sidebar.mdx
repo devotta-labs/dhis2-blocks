@@ -101,9 +101,9 @@ It starts open; set `defaultOpen={false}` on `SidebarProvider` to start
 folded, or `open` and `onOpenChange` to hold the state in your app. Read it
 anywhere inside the provider with `useSidebar()`.
 
-On a narrow window the trigger opens the sheet instead. Close it when a link
-is followed: call `setOpenMobile(false)` from `useSidebar()` in the link's
-`onClick`.
+On a narrow window the trigger opens the sheet instead. The sheet closes when
+a link in it is followed, unless the click opens a new tab; buttons, such as a
+group's trigger, leave it open.
 
 ## Groups of pages
 

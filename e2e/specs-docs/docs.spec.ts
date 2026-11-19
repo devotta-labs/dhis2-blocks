@@ -101,7 +101,7 @@ test.describe('documentation catalog', () => {
 test.describe('contrast', () => {
     const PREVIEW = '/preview/sidebar/app'
     const current = (page: Page) =>
-        page.locator('[data-slot="sidebar-menu-button"][data-active]')
+        page.locator('[data-slot="sidebar-menu-button"][aria-current="page"]')
 
     test('more contrast switches the sidebar example to its high-contrast roles', async ({
         page,

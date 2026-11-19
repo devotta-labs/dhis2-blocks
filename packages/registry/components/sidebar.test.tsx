@@ -149,4 +149,17 @@ describe('sidebar', () => {
         await userEvent.keyboard('{Escape}')
         await expect.element(sheet).not.toBeInTheDocument()
     })
+
+    it('closes the sheet when a link is followed, not when a group opens', async () => {
+        await page.viewport(375, 700)
+        await render(<AppNavigation />)
+        await trigger().click()
+        const sheet = page.getByRole('dialog', { name: 'Navigation' })
+
+        await sheet.getByRole('button', { name: 'Reports' }).click()
+        await expect.element(sheet).toBeVisible()
+
+        await sheet.getByRole('link', { name: 'Today' }).click()
+        await expect.element(sheet).not.toBeInTheDocument()
+    })
 })

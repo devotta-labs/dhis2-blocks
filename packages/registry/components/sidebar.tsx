@@ -157,10 +157,30 @@ function Sidebar({
     }
 
     if (isMobile) {
+        // A link followed from the sheet leads to a new page, so the sheet
+        // gets out of the way. A click that opens a new tab leaves it open.
+        const closeOnLink = (event: React.MouseEvent<HTMLDivElement>) => {
+            props.onClick?.(event)
+            const link =
+                event.target instanceof Element
+                    ? event.target.closest('a[href]')
+                    : null
+            const plainClick =
+                event.button === 0 &&
+                !event.metaKey &&
+                !event.ctrlKey &&
+                !event.shiftKey &&
+                !event.altKey
+            if (link !== null && plainClick) {
+                setOpenMobile(false)
+            }
+        }
+
         return (
             <Sheet open={openMobile} onOpenChange={setOpenMobile}>
                 <SheetContent
                     {...props}
+                    onClick={closeOnLink}
                     data-sidebar="sidebar"
                     data-slot="sidebar"
                     data-mobile="true"

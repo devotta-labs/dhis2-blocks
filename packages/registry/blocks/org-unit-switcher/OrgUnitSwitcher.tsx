@@ -130,23 +130,33 @@ function Tile({ orgUnit }: { orgUnit?: OrgUnit }) {
     )
 }
 
-/** Announces every change of unit after the first, whoever made it. */
+/**
+ * Announces every change of unit once the units are ready, whoever made it.
+ * What is current when they become ready, a unit or none, is said by the
+ * trigger, so only later changes are announced.
+ */
 function useChangeAnnouncement(
+    ready: boolean,
     id: string | undefined,
     userId: string | undefined,
     message: string | undefined
 ) {
-    const said = useRef<{ userId?: string; id: string }>()
+    const said = useRef<{ userId?: string; id?: string }>()
     useEffect(() => {
-        if (id === undefined || message === undefined) {
+        if (!ready) {
             return
         }
         const before = said.current
         said.current = { userId, id }
-        if (before && before.userId === userId && before.id !== id) {
+        if (
+            message !== undefined &&
+            before &&
+            before.userId === userId &&
+            before.id !== id
+        ) {
             announce(message)
         }
-    }, [id, userId, message])
+    }, [ready, id, userId, message])
 }
 
 /** Tile and name, the same in the trigger and every menu row. */
@@ -210,6 +220,7 @@ export function OrgUnitSwitcher({
     const { setOrgUnit, retry } = actions
     const t = { ...defaultTexts(), ...texts }
     useChangeAnnouncement(
+        status === 'ready',
         orgUnit?.id,
         source.userId,
         orgUnit && t.changed(orgUnit.displayName)

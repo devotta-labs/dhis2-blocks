@@ -49,9 +49,9 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
-    'clinic-selector': lazy(() =>
-        import('./clinic-selector/ClinicSelectorLab').then(
-            ({ ClinicSelectorLab }) => ({ default: ClinicSelectorLab })
+    'org-unit-switcher': lazy(() =>
+        import('./org-unit-switcher/OrgUnitSwitcherLab').then(
+            ({ OrgUnitSwitcherLab }) => ({ default: OrgUnitSwitcherLab })
         )
     ),
 } satisfies Record<PlaygroundSlug, ComponentType>

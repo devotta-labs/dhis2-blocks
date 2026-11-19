@@ -114,8 +114,8 @@ const router = createBrowserRouter([
                     docRoute('/blocks/tooltip', './pages/blocks/tooltip.mdx'),
                     docRoute('/blocks/sidebar', './pages/blocks/sidebar.mdx'),
                     docRoute(
-                        '/blocks/clinic-selector',
-                        './pages/blocks/clinic-selector.mdx'
+                        '/blocks/org-unit-switcher',
+                        './pages/blocks/org-unit-switcher.mdx'
                     ),
                     docRoute(
                         '/blocks/context-selector',

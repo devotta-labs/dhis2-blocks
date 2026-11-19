@@ -61,8 +61,8 @@ export const docsNavigation: readonly NavigationSection[] = [
                     { title: 'Working List', href: '/blocks/working-list' },
                     { title: 'Calendar', href: '/blocks/calendar' },
                     {
-                        title: 'Clinic Selector',
-                        href: '/blocks/clinic-selector',
+                        title: 'Organisation Unit Switcher',
+                        href: '/blocks/org-unit-switcher',
                     },
                     {
                         title: 'Observation Cards',

@@ -15,7 +15,6 @@ const slot = (container: HTMLElement, name: string) =>
 
 describe('ObservationCard states', () => {
     it('pending shows a skeleton and a generic name until the label is known', async () => {
-        // An empty label is no label.
         const { container } = await renderWith(
             <ObservationCard dataElement={DE} label="" />,
             {},
@@ -146,7 +145,6 @@ describe('the default arrangement', () => {
             'observation-sparkline',
             'observation-recorded',
         ])
-        // The legend shares the value's row, so a wrapped legend never lowers the value.
         expect(
             slot(numeric.container, 'observation-legend')?.parentElement
         ).toBe(slot(numeric.container, 'observation-value')?.parentElement)
@@ -275,7 +273,6 @@ describe('the default arrangement', () => {
     })
 
     it('names the card by its label for screen readers', async () => {
-        // An empty label is no label: the element's own name is used.
         await renderWith(<ObservationCard dataElement={DE} label="" />, {
             readings: march(10),
         })
@@ -474,7 +471,6 @@ describe('the default arrangement', () => {
         const note = slot(container, 'stale-note')
         expect(note?.classList).toContain('text-dhis2-warning')
         expect(note?.querySelector('[aria-hidden="true"] svg')).not.toBeNull()
-        // Sighted users read "Out of date"; a screen reader hears the threshold.
         expect(
             [...(note?.querySelectorAll('[aria-hidden="true"]') ?? [])]
                 .map((part) => part.textContent)

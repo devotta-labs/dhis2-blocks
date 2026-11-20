@@ -36,7 +36,7 @@ export interface UseProgramRuleContextResult {
 const HOUR = 60 * 60_000
 const NO_GROUPS: string[] = []
 
-export const asError = (cause: unknown): Error =>
+export const asError = (cause: unknown) =>
     cause instanceof Error ? cause : new Error(String(cause))
 
 const buildContext = (
@@ -76,11 +76,9 @@ interface StageRuleContext {
 }
 
 /** The engine, the stage's metadata and its context; shared with `useProgramRules`. */
-export const useStageRuleContext = ({
-    programId,
-    programStageId,
-    enabled = true,
-}: UseProgramRuleContextOptions): StageRuleContext => {
+export const useStageRuleContext: (
+    options: UseProgramRuleContextOptions
+) => StageRuleContext = ({ programId, programStageId, enabled = true }) => {
     const client = useProgramRulesClient()
 
     const ruleEngine = useRuleEngine(enabled)
@@ -143,9 +141,9 @@ export const useStageRuleContext = ({
  * graph, invalid rules and data requirements, and the metadata it was built
  * from. Shares its queries and the engine with `useProgramRules`.
  */
-export const useProgramRuleContext = (
+export const useProgramRuleContext: (
     options: UseProgramRuleContextOptions
-): UseProgramRuleContextResult => {
+) => UseProgramRuleContextResult = (options) => {
     const { metadata, context, error } = useStageRuleContext(options)
     const progress = context === undefined ? 'loading' : 'ready'
     return {

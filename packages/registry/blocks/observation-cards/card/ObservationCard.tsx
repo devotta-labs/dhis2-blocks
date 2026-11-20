@@ -61,7 +61,6 @@ function Frame({
         <Card
             data-slot="observation-card"
             role="group"
-            // Until the metadata names the card, a generic name, so a screen reader never meets an unnamed group.
             aria-label={name || i18n.t('Observation')}
             aria-busy={busy || undefined}
             data-tone={stale ? 'stale' : 'default'}
@@ -76,12 +75,6 @@ function Frame({
     )
 }
 
-/**
- * What the program's metadata already says about the card's data element:
- * its name, for cards that never get a series, and whether the loaded card
- * will show a trend, so its skeleton takes the same shape. Until the metadata
- * says, a trend, the taller of the two.
- */
 const useElementMetadata = (dataElement: string) => {
     const { metadata } = useObservationsContext()
     const element = metadata?.dataElements.get(dataElement)
@@ -94,7 +87,6 @@ const useElementMetadata = (dataElement: string) => {
     }
 }
 
-/** The loading card, in the shape of the arrangement it will become. */
 function LoadingContent({
     heading,
     trend,
@@ -110,7 +102,7 @@ function LoadingContent({
             {trend ? (
                 <>
                     <Skeleton className="my-0.5 h-4 w-40 max-w-full" />
-                    {/* Dropped below 13rem, as the sparkline is. */}
+                    {}
                     <div className="@container mt-auto w-full">
                         <Skeleton className="hidden h-10 w-full @[13rem]:block" />
                     </div>
@@ -127,12 +119,11 @@ const Notice = ({ children }: { children: ReactNode }) => (
     <p className="text-sm text-dhis2-muted-foreground">{children}</p>
 )
 
-/** No children: numeric readings get the trend, everything else the last recorded value. */
 function DefaultArrangement({ series }: { series: ObservationSeries }) {
     return (
         <>
             <ObservationLabel />
-            {/* The legend wraps under the value, so values in a row stay level. */}
+            {}
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <ObservationValue />
                 <ObservationLegend />
@@ -174,7 +165,7 @@ function ReadyContent({
     return (
         <>
             {children ?? <DefaultArrangement series={series} />}
-            {/* The date can be placed, never dropped: an old value must not pass as current. */}
+            {}
             {recordedPlaced ? null : <RecordedFooter />}
         </>
     )
@@ -201,9 +192,7 @@ export function ObservationCard({
         setRecordedNotes((count) => count + 1)
         return () => setRecordedNotes((count) => count - 1)
     }, [])
-    // An empty label is no label.
     const hostLabel = label || undefined
-    // Before there is a series, the element's name from the metadata, once known.
     const earlyName = hostLabel ?? name
     const heading = earlyName ? <CardHeading>{earlyName}</CardHeading> : null
 
@@ -229,7 +218,7 @@ export function ObservationCard({
             return (
                 <Frame name={earlyName} className={className}>
                     {heading}
-                    {/* The provider logs the full message in production. */}
+                    {}
                     <p
                         role="alert"
                         data-slot="observation-config-error"

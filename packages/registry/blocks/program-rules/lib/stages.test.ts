@@ -1,5 +1,5 @@
-import { programMetadata, rule } from '../__tests__/metadata'
-import { RMNCH, rmnchMetadata } from '../__tests__/rmnch'
+import { programMetadata, rule } from '../test/metadata'
+import { RMNCH, rmnchMetadata } from '../test/rmnch'
 import { metadataForStage } from './stages'
 
 describe('metadataForStage', () => {

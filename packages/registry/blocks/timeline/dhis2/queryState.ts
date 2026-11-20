@@ -7,7 +7,7 @@ import { timelineKeys } from './timelineKeys'
 import type { ProgramInfo } from './types'
 
 /** Unwraps a fetcher's result for a query function, which reports by throwing. */
-export const unwrap = <T>(result: Result<T, Error>): T => {
+export const unwrap = <T>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
@@ -24,7 +24,7 @@ export const statusOf = (query: {
     data: unknown
     isError: boolean
     errorUpdateCount: number
-}): TimelineStatus => {
+}) => {
     if (query.data !== undefined) {
         return 'success'
     }
@@ -49,9 +49,7 @@ export interface QueriesSummary<T> {
  * result that haven't changed, so `data` and `statuses` keep their
  * references until an answer or a status changes, and can be memo deps.
  */
-export const summarize = <T>(
-    queries: ReadonlyArray<UseQueryResult<T>>
-): QueriesSummary<T> => ({
+export const summarize = <T>(queries: ReadonlyArray<UseQueryResult<T>>) => ({
     data: queries.map((query) => query.data),
     statuses: queries.map(statusOf),
     errors: queries.map((query) => query.error),

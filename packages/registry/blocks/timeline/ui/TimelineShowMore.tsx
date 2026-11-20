@@ -10,7 +10,6 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { useTimeline } from '../hooks/useTimeline'
 
 interface Request {
-    /** The entries on show when the button was pressed. */
     shown: ReadonlySet<string>
     sawLoading: boolean
 }
@@ -77,7 +76,6 @@ export const TimelineShowMore = ({
         }
     }, [entries, groups, loading, hasMore, id])
 
-    // Stays mounted after the last press, so its announcement is still heard.
     const status = (
         <span role="status" className="sr-only">
             {announced}
@@ -93,13 +91,11 @@ export const TimelineShowMore = ({
                 variant="secondary"
                 size="sm"
                 {...props}
-                // Sits under the entries, at their indent, not across the page.
                 className={cn('ms-6 self-start text-sm!', className)}
                 ref={button}
                 type="button"
                 data-slot="timeline-show-more"
                 disabled={loading}
-                // Keeps focus on the button while it loads, not on <body>.
                 focusableWhenDisabled
                 aria-busy={loading}
                 onClick={() => {
@@ -109,8 +105,6 @@ export const TimelineShowMore = ({
                     }
                     request.current = pending
                     onShowMore()
-                    // A press that starts no load and adds nothing leaves nothing
-                    // to wait for; the render that shows either has run by now.
                     setTimeout(() => {
                         if (
                             request.current === pending &&

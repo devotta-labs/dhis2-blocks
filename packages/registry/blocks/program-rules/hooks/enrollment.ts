@@ -43,14 +43,16 @@ export type RuleEnrollmentResponse = z.infer<
 
 const presentValues = (
     entries: ReadonlyArray<readonly [string, string | undefined]>
-): Record<string, string> =>
+) =>
     Object.fromEntries(
         entries.flatMap(([id, value]) =>
             value === undefined || value === '' ? [] : [[id, value]]
         )
     )
 
-const toEvent = (event: z.infer<typeof EventSchema>): RuleEventInput => ({
+const toEvent: (event: z.infer<typeof EventSchema>) => RuleEventInput = (
+    event
+) => ({
     id: event.event,
     programStageId: event.programStage,
     status: event.status,
@@ -65,9 +67,9 @@ const toEvent = (event: z.infer<typeof EventSchema>): RuleEventInput => ({
 })
 
 /** A tracker enrollment response → rule input. `events` includes every event; the lib drops the current one. */
-export const toRuleEnrollmentData = (
+export const toRuleEnrollmentData: (
     response: RuleEnrollmentResponse
-): RuleEnrollmentData => ({
+) => RuleEnrollmentData = (response) => ({
     enrollment: {
         id: response.enrollment,
         status: response.status,
@@ -84,7 +86,7 @@ export const toRuleEnrollmentData = (
 const EVENT_FIELDS =
     'event,programStage,status,occurredAt,scheduledAt,createdAt,completedAt,orgUnit,dataValues[dataElement,value]'
 
-const enrollmentFields = (withEvents: boolean): string =>
+const enrollmentFields = (withEvents: boolean) =>
     `enrollment,status,enrolledAt,occurredAt,orgUnit,attributes[attribute,value]${withEvents ? `,events[${EVENT_FIELDS}]` : ''}`
 
 export const fetchRuleEnrollment = async (
@@ -92,7 +94,7 @@ export const fetchRuleEnrollment = async (
     enrollmentId: string,
     withEvents: boolean,
     signal?: AbortSignal
-): Promise<RuleEnrollmentData> => {
+) => {
     const response = await client.query(
         {
             enrollment: {
@@ -120,7 +122,7 @@ export const fetchRuleEnrollments = async (
     enrollmentIds: ReadonlyArray<string>,
     withEvents: boolean,
     signal?: AbortSignal
-): Promise<Map<string, RuleEnrollmentData>> => {
+) => {
     const fields = enrollmentFields(withEvents)
     const batches = Array.from(
         { length: Math.ceil(enrollmentIds.length / ENROLLMENT_BATCH_SIZE) },
@@ -137,7 +139,6 @@ export const fetchRuleEnrollments = async (
                     enrollments: {
                         resource: 'tracker/enrollments',
                         params: {
-                            // DHIS2 2.43 refuses a list of enrollments without its program.
                             program: programId,
                             enrollments: ids.join(','),
                             pageSize: ids.length,
@@ -156,8 +157,8 @@ export const fetchRuleEnrollments = async (
     )
     return new Map(
         responses.flatMap((response) =>
-            response.enrollments.enrollments.map(
-                (enrollment): [string, RuleEnrollmentData] => [
+            response.enrollments.enrollments.map<[string, RuleEnrollmentData]>(
+                (enrollment) => [
                     enrollment.enrollment,
                     toRuleEnrollmentData(enrollment),
                 ]

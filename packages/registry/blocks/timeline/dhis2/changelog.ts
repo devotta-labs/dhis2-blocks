@@ -16,7 +16,7 @@ const displayNameOf = ({ username, firstName, surname }: TrackerUser) =>
  * Labels for the event fields that 2.42+ record in an event's changelog.
  * @public For hosts labelling changes they fetch themselves.
  */
-export const eventFieldInfo = (id: string): FieldInfo | undefined => {
+export const eventFieldInfo: (id: string) => FieldInfo | undefined = (id) => {
     switch (id) {
         case 'occurredAt':
             return { name: i18n.t('Event date'), meta: { valueType: 'DATE' } }
@@ -37,10 +37,7 @@ export const eventFieldInfo = (id: string): FieldInfo | undefined => {
     }
 }
 
-const toChange = (
-    { type, change }: ChangeLogRow,
-    resolve: ResolveField
-): ResolvedChange => {
+const toChange = ({ type, change }: ChangeLogRow, resolve: ResolveField) => {
     const field = { kind: change.kind, id: change.id }
     const info =
         (field.kind === 'eventField' ? eventFieldInfo(field.id) : undefined) ??
@@ -70,7 +67,7 @@ const toChange = (
 export const groupChangelogRows = (
     rows: ReadonlyArray<ChangeLogRow>,
     resolve: ResolveField = () => undefined
-): ChangeSave[] => {
+) => {
     const saves = new Map<string, ChangeSave>()
     const seen = new Set<string>()
     const newestFirst = [...rows].sort((a, b) =>

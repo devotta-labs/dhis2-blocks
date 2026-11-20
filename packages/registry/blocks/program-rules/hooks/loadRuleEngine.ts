@@ -9,7 +9,7 @@ import type {
 
 /** Where the engine's chunk comes from; tests make the import fail. */
 export const ruleEngineChunk = {
-    load: (): Promise<RuleEngineModule> => import('@dhis2/rule-engine'),
+    load: () => import('@dhis2/rule-engine'),
 }
 
 let pending: Promise<RuleEngineModule> | undefined
@@ -20,7 +20,7 @@ let loaded: RuleEngineModule | undefined
  * is only imported on first use; call this early to preload it. A failed
  * import is forgotten, so the next call tries again.
  */
-export const loadRuleEngine = (): Promise<RuleEngineModule> => {
+export const loadRuleEngine = () => {
     pending ??= ruleEngineChunk.load().then(
         (engine) => {
             loaded = engine
@@ -63,7 +63,7 @@ let warming: Promise<void> | undefined
  * pay for the engine's start-up. Call it as soon as a program is known to have rules. It says nothing when it fails:
  * the failure is forgotten, so the next call tries again.
  */
-export const preloadRuleEngine = (): void => {
+export const preloadRuleEngine = () => {
     warming ??= loadRuleEngine().then(
         (engine) => {
             const warm = Result.try(() =>
@@ -93,7 +93,7 @@ interface RuleEngineState {
  * can't be serialised, so a persisted cache would restore it as `{}`. A failed
  * import is tried again by the next mount, and when the connection comes back.
  */
-export const useRuleEngine = (enabled: boolean): RuleEngineState => {
+export const useRuleEngine = (enabled: boolean) => {
     const [state, setState] = useState<RuleEngineState>(() => ({
         engine: loaded,
     }))

@@ -1,4 +1,4 @@
-import type { TimelineEntry, TimelinePhase } from '../core/types'
+import type { TimelineEntry } from '../core/types'
 import { deriveEventStatus, type DerivedEventStatus } from './eventStatus'
 import type { EventTimeField } from './queries'
 import type { Enrollment, TrackerEvent } from './schemas'
@@ -12,8 +12,7 @@ import type {
     ProgramInfo,
 } from './types'
 
-/** An event with no date has no place before or after now: it is Undated. */
-const phaseOf = (status: DerivedEventStatus): TimelinePhase => {
+const phaseOf = (status: DerivedEventStatus) => {
     if (status === 'scheduled') {
         return 'future'
     }
@@ -38,10 +37,13 @@ export interface EventEntryOptions {
  * at `timeField`. A missing value gives `at: ''`, which the feed shows as
  * Undated.
  */
-export const eventEntry = (
+export const eventEntry: (
     event: TrackerEvent,
-    { timeField, today, program, orgUnitNames = NO_NAMES }: EventEntryOptions
-): TimelineEntry<EventEntryData> => {
+    arg1: EventEntryOptions
+) => TimelineEntry<EventEntryData> = (
+    event,
+    { timeField, today, program, orgUnitNames = NO_NAMES }
+) => {
     const status = deriveEventStatus(event, today)
     const byScheduledAt =
         status === 'scheduled' || status === 'overdue' || status === 'skipped'
@@ -80,11 +82,8 @@ export const eventEntry = (
 export const milestoneEntries = (
     enrollment: Enrollment,
     program?: ProgramInfo
-): TimelineEntry<MilestoneEntryData>[] => {
-    const milestone = (
-        kind: MilestoneKind,
-        at: string | undefined
-    ): TimelineEntry<MilestoneEntryData>[] => {
+) => {
+    const milestone = (kind: MilestoneKind, at: string | undefined) => {
         if (!at) {
             return []
         }
@@ -131,10 +130,10 @@ export const milestoneEntries = (
  * The notes on one enrollment, at the time they were stored: past, even when
  * the server's clock is a day ahead of the viewer's.
  */
-export const noteEntries = (
+export const noteEntries: (
     enrollment: Enrollment,
     program?: ProgramInfo
-): TimelineEntry<NoteEntryData>[] =>
+) => TimelineEntry<NoteEntryData>[] = (enrollment, program) =>
     enrollment.notes.flatMap((note) => {
         if (!note.storedAt) {
             return []
@@ -149,9 +148,9 @@ export const noteEntries = (
     })
 
 /** One entry per save; a save has happened, so it is past. */
-export const changeEntries = (
+export const changeEntries: (
     saves: ReadonlyArray<ChangeSave>
-): TimelineEntry<ChangeEntryData>[] =>
+) => TimelineEntry<ChangeEntryData>[] = (saves) =>
     saves.map((save) => ({
         id: `change:${save.id}`,
         at: save.createdAt,
@@ -169,7 +168,7 @@ export const orgUnitIdsOf = (
         events: ReadonlyArray<TrackerEvent>
         program?: ProgramInfo
     }>
-): string[] => {
+) => {
     const ids = new Set<string>()
     for (const { events, program } of groups) {
         for (const event of events) {

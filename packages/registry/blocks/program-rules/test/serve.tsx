@@ -42,7 +42,6 @@ export const SECOND_PERSON = 'PE2ndPerson'
 
 const people = [RMNCH.enrollmentId, SECOND_PERSON]
 
-/** What `tracker/enrollments` answers: the enrollment asked for by id, or a list of the known people among those asked for. */
 const enrollmentsAnswer = (query: RequestedResource) =>
     query.id !== undefined
         ? rmnchEnrollmentResponse
@@ -66,8 +65,7 @@ export const serve = (
     const queries: Array<{ name: string; query: RequestedResource }> = []
     const failing = [...initiallyFailing]
     const holds = new Map<string, Promise<void>>()
-    /** Makes the answers of a resource wait until the returned function is called. */
-    const hold = (name: string): (() => void) => {
+    const hold = (name: string) => {
         let release: (() => void) | undefined
         holds.set(
             name,
@@ -87,13 +85,11 @@ export const serve = (
             queries.push({ name, query })
             await holds.get(name)
             if (failing.includes(name)) {
-                // An access error, so the hook's retry policy doesn't retry it.
                 throw new FetchError({
                     type: 'access',
                     message: `${name} failed`,
                 })
             }
-            // Served as it would arrive over the wire: plain JSON, no `undefined` members.
             return z.json().parse(JSON.parse(JSON.stringify(body(query))))
         }
     const data = {

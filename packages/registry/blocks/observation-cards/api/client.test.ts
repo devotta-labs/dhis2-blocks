@@ -1,17 +1,17 @@
 import { Result } from 'better-result'
 import { z } from 'zod'
+import { serveDhis2 } from '../test/dhis2Server.test-utils'
 import {
     createObservationsClient,
     createObservationsResourceClient,
-    type DataEngineLike,
     type ObservationsClient,
     resourceClientOf,
     shouldRetryObservationsRequest,
 } from './client'
 
-const failWith = async (cause: unknown) => {
-    const query = vi.fn<DataEngineLike['query']>().mockRejectedValue(cause)
-    const result = await createObservationsResourceClient({ query }).query(
+const failWith = async (respond: Parameters<typeof serveDhis2>[0]) => {
+    const { engine } = await serveDhis2(respond)
+    const result = await createObservationsResourceClient(engine).query(
         { resource: 'programs' },
         z.unknown()
     )
@@ -23,10 +23,8 @@ const failWith = async (cause: unknown) => {
 
 describe('shouldRetryObservationsRequest', () => {
     it('retries server and network failures twice', async () => {
-        const serverError = await failWith(
-            Object.assign(new Error('Bad gateway'), { httpStatusCode: 502 })
-        )
-        const networkError = await failWith(new Error('Failed to fetch'))
+        const serverError = await failWith(() => ({ status: 502 }))
+        const networkError = await failWith(() => ({ disconnect: true }))
 
         expect(shouldRetryObservationsRequest(0, serverError)).toBe(true)
         expect(shouldRetryObservationsRequest(1, networkError)).toBe(true)
@@ -34,22 +32,16 @@ describe('shouldRetryObservationsRequest', () => {
     })
 
     it('does not retry a client error', async () => {
-        const forbidden = await failWith(
-            Object.assign(new Error('Forbidden'), {
-                details: { httpStatusCode: 403 },
-            })
-        )
+        const forbidden = await failWith(() => ({ status: 403 }))
 
         expect(shouldRetryObservationsRequest(0, forbidden)).toBe(false)
     })
 
     it('does not retry a malformed response or a missing enrollment', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockResolvedValue({ observationsResource: { unexpected: true } })
-        const malformed = await createObservationsResourceClient({
-            query,
-        }).query(
+        const { engine } = await serveDhis2(() => ({
+            body: { unexpected: true },
+        }))
+        const malformed = await createObservationsResourceClient(engine).query(
             { resource: 'programs' },
             z.object({ programStages: z.array(z.unknown()) })
         )
@@ -71,8 +63,8 @@ describe('shouldRetryObservationsRequest', () => {
 })
 
 describe('resourceClientOf', () => {
-    it('runs requests only for a client made by createObservationsClient', () => {
-        const engine: DataEngineLike = { query: vi.fn() }
+    it('runs requests only for a client made by createObservationsClient', async () => {
+        const { engine } = await serveDhis2(() => undefined)
 
         expect(resourceClientOf(createObservationsClient(engine))).toBeDefined()
         expect(() =>

@@ -31,7 +31,7 @@ const entry = (
     id: string,
     at: string,
     extra: Partial<TimelineEntry<string>> = {}
-): TimelineEntry<string> => ({ id, at, data: id, ...extra })
+) => ({ id, at, data: id, ...extra })
 
 const ENTRIES = [
     entry('future-visit', '2026-10-25T10:00'),
@@ -574,7 +574,6 @@ describe('show more', () => {
 
         button?.click()
 
-        // While the page loads, focus stays on the button, not on <body>.
         await vi.waitFor(() =>
             expect(button?.getAttribute('aria-busy')).toBe('true')
         )

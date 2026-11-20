@@ -30,19 +30,18 @@ const LATEST_ONLY_TYPES = new Set([
     'DATE',
 ])
 
-/** Numeric readings plot and compare; option codes do not, even numeric ones. */
-const trends = (hasOptions: boolean, valueType: string): boolean =>
+const trends = (hasOptions: boolean, valueType: string) =>
     !hasOptions && isNumericValueType(valueType)
 
-export const showsTrend = (series: ObservationSeries): boolean =>
+export const showsTrend = (series: ObservationSeries) =>
     trends(series.options !== undefined, series.valueType)
 
 /** showsTrend from metadata alone, before any reading has loaded. */
-export const elementShowsTrend = (element: DataElementMetadata): boolean =>
+export const elementShowsTrend = (element: DataElementMetadata) =>
     trends(element.optionSet !== undefined, element.valueType)
 
 /** Types a card can show; an option set supports any type. */
-export const isSupportedValueType = (series: ObservationSeries): boolean =>
+export const isSupportedValueType = (series: ObservationSeries) =>
     series.options !== undefined ||
     isNumericValueType(series.valueType) ||
     LATEST_ONLY_TYPES.has(series.valueType)
@@ -54,7 +53,7 @@ export const isSupportedValueType = (series: ObservationSeries): boolean =>
 export const legendFor = (
     legends: ObservationLegendBand[] | undefined,
     value: number | undefined
-): ObservationLegendBand | undefined => {
+) => {
     if (value === undefined || legends === undefined || legends.length === 0) {
         return undefined
     }
@@ -74,14 +73,14 @@ export const legendFor = (
 export const isUnticked = (
     series: ObservationSeries,
     point: ObservationPoint
-): boolean => series.valueType === 'TRUE_ONLY' && point.value !== 'true'
+) => series.valueType === 'TRUE_ONLY' && point.value !== 'true'
 
 /** A reading as shown: option names, Yes or No, dates in the system calendar. */
-export const formatPointValue = (
+export const formatPointValue: (
     series: ObservationSeries,
     point: ObservationPoint,
     options: DisplayOptions
-): string =>
+) => string = (series, point, options) =>
     isUnticked(series, point)
         ? i18n.t('Not recorded')
         : formatDhis2Value(
@@ -102,7 +101,7 @@ export const formatPointValue = (
 export const formatRecordedDate = (
     point: ObservationPoint,
     { calendar, locale }: DisplayOptions
-): string => formatCalendarDate(point.occurredAt, calendar, locale)
+) => formatCalendarDate(point.occurredAt, calendar, locale)
 
 export interface ChangeLine {
     /** Shown as an arrow, and said as a word to screen readers. */
@@ -111,11 +110,11 @@ export interface ChangeLine {
 }
 
 /** The change from the previous reading, or nothing when there is no earlier one. */
-export const changeLine = (
+export const changeLine: (
     series: ObservationSeries,
     unit: string | undefined,
     options: DisplayOptions
-): ChangeLine | undefined => {
+) => ChangeLine | undefined = (series, unit, options) => {
     const { change, previous, latest, legends } = series
     if (change === undefined || previous === undefined) {
         return undefined
@@ -129,7 +128,6 @@ export const changeLine = (
             }),
         }
     }
-    // `change` is already at the readings' precision, and takes their type's form, so a PERCENTAGE keeps its "%".
     const size = formatDhis2Value(
         String(Math.abs(change)),
         { valueType: series.valueType },
@@ -138,7 +136,6 @@ export const changeLine = (
     const amount = [size, unit].filter(Boolean).join(' ')
     const now = legendFor(legends, latest?.numericValue)
     const was = legendFor(legends, previous.numericValue)
-    // One string per sentence, so translators can reorder all of it.
     const text =
         now && was && now.name !== was.name
             ? i18n.t(
@@ -159,16 +156,12 @@ export const changeLine = (
     return { direction: change > 0 ? 'up' : 'down', text }
 }
 
-/**
- * A TRUE_ONLY box is ticked or left empty, so its line says when it was last
- * recorded as Yes rather than what it changed from.
- */
-const trueOnlyLine = (
+const trueOnlyLine: (
     latest: ObservationPoint,
     before: ObservationPoint | undefined,
     since: ObservationPoint,
     options: DisplayOptions
-): ChangeLine | undefined => {
+) => ChangeLine | undefined = (latest, before, since, options) => {
     if (latest.value === 'true') {
         return {
             text: i18n.t('Yes since {{date}}', {
@@ -177,7 +170,6 @@ const trueOnlyLine = (
             }),
         }
     }
-    // The run before an empty latest is ticked, so `before` is the last Yes; never ticked needs no line.
     return before === undefined
         ? undefined
         : {
@@ -188,17 +180,16 @@ const trueOnlyLine = (
           }
 }
 
-/** Short categories whose earlier value reads well in a sentence. */
 const CATEGORY_TYPES = new Set(['BOOLEAN', 'TRUE_ONLY'])
 
 /**
  * When an option or yes/no value last changed, and from what; or how long it
  * has held. Nothing for one reading, or for other types.
  */
-export const categoryChangeLine = (
+export const categoryChangeLine: (
     series: ObservationSeries,
     options: DisplayOptions
-): ChangeLine | undefined => {
+) => ChangeLine | undefined = (series, options) => {
     const { points, latest } = series
     if (
         latest === undefined ||
@@ -207,7 +198,6 @@ export const categoryChangeLine = (
     ) {
         return undefined
     }
-    // The run of readings ending at the latest that all hold its value.
     let start = points.length - 1
     while (start > 0 && points[start - 1]?.value === latest.value) {
         start -= 1
@@ -239,7 +229,7 @@ export const isStale = (
     point: ObservationPoint,
     staleAfterDays: number | undefined,
     now: Date
-): boolean => {
+) => {
     if (staleAfterDays === undefined) {
         return false
     }
@@ -253,8 +243,7 @@ export const isStale = (
 const DAYS_PER_MONTH = 30.4375
 const DAYS_PER_YEAR = 365.25
 
-/** Days since 1970-01-01 of the `YYYY-MM-DD` the point was recorded on; NaN when it has none. */
-const dayNumber = (iso: string): number =>
+const dayNumber = (iso: string) =>
     Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) / MS_PER_DAY
 
 /**
@@ -268,7 +257,7 @@ export const relativeTime = (
     point: ObservationPoint,
     now: Date,
     locale: string | undefined
-): string => {
+) => {
     const occurred = dayNumber(point.occurredAt)
     if (!Number.isFinite(occurred)) {
         return point.occurredAt
@@ -284,12 +273,10 @@ export const relativeTime = (
     }
     const format = new Intl.RelativeTimeFormat(locale, { numeric: 'always' })
     const size = Math.abs(days)
-    // Negative: the reading lies in the past.
     const sign = days > 0 ? -1 : 1
     if (size < 30) {
         return format.format(sign * size, 'day')
     }
-    // Rounded, not truncated, so 59 days reads "2 months ago" and an old reading never looks newer.
     const months = Math.round(size / DAYS_PER_MONTH)
     if (months < 12) {
         return format.format(sign * months, 'month')
@@ -302,7 +289,7 @@ export const relativeTime = (
  * (`fr_SN`), which `Intl` rejects; one it still can't read falls back to the
  * browser's locale.
  */
-export const displayLocale = (): string | undefined => {
+export const displayLocale = () => {
     try {
         return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))[0]
     } catch {
@@ -316,9 +303,7 @@ const BARE_HEX = /^([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i
  * DHIS2 colours can arrive without a leading `#`. Prefixes bare hex, passes any
  * other CSS colour through and gives undefined for an empty one.
  */
-export const normaliseColor = (
-    color: string | undefined
-): string | undefined => {
+export const normaliseColor = (color: string | undefined) => {
     const trimmed = color?.trim()
     if (!trimmed) {
         return undefined
@@ -326,10 +311,9 @@ export const normaliseColor = (
     return BARE_HEX.test(trimmed) ? `#${trimmed}` : trimmed
 }
 
-/** Luminance above which black text contrasts better than white (WCAG). */
 const DARK_TEXT_LUMINANCE = 0.179
 
-const linearChannel = (channel: number): number => {
+const linearChannel = (channel: number) => {
     const scaled = channel / 255
     return scaled <= 0.04045
         ? scaled / 12.92
@@ -340,7 +324,7 @@ const linearChannel = (channel: number): number => {
  * Black or white, whichever reads better on a hex background. Undefined for a
  * colour that is not hex, which the caller cannot judge either.
  */
-export const readableTextColor = (color: string): string | undefined => {
+export const readableTextColor = (color: string) => {
     const hex = normaliseColor(color)?.replace(/^#/, '')
     if (hex === undefined || !BARE_HEX.test(hex)) {
         return undefined
@@ -353,6 +337,5 @@ export const readableTextColor = (color: string): string | undefined => {
         linearChannel(parseInt(full.slice(start, start + 2), 16))
     )
     const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
-    // colour-literal: legend text on a metadata colour, picked from that colour's luminance
     return luminance > DARK_TEXT_LUMINANCE ? '#000000' : '#ffffff'
 }

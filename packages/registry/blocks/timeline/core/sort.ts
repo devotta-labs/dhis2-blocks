@@ -9,9 +9,7 @@ const STORED_CLOCK =
  * the stored text with no time-zone shift. Missing parts are zero. Undefined
  * when the stored day is unreadable.
  */
-export const sortKey = (
-    entry: Pick<TimelineEntry, 'at'>
-): string | undefined => {
+export const sortKey = (entry: Pick<TimelineEntry, 'at'>) => {
     const day = storedDay(entry.at)
     if (day === undefined) {
         return undefined
@@ -24,15 +22,7 @@ export const sortKey = (
     return `${day}T${hours}:${minutes}:${seconds}.${fraction.padEnd(3, '0').slice(0, 3)}`
 }
 
-/**
- * The key entries are ordered by: `sortKey`, except that a
- * day-precision entry becomes `YYYY-MM-DDT!`. '!' sorts before every digit, so
- * a day-precision entry is the earliest moment of its day: first when
- * ascending, last once the order is reversed. Undefined when unreadable.
- */
-const comparableKey = (
-    entry: Pick<TimelineEntry, 'at' | 'precision'>
-): string | undefined => {
+const comparableKey = (entry: Pick<TimelineEntry, 'at' | 'precision'>) => {
     const key = sortKey(entry)
     return key !== undefined && entry.precision === 'day'
         ? `${key.slice(0, 10)}T!`
@@ -52,8 +42,7 @@ export const compareText = (a: string, b: string) => {
  * way in both orders.
  */
 export const compareEntries =
-    (order: TimelineOrder) =>
-    (a: TimelineEntry, b: TimelineEntry): number => {
+    (order: TimelineOrder) => (a: TimelineEntry, b: TimelineEntry) => {
         const keyA = comparableKey(a)
         const keyB = comparableKey(b)
         if (keyA === undefined || keyB === undefined) {

@@ -50,7 +50,7 @@ const TimelineLayout = <TData,>({
 }) => {
     const id = useId()
     const meta = useTimelineMeta()
-    const value = useMemo((): TimelineContextValue<TData> => {
+    const value = useMemo<TimelineContextValue<TData>>(() => {
         const { groups, nowIndex } = groupTimeline([...entries], {
             order: meta.order,
             groupBy,

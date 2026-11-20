@@ -21,13 +21,10 @@ const sortedUnique = (ids: Iterable<string>) => [...new Set(ids)].sort()
  * program the tracked entity is enrolled in (one request, shared with the
  * enrollments).
  */
-export const useProgramIds = ({
-    trackedEntity,
-    programs,
-}: {
+export const useProgramIds: (options: {
     trackedEntity: string
     programs?: ReadonlyArray<string>
-}): ProgramIds => {
+}) => ProgramIds = ({ trackedEntity, programs }) => {
     const client = useTimelineClient()
     const given = programs !== undefined
     const entity = useQuery({

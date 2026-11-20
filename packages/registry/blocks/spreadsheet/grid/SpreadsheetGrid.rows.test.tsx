@@ -10,7 +10,7 @@ import {
     mount,
     nextFrame,
     range,
-} from './__tests__/gridRig'
+} from './test/gridRig'
 
 test('a row’s own errors and warnings show in its header, marked as a cell’s are', async () => {
     await mount([makeTable({ rows: ['2026-10-20', '2026-10-21'] })], {
@@ -38,7 +38,6 @@ test('a row’s own errors and warnings show in its header, marked as a cell’s
     expect(getComputedStyle(error).borderInlineStartColor).not.toBe(
         getComputedStyle(warning).borderInlineStartColor
     )
-    // The other row says nothing.
     await expect
         .element(page.getByRole('rowheader').nth(1))
         .toHaveTextContent(/^2026-10-21$/)
@@ -56,7 +55,6 @@ test('a row’s notes are a marker with their count that opens them, and the row
     expect(noted.getBoundingClientRect().height).toBe(
         plain.getBoundingClientRect().height
     )
-    // The header is named without the notes; screen readers hear them as its description.
     await expect.element(noted).not.toHaveAccessibleName(/Weight/)
     await expect
         .element(noted)
@@ -113,7 +111,6 @@ test.each(['ltr', 'rtl'])(
             ]
             const cells = [...body.children]
             const bodyActions = cells.at(-1)
-            // The actions column's line is on its start side, the one facing the data, whichever way the page reads.
             const [start, end] =
                 dir === 'rtl' ? ['Right', 'Left'] : ['Left', 'Right']
             const width = (element: Element | undefined, side: string) =>
@@ -147,7 +144,6 @@ test.each(['ltr', 'rtl'])(
                 2
             await nextFrame()
             expect(Math.abs(region.scrollLeft)).toBeGreaterThan(0)
-            // Mid-scroll the actions column stays at the region's end, its line over the cells sliding under it.
             const box = region.getBoundingClientRect()
             const actions = bodyActions?.getBoundingClientRect()
             if (dir === 'rtl') {
@@ -201,7 +197,6 @@ test.each(['Control', 'Meta'])(
             .element(page.getByRole('button', { name: 'Add event' }).first())
             .toHaveAttribute('aria-keyshortcuts', 'Control+Enter Meta+Enter')
         const shortcut = `{${modifier}>}{Enter}{/${modifier}}`
-        // A table that takes no new rows leaves the keys alone.
         control(cellKey('t3r0', 'c0')).focus()
         await userEvent.keyboard(shortcut)
         expect(added).toEqual([])
@@ -300,7 +295,6 @@ test('a heading that spans rows renders with rowSpan and names its cells', async
 })
 
 test('a row message on complete has the error border', async () => {
-    // The consumer's own message, with fields of its own: the grid reads its tone.
     const message = {
         tone: 'error',
         onComplete: true,
@@ -324,7 +318,6 @@ test('a table’s add button says what its addRow says', async () => {
     await expect.element(button).toHaveAccessibleDescription('Table t')
     await button.click()
     expect(add).toHaveBeenCalledOnce()
-    // The table with no entry has no add button.
     expect(document.querySelectorAll('button[aria-keyshortcuts]')).toHaveLength(
         1
     )
@@ -345,7 +338,6 @@ test('RowBadge and GridFooter render where they are slotted', async () => {
     await expect.element(headers.nth(0)).toHaveTextContent('badge:t1r0')
     await expect.element(headers.nth(1)).toHaveTextContent('badge:t1r1')
     await expect.element(headers.nth(2)).toHaveTextContent('badge:t2r0')
-    // The badge is the row's, not part of its cells' names.
     await expect
         .element(
             page.getByRole('textbox', {
@@ -354,7 +346,6 @@ test('RowBadge and GridFooter render where they are slotted', async () => {
             })
         )
         .toBeVisible()
-    // Once, after both tables and the place the skip link leads to, which it is handed.
     const footers = page.getByText(/^footer:/)
     expect(footers.elements()).toHaveLength(1)
     const target =

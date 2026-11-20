@@ -2,7 +2,7 @@
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { outboxName } from '../outbox/outbox'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'

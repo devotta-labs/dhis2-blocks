@@ -51,7 +51,7 @@ interface SpreadsheetProps<R extends GridRow, C extends GridColumn> {
 
 const byIds = (row: GridRow, column: GridColumn) => cellKey(row.id, column.id)
 const ownId = (row: GridRow) => [row.id]
-const names = (): Names =>
+const names = () =>
     createStore<{ names: ReadonlyMap<string, string> }>()(() => ({
         names: new Map(),
     }))
@@ -103,7 +103,7 @@ export const Spreadsheet = <R extends GridRow, C extends GridColumn>({
         [scope, own]
     )
     const context = useMemo(
-        (): SpreadsheetContext => ({
+        () => ({
             store: cells,
             effects: annotations,
             idScope: scope,

@@ -20,19 +20,14 @@ const sideways = (
     grid: NavGrid,
     { table, row, column }: CellPlace,
     step: 1 | -1
-): CellPlace | undefined => {
+) => {
     const { columns, isOpen } = grid.tables[table]
     for (let next = column + step; next >= 0 && next < columns; next += step) {
         if (isOpen(row, next)) return { table, row, column: next }
     }
 }
 
-// A narrower table keeps the nearest column, so moving down never skips a table.
-const vertical = (
-    grid: NavGrid,
-    from: CellPlace,
-    step: 1 | -1
-): CellPlace | undefined => {
+const vertical = (grid: NavGrid, from: CellPlace, step: 1 | -1) => {
     let { table, row } = from
     for (row += step; ; row += step) {
         while (row < 0 || row >= grid.tables[table].rows) {
@@ -55,7 +50,7 @@ export const nextCell = (
     from: CellPlace,
     key: Exclude<NavKey, 'tab'>,
     tabStart?: number
-): CellPlace | undefined => {
+) => {
     switch (key) {
         case 'up':
             return vertical(grid, from, -1)

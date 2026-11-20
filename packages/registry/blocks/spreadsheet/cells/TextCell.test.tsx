@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
+import { CELL, HEADER, inputOf, rig } from './test/harness'
 import { Cell } from './Cell'
 
 const INTEGER: Field = { valueType: 'INTEGER' }
@@ -27,7 +27,6 @@ const mount = async (options?: Parameters<typeof rig>[1], field = INTEGER) => {
 test('typing in Ready replaces the value', async () => {
     const { input, caret, moves, stored } = await mount({ value: '123' })
     inputOf(input).focus()
-    // Ready: the cell is selected, but no cursor shows.
     expect(caret()).toBe(TRANSPARENT)
     await userEvent.keyboard('7')
     expect(caret()).not.toBe(TRANSPARENT)
@@ -55,7 +54,6 @@ test('Escape reverts unsaved typing', async () => {
     await userEvent.keyboard('{Escape}')
     await expect.element(input).toHaveValue('123')
     expect(enqueued).toEqual([])
-    // Back in Ready, so the next typing replaces the value again.
     await userEvent.keyboard('5{Enter}')
     expect(stored()?.value).toBe('5')
 })
@@ -68,7 +66,6 @@ test('arrows in Ready move between cells; in Edit they move the caret', async ()
     await userEvent.keyboard('{F2}{ArrowLeft}{ArrowRight}{ArrowLeft}')
     expect(moves).toEqual(['right'])
     expect(inputOf(input).selectionStart).toBe(2)
-    // Up and down still save and move in Edit.
     await userEvent.keyboard('{ArrowDown}')
     expect(moves).toEqual(['right', 'down'])
 })
@@ -89,11 +86,9 @@ test('an invalid value is described and marked invalid', async () => {
     await expect
         .element(input)
         .toHaveAccessibleDescription('Enter a whole number')
-    // Nothing typed is lost.
     await expect.element(input).toHaveValue('abc')
     expect(stored()?.draft).toBe('abc')
     expect(enqueued).toEqual([])
-    // The person stays to fix it, in Edit mode: the cursor moves in the text.
     expect(moves).toEqual([])
     await expect.element(input).toHaveFocus()
     await userEvent.keyboard('{ArrowLeft}')
@@ -172,7 +167,6 @@ test('Enter while composing text belongs to the input method', async () => {
             bubbles: true,
         })
     )
-    // Safari ends composition with a keydown that reports keyCode 229 instead.
     inputOf(input).dispatchEvent(
         new KeyboardEvent('keydown', {
             key: 'Enter',
@@ -200,7 +194,6 @@ test('Escape in the middle of a composition does not revert the typing', async (
 
 test('a click into the cell selects it, so typing replaces the value', async () => {
     const { input, caret, stored } = await mount({ value: '123' })
-    // On the text, where a click would otherwise place the cursor.
     await userEvent.click(input, { position: { x: 16, y: 10 } })
     await expect.element(input).toHaveFocus()
     expect(caret()).toBe(TRANSPARENT)
@@ -256,14 +249,12 @@ test('Escape hides the notes before it discards anything', async () => {
     const note = page.getByText('Enter a whole number')
     inputOf(input).focus()
     await userEvent.keyboard('abc{Enter}')
-    // Back in Ready on the cell that holds the refused text.
     inputOf(input).blur()
     inputOf(input).focus()
     await expect.element(note).toBeVisible()
     await userEvent.keyboard('{Escape}')
     await expect.element(note).not.toBeVisible()
     await expect.element(input).toHaveValue('abc')
-    // The notes are still the cell's description.
     await expect
         .element(input)
         .toHaveAccessibleDescription('Enter a whole number')

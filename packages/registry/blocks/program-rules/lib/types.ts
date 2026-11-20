@@ -3,8 +3,6 @@ import type * as Engine from '@dhis2/rule-engine'
 /** The `@dhis2/rule-engine` module. Callers load it (lazily) and pass it in. */
 export type RuleEngineModule = typeof Engine
 
-// ---- Metadata: what a rule context is built from --------------------------
-
 export interface ProgramRuleActionMetadata {
     id: string
     /** `programRuleActionType`, e.g. `HIDEFIELD` or `ASSIGN`. */
@@ -74,8 +72,6 @@ export interface ProgramRulesMetadata {
     orgUnitGroups?: ReadonlyArray<RuleOrgUnitGroupMetadata>
 }
 
-// ---- Input: what one evaluation runs on ------------------------------------
-
 export type RuleEventStatus =
     | 'ACTIVE'
     | 'COMPLETED'
@@ -124,8 +120,6 @@ export interface EventRuleInput {
     /** The enrollment's other events. The current event is ignored if present. */
     otherEvents: ReadonlyArray<RuleEventInput>
 }
-
-// ---- Output: effects -------------------------------------------------------
 
 /** Which rule action caused an effect, and which answers fed it. */
 export interface Attribution {
@@ -181,8 +175,6 @@ export interface RuleEffects {
     /** programStageId → the rule actions that hid it */
     programStageAttributions: Map<string, Attribution[]>
 }
-
-// ---- Context ---------------------------------------------------------------
 
 /** A rule, or one of its actions, that the engine cannot parse. It is left out of evaluation. */
 export interface InvalidRule {

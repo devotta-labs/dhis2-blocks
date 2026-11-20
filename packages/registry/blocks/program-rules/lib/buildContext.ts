@@ -18,15 +18,9 @@ import type {
 } from './types'
 import { ruleValueType } from './valueTypes'
 
-// `validate` parses, then type-checks. The type check is stricter than
-// evaluation (it rejects `!#{bool}` and `d2:weeksBetween(#{date}, V{event_date})`),
-// and reports with this summary. Only parse failures make an expression invalid,
-// because only those also fail when the engine evaluates the rule.
 const TYPE_CHECK_SUMMARY = /^\d+ error\(s\), \d+ warning\(s\)$/
 
-const parseFailure = (
-    validation: () => Engine.RuleValidationResult
-): string | undefined => {
+const parseFailure = (validation: () => Engine.RuleValidationResult) => {
     const result = Result.try(validation)
     if (result.isErr()) {
         return undefined
@@ -42,10 +36,7 @@ const parseFailure = (
     return errorMessage
 }
 
-/** Rules in the engine's order: priority ascending, no priority last, ties as given. */
-const evaluationOrder = (
-    rules: ReadonlyArray<ProgramRuleMetadata>
-): ProgramRuleMetadata[] =>
+const evaluationOrder = (rules: ReadonlyArray<ProgramRuleMetadata>) =>
     rules
         .map((rule, index) => ({ rule, index }))
         .sort(
@@ -59,8 +50,6 @@ const validParts = (
     ruleEngine: Engine.RuleEngineJs,
     rules: ReadonlyArray<ProgramRuleMetadata>
 ) => {
-    // Parsing needs no data items; with none, every reference fails the type
-    // check, which parseFailure ignores.
     const store = new Map<string, Engine.DataItemJs>()
     const invalidRules: InvalidRule[] = []
     const valid: ProgramRuleMetadata[] = []
@@ -110,29 +99,23 @@ const attributeType = (action: ProgramRuleActionMetadata) => {
         : 'UNKNOWN'
 }
 
-const optional = (
+const optional: (
     key: string,
     value: string | undefined
-): [string, string][] => (value ? [[key, value]] : [])
+) => [string, string][] = (key, value) => (value ? [[key, value]] : [])
 
 const toEngineActions = (
     engine: RuleEngineModule,
     rule: ProgramRuleMetadata,
     variablesByName: Map<string, ProgramRuleVariableMetadata>
-): Engine.RuleActionJs[] =>
+) =>
     rule.actions.flatMap((action) => {
-        // `id` and `ruleId` ride along in `values`, which every effect returns untouched.
         const base: [string, string][] = [
             ['id', action.id],
             ['ruleId', rule.id],
         ]
         const field = actionField(action)
         if (action.type === 'ASSIGN') {
-            // A field ASSIGN writes valueMap[field], which `#{var}` never reads;
-            // a content ASSIGN writes the variable, and the engine retargets the
-            // effect to the variable's field. If both are set the field wins, so
-            // emit them as two actions: content always, field only when it
-            // targets something else.
             const name = assignedVariable(action)
             const variable =
                 name === undefined ? undefined : variablesByName.get(name)
@@ -171,8 +154,6 @@ const toEngineActions = (
                 action.type,
                 new Map([
                     ...base,
-                    // evaluateEvent skips TRACKED_ENTITY_ATTRIBUTE actions and
-                    // runs DATA_ELEMENT/UNKNOWN ones, so this must always be set.
                     ['attributeType', attributeType(action)],
                     ...optional('field', field),
                     ...optional('content', action.content),
@@ -191,12 +172,11 @@ const toEngineVariable = (
     engine: RuleEngineModule,
     variable: ProgramRuleVariableMetadata,
     options: Map<string, Engine.Option[]>
-): Engine.RuleVariableJs =>
+) =>
     new engine.RuleVariableJs(
         Result.try(() =>
             engine.RuleVariableType.valueOf(variable.sourceType)
         ).unwrapOr(engine.RuleVariableType.CALCULATED_VALUE),
-        // `name`, not `displayName`: expressions reference the untranslated name.
         variable.name,
         variable.useCodeForOptionSet,
         (variable.optionSetId && options.get(variable.optionSetId)) || [],
@@ -208,8 +188,7 @@ const toEngineVariable = (
 const toSupplementaryData = (
     engine: RuleEngineModule,
     metadata: ProgramRulesMetadata
-): Engine.RuleSupplementaryDataJs => {
-    // d2:inOrgUnitGroup accepts a group id or code.
+) => {
     const groups = new Map<string, string[]>()
     for (const group of metadata.orgUnitGroups ?? []) {
         groups.set(group.id, [...group.orgUnitIds])
@@ -224,10 +203,10 @@ const toSupplementaryData = (
     )
 }
 
-export const buildRuleContext = (
+export const buildRuleContext: (
     engine: RuleEngineModule,
     metadata: ProgramRulesMetadata
-): RuleContext => {
+) => RuleContext = (engine, metadata) => {
     const ruleEngine = new engine.RuleEngineJs(false)
     const variablesByName = new Map(
         metadata.variables.map((variable) => [variable.name, variable])
@@ -288,7 +267,6 @@ export const buildRuleContext = (
     const variables = metadata.variables.map((variable) =>
         toEngineVariable(engine, variable, options)
     )
-    // Constants are referenced as C{uid} and must be strings (the API sends numbers).
     const constants = new Map(
         metadata.constants.map((constant) => [
             constant.id,

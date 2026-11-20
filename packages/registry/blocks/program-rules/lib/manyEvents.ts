@@ -45,7 +45,6 @@ export interface EventsRulesEvaluation {
     failures: Map<string, Error>
 }
 
-/** The variable source types that read a value from another event. */
 const CROSS_EVENT_SOURCES = new Set([
     'DATAELEMENT_NEWEST_EVENT_PROGRAM',
     'DATAELEMENT_NEWEST_EVENT_PROGRAM_STAGE',
@@ -53,9 +52,9 @@ const CROSS_EVENT_SOURCES = new Set([
 ])
 
 /** The data elements whose value in one event can change the rules of the person's other events. */
-export const crossEventFields = (
+export const crossEventFields: (
     metadata: ProgramRulesMetadata
-): ReadonlySet<string> =>
+) => ReadonlySet<string> = (metadata) =>
     new Set(
         metadata.variables.flatMap((variable) =>
             variable.dataElementId !== undefined &&
@@ -71,7 +70,7 @@ export const rowsAffectedBy = (
     crossFields: ReadonlySet<string>,
     rowId: string,
     fieldId: string
-): string[] => {
+) => {
     const enrollmentId = rows.find((r) => r.event.id === rowId)?.enrollmentId
     if (enrollmentId === undefined || !crossFields.has(fieldId)) {
         return [rowId]
@@ -90,7 +89,7 @@ export const rowsAffectedBy = (
 export const withLiveEvents = (
     server: ReadonlyArray<RuleEventInput>,
     live: ReadonlyArray<RuleEventInput>
-): RuleEventInput[] => {
+) => {
     const liveById = new Map(live.map((e) => [e.id, e]))
     const serverIds = new Set(server.map((e) => e.id))
     return [
@@ -99,12 +98,11 @@ export const withLiveEvents = (
     ]
 }
 
-/** The row's person's server events, each replaced by its live row, plus the live rows the server lacks. Never the row itself. */
 const otherEventsOf = (
     row: EventsRuleRow,
     person: RuleEnrollmentData | undefined,
     siblings: ReadonlyArray<EventsRuleRow>
-): RuleEventInput[] =>
+) =>
     withLiveEvents(
         (person?.events ?? []).filter((e) => e.id !== row.event.id),
         siblings.flatMap((s) => (s.event.id === row.event.id ? [] : [s.event]))
@@ -118,7 +116,7 @@ interface RowIndex {
 const rowIndexes = new WeakMap<ReadonlyArray<EventsRuleRow>, RowIndex>()
 
 /** The rows by id and by person, built once per array: a grid evaluates one row at a time over the same rows. */
-export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
+export const indexRows = (rows: ReadonlyArray<EventsRuleRow>) => {
     const cached = rowIndexes.get(rows)
     if (cached !== undefined) {
         return cached
@@ -145,12 +143,12 @@ export const indexRows = (rows: ReadonlyArray<EventsRuleRow>): RowIndex => {
  * `contexts` is keyed by program stage id; a row of a stage without a context, or an id that is not in `input.rows`, is
  * in neither map. `input.rows` is indexed once per array: pass a new array when the rows change.
  */
-export const evaluateEventsRules = (
+export const evaluateEventsRules: (
     engine: RuleEngineModule,
     contexts: ReadonlyMap<string, RuleContext>,
     input: EventsRuleInput,
     rowIds: ReadonlyArray<string>
-): EventsRulesEvaluation => {
+) => EventsRulesEvaluation = (engine, contexts, input, rowIds) => {
     const { byId: rows, byPerson: rowsOfPerson } = indexRows(input.rows)
     const effects = new Map<string, RuleEffects>()
     const failures = new Map<string, Error>()
@@ -168,7 +166,6 @@ export const evaluateEventsRules = (
             enrollmentId === undefined
                 ? undefined
                 : input.persons.get(enrollmentId)
-        // Without its person an ASSIGN that reads attributes assigns nothing, which would clear the row's values.
         if (
             input.tracker &&
             input.personsLoaded &&

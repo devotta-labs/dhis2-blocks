@@ -43,7 +43,6 @@ interface RawVariable {
     trackedEntityAttribute?: RawField
 }
 
-/** The variables endpoint as the hook requests it: option sets nested, with options. */
 const rmnchVariablesResponse = () => {
     const byId = new Map(optionSets.optionSets.map((set) => [set.id, set]))
     const withOptions = (field: RawField | undefined) =>
@@ -71,14 +70,14 @@ export const rmnchResponses = {
     me,
 }
 
-export const rmnchMetadata = (): ProgramRulesMetadata =>
+export const rmnchMetadata: () => ProgramRulesMetadata = () =>
     toProgramRulesMetadata(ProgramRulesResponseSchema.parse(rmnchResponses))
 
 export const rmnchEnrollmentResponse = enrollment
 
-export const rmnchInput = (
-    values: Record<string, string | null> = {}
-): EventRuleInput => {
+export const rmnchInput: (
+    values?: Record<string, string | null>
+) => EventRuleInput = (values = {}) => {
     const data = toRuleEnrollmentData(
         RuleEnrollmentResponseSchema.parse(enrollment)
     )

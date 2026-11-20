@@ -1,5 +1,6 @@
 import { renderHook } from 'vitest-browser-react'
 import {
+    loadRuleEngine,
     preloadRuleEngine,
     ruleEngineChunk,
     useRuleEngine,
@@ -7,9 +8,9 @@ import {
 
 afterEach(() => vi.restoreAllMocks())
 
-// In its own file: the engine is imported once per page, and this one's warm-up is made to fail.
 test('a warm-up that fails is forgotten without a word, and does not break useRuleEngine', async () => {
     const engine = await ruleEngineChunk.load()
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Warm-up always supplies valid empty data, so the real engine cannot be made to fail through inputs.
     const evaluate = vi
         .spyOn(engine.RuleEngineJs.prototype, 'evaluateEvent')
         .mockImplementation(() => {
@@ -20,18 +21,15 @@ test('a warm-up that fails is forgotten without a word, and does not break useRu
     )
 
     preloadRuleEngine()
-    await expect.poll(() => evaluate.mock.calls.length).toBe(1)
+    await loadRuleEngine()
+    expect(evaluate).toHaveBeenCalledTimes(1)
     const { result } = await renderHook(() => useRuleEngine(true))
     await expect.poll(() => result.current.engine).toBe(engine)
     expect(result.current.error).toBeUndefined()
 
-    // Asking again until the failure has settled: a warm-up that was kept would never run again.
-    await expect
-        .poll(() => {
-            preloadRuleEngine()
-            return evaluate.mock.calls.length
-        })
-        .toBeGreaterThan(1)
+    preloadRuleEngine()
+    await loadRuleEngine()
+    expect(evaluate).toHaveBeenCalledTimes(2)
     for (const spy of said) {
         expect(spy).not.toHaveBeenCalled()
     }

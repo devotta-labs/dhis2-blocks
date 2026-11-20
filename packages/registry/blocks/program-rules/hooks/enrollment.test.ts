@@ -1,10 +1,9 @@
-import { RMNCH, rmnchEnrollmentResponse } from '../__tests__/rmnch'
+import { RMNCH, rmnchEnrollmentResponse } from '../test/rmnch'
 import type { ProgramRulesClient } from './client'
 import { fetchRuleEnrollments } from './enrollment'
 
 type RecordedRequest = Parameters<ProgramRulesClient['query']>[0][string]
 
-/** Records each request and answers every requested enrollment with the RMNCH one, under its own id, in the list body the API sends. */
 const fakeClient = () => {
     const requests: RecordedRequest[] = []
     const client: ProgramRulesClient = {
@@ -38,7 +37,6 @@ describe('fetchRuleEnrollments', () => {
         expect(requests).toHaveLength(1)
         expect(requests[0]?.resource).toBe('tracker/enrollments')
         expect(requests[0]?.params?.enrollments).toBe('a,b,c')
-        // DHIS2 2.43 refuses a list of enrollments without its program (E1003).
         expect(requests[0]?.params?.program).toBe(RMNCH.programId)
         expect(requests[0]?.params?.pageSize).toBe(3)
         expect(requests[0]?.params?.fields).toContain('events[')

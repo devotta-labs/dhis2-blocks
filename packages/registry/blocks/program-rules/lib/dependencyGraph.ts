@@ -7,24 +7,20 @@ import type {
     RuleDependencyGraph,
 } from './types'
 
-/** `#{name}` or `A{name}` as a whole ASSIGN content: the variable it writes. */
 const ASSIGNED_VARIABLE = /^\s*[#A]\{([^{}]+)\}\s*$/
 
-export const assignedVariable = (
-    action: ProgramRuleActionMetadata
-): string | undefined =>
+export const assignedVariable = (action: ProgramRuleActionMetadata) =>
     action.type === 'ASSIGN'
         ? action.content?.match(ASSIGNED_VARIABLE)?.[1]?.trim()
         : undefined
 
-export const actionField = (
-    action: ProgramRuleActionMetadata
-): string | undefined => action.dataElementId ?? action.attributeId
+export const actionField = (action: ProgramRuleActionMetadata) =>
+    action.dataElementId ?? action.attributeId
 
 const variableField = (variable: ProgramRuleVariableMetadata | undefined) =>
     variable?.dataElementId ?? variable?.attributeId
 
-const union = (lists: ReadonlyArray<ReadonlyArray<string>>): string[] => [
+const union = (lists: ReadonlyArray<ReadonlyArray<string>>) => [
     ...new Set(lists.flat()),
 ]
 
@@ -47,16 +43,15 @@ export interface DependencyGraphResult {
  * an ASSIGN only feeds the rules after it: a variable's upstream fields are
  * the ones known when the reading rule runs.
  */
-export const buildDependencyGraph = (
+export const buildDependencyGraph: (
     rules: ReadonlyArray<ProgramRuleMetadata>,
     variables: ReadonlyArray<ProgramRuleVariableMetadata>
-): DependencyGraphResult => {
+) => DependencyGraphResult = (rules, variables) => {
     const variablesByName = new Map(
         variables.map((variable) => [variable.name, variable])
     )
-    // variable name → fields that feed it through ASSIGNs evaluated so far
     const upstream = new Map<string, Set<string>>()
-    const fieldsRead = (references: ExpressionReferences): string[] =>
+    const fieldsRead = (references: ExpressionReferences) =>
         union(
             references.variables.map((name) => {
                 const field = variableField(variablesByName.get(name))

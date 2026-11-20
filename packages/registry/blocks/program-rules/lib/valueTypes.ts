@@ -14,10 +14,10 @@ const NUMERIC = new Set([
 const BOOLEAN = new Set(['BOOLEAN', 'TRUE_ONLY'])
 const DATE = new Set(['DATE', 'DATETIME', 'AGE'])
 
-export const ruleValueType = (
+export const ruleValueType: (
     engine: RuleEngineModule,
     valueType: string | undefined
-): Engine.RuleValueType => {
+) => Engine.RuleValueType = (engine, valueType) => {
     if (valueType === undefined) {
         return engine.RuleValueType.TEXT
     }
@@ -34,8 +34,7 @@ export const ruleValueType = (
 
 const DATE_PREFIX = /^(\d{4})-(\d{2})-(\d{2})/
 
-/** `yyyy-MM-dd` from a tracker (ISO) date or timestamp, or null when it isn't a real date. */
-const datePart = (value: string): string | null => {
+const datePart = (value: string) => {
     const match = DATE_PREFIX.exec(value)
     if (match === null) {
         return null
@@ -57,7 +56,7 @@ const datePart = (value: string): string | null => {
 export const normaliseValue = (
     value: string | undefined,
     valueType: string | undefined
-): string | null => {
+) => {
     if (value === undefined || value === '') {
         return null
     }
@@ -70,7 +69,7 @@ export const normaliseValue = (
 export const toLocalDate = (
     engine: RuleEngineModule,
     value: string | undefined
-): Engine.RuleLocalDate | null => {
+) => {
     const date = value === undefined ? null : datePart(value)
     return date === null
         ? null
@@ -83,7 +82,7 @@ const HAS_OFFSET = /(?:Z|[+-]\d\d:?\d\d)$/
 export const toInstant = (
     engine: RuleEngineModule,
     value: string | undefined
-): Engine.RuleInstant | null => {
+) => {
     if (value === undefined || datePart(value) === null) {
         return null
     }

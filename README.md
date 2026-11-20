@@ -404,8 +404,10 @@ install and build in a throwaway consumer app.
 
 `apps/docs` is a Vite + React 18 catalog of MDX pages and executable examples
 in the style of the shadcn documentation. Prose and code tabs render without
-a backend; live previews reach a real DHIS2 instance through a
-same-origin `/dhis2` proxy and are hosted by the official
+a backend; block previews run on the playground's mock DHIS2
+(`apps/docs/src/preview/mock`), so they load without a server. The
+playground can still switch a lab to a real instance through a
+same-origin `/dhis2` proxy hosted by the official
 `@dhis2/app-adapter`. The proxy injects the published `admin`/`district`
 demo credentials into every upstream request by default, so previews load
 authenticated with no sign-in dialog — override via
@@ -473,8 +475,8 @@ Pages are MDX documents under `apps/docs/src/pages` registered in
 `src/navigation.ts` and `src/App.tsx`. Each example is a single component
 under `src/examples` registered in `src/examples/registry.ts`; the Code tab
 shows the same source the preview executes, so examples import blocks from
-`@/components/<block>` as an installed project would. Examples marked `live`
-are wrapped in the app-adapter host at `/preview/<slug>`.
+`@/components/<block>` as an installed project would. Examples marked `mock`
+are wrapped in the playground's fake DHIS2 at `/preview/<slug>`.
 
 `pnpm docs:e2e` runs the docs Playwright suite (`playwright.docs.config.ts`):
 catalog browsing without a backend and live Working List

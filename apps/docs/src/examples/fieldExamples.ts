@@ -18,7 +18,7 @@ export const fieldExamples = [
     {
         slug: 'field/demo',
         title: 'Patient registration',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldDemo')),
         source: fieldDemoSource,
         minHeight: 640,
@@ -26,7 +26,7 @@ export const fieldExamples = [
     {
         slug: 'field/density',
         title: 'Regular and compact',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldDensity')),
         source: fieldDensitySource,
         minHeight: 320,
@@ -34,7 +34,7 @@ export const fieldExamples = [
     {
         slug: 'field/input',
         title: 'Phone number',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldInput')),
         source: fieldInputSource,
         minHeight: 160,
@@ -42,7 +42,7 @@ export const fieldExamples = [
     {
         slug: 'field/textarea',
         title: 'Clinical notes',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldTextarea')),
         source: fieldTextareaSource,
         minHeight: 200,
@@ -50,7 +50,7 @@ export const fieldExamples = [
     {
         slug: 'field/select',
         title: 'Visit type',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldSelect')),
         source: fieldSelectSource,
         minHeight: 160,
@@ -58,7 +58,7 @@ export const fieldExamples = [
     {
         slug: 'field/fieldset',
         title: 'Home location',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldFieldset')),
         source: fieldFieldsetSource,
         minHeight: 220,
@@ -66,7 +66,7 @@ export const fieldExamples = [
     {
         slug: 'field/checkboxes',
         title: 'Symptoms',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldCheckboxes')),
         source: fieldCheckboxesSource,
         minHeight: 200,
@@ -74,7 +74,7 @@ export const fieldExamples = [
     {
         slug: 'field/radio-group',
         title: 'Malaria test result',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldRadioGroup')),
         source: fieldRadioGroupSource,
         minHeight: 180,
@@ -82,7 +82,7 @@ export const fieldExamples = [
     {
         slug: 'field/radio-description',
         title: 'TB treatment outcome',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldRadioDescription')),
         source: fieldRadioDescriptionSource,
         minHeight: 240,
@@ -90,7 +90,7 @@ export const fieldExamples = [
     {
         slug: 'field/horizontal',
         title: 'Consent and reminders',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldHorizontal')),
         source: fieldHorizontalSource,
         minHeight: 160,
@@ -98,7 +98,7 @@ export const fieldExamples = [
     {
         slug: 'field/group',
         title: 'Find a person',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldGroupSeparator')),
         source: fieldGroupSeparatorSource,
         minHeight: 240,
@@ -106,7 +106,7 @@ export const fieldExamples = [
     {
         slug: 'field/validation',
         title: 'Weight and test result',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/FieldValidation')),
         source: fieldValidationSource,
         minHeight: 300,

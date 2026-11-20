@@ -10,8 +10,8 @@ import { InstallCommand } from '../../components/InstallCommand'
 
 This preview shows the Inpatient morbidity and mortality events of Ngelehun CHC
 in the Sierra Leone demo database, one row per event and one column per data
-element. The preview is live: what you type is saved to the demo database
-behind this site.
+element. The preview runs on made-up data in your browser: what you type is
+kept in the page's memory, not saved to a server.
 
 Each cell works as a spreadsheet's does (see [Spreadsheet](/blocks/spreadsheet)). Type to replace a value, press F2 to
 edit it, and use Enter and the arrow keys to save and move. Every change is
@@ -250,7 +250,7 @@ never asks.
 A source can load any data, not only DHIS2 events. This preview's source keeps
 a small form in the page's memory, with a column for each value type: typed in
 the cell, edited in a pop-up, or shown only. Its changes are saved in memory;
-org unit and user searches, and uploads, still go to the demo database. A
+org unit and user searches, and uploads, are answered by the page's sample data. A
 saved file's **Download** and an image's preview do not work here: they need
 rows that are DHIS2 events.
 

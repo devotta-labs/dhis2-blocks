@@ -71,18 +71,18 @@ import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx
  * projects, so examples import blocks from `@/components/<block>` (aliased to
  * the workspace source) and leave layout chrome to the preview hosts.
  *
- * `live: true` examples render inside the shared DHIS2 adapter host and
- * require a reachable backend; `live: false` examples render standalone.
+ * `mock: true` examples render inside the shared DHIS2 adapter host and
+ * require a reachable backend; `mock: false` examples render standalone.
  *
  * `Placeholder` is shown until the example renders — while its code loads and,
- * for live examples, while the adapter starts the DHIS2 session. Shape it
+ * for mock examples, while the fake server loads. Shape it
  * like the example's own loading state so the preview never changes layout
  * between owners; without one, a generic spinner is used.
  */
 export interface ExampleDefinition {
     slug: string
     title: string
-    live: boolean
+    mock: boolean
     Component: LazyExoticComponent<ComponentType>
     source: string
     sourceFiles?: readonly { name: string; code: string }[]
@@ -94,7 +94,7 @@ const examples = [
     {
         slug: 'calendar/visits',
         title: 'ANC visits',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./calendar/CalendarVisits')),
         source: calendarVisitsSource,
         minHeight: 640,
@@ -102,7 +102,7 @@ const examples = [
     {
         slug: 'sidebar/app',
         title: 'App navigation',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/SidebarApp')),
         source: sidebarAppSource,
         minHeight: 600,
@@ -110,7 +110,7 @@ const examples = [
     {
         slug: 'working-list/default',
         title: 'Default Working List',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./working-list/WorkingListDefault')),
         source: workingListDefaultSource,
         minHeight: 730,
@@ -119,7 +119,7 @@ const examples = [
     {
         slug: 'working-list/program-picker',
         title: 'Metadata-driven Working List',
-        live: true,
+        mock: true,
         Component: lazy(
             () => import('./working-list/WorkingListProgramPicker')
         ),
@@ -130,7 +130,7 @@ const examples = [
     {
         slug: 'working-list/calendar',
         title: 'Working List as a calendar',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./working-list/WorkingListCalendarTabs')),
         source: workingListCalendarTabsSource,
         sourceFiles: [
@@ -146,7 +146,7 @@ const examples = [
     {
         slug: 'observation-cards/person-vitals',
         title: 'Observation cards',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./observation-cards/PersonVitals')),
         source: personVitalsSource,
         minHeight: 220,
@@ -155,7 +155,7 @@ const examples = [
     {
         slug: 'tracked-entity-header/person-banner',
         title: 'Person banner',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracked-entity-header/PersonBanner')),
         source: personBannerSource,
         minHeight: 200,
@@ -164,7 +164,7 @@ const examples = [
     {
         slug: 'timeline/case-history',
         title: 'Case history',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./timeline/TimelineCaseHistory')),
         source: timelineCaseHistorySource,
         minHeight: 720,
@@ -173,7 +173,7 @@ const examples = [
     {
         slug: 'timeline/own-data',
         title: 'Your own data',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./timeline/TimelineOwnData')),
         source: timelineOwnDataSource,
         minHeight: 420,
@@ -181,7 +181,7 @@ const examples = [
     {
         slug: 'timeline/entry-parts',
         title: 'Entry parts outside a timeline',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./timeline/TimelineEntryParts')),
         source: timelineEntryPartsSource,
         minHeight: 260,
@@ -189,7 +189,7 @@ const examples = [
     {
         slug: 'org-unit-switcher/sidebar',
         title: 'Organisation unit switcher in a sidebar',
-        live: true,
+        mock: true,
         Component: lazy(
             () => import('./org-unit-switcher/OrgUnitSwitcherSidebar')
         ),
@@ -200,7 +200,7 @@ const examples = [
     {
         slug: 'org-unit-switcher/states',
         title: 'One clinic and a few clinics, named by the app',
-        live: false,
+        mock: false,
         Component: lazy(
             () => import('./org-unit-switcher/OrgUnitSwitcherStates')
         ),
@@ -217,7 +217,7 @@ const examples = [
     {
         slug: 'context-selector/basic',
         title: 'Registration context',
-        live: false,
+        mock: false,
         Component: lazy(
             () => import('./context-selector/ContextSelectorBasic')
         ),
@@ -227,7 +227,7 @@ const examples = [
     {
         slug: 'context-selector/states',
         title: 'Selector primitives and states',
-        live: false,
+        mock: false,
         Component: lazy(
             () => import('./context-selector/ContextSelectorStates')
         ),
@@ -237,7 +237,7 @@ const examples = [
     {
         slug: 'spreadsheet/targets',
         title: 'Yearly targets for a few organisation units',
-        live: true,
+        mock: false,
         Component: lazy(() => import('./spreadsheet/TargetsGrid')),
         source: spreadsheetTargetsSource,
         minHeight: 300,
@@ -245,7 +245,7 @@ const examples = [
     {
         slug: 'dhis2-value-input/kinds',
         title: 'Fields that need no server',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./dhis2-value-input/ValueInputKinds')),
         source: valueInputKindsSource,
         minHeight: 520,
@@ -253,7 +253,7 @@ const examples = [
     {
         slug: 'dhis2-value-input/form',
         title: 'A form with rule effects',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./dhis2-value-input/ValueInputForm')),
         source: valueInputFormSource,
         minHeight: 520,
@@ -261,7 +261,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/event-program',
         title: 'Inpatient morbidity and mortality at Ngelehun CHC',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracker-data-entry/EventProgramGrid')),
         source: trackerDataEntryEventProgramSource,
         minHeight: 680,
@@ -269,7 +269,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/tracker-register',
         title: 'RMNCH first visits across Sierra Leone',
-        live: true,
+        mock: true,
         Component: lazy(
             () => import('./tracker-data-entry/TrackerRegisterGrid')
         ),
@@ -279,7 +279,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/person-events',
         title: 'One RMNCH woman',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracker-data-entry/PersonEventsGrid')),
         source: trackerDataEntryPersonEventsSource,
         minHeight: 680,
@@ -287,7 +287,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/immunisation-register',
         title: 'A child immunisation register',
-        live: true,
+        mock: true,
         Component: lazy(
             () => import('./tracker-data-entry/ImmunisationRegister')
         ),
@@ -297,7 +297,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/cohort-anc-register',
         title: 'An antenatal care cohort register',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracker-data-entry/CohortAncRegister')),
         source: trackerDataEntryCohortAncSource,
         minHeight: 560,
@@ -305,7 +305,7 @@ const examples = [
     {
         slug: 'tracker-data-entry/value-types',
         title: 'Every value type, from a source of your own',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracker-data-entry/ValueTypesGrid')),
         source: trackerDataEntryValueTypesSource,
         minHeight: 360,
@@ -313,7 +313,7 @@ const examples = [
     {
         slug: 'tracked-entity-finder/find-person',
         title: 'Find a person by ID',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracked-entity-finder/FindPerson')),
         source: finderFindPersonSource,
         minHeight: 360,
@@ -321,7 +321,7 @@ const examples = [
     {
         slug: 'tracked-entity-finder/custom-rows',
         title: 'Composed results',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracked-entity-finder/CustomRows')),
         source: finderCustomRowsSource,
         minHeight: 360,
@@ -329,7 +329,7 @@ const examples = [
     {
         slug: 'tracked-entity-finder/program-picker',
         title: 'Program from a select',
-        live: true,
+        mock: true,
         Component: lazy(() => import('./tracked-entity-finder/ProgramPicker')),
         source: finderProgramPickerSource,
         minHeight: 520,
@@ -337,7 +337,7 @@ const examples = [
     {
         slug: 'alert/variants',
         title: 'Alert messages',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/AlertVariants')),
         source: alertVariantsSource,
         minHeight: 260,
@@ -345,7 +345,7 @@ const examples = [
     {
         slug: 'button/variants',
         title: 'Button styles',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ButtonVariants')),
         source: buttonVariantsSource,
         minHeight: 120,
@@ -353,7 +353,7 @@ const examples = [
     {
         slug: 'chart/visits',
         title: 'Visits per month',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ChartVisits')),
         source: chartVisitsSource,
         minHeight: 340,
@@ -361,7 +361,7 @@ const examples = [
     {
         slug: 'chart/trend',
         title: 'Coverage trend',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ChartTrend')),
         source: chartTrendSource,
         minHeight: 340,
@@ -369,7 +369,7 @@ const examples = [
     {
         slug: 'chart/share',
         title: 'Cases by age group',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ChartShare')),
         source: chartShareSource,
         minHeight: 340,
@@ -377,7 +377,7 @@ const examples = [
     {
         slug: 'checkbox/options',
         title: 'Checkboxes',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/CheckboxOptions')),
         source: checkboxOptionsSource,
         minHeight: 160,
@@ -385,7 +385,7 @@ const examples = [
     {
         slug: 'combobox/facilities',
         title: 'Searchable facility picker',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ComboboxOrgUnits')),
         source: comboboxOrgUnitsSource,
         minHeight: 420,
@@ -393,7 +393,7 @@ const examples = [
     {
         slug: 'combobox/multiple',
         title: 'Programs as chips',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ComboboxMultiple')),
         source: comboboxMultipleSource,
         minHeight: 320,
@@ -401,7 +401,7 @@ const examples = [
     {
         slug: 'dialog/confirm',
         title: 'Dialogs',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/DialogConfirm')),
         source: dialogConfirmSource,
         minHeight: 120,
@@ -409,7 +409,7 @@ const examples = [
     {
         slug: 'dropdown-menu/actions',
         title: 'Record actions menu',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/DropdownMenuActions')),
         source: dropdownMenuActionsSource,
         minHeight: 300,
@@ -418,7 +418,7 @@ const examples = [
     {
         slug: 'input/field',
         title: 'Text fields',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/InputField')),
         source: inputFieldSource,
         minHeight: 260,
@@ -426,7 +426,7 @@ const examples = [
     {
         slug: 'select/period',
         title: 'Period select',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/SelectPeriod')),
         source: selectPeriodSource,
         minHeight: 320,
@@ -434,7 +434,7 @@ const examples = [
     {
         slug: 'table/records',
         title: 'Records table',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/TableRecords')),
         source: tableRecordsSource,
         minHeight: 240,
@@ -442,7 +442,7 @@ const examples = [
     {
         slug: 'tooltip/hint',
         title: 'Tooltips',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/TooltipHint')),
         source: tooltipHintSource,
         minHeight: 140,
@@ -450,7 +450,7 @@ const examples = [
     {
         slug: 'badge/status',
         title: 'Status badges',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/BadgeStatus')),
         source: badgeStatusSource,
         minHeight: 100,
@@ -458,7 +458,7 @@ const examples = [
     {
         slug: 'card/facilities',
         title: 'Facility cards',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/CardFacilities')),
         source: cardFacilitiesSource,
         minHeight: 220,
@@ -466,7 +466,7 @@ const examples = [
     {
         slug: 'input-group/search',
         title: 'Search and unit fields',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/InputGroupSearch')),
         source: inputGroupSearchSource,
         minHeight: 200,
@@ -474,7 +474,7 @@ const examples = [
     {
         slug: 'popover/details',
         title: 'Value details',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/PopoverDetails')),
         source: popoverDetailsSource,
         minHeight: 260,
@@ -482,7 +482,7 @@ const examples = [
     {
         slug: 'radio-group/outcome',
         title: 'Visit outcome',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/RadioGroupOutcome')),
         source: radioGroupOutcomeSource,
         minHeight: 160,
@@ -490,7 +490,7 @@ const examples = [
     {
         slug: 'radio-group/description',
         title: 'Referral',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/RadioGroupDescription')),
         source: radioGroupDescriptionSource,
         minHeight: 200,
@@ -498,7 +498,7 @@ const examples = [
     {
         slug: 'spinner/sizes',
         title: 'Spinners',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/SpinnerSizes')),
         source: spinnerSizesSource,
         minHeight: 120,
@@ -506,7 +506,7 @@ const examples = [
     {
         slug: 'switch/settings',
         title: 'Settings switches',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/SwitchSettings')),
         source: switchSettingsSource,
         minHeight: 160,
@@ -514,7 +514,7 @@ const examples = [
     {
         slug: 'textarea/notes',
         title: 'Visit note',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/TextareaNotes')),
         source: textareaNotesSource,
         minHeight: 200,
@@ -522,7 +522,7 @@ const examples = [
     {
         slug: 'toggle-group/view',
         title: 'View switcher',
-        live: false,
+        mock: false,
         Component: lazy(() => import('./ui/ToggleGroupView')),
         source: toggleGroupViewSource,
         minHeight: 140,

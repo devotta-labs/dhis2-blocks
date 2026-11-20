@@ -165,7 +165,6 @@ export const SUBJECTS: Subjects = {
             BIRTH_DATE,
             ALLERGIES,
         ],
-        // No birth date, identifier or allergies were ever recorded.
         values: { [FIRST_NAME]: 'Tamba', [LAST_NAME]: 'Koroma' },
         enrollment: {
             status: 'COMPLETED',
@@ -193,14 +192,11 @@ export const SUBJECTS: Subjects = {
             ALLERGIES,
         ],
         values: {
-            // One unbroken token, to test wrapping.
             [UNIQUE_ID]: 'SLANC2026WESTERNAREARURAL000918273645',
             [FIRST_NAME]: 'Mary-Elizabeth Ngozi Adaeze Oluwakemi',
             [LAST_NAME]: 'Bankole-Williams-Fitzgerald',
             [MOBILE]: '+232 76 123456 / +232 88 654321',
-            // A leap day.
             [BIRTH_DATE]: '1988-02-29',
-            // LATEX is not an option of the set: a code the program has since removed.
             [ALLERGIES]: 'Penicillin,SULFA,NSAIDS,LATEX',
         },
         enrollment: {
@@ -227,7 +223,6 @@ export const SUBJECTS: Subjects = {
             BIRTH_DATE,
             ALLERGIES,
         ],
-        // Registered with nothing recorded, not even a name.
         values: {},
         enrollment: {
             status: 'ACTIVE',
@@ -290,7 +285,6 @@ export const SUBJECTS: Subjects = {
             [FIRST_NAME]: 'ሰላማዊት',
             [LAST_NAME]: 'ተስፋዬ',
             [MOBILE]: '+251 91 123 4567',
-            // Pagume 6, 1987: the extra 13th-month day of an Ethiopian leap year.
             [BIRTH_DATE]: '1995-09-11',
             [ALLERGIES]: 'NSAIDS',
         },
@@ -319,7 +313,6 @@ export const SUBJECTS: Subjects = {
             ALLERGIES,
         ],
         values: {
-            // Latin digits inside right-to-left text.
             [UNIQUE_ID]: '5520193',
             [FIRST_NAME]: 'فاطمة',
             [LAST_NAME]: 'عبد الرحمن',
@@ -366,7 +359,6 @@ export const SUBJECTS: Subjects = {
             EMAIL,
             INSURANCE,
         ],
-        // Everything but an email address and insurance number.
         values: {
             [UNIQUE_ID]: '6023117',
             [FIRST_NAME]: 'Abu',
@@ -441,7 +433,7 @@ export const SUBJECTS: Subjects = {
 }
 
 /** What the canvases place for this lab person and these settings. */
-export const partsFor = (settings: LabSettings): Parts => {
+export const partsFor: (settings: LabSettings) => Parts = (settings) => {
     const subject = SUBJECTS[settings.record]
     const actions = subject.actions ?? PERSON_ACTIONS
     const { name, date, identifier, fact } = subject.parts

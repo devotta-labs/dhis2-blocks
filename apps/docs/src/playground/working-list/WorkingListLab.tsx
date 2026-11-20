@@ -5,7 +5,6 @@ import { DisplayChoice } from './displayChoice'
 
 type Display = 'table' | 'calendar'
 
-/** Each display's lab, loaded when it is chosen. */
 const DISPLAYS = {
     table: lazy(() =>
         import('./table/TableLab').then(({ TableLab }) => ({

@@ -1,8 +1,3 @@
-/**
- * The network every lab's fake server sits behind: how slow each endpoint is, whether it fails or never answers, and
- * a log of what was asked. A lab's own server only decides what comes back.
- */
-
 /** One request as a block sends it through app-runtime. */
 export interface NetworkRequest {
     resource: string
@@ -39,13 +34,11 @@ export type Log = (
     update: (entries: RequestLogEntry[]) => RequestLogEntry[]
 ) => void
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
     })
 
-/** Waits `ms`, or forever when `ms` is undefined, unless the request is aborted first. */
 const wait = (ms: number | undefined, signal?: AbortSignal) =>
     new Promise<void>((resolve, reject) => {
         let timer: ReturnType<typeof setTimeout> | undefined
@@ -65,13 +58,13 @@ const wait = (ms: number | undefined, signal?: AbortSignal) =>
 let nextRequest = 0
 
 /** Sends `request` through the lab network: waits, fails or hangs as its endpoint says, else `respond`s, logging it all. */
-export const throughNetwork = async <Result>(
+export const throughNetwork: <Result>(
     network: LabNetwork,
     request: NetworkRequest,
     respond: () => Result | Promise<Result>,
     log: Log,
     signal?: AbortSignal
-): Promise<Result> => {
+) => Promise<Result> = async (network, request, respond, log, signal) => {
     const id = ++nextRequest
     const started = performance.now()
     log((entries) =>

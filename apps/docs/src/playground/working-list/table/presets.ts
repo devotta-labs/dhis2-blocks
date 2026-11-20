@@ -43,7 +43,7 @@ const preset = (
         network?: Partial<LabNetwork>
         view?: Partial<LabView>
     } = {}
-): Preset => ({
+) => ({
     group,
     name,
     config: {

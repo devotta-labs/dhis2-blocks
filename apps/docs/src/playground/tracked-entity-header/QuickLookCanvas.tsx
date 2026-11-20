@@ -23,7 +23,6 @@ interface Props {
     settings: Pick<LabSettings, 'width'>
 }
 
-/** The whole-record states are the host's own outside a frame. */
 const QuickLookStatus = () => {
     const state = useTrackedEntityHeader()
     if (state.status === 'loading') {

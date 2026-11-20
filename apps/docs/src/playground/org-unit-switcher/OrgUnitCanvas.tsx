@@ -16,7 +16,6 @@ interface Props {
     onValueChange: (orgUnit: OrgUnit) => void
 }
 
-/** What the rest of the app sees through `useOrgUnit()`. */
 const OrgUnitPage = () => {
     const { status, orgUnit, retry } = useOrgUnit()
     return (
@@ -61,7 +60,7 @@ export const OrgUnitCanvas = ({
     return (
         <OrgUnitProvider value={value} onValueChange={onValueChange}>
             <div className="flex min-h-96 w-full flex-col overflow-hidden rounded-md border border-border bg-background md:flex-row">
-                {/* A plain navigation rail: the selector at the top, narrowed to its tile when collapsed. */}
+                {}
                 <aside
                     className={cn(
                         'flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0',

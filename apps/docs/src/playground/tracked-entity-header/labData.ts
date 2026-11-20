@@ -11,7 +11,6 @@ import {
 } from './labRelationships'
 import { SUBJECTS } from './labSubjects'
 
-// Everyone in the lab is the observation cards lab's one person, so the pregnancy person has visits to show.
 export { LAB_PERSON }
 
 type LabRecord =
@@ -82,7 +81,6 @@ const attributeJson = (id: string) => {
 /** Everything the lab's DHIS2 holds for its one person, as the block's requests see it. */
 export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     const subject = SUBJECTS[settings.record]
-    // Enrolled again: the current enrollment is the open one.
     const enrollment =
         settings.enrollment === 'again'
             ? {
@@ -110,7 +108,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
             })),
         enrollments: withProgram
             ? [
-                  // Completed years ago; the block shows the active one.
                   ...(settings.enrollment === 'again'
                       ? [
                             {
@@ -168,7 +165,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
             enrollmentDateLabel: 'Date of enrollment',
             trackedEntityType: { displayName: subject.typeName },
             programTrackedEntityAttributes: listed(subject.attributes),
-            // The observation cards' stages and data elements, for the facts line.
             ...(settings.record === 'pregnancy' && {
                 programStages: observations.program.programStages,
             }),

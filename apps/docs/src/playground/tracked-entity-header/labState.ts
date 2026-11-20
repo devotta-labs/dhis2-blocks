@@ -21,7 +21,6 @@ export interface LabState {
 
 export type LabAction =
     | { type: 'switchMode'; mode: LabState['mode'] }
-    /** Live DHIS2 has no examples, so its canvas is chosen directly. */
     | { type: 'switchCanvas'; canvas: Canvas }
     | { type: 'pickPreset'; preset: Preset }
     | { type: 'changeSettings'; changes: Partial<LabSettings> }
@@ -33,23 +32,23 @@ export type LabAction =
       }
     | { type: 'clearRequests' }
 
-// WHO RMNCH Tracker and Linda Bailey on the Sierra Leone demo.
 const LIVE: Live = { programId: 'WSGAb5XwJ3Y', trackedEntityId: 'Y8aEiTpHSSQ' }
 
-/** Settings that only change the lab's layout, so the person keeps their data. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'arrangement',
     'width',
 ])
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -63,7 +62,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -87,7 +89,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             )
             return inPlace ? next : restarted(next)
         }
-        // A new person: the provider is keyed on them, but the log starts over.
         case 'changeLive':
             return restarted({
                 ...state,

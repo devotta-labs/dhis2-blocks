@@ -14,7 +14,7 @@ const attribute = (
     label: string,
     valueType: string,
     overrides: Partial<LabAttribute> = {}
-): LabAttribute => ({
+) => ({
     id,
     label,
     valueType,
@@ -63,7 +63,7 @@ const SERVER: LabServer = { matches: 3, calendar: 'gregorian' }
 
 const NETWORK: LabNetwork = { delay: 300, endpoints: {} }
 
-const field = (attributeId: string, range = false): LabField => ({
+const field = (attributeId: string, range = false) => ({
     attribute: attributeId,
     range,
 })
@@ -90,10 +90,9 @@ export const DEFAULT_SETTINGS: LabSettings = {
 
 type Tweak = (settings: LabSettings) => LabSettings
 
-/** One endpoint failing with a 500 or never answering. */
 const withEndpoint =
-    (resource: string, behaviour: 'fails' | 'hangs'): Tweak =>
-    (settings) => ({
+    (resource: string, behaviour: 'fails' | 'hangs') =>
+    (settings: LabSettings) => ({
         ...settings,
         network: {
             ...settings.network,
@@ -101,25 +100,24 @@ const withEndpoint =
         },
     })
 
-const withServer =
-    (server: Partial<LabServer>): Tweak =>
-    (settings) => ({ ...settings, server: { ...settings.server, ...server } })
+const withServer = (server: Partial<LabServer>) => (settings: LabSettings) => ({
+    ...settings,
+    server: { ...settings.server, ...server },
+})
 
 const withProgram =
-    (program: Partial<LabProgram>): Tweak =>
-    (settings) => ({
+    (program: Partial<LabProgram>) => (settings: LabSettings) => ({
         ...settings,
         program: { ...settings.program, ...program },
     })
 
 const withComposition =
-    (composition: Partial<LabComposition>): Tweak =>
-    (settings) => ({
+    (composition: Partial<LabComposition>) => (settings: LabSettings) => ({
         ...settings,
         composition: { ...settings.composition, ...composition },
     })
 
-const tweak = (...tweaks: Tweak[]): LabSettings =>
+const tweak = (...tweaks: Tweak[]) =>
     tweaks.reduce((settings, each) => each(settings), DEFAULT_SETTINGS)
 
 const EVERY_KIND: LabAttribute[] = [
@@ -190,7 +188,7 @@ export interface Preset {
     settings: LabSettings
 }
 
-const preset = (group: string, name: string, ...tweaks: Tweak[]): Preset => ({
+const preset = (group: string, name: string, ...tweaks: Tweak[]) => ({
     group,
     name,
     settings: tweak(...tweaks),
@@ -204,10 +202,7 @@ const RANGES: LabField[] = [
     field('registered', true),
 ]
 
-// Names say what the canvas shows. Calendar and the number of people found are
-// options, so no preset only changes one.
 export const PRESETS: readonly Preset[] = [
-    // First, so the lab opens on it: one form, an ID or a name and birth date.
     preset('Searches', 'ID, or name and birth date'),
     preset(
         'Searches',

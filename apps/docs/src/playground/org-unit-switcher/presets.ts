@@ -41,20 +41,19 @@ const preset = (
     name: string,
     changes: Partial<LabSettings> = {},
     extra: Pick<Preset, 'description' | 'seed'> = {}
-): Preset => ({
+) => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },
     ...extra,
 })
 
-/** An edge case: `PresetControls` already folds these under Edge cases, so `group` names the kind. */
 const edge = (
     group: string,
     name: string,
     changes: Partial<LabSettings> = {},
     extra: Pick<Preset, 'description' | 'seed'> = {}
-): Preset => ({
+) => ({
     ...preset(group, name, changes, extra),
     folded: true,
 })

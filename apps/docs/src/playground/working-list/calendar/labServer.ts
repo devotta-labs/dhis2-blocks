@@ -166,7 +166,6 @@ const savedViews = (config: LabConfig, today: string) => {
 
 const dateOf = (stamp?: string) => stamp?.slice(0, 10)
 
-/** Whether `stamp` passes the request's after/before pair, as the server reads it. */
 const inWindow = (
     stamp: string | undefined,
     params: Params,
@@ -176,8 +175,6 @@ const inWindow = (
     const start = text(params[after])
     const end = text(params[before])
     if (!start && !end) return true
-    // A malformed date is not a date the server could compare, so the lab
-    // lets it through to show what the block does with it.
     if (stamp && !/^\d{4}-\d{2}-\d{2}/.test(stamp)) return true
     const date = dateOf(stamp)
     if (!date) return false

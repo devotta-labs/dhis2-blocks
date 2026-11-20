@@ -15,10 +15,8 @@ import type { Growing } from './appendPage'
 import { formEffects } from './formRows'
 import type { TrackerDataEntryView } from './hooks'
 
-// Server reasons are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-// Changes the store has handed to the outbox that DHIS2 does not have yet.
 const UNSENT = new Set<SyncState>(['queued', 'sending'])
 
 /** Why nothing goes to DHIS2 while the sync loop is paused in this state. */
@@ -29,36 +27,35 @@ export const pauseReason = (sync: SyncStatus) => {
     return sync === 'signIn' ? i18n.t('Sign in to keep saving') : undefined
 }
 
-export const refusalOf = (
+export const refusalOf: (
     sourceKey: string,
     key: CellKey,
     reason: string
-): SaveOutcome => ({ sourceKey, key, result: 'failed', reason })
+) => SaveOutcome = (sourceKey, key, reason) => ({
+    sourceKey,
+    key,
+    result: 'failed',
+    reason,
+})
 
 /** What `complete` checks of a record before it asks DHIS2, and the wait for the record's changes to be sent. */
 export const completionChecks = (
     sourceKey: string,
     store: StoreApi<CellStoreState>,
     view: StoreApi<TrackerDataEntryView>,
-    /** Brings the view's summary up to date with the stores. */
     summed: () => void
 ) => {
     const refusal = (key: CellKey, reason: string) =>
         refusalOf(sourceKey, key, reason)
     const recordCells = (recordId: string) =>
-        Object.entries(store.getState().cells).flatMap(
-            ([key, cell]): Array<[CellKey, CellState]> =>
+        Object.entries(store.getState().cells).flatMap<[CellKey, CellState]>(
+            ([key, cell]) =>
                 cell !== undefined && key.startsWith(`${recordId}.`)
                     ? [[cellKey(recordId, fieldIdOfKey(key)), cell]]
                     : []
         )
     return {
-        /**
-         * What stops the record completing: its errors and empty required fields (its own: `r1.…` and `r1`, never
-         * `r10.…`), changes refused or waiting, and once its changes were given time to go, any DHIS2 still lacks.
-         */
         refusals: (recordId: string, afterSending: boolean) => {
-            // The summary is up to date: an error committed in this same task stops the record too.
             summed()
             return [
                 ...view
@@ -100,10 +97,6 @@ export const completionChecks = (
                 }),
             ]
         },
-        /**
-         * Settles once none of the record's changes waits to be sent, or after as long as a save may take; early, with
-         * the reason, when sending pauses (offline, or signed out) after the record's changes were nudged.
-         */
         sentFrom: (recordId: string) =>
             new Promise<string | undefined>((resolve) => {
                 const waiting = () =>
@@ -161,7 +154,6 @@ export const showStatus = (
         if (blocked !== undefined) {
             readOnlyRecords.set(recordId, blocked)
         }
-        // As at load: a record the user could write in, and that had not expired.
         if (
             form.mayUncomplete &&
             (form.canReopen.has(recordId) ||
@@ -170,13 +162,11 @@ export const showStatus = (
             reopenable.add(recordId)
         }
     } else {
-        // A record that could be reopened had no reason to be read-only but its completion.
         readOnlyRecords.delete(recordId)
         reopenable.delete(recordId)
     }
     const updated = new Map(records).set(recordId, { ...record, status })
     effects.setState(({ cells }) => {
-        // Every cell of the record is made again, shown in a column or not.
         const next = Object.fromEntries(
             Object.entries(cells).filter(
                 ([key]) => recordIdOf(key) !== recordId
@@ -186,7 +176,6 @@ export const showStatus = (
             cells: formEffects(
                 form,
                 readOnlyRecords,
-                // The record alone: its row's other records keep their effects.
                 [{ rows: [{ id: recordId }] }],
                 updated,
                 next

@@ -10,7 +10,7 @@ import {
     later,
     open,
     setup,
-} from './__tests__/syncRig'
+} from './test/syncRig'
 
 afterEach(cleanUp)
 
@@ -30,9 +30,10 @@ test('removes saved records and reports them with the value that was sent', asyn
 test('keeps failed records with their reason and does not send them again', async () => {
     const { outbox, lockName } = await setup()
     await outbox.put(change())
-    const { save, calls } = answering('failed', 'E1302')
+    const { save, calls, callCount } = answering('failed', 'E1302')
     const run = begin(outbox, lockName, save)
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(1))
+    await run.outcomeCount(1)
+    expect(run.outcomes).toHaveLength(1)
     expect(run.outcomes[0]).toMatchObject({ result: 'failed', reason: 'E1302' })
     expect(await outbox.list()).toMatchObject([
         { key: 'r1.c1', state: 'failed', reason: 'E1302' },
@@ -40,7 +41,8 @@ test('keeps failed records with their reason and does not send them again', asyn
 
     await outbox.put(change({ key: 'r2.c1' }))
     run.sync.nudge()
-    await vi.waitFor(() => expect(calls).toHaveLength(2))
+    await callCount(2)
+    expect(calls).toHaveLength(2)
     expect(calls[1]?.records.map((record) => record.key)).toEqual(['r2.c1'])
 })
 
@@ -56,13 +58,15 @@ test('keeps waiting records and sends them again on the next nudge', async () =>
             answer(record, round === 1 ? 'waiting' : 'saved', 'Needs a date')
         )
     })
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(1))
+    await run.outcomeCount(1)
+    expect(run.outcomes).toHaveLength(1)
     expect(await outbox.list()).toMatchObject([
         { state: 'waiting', reason: 'Needs a date' },
     ])
 
     run.sync.nudge()
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(2))
+    await run.outcomeCount(2)
+    expect(run.outcomes).toHaveLength(2)
     expect(sent).toEqual([['queued'], ['waiting']])
     expect(await outbox.list()).toEqual([])
 })
@@ -86,7 +90,8 @@ test('gives every failed and waiting record its own reason', async () => {
             return answer(record, given?.result ?? 'saved', given?.reason)
         })
     )
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(4))
+    await run.outcomeCount(4)
+    expect(run.outcomes).toHaveLength(4)
     expect(await outbox.list()).toMatchObject([
         { key: 'r1.c1', state: 'failed', reason: 'Period closed' },
         { key: 'r2.c1', state: 'failed', reason: 'Locked' },
@@ -113,7 +118,6 @@ test('ignores an outcome for a cell the source was not given', async () => {
     await outbox.putMany([change({ key: 'r1.c1' }), change({ key: 'r2.c1' })])
     const run = begin(outbox, lockName, async () => [
         { sourceKey: SOURCE, key: 'r1.c1', result: 'saved' },
-        // A key that was not sent, and the key that was sent under another source.
         { sourceKey: SOURCE, key: 'r9.c9', result: 'saved' },
         { sourceKey: 'dataset:d1', key: 'r2.c1', result: 'saved' },
     ])
@@ -144,7 +148,8 @@ test('restores unsent new rows after a reload', async () => {
     const reopened = await open(server)
     const { save, calls } = answering('saved')
     const second = begin(reopened, lockName, save)
-    await vi.waitFor(() => expect(second.outcomes).toHaveLength(1))
+    await second.outcomeCount(1)
+    expect(second.outcomes).toHaveLength(1)
     expect(calls[0]?.records).toMatchObject([
         { key: 'r1.c1', value: '5', record },
     ])
@@ -186,7 +191,8 @@ test('sends each source once, oldest change first', async () => {
     ])
     const { save, calls } = answering('saved')
     const run = begin(outbox, lockName, save)
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(4))
+    await run.outcomeCount(4)
+    expect(run.outcomes).toHaveLength(4)
     expect(calls).toHaveLength(2)
     expect(
         calls
@@ -216,7 +222,8 @@ test('a change made while its cell was being sent is kept and sent next', async 
     ])
 
     run.sync.nudge()
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(2))
+    await run.outcomeCount(2)
+    expect(run.outcomes).toHaveLength(2)
     expect(sent).toEqual(['5', '6'])
     expect(run.outcomes[1]).toMatchObject({ value: '6', at: 2 })
     expect(await outbox.list()).toEqual([])
@@ -229,7 +236,8 @@ test('a change made while its cell was being sent keeps its state when the sent 
         await outbox.put(change({ value: '6', at: 2 }))
         return records.map((record) => answer(record, 'failed', 'Locked'))
     })
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(1))
+    await run.outcomeCount(1)
+    expect(run.outcomes).toHaveLength(1)
     const [record] = await outbox.list()
     expect(record).toMatchObject({ value: '6', state: 'queued' })
     expect(record?.reason).toBeUndefined()
@@ -250,7 +258,6 @@ test('nudges during a round schedule exactly one more round and never overlap', 
             await gate.promise
         }
         sending -= 1
-        // Waiting records are sent again on every round, so rounds can be counted.
         return records.map((record) =>
             answer(record, 'waiting', 'Needs a date')
         )
@@ -270,10 +277,8 @@ test('nudges during a round schedule exactly one more round and never overlap', 
 test('still sends on a page that has no Web Locks', async () => {
     const { outbox, lockName } = await setup()
     await outbox.put(change())
-    // SAFETY: an insecure page has no `navigator.locks`, though its type says it always exists.
-    vi.spyOn(navigator, 'locks', 'get').mockReturnValue(undefined as never)
     const { save, calls } = answering('saved')
-    const run = begin(outbox, lockName, save)
+    const run = begin(outbox, lockName, save, null)
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
     expect(calls).toHaveLength(1)
     expect(await outbox.list()).toEqual([])

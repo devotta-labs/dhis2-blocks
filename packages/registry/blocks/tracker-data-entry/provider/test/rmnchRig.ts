@@ -31,12 +31,11 @@ export const eventId = (id: string, k: number) => {
     if (k === 0) {
         return id
     }
-    // Event ids are unique: person `k` never shares one with person 0.
     return `${id.slice(0, -1)}${id.at(-1) === String(k) ? 0 : k}`
 }
 
 /** Person `k`'s events, as the server has them. */
-export const eventsOf = (k: number): FixtureEvent[] =>
+export const eventsOf: (k: number) => FixtureEvent[] = (k) =>
     rmnchEnrollmentResponse.events.map((event) => ({
         event: eventId(event.event, k),
         enrollment: personId(k),
@@ -53,7 +52,6 @@ export const eventsOf = (k: number): FixtureEvent[] =>
 export const antenatalOf = (k: number) =>
     eventsOf(k).filter(({ programStage }) => ANTENATAL.has(programStage))
 
-/** What the server sends: plain JSON, no `undefined` members. */
 const json = <T>(body: T) => z.json().parse(JSON.parse(JSON.stringify(body)))
 
 export const answering = <T>(answer: T) =>

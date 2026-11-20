@@ -1,3 +1,4 @@
+import { recording } from '../../test/recording'
 import { CustomDataProvider, Provider } from '@dhis2/app-runtime'
 import {
     onlineManager,
@@ -24,12 +25,10 @@ import type {
 import { openOutbox, outboxName } from '../../outbox/outbox'
 import type { Outbox, OutboxRecord } from '../../outbox/outbox'
 import type { TrackerDataEntrySource, LoadedForm } from '../../sources/types'
-import { paintClock } from '../afterPaint'
 import { TrackerDataEntry } from '../TrackerDataEntry'
 import { TrackerDataEntryViewContext, TrackerReactContext } from '../hooks'
 import type { TrackerDataEntryView, TrackerContext } from '../hooks'
 
-/** The spreadsheet's context as `TrackerDataEntry` fills it: its annotations are the form's own effects store. */
 type FormContext = Omit<SpreadsheetContext, 'effects'> & {
     effects: StoreApi<TrackerEffectsState>
 }
@@ -63,11 +62,11 @@ interface Visit extends GridRow {
     status: EventStatus
 }
 
-export const visit = (
+export const visit: (
     id: string,
     label: string,
-    status: EventStatus = 'ACTIVE'
-): Visit => ({ id, label, status })
+    status?: EventStatus
+) => Visit = (id, label, status = 'ACTIVE') => ({ id, label, status })
 
 interface FormOptions {
     rows?: Visit[]
@@ -82,14 +81,14 @@ interface FormOptions {
 export const BLOCKED = 'Completed events in this stage cannot be edited'
 
 /** One table of visits: Children (required), Referral (options A, B, C) and Notes, which the stage has no field for. */
-export const visitForm = ({
+export const visitForm: (options?: FormOptions) => LoadedForm = ({
     rows = [visit('r1', 'Visit 1'), visit('r2', 'Visit 2')],
     values = [],
     readOnlyRecords = [],
     canReopen = [],
     blockedWhenCompleted,
     hasMore = false,
-}: FormOptions = {}): LoadedForm => ({
+} = {}) => ({
     tables: [
         {
             id: 't1',
@@ -116,10 +115,11 @@ export const visitForm = ({
         ])
     ),
     fields: new Map([
-        ...COLUMNS.map(({ id, field }): [string, Field] => [id, field]),
+        ...COLUMNS.map(
+            ({ id, field }) => [id, field] satisfies [string, Field]
+        ),
         [HIDDEN_FIELD, { valueType: 'INTEGER' }],
     ]),
-    // Notes is another stage's field; the hidden one is the stage's, with no column.
     fieldsByForm: new Map([[STAGE, new Set(['c1', 'c2', HIDDEN_FIELD])]]),
     required: new Map([[STAGE, new Set(['c1'])]]),
     strategy: new Map([[STAGE, 'ON_COMPLETE']]),
@@ -143,7 +143,6 @@ export const visitForm = ({
     fieldNames: new Map(),
 })
 
-// Gates still closed when a test ends are opened, so no sync loop keeps its lock.
 const gates: Array<() => void> = []
 
 /**
@@ -151,7 +150,7 @@ const gates: Array<() => void> = []
  * `release`, or `fail` makes them throw as a dropped connection does.
  */
 export const memorySource = (form: LoadedForm, key = KEY) => {
-    const sent: OutboxRecord[][] = []
+    const saves = recording<OutboxRecord[]>()
     const statuses: Array<[string, string]> = []
     let loads = 0
     let gate = Promise.resolve()
@@ -163,7 +162,7 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
             return form
         },
         save: async (_engine, records) => {
-            sent.push([...records])
+            saves.add([...records])
             if (failing) {
                 throw new Error('The connection dropped')
             }
@@ -184,7 +183,6 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
                 },
             ]
         },
-        // Only the new rows this form adds: same stage and org unit.
         restoreRows: async (_engine, records, { newRows }) => {
             const restored = new Map<string, DataRecord>()
             for (const { record } of records) {
@@ -208,9 +206,9 @@ export const memorySource = (form: LoadedForm, key = KEY) => {
     }
     return {
         source,
-        sent,
+        sent: saves.values,
+        saveCount: saves.reached,
         statuses,
-        /** How often the form was loaded. */
         loads: () => loads,
         hold() {
             gate = new Promise((resolve) => gates.push(resolve))
@@ -245,7 +243,7 @@ export const cleanUp = async () => {
     await cleanup()
     gates.splice(0).forEach((open) => open())
     vi.restoreAllMocks()
-    // A test that went offline leaves React Query's online manager, shared by every test, offline.
+    vi.useRealTimers()
     onlineManager.setOnline(true)
     await Promise.all(
         servers
@@ -270,11 +268,11 @@ export const withOutbox = async <T,>(
 export const records = (server: string, sourceKey?: string) =>
     withOutbox(server, (outbox) => outbox.list(sourceKey))
 
-export const change = (
+export const change: (
     key: CellKey,
     value: string,
-    overrides: Partial<PendingChange> = {}
-): PendingChange => ({
+    overrides?: Partial<PendingChange>
+) => PendingChange = (key, value, overrides = {}) => ({
     sourceKey: KEY,
     key,
     value,
@@ -318,7 +316,6 @@ export const mount = async (
         until = 'ready',
     }: MountOptions = {}
 ) => {
-    // The abort signal of every `me` request, in order.
     const meSignals: Array<AbortSignal | undefined> = []
     const data = {
         me: async (_type, _query, options) => {
@@ -389,7 +386,6 @@ export const mount = async (
     return {
         server,
         screen,
-        /** Renders the page again from its root, as an app's own state change does; the data provider makes a new engine. */
         rerender: () => screen.rerender(tree()),
         client,
         meSignals,
@@ -414,56 +410,4 @@ export const leaving = () => {
     const event = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(event)
     return event.defaultPrevented
-}
-
-/** Stops downloads and collects the files they would have saved. */
-export const catchDownloads = () => {
-    const files: Blob[] = []
-    vi.spyOn(URL, 'createObjectURL').mockImplementation((file) => {
-        if (file instanceof Blob) {
-            files.push(file)
-        }
-        return 'blob:unsent'
-    })
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-    return files
-}
-
-/** Holds idle callbacks: `next` runs the first one, `run` runs them and those they ask for. */
-export const holdIdle = () => {
-    const waiting: IdleRequestCallback[] = []
-    vi.spyOn(window, 'requestIdleCallback').mockImplementation((callback) =>
-        waiting.push(callback)
-    )
-    const next = () =>
-        waiting.shift()?.({ didTimeout: false, timeRemaining: () => 50 })
-    return {
-        next,
-        run() {
-            while (waiting.length > 0) {
-                next()
-            }
-        },
-    }
-}
-
-/** Holds the paint that deferred work waits for: `run` lets it happen, and runs what waited. */
-export const holdPaint = () => {
-    const waiting: Array<() => void> = []
-    vi.spyOn(paintClock, 'wait').mockImplementation((next) => {
-        waiting.push(next)
-        return () => {
-            const at = waiting.indexOf(next)
-            if (at >= 0) {
-                waiting.splice(at, 1)
-            }
-        }
-    })
-    return {
-        run() {
-            while (waiting.length > 0) {
-                waiting.shift()?.()
-            }
-        },
-    }
 }

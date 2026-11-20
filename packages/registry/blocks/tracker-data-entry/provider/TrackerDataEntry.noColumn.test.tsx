@@ -1,7 +1,7 @@
 /// <reference types="@vitest/browser-playwright" />
+import { captureNextDownload } from '../../../test/download.test-utils'
 import { cellKey } from '@/components/spreadsheet'
 import {
-    catchDownloads,
     change,
     cleanUp,
     freshServer,
@@ -11,9 +11,7 @@ import {
     mount,
     visitForm,
     withOutbox,
-} from './__tests__/rig'
-
-// A field of a row's record that no column shows, which rules may assign, is the form's like any cell.
+} from './test/rig'
 
 afterEach(cleanUp)
 
@@ -29,10 +27,11 @@ test('an unsent value a rule gave a field no column shows comes back on its cell
         sync: 'queued',
     })
     expect(view().summary.unsent).toBe(1)
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    expect(await files[0].text()).toBe(
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         `form,row,field,value,state,reason\nVisits,Visit 1,${HIDDEN_FIELD},5,queued,\n`
     )
 })
@@ -54,7 +53,6 @@ test('a refused change to a field no column shows counts once among the failed',
     await expect
         .poll(() => context().store.getState().cells[hidden]?.sync)
         .toBe('failed')
-    // Counting the program's other grids' failures reads the outbox afterwards.
     await later(200)
     expect(view().summary.failed).toBe(1)
 })

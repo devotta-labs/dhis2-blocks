@@ -25,7 +25,6 @@ import { FORM_MESSAGES } from '../logic/effects'
 import { useTrackerDataEntry, useTrackerContext } from '../provider/hooks'
 import { useRowLabel } from '../provider/TrackerRowLabel'
 
-// Labels and messages are shown as DHIS2 and the rules give them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
 const TONES = {
@@ -38,22 +37,15 @@ const TONES = {
 } satisfies Record<SummaryItem['kind'], string>
 
 interface ItemProps {
-    /** The item's cell, or its row for a message without a field. */
     itemKey: SummaryItem['key']
     kind: SummaryItem['kind']
     text: string
     namesField?: true
     idScope: string
     rows: ReadonlyMap<string, TrackerRow>
-    /** A cell's field's name. */
     nameOf(key: string): string
 }
 
-/**
- * One message, naming its row as the grid does (by the row's event date once it has one, a person by their name) and
- * its field by the heading of its column. It reads only the cells that name its row, and takes plain props, so it
- * draws again only when its own message or its row's name changes.
- */
 const Item = memo(function Item({
     itemKey: key,
     kind,
@@ -66,11 +58,9 @@ const Item = memo(function Item({
     const focusCell = useFocusCell()
     const dot = key.indexOf('.')
     const rowId = dot < 0 ? key : key.slice(0, dot)
-    // The row that shows the record, named as the grid names it.
     const label = useRowLabel(rows.get(rowId))
     const row = label ?? rowId
     const className = cn('border-s-2 ps-2', TONES[kind])
-    // A message without a field is the row's, or the whole form's: there is no cell to go to.
     if (dot < 0) {
         return (
             <li className={className}>
@@ -93,11 +83,9 @@ const Item = memo(function Item({
             <a
                 href={`#${target}`}
                 onClick={(event) => {
-                    // Focus moves without touching the address, which some apps route by.
                     event.preventDefault()
                     focusCell(cell)
                 }}
-                // At least 24 px tall, as WCAG 2.2 asks of a target with others close by.
                 className="inline-block py-1 text-dhis2-primary underline"
             >
                 {namesField
@@ -119,7 +107,6 @@ const Item = memo(function Item({
     )
 })
 
-/** Asks before the changes that could not be saved are dropped from the device. */
 const DiscardFailed = ({ count }: { count: number }) => {
     const discardFailed = useTrackerDataEntry((view) => view.discardFailed)
     const [asking, setAsking] = useState(false)

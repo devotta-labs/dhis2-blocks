@@ -14,16 +14,14 @@ import {
     immunisationRegister,
 } from '../register/test/registerRig'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
-import { cleanUp, memorySource, mount, visitForm } from './__tests__/rig'
+import { cleanUp, memorySource, mount, visitForm } from './test/rig'
 
 afterEach(cleanUp)
 
 const DIALOG = 'Create events?'
 
-/** The column's value popover, named by its header. */
 const popover = (column: string) => page.getByRole('dialog', { name: column })
 
-/** Opens the column's popover, types `text` into its control, ticks Overwrite and presses Apply. */
 const applyToColumn = async (column: string, text: string) => {
     await page.getByRole('button', { name: `Column actions ${column}` }).click()
     await page
@@ -36,11 +34,6 @@ const applyToColumn = async (column: string, text: string) => {
     await popover(column).getByRole('button', { name: 'Apply' }).click()
 }
 
-/**
- * The immunisation register whose BCG slot of the last `missing` of its three children holds no event, saving through
- * the register's own saver to a DHIS2 that imports everything; `sent` holds what each save was handed. `ruleless`
- * leaves its program rules out, so completing waits for none.
- */
 const mountRegister = async (missing = 2, ruleless = false) => {
     const rig = engineFor({
         enrollments: enrolledAs((enrollment, at) => ({
@@ -136,7 +129,6 @@ test('a column apply that creates events asks first; Cancel writes nothing, and 
         )
         .toEqual(bcg.map((key) => [key, '2026-10-20']).sort())
     const created = bcg.slice(1).map((key) => key.slice(0, key.indexOf('.')))
-    // Each new event is in an import, by its id.
     await expect
         .poll(() =>
             created.filter((event) =>
@@ -144,7 +136,6 @@ test('a column apply that creates events asks first; Cancel writes nothing, and 
             )
         )
         .toEqual(created)
-    // The rig's DHIS2 returns no event before an import, so only the created ones are saved.
     await expect
         .poll(() =>
             bcg
@@ -191,7 +182,6 @@ test('completing an event leaves the grid’s context alone, and a column apply 
     await expect
         .poll(() => view().records.get(event))
         .toMatchObject({ status: 'COMPLETED' })
-    // A new context would render every cell again.
     expect(context().confirmBulk).toBe(before.confirmBulk)
 
     await applyToColumn('BCG 0', '2026-10-20')

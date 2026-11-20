@@ -1,6 +1,9 @@
 /// <reference types="@vitest/browser-playwright" />
+import { captureNextDownload } from '../../../test/download.test-utils'
+import { setBrowserOffline } from '../../../test/network-status.test-utils'
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
+import { onTestFinished } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { z } from 'zod'
 import { cellKey } from '@/components/spreadsheet'
@@ -11,7 +14,6 @@ import meAdmin from '../sources/test/fixtures/me-admin.json'
 import { eventSource } from '../sources/eventSource'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {
-    catchDownloads,
     change,
     cleanUp,
     freshServer,
@@ -24,7 +26,7 @@ import {
     USER,
     visitForm,
     withOutbox,
-} from './__tests__/rig'
+} from './test/rig'
 import { liveRegion } from '../../../test/liveRegion'
 
 afterEach(cleanUp)
@@ -39,16 +41,13 @@ const AGE_OF_A = cellKey(A, AGE)
 const TODAY = '2026-10-26'
 const DISCARD = 'Discard changes that could not be saved'
 
-/** What the server sends: plain JSON, no `undefined` members. */
 const json = <T,>(body: T) => z.json().parse(JSON.parse(JSON.stringify(body)))
 
-/** DHIS2 holding the inpatient events at Ngelehun; every import is kept and saved. */
 const inpatientServer = () => {
     const imports: Array<{ events: Array<{ event: string }> }> = []
     const data = {
         me: async () => ({ id: USER, authorities: meAdmin.authorities }),
         programs: async () => json(inpatientProgram),
-        // A load names an org unit; the read before an import names events.
         'tracker/events': async (_type, query) => {
             const ids = query.params?.events
             return json({
@@ -71,8 +70,7 @@ const inpatientServer = () => {
 test('a change made in one grid of a program is sent by another grid of it', async () => {
     const dhis2 = inpatientServer()
     const server = freshServer()
-    const online = vi.spyOn(Navigator.prototype, 'onLine', 'get')
-    online.mockReturnValue(false)
+    await setBrowserOffline(true)
     const ngelehun = await mount(
         eventSource({
             programId: INPATIENT,
@@ -85,8 +83,7 @@ test('a change made in one grid of a program is sent by another grid of it', asy
     await expect.poll(() => records(server)).toHaveLength(1)
     await ngelehun.screen.unmount()
 
-    // Bo holds none of Ngelehun's events.
-    online.mockReturnValue(true)
+    await setBrowserOffline(false)
     const bo = await mount(
         eventSource({ programId: INPATIENT, orgUnitId: BO, today: TODAY }),
         { server, data: dhis2.data, children: null }
@@ -107,7 +104,7 @@ test('a change made in one grid of a program is sent by another grid of it', asy
 })
 
 test('one cell typed in two grids of a program is one record, holding the newer value', async () => {
-    vi.spyOn(Navigator.prototype, 'onLine', 'get').mockReturnValue(false)
+    await setBrowserOffline(true)
     const { data } = inpatientServer()
     const server = freshServer()
     const all = await mount(
@@ -138,7 +135,6 @@ test('one cell typed in two grids of a program is one record, holding the newer 
 test('a restore puts back only this form’s cells; the program’s other changes stay in the outbox and are sent', async () => {
     const server = freshServer()
     const elsewhere = [
-        // An event another grid shows, a new row another grid adds, and a field this form has no column for.
         change('x1.c1', '9', { at: 1 }),
         change('n2.c1', '4', {
             at: 2,
@@ -162,7 +158,8 @@ test('a restore puts back only this form’s cells; the program’s other change
     expect(context().tables[0].rows.map(({ id }) => id)).toEqual(['r1', 'r2'])
     expect(Object.keys(context().store.getState().cells)).toEqual(['r1.c1'])
     expect(view().summary.unsent).toBe(1)
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     expect(memory.sent[0].map(({ key }) => key)).toEqual([
         'x1.c1',
         'n2.c1',
@@ -198,7 +195,6 @@ test('“All changes saved” is said only once nothing of the program is left o
         .poll(() => context().store.getState().cells['r1.c1']?.sync)
         .toBe('saved')
     await later(1000)
-    // The other grid's change is still on the device, not saved.
     expect(said.filter(Boolean)).toEqual(['Values not saved: 1'])
 })
 
@@ -224,11 +220,11 @@ test('a change another grid could not save is counted, downloaded and discarded 
     expect(view().summary).toMatchObject({ unsent: 1, failed: 1 })
     expect(leaving()).toBe(true)
 
-    // This form's change by its labels; the other grid's by the names known here, else by its ids.
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    expect(await files[0].text()).toBe(
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         'form,row,field,value,state,reason\n' +
             'Visits,Visit 1,Children,5,queued,\n' +
             ',x1,Children,9,failed,Too high\n'
@@ -268,31 +264,34 @@ test('a change of another grid refused while this one is open is counted here at
     ])
 })
 
-/** Holds the outbox's reads from now on: each answers only once `release` is called. */
-const holdReads = () => {
-    const held: Array<() => void> = []
-    const getAll = IDBObjectStore.prototype.getAll
-    vi.spyOn(IDBObjectStore.prototype, 'getAll').mockImplementation(function (
-        this: IDBObjectStore,
-        ...args: Parameters<IDBObjectStore['getAll']>
-    ) {
-        const read = getAll.apply(this, args)
-        // Listens before the outbox does, so the outbox hears of the answer only on release.
-        read.addEventListener('success', (event) => {
-            event.stopImmediatePropagation()
-            held.push(() => read.onsuccess?.(event))
-        })
-        return read
-    })
-    return {
-        held: () => held.length,
-        release: () => held.splice(0).forEach((answer) => answer()),
+const holdOutboxTransaction = async (server: string) => {
+    const connection = Promise.withResolvers<IDBDatabase>()
+    const opening = indexedDB.open(outboxName(server, USER), 1)
+    opening.onsuccess = () => connection.resolve(opening.result)
+    opening.onerror = () => connection.reject(opening.error)
+    const database = await connection.promise
+    const write = database.transaction('changes', 'readwrite')
+    const store = write.objectStore('changes')
+    const started = Promise.withResolvers<void>()
+    let released = false
+    const release = () => {
+        released = true
+        database.close()
     }
+    onTestFinished(release)
+    const keepOpen = () => {
+        started.resolve()
+        if (!released) {
+            store.count().onsuccess = keepOpen
+        }
+    }
+    store.count().onsuccess = keepOpen
+    await started.promise
+    return release
 }
 
-/** Another tab of the program refuses a change to a row this form does not show, and says so. */
-const refusedThere = async (server: string) => {
-    await withOutbox(server, async (outbox) => {
+const putRefusal = (server: string) =>
+    withOutbox(server, async (outbox) => {
         await outbox.put(change('x1.c1', '9'))
         await outbox.mark(
             [{ sourceKey: KEY, key: 'x1.c1' }],
@@ -300,6 +299,8 @@ const refusedThere = async (server: string) => {
             'Too high'
         )
     })
+
+const announceRefusal = (server: string) => {
     const tab = new BroadcastChannel(outboxName(server, USER))
     tab.postMessage({
         outcomes: [
@@ -322,7 +323,8 @@ test('another tab’s refusal of a change this form does not show is counted onc
         server,
         children: null,
     })
-    await refusedThere(server)
+    await putRefusal(server)
+    announceRefusal(server)
     await expect.poll(() => view().summary.failed).toBe(1)
     await later(100)
     expect(view().summary.failed).toBe(1)
@@ -335,13 +337,38 @@ test('a form closed while it counts the other grids’ failed changes leaves the
         server,
         children: null,
     })
-    await later(100)
-    const reads = holdReads()
-    await refusedThere(server)
-    await expect.poll(reads.held).toBe(1)
-    await screen.unmount()
-    const summary = view().summary
-    reads.release()
-    await later(100)
-    expect(view().summary).toBe(summary)
+    await putRefusal(server)
+    const release = await holdOutboxTransaction(server)
+    const reads = vi.spyOn(IDBObjectStore.prototype, 'getAll')
+    const message = Promise.withResolvers<void>()
+    const listener = new BroadcastChannel(outboxName(server, USER))
+    listener.onmessage = () => {
+        listener.close()
+        message.resolve()
+    }
+    onTestFinished(() => listener.close())
+    try {
+        announceRefusal(server)
+        await message.promise
+        const read = reads.mock.results.at(-1)
+        expect(read?.type).toBe('return')
+        if (read?.type !== 'return') {
+            throw new Error('Expected the form to queue a real IndexedDB read')
+        }
+        expect(read.value.readyState).toBe('pending')
+        const finished = Promise.withResolvers<void>()
+        read.value.transaction?.addEventListener(
+            'complete',
+            () => finished.resolve(),
+            { once: true }
+        )
+        await screen.unmount()
+        const summary = view().summary
+        release()
+        await finished.promise
+        expect(view().summary).toBe(summary)
+    } finally {
+        reads.mockRestore()
+        release()
+    }
 })

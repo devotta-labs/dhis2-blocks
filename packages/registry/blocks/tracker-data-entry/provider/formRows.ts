@@ -49,10 +49,6 @@ export const summaryOf = (
 
 const FILES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])
 
-/**
- * Why a field of the record is read-only whatever else is said of it: a person's file or image is uploaded in their own
- * form, as the file editor uploads an event's.
- */
 const editedElsewhere = (
     { fields }: Pick<LoadedForm, 'fields'>,
     record: DataRecord,
@@ -64,12 +60,12 @@ const editedElsewhere = (
         : undefined
 
 /** `effects`, read-only when the field is edited elsewhere (`editedElsewhere`) and nothing else locks it. */
-export const lockedElsewhere = (
+export const lockedElsewhere: (
     form: Pick<LoadedForm, 'fields'>,
     record: DataRecord,
     field: string,
     effects: TrackerEffects
-): TrackerEffects => {
+) => TrackerEffects = (form, record, field, effects) => {
     const elsewhere = effects.readOnly ?? editedElsewhere(form, record, field)
     return elsewhere === effects.readOnly
         ? effects
@@ -119,7 +115,6 @@ export const formEffects = (
     return cells
 }
 
-/** Whether the record's form has the field, shown in a column or not: an event's date, or one of its form's fields. */
 const holds = (
     { fieldsByForm }: Pick<LoadedForm, 'fieldsByForm'>,
     record: DataRecord,
@@ -138,7 +133,6 @@ export const isRecordField = (
     return record !== undefined && holds(form, record, fieldIdOfKey(key))
 }
 
-/** The row's cells in `columns` that have no field: their record's form does not hold it; never an event's date. */
 const closedOn = (
     form: LoadedForm,
     row: TrackerRow,
@@ -146,7 +140,7 @@ const closedOn = (
     records: ReadonlyMap<string, DataRecord>,
     reason: string
 ) =>
-    columns.flatMap((column): Array<[CellKey, string]> => {
+    columns.flatMap<[CellKey, string]>((column) => {
         const key = trackerKeyOf(row, column)
         const record = records.get(recordIdOf(key))
         return record === undefined ||
@@ -159,12 +153,12 @@ const closedOn = (
  * The table with new rows added at its end, each closed where its record's stage has no field. A row with the id of
  * one shown replaces it in place: a register's person, back with the slot events typed before a reload.
  */
-export const withRows = (
+export const withRows: (
     form: LoadedForm,
     table: GridTable<TrackerRow, TrackerColumn>,
     rows: ReadonlyArray<TrackerRow>,
     records: ReadonlyMap<string, DataRecord>
-): GridTable<TrackerRow, TrackerColumn> => {
+) => GridTable<TrackerRow, TrackerColumn> = (form, table, rows, records) => {
     const notInStage = i18n.t('Not in this stage')
     const byId = new Map(rows.map((row) => [row.id, row]))
     const shown = new Set(table.rows.map(({ id }) => id))
@@ -184,17 +178,16 @@ export const withRows = (
 }
 
 /** The table with columns added at its end, closed in its rows whose record's stage has no field for them. */
-export const withColumns = (
+export const withColumns: (
     form: LoadedForm,
     table: GridTable<TrackerRow, TrackerColumn>,
     columns: ReadonlyArray<TrackerColumn>,
     records: ReadonlyMap<string, DataRecord>
-): GridTable<TrackerRow, TrackerColumn> => {
+) => GridTable<TrackerRow, TrackerColumn> = (form, table, columns, records) => {
     const notInStage = i18n.t('Not in this stage')
     return {
         ...table,
         columns: [...table.columns, ...columns],
-        // shortcut: new columns join the last header row only; a paging source with grouped headers needs its groups grown.
         headerRows: table.headerRows.map((cells, level, all) =>
             level < all.length - 1
                 ? cells

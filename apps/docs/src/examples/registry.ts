@@ -1,5 +1,9 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
+import orgUnitSelectorSidebarSource from './org-unit-switcher/OrgUnitSwitcherSidebar.tsx?raw'
+import orgUnitSelectorStatesSource from './org-unit-switcher/OrgUnitSwitcherStates.tsx?raw'
+import orgUnitSelectorStubSource from './org-unit-switcher/stubClient.ts?raw'
+import { OrgUnitSwitcherSidebarPlaceholder } from './org-unit-switcher/OrgUnitSwitcherPlaceholders'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
 import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
@@ -181,6 +185,34 @@ const examples = [
         Component: lazy(() => import('./timeline/TimelineEntryParts')),
         source: timelineEntryPartsSource,
         minHeight: 260,
+    },
+    {
+        slug: 'org-unit-switcher/sidebar',
+        title: 'Organisation unit switcher in a sidebar',
+        live: true,
+        Component: lazy(
+            () => import('./org-unit-switcher/OrgUnitSwitcherSidebar')
+        ),
+        source: orgUnitSelectorSidebarSource,
+        minHeight: 320,
+        Placeholder: OrgUnitSwitcherSidebarPlaceholder,
+    },
+    {
+        slug: 'org-unit-switcher/states',
+        title: 'One clinic and a few clinics, named by the app',
+        live: false,
+        Component: lazy(
+            () => import('./org-unit-switcher/OrgUnitSwitcherStates')
+        ),
+        source: orgUnitSelectorStatesSource,
+        sourceFiles: [
+            {
+                name: 'OrgUnitSwitcherStates.tsx',
+                code: orgUnitSelectorStatesSource,
+            },
+            { name: 'stubClient.ts', code: orgUnitSelectorStubSource },
+        ],
+        minHeight: 220,
     },
     {
         slug: 'context-selector/basic',

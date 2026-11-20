@@ -49,6 +49,11 @@ const LABS = {
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
         )
     ),
+    'org-unit-switcher': lazy(() =>
+        import('./org-unit-switcher/OrgUnitSwitcherLab').then(
+            ({ OrgUnitSwitcherLab }) => ({ default: OrgUnitSwitcherLab })
+        )
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

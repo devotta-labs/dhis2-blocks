@@ -1330,6 +1330,111 @@
             "docs": "Wrap the cards in ObservationsProvider with a trackedEntity and a program; it loads the program's metadata and the person's events once for every card inside. Render one ObservationCard per data element uid, with an optional unit, label and staleAfterDays. Without children a card picks its arrangement from the value type: numbers show the latest value, its legend, the change since the previous reading and a sparkline; other types show the last recorded value, and yes or no values and option sets say when it last changed. To compose a different card, place the parts ObservationLabel, ObservationLegend, ObservationValue, ObservationChange, ObservationSparkline and ObservationRecorded inside it. The card shows the loading, error and never recorded states itself, and the recorded date can be placed but never dropped. ObservationInline shows one data element as a single line of label, value, legend and recorded time, for a banner's facts line; it reads the same provider and adds no requests. Use useObservation for custom layouts. See the observation cards docs page for examples."
         },
         {
+            "name": "org-unit-switcher",
+            "type": "registry:block",
+            "title": "DHIS2 Organisation Unit Switcher",
+            "description": "A switcher for the organisation unit a user is working in, such as their clinic or school: a short list of their own units, with search when they have more.",
+            "dependencies": [
+                "@base-ui/react@^1.9.0",
+                "@dhis2/app-runtime@^3.15.1",
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "@tanstack/react-query@^5.101.4",
+                "better-result@^3.0.1",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/combobox",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dropdown-menu",
+                "devotta-labs/dhis2-blocks/skeleton",
+                "devotta-labs/dhis2-blocks/spinner",
+                "devotta-labs/dhis2-blocks/tooltip"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/OrgUnitSwitcher.tsx",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/OrgUnitSwitcher.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/client.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/client.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/queries.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/queries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/queryKeys.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/queryKeys.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/runtimeClient.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/runtimeClient.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/schemas.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/schemas.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/api/scope.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/api/scope.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/provider/OrgUnitProvider.tsx",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/provider/OrgUnitProvider.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/provider/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/provider/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/provider/remembered.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/provider/remembered.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/search.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/search.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/texts.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/texts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/org-unit-switcher/tile.ts",
+                    "type": "registry:file",
+                    "target": "@components/org-unit-switcher/tile.ts"
+                }
+            ],
+            "docs": "Wrap the app in OrgUnitProvider and put OrgUnitSwitcher at the top of the app's navigation, on a light surface. The block brings no navigation of its own, so pass collapsed yourself when yours is narrowed to icons. Read useOrgUnit() on any page to scope its data to the current unit. Pass texts to OrgUnitSwitcher to name the units as your users do, such as clinics or schools, with translated sentences. Pass value and onValueChange to OrgUnitProvider to control the choice, for example from the URL. For a tree picker of any organisation unit, use context-selector instead."
+        },
+        {
             "name": "program-rules",
             "type": "registry:block",
             "title": "Program Rules",

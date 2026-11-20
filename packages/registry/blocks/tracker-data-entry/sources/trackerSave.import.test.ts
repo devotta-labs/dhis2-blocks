@@ -1,3 +1,4 @@
+import { setImmediate } from 'node:timers/promises'
 import importAllRefused from './test/fixtures/import-all-refused.json'
 import importOneRefused from './test/fixtures/import-one-refused.json'
 import inpatientEvents from './test/fixtures/inpatient-events.json'
@@ -439,7 +440,7 @@ test('a save waits for a status change in flight', async () => {
     const reopening = grid.setStatus(A, 'ACTIVE')
     await importingStatus.promise
     const saving = grid.save(change(A, AGE, '6'))
-    await Promise.resolve()
+    await setImmediate()
     expect([grid.reads.length, grid.mutations.length]).toEqual([1, 1])
     gate.resolve()
     await Promise.all([reopening, saving])

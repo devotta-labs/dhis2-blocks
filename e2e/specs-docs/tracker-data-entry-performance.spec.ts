@@ -134,7 +134,7 @@ const cohortData = (action: 'seed' | 'cleanup', batch: string) => {
 }
 
 const test = base.extend<{ cohortBatch: string }>({
-    cohortBatch: async ({}, use) => {
+    cohortBatch: async ({ shared: _shared }, use) => {
         test.skip(!localDhis2, 'Requires the disposable docs DHIS2 stack')
         const batch = randomBytes(4).toString('hex').slice(0, 7)
         try {

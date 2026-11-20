@@ -42,9 +42,7 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
     const { id, labelledBy, move, readOnly, aria, hidden = false } = props
     const { view } = useCellContext()
     const locked = readOnly !== undefined
-    // `commit` reads the cell's lock as it saves: a rule may have locked it since it was drawn.
     const save = (text: string) => view.commit(text)
-    // Arrows, Enter and Tab move, and Escape is left to the cell, which hides its notes; says whether it took the key.
     const navigate = (event: KeyboardEvent) => {
         const key = navKeyOf(event)
         if (key !== undefined) {
@@ -57,7 +55,6 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
         return event.key === 'Escape'
     }
     const box = useRef<HTMLInputElement>(null)
-    // A rule hid the answer: neither checked nor not, rather than "not checked".
     useLayoutEffect(() => {
         if (box.current !== null) {
             box.current.indeterminate = hidden
@@ -76,7 +73,6 @@ export const TrueOnlyCell = memo(function TrueOnlyCell(props: ControlProps) {
                 id={id}
                 aria-labelledby={labelledBy}
                 aria-readonly={locked || undefined}
-                // Always in Ready: a paste and Ctrl+Z are the grid's.
                 data-mode="ready"
                 ref={box}
                 type="checkbox"

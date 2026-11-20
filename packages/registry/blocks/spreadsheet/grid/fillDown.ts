@@ -12,7 +12,7 @@ import { fieldAt } from './navGrid'
  * nothing is above. A hidden or closed cell above holds nothing the person can see. A refused text stays a draft and
  * is announced by the grid's own store subscription.
  */
-export const fillDown = (
+export const fillDown: (
     state: CellStoreState,
     annotations: AnnotationsState,
     closed: GridTable['closed'],
@@ -20,7 +20,15 @@ export const fillDown = (
     key: CellKey,
     above: CellKey | undefined,
     reason: string | undefined
-): { commit: string } | { say: string } => {
+) => { commit: string } | { say: string } = (
+    state,
+    annotations,
+    closed,
+    settings,
+    key,
+    above,
+    reason
+) => {
     if (reason !== undefined) {
         return { say: reason }
     }

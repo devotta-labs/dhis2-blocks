@@ -24,12 +24,12 @@ export interface BulkCandidate {
 type KeyOf = (row: GridRow, column: GridColumn) => CellKey
 
 /** The column action: `text` into every row of the table's column. */
-export const columnCandidates = (
+export const columnCandidates: (
     table: GridTable,
     column: GridColumn,
     text: string,
     keyOf: KeyOf
-): BulkCandidate[] =>
+) => BulkCandidate[] = (table, column, text, keyOf) =>
     table.rows.map((row) => ({ key: keyOf(row, column), text }))
 
 /** The key of the column's first open cell, whose field a column action takes as the column's own. */
@@ -37,7 +37,7 @@ export const openKeyOf = (
     table: GridTable,
     column: GridColumn,
     keyOf: KeyOf
-): CellKey => {
+) => {
     const key = table.rows
         .map((row) => keyOf(row, column))
         .find((each) => !table.closed.has(each))
@@ -51,7 +51,7 @@ export const openKeyOf = (
  * A row copy: the source row's values, as a Ready cell shows them, onto the target rows' cells of the same columns. A
  * value hidden by a rule is not copied: the person cannot see it.
  */
-export const rowCandidates = (
+export const rowCandidates: (
     columns: ReadonlyArray<GridColumn>,
     from: GridRow,
     to: ReadonlyArray<GridRow>,
@@ -59,7 +59,15 @@ export const rowCandidates = (
     state: CellStoreState,
     annotations: AnnotationsState,
     settings: ValueSettings
-): BulkCandidate[] =>
+) => BulkCandidate[] = (
+    columns,
+    from,
+    to,
+    keyOf,
+    state,
+    annotations,
+    settings
+) =>
     columns.flatMap((column) => {
         const source = keyOf(from, column)
         const value = state.cells[source]?.value
@@ -74,11 +82,10 @@ export const rowCandidates = (
     })
 
 /** A clear: no value in each cell. Plan it with overwrite. */
-export const clearCandidates = (
+export const clearCandidates: (
     keys: ReadonlyArray<CellKey>
-): BulkCandidate[] => keys.map((key) => ({ key, text: '' }))
+) => BulkCandidate[] = (keys) => keys.map((key) => ({ key, text: '' }))
 
-/** Whether the text adds no option code the cell hides, by the store's own rule. */
 const offersAll = (
     state: CellStoreState,
     annotations: AnnotationsState,
@@ -91,7 +98,6 @@ const offersAll = (
     }
     const field = fieldAt(state, key)
     const parsed = parseTyped(field, text, settings)
-    // Text that does not parse is the store's to refuse.
     if (!parsed.ok || parsed.value === undefined) {
         return true
     }
@@ -103,7 +109,6 @@ const offersAll = (
     )
 }
 
-/** Whether the cell holds the text's value already, with no draft to drop and no failed save to send again. */
 const holds = (
     state: CellStoreState,
     settings: ValueSettings,
@@ -158,22 +163,21 @@ export const skippedClause = (skipped: ReadonlyMap<string, number>) => {
  * no draft; one that is not is left alone unless `overwrite`, and one that holds the value already is left out. A cell
  * the person cannot edit, or that does not offer the value's options, is skipped and counted under its reason.
  */
-export const planBulk = (
+export const planBulk: (
     candidates: ReadonlyArray<BulkCandidate>,
     overwrite: boolean,
-    {
-        isEditable,
-        state,
-        annotations,
-        settings,
-    }: {
+    options3: {
         /** Why the cell cannot be edited, or undefined when it can: `reasonOf` for its table. */
         isEditable(key: CellKey): string | undefined
         state: CellStoreState
         annotations: AnnotationsState
         settings: ValueSettings
     }
-): BulkPlan => {
+) => BulkPlan = (
+    candidates,
+    overwrite,
+    { isEditable, state, annotations, settings }
+) => {
     const entries: BulkCandidate[] = []
     const skipped = new Map<string, number>()
     let filled = 0

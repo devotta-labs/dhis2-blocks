@@ -74,7 +74,6 @@ export const NotesMarker = ({
         </>
     )
 
-/** A row's notes, each as plain text with its line breaks. */
 const NotesList = ({ row }: { row: GridRow }) => {
     const notes = useRowNotes(row)
     return (

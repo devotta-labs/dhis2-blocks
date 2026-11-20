@@ -2,18 +2,16 @@ import type { CDPSession } from '@vitest/browser-playwright'
 import { cdp, page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { OPTION_LIMIT } from '@/components/dhis2-value-types'
-import type { Field, Option } from '@/components/dhis2-value-types'
-import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
+import type { Field } from '@/components/dhis2-value-types'
+import { CELL, HEADER, inputOf, rig } from './test/harness'
 import { Cell } from './Cell'
 
 // SAFETY: these tests run on the playwright provider, whose `cdp()` is this
-// session; its typing lands on only one of the workspace's two vitest installs.
 const devtools = () => cdp() as CDPSession
 
 const LETTERS = 'ABCDEFGHIJKLM'
 
-/** An ICD-sized list: A00, A00.0 … A00.9, A01 …; every name holds an "a". */
-const icd = (): Option[] =>
+const icd = () =>
     Array.from({ length: 14_240 }, (_, i) => {
         const group = String(Math.floor((i % 1100) / 11)).padStart(2, '0')
         const sub = i % 11
@@ -61,7 +59,6 @@ test('the picker shows 50 ranked matches and announces the count', async () => {
     await userEvent.keyboard('a')
     await expect.element(list).toBeVisible()
     expect(options.all()).toHaveLength(50)
-    // Codes starting with what was typed come first.
     await expect.element(options.first()).toHaveTextContent('Diagnosis A00')
     await expect
         .element(options.first())
@@ -72,9 +69,7 @@ test('the picker shows 50 ranked matches and announces the count', async () => {
     await expect
         .element(page.getByText('Showing 50 of 14,240 matches'))
         .toBeVisible()
-    // Said through the grid's announcer; the list has no live region of its own.
     expect(document.querySelectorAll('[aria-live]')).toHaveLength(0)
-    // Typing that leaves the count as it is says nothing more.
     await userEvent.keyboard(' ')
     expect(announced).toEqual(['Showing 50 of 14,240 matches'])
 })
@@ -85,7 +80,6 @@ test('Enter picks the top match and keeps the flow', async () => {
     await userEvent.keyboard('I2')
     const top = inputOf(input).getAttribute('aria-activedescendant')
     await userEvent.keyboard('1')
-    // A new top match is a new active option, so a screen reader reads it.
     await expect
         .element(input)
         .not.toHaveAttribute('aria-activedescendant', top)
@@ -169,9 +163,7 @@ test('clicking the selected cell lists the options; clicking one picks it', asyn
     inputOf(input).focus()
     await userEvent.click(input)
     await expect.element(list).toBeVisible()
-    // Nothing is highlighted, so Enter would not replace the value.
     await expect.element(input).not.toHaveAttribute('aria-activedescendant')
-    // Pressing the list anywhere (its scrollbar too) leaves focus in the cell.
     const press = new MouseEvent('mousedown', {
         bubbles: true,
         cancelable: true,
@@ -241,7 +233,6 @@ test('Alt+Down and F4 list every option from the keyboard; Escape closes the lis
     await expect.element(list).toBeVisible()
     expect(options.all()).toHaveLength(50)
     await expect.element(input).not.toHaveAttribute('aria-activedescendant')
-    // The cell has notes: Escape closes the list before it would hide them.
     await userEvent.keyboard('{Escape}')
     await expect.element(list).not.toBeInTheDocument()
     await expect.element(page.getByText('Check the diagnosis')).toBeVisible()
@@ -260,7 +251,6 @@ test('Space lists every option in Ready, so Enter after it keeps the value', asy
     await userEvent.keyboard('{Enter}')
     expect(stored()?.value).toBe('A01')
     expect(moves).toEqual(['enter'])
-    // Once typing, a space is part of the search.
     await userEvent.keyboard('a00 0{Enter}')
     expect(stored()?.value).toBe('A00.0')
 })
@@ -271,7 +261,6 @@ test('Tab picks the highlighted match and moves; Shift+Tab picks it and leaves t
     await userEvent.keyboard('I21{ArrowDown}{Tab}')
     expect(stored()).toMatchObject({ value: 'I21.0', draft: undefined })
     expect(moves).toEqual(['tab'])
-    // Not cancelled: the browser moved focus on.
     await expect.element(input).not.toHaveFocus()
     inputOf(input).focus()
     await userEvent.keyboard('A00{Shift>}{Tab}{/Shift}')
@@ -326,7 +315,6 @@ test('clicking a locked cell lists nothing, even once it is unlocked', async () 
 })
 
 test('the first matches of a 14,240-option list are at most the option limit, the CPU slowed 4×', async () => {
-    // A list no cell has searched yet, so building its index is part of the time.
     const { input } = await mount(undefined, {
         valueType: 'TEXT',
         options: icd(),
@@ -345,17 +333,14 @@ test('the first matches of a 14,240-option list are at most the option limit, th
         const observer = new MutationObserver(() => {
             if (document.querySelector('[role="option"]') !== null) {
                 observer.disconnect()
-                // The next frame, once the list is painted.
                 requestAnimationFrame(() => resolve(performance.now()))
             }
         })
         observer.observe(document.body, { childList: true, subtree: true })
     })
-    // A clinic desktop, as the performance budgets measure.
     await devtools().send('Emulation.setCPUThrottlingRate', { rate: 4 })
     try {
         await userEvent.keyboard('a')
-        // Reported, not asserted: a shared runner slowed 4× is no clinic desktop. The bound below keeps it fast.
         console.info(
             `First matches of 14,240 options listed in ${Math.round((await listed) - pressed)} ms (CPU 4×, dev build)`
         )

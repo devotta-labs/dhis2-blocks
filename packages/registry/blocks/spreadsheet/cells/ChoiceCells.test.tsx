@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { CELL, HEADER, rig } from './__tests__/harness'
+import { CELL, HEADER, rig } from './test/harness'
 import { Cell } from './Cell'
 
 const BOOLEAN: Field = { valueType: 'BOOLEAN' }
@@ -9,7 +9,6 @@ const TRUE_ONLY: Field = { valueType: 'TRUE_ONLY' }
 
 const mount = async (field: Field, options?: Parameters<typeof rig>[1]) => {
     const setup = rig(field, options)
-    // Through `Cell`, which hands the control the rule's lock.
     await render(
         setup.ui(
             <Cell
@@ -32,7 +31,6 @@ test('y, n and Delete set a Yes/No field; all four arrows move', async () => {
     await userEvent.keyboard('n')
     expect(stored()?.value).toBe('false')
     await expect.element(yesNo()).toHaveDisplayValue('No')
-    // Straight after 'n': the select's own type-ahead would look for "ny".
     await userEvent.keyboard('y')
     expect(stored()?.value).toBe('true')
     await expect.element(yesNo()).toHaveDisplayValue('Yes')
@@ -42,7 +40,6 @@ test('y, n and Delete set a Yes/No field; all four arrows move', async () => {
         '{ArrowDown}{ArrowUp}{ArrowLeft}{ArrowRight}{Enter}'
     )
     expect(moves).toEqual(['down', 'up', 'left', 'right', 'enter'])
-    // Arrows only move: the value stays as it is.
     expect(stored()?.value).toBeUndefined()
 })
 
@@ -52,7 +49,6 @@ test('a Yes/No field lists and picks like an option set', async () => {
     await userEvent.click(yesNo())
     await userEvent.click(page.getByRole('option', { name: 'No' }))
     expect(stored()?.value).toBe('false')
-    // Typed and picked: the top match is highlighted, so Enter takes it.
     await userEvent.keyboard('{F2}{Backspace}{Backspace}ye{Enter}')
     expect(stored()?.value).toBe('true')
 })
@@ -86,7 +82,6 @@ test('a choice made as a rule locks the cell is not saved: the lock is read as i
     const { effects, enqueued } = await mount(BOOLEAN)
     const control = yesNo().element()
     control.focus()
-    // The rule locks the cell, and the key arrives before the cell is drawn again.
     effects.setState({
         cells: {
             [CELL]: {
@@ -164,7 +159,6 @@ test('a rule that hides a checkbox keeps focus on the same control and names the
     await expect
         .element(page.getByText('Hidden', { exact: true }))
         .toBeVisible()
-    // Neither checked nor not: the rule hid the answer.
     await expect.element(checkbox()).toBePartiallyChecked()
     await expect.element(checkbox()).toHaveAccessibleDescription(HIDDEN_BY)
     await expect.element(checkbox()).toHaveFocus()

@@ -2,7 +2,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { CELL, HEADER, inputOf, rig } from '../__tests__/harness'
+import { CELL, HEADER, inputOf, rig } from '../test/harness'
 import { Cell } from '../Cell'
 
 const LONG_TEXT: Field = { valueType: 'LONG_TEXT' }
@@ -38,7 +38,6 @@ test('Enter adds a line; Ctrl+Enter and ⌘+Enter save; the hint says so', async
     await userEvent.keyboard('{Enter}')
     await expect.element(text).toHaveValue('Seen')
     await expect.element(text).toHaveFocus()
-    // The cursor opens at the end of the text.
     await userEvent.keyboard('{Enter}at home')
     await expect.element(text).toHaveValue('Seen\nat home')
     expect(enqueued).toEqual([])
@@ -59,7 +58,6 @@ test('Enter adds a line; Ctrl+Enter and ⌘+Enter save; the hint says so', async
     expect(stored()?.value).toBe('Seen\nat home!')
     await expect.element(dialog).not.toBeInTheDocument()
 
-    // Emptied text clears the value.
     await userEvent.keyboard('{F2}')
     await userEvent.fill(text, '')
     await userEvent.click(page.getByRole('button', { name: 'Save' }))
@@ -73,12 +71,10 @@ test('opening with a typed key starts the text with that key, cursor at the end'
     await expect.element(text).toHaveValue('a')
     await userEvent.keyboard('bc')
     await expect.element(text).toHaveValue('abc')
-    // Text that is typed and not yet saved is kept when focus leaves the editor.
     await userEvent.click(page.getByText('Age (years)'))
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('abc')
 
-    // Without a key, the editor opens on the stored text, the cursor at its end.
     inputOf(cell).focus()
     await userEvent.keyboard('{Enter}')
     const area = text.element()
@@ -96,29 +92,23 @@ test('a field mask is checked on save and keeps the editor open with the message
     inputOf(cell).focus()
     await userEvent.keyboard('{Enter}')
     await userEvent.fill(text, '12')
-    // Nothing is said while the text is typed.
     await expect.element(dialog.getByText(BAD_FORMAT)).not.toBeInTheDocument()
     await userEvent.click(page.getByRole('button', { name: 'Save' }))
     await expect.element(dialog.getByText(BAD_FORMAT)).toBeVisible()
     await expect.element(text).toHaveAttribute('aria-invalid', 'true')
     await expect.element(dialog).toBeVisible()
     expect(enqueued).toEqual([])
-    // Focus goes back to the text the message is about.
     await expect.element(text).toHaveFocus()
-    // Ctrl+Enter is checked the same way.
     await userEvent.keyboard('{Control>}{Enter}{/Control}')
     await expect.element(dialog).toBeVisible()
     expect(enqueued).toEqual([])
 
-    // Typing again takes the message away; the matching text saves.
     await userEvent.fill(text, '456')
     await expect.element(dialog.getByText(BAD_FORMAT)).not.toBeInTheDocument()
     await userEvent.keyboard('{Control>}{Enter}{/Control}')
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('456')
 
-    // Focus leaving with text the mask refuses keeps it in the cell, refused, and saves nothing. (The next Enter would
-    // move on.)
     await userEvent.keyboard('{F2}')
     await userEvent.fill(text, '7')
     await userEvent.click(page.getByText('Age (years)'))
@@ -130,12 +120,10 @@ test('a field mask is checked on save and keeps the editor open with the message
     })
     await expect.element(cell).toHaveValue('7')
     await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
-    // Beside the cell's other notes, such as whether its value is saved.
     await expect
         .element(cell)
         .toHaveAccessibleDescription(new RegExp(BAD_FORMAT))
     expect(enqueued).toHaveLength(1)
-    // Escape on the cell drops it.
     inputOf(cell).focus()
     await userEvent.keyboard('{Escape}{Escape}')
     expect(stored()).toMatchObject({ draft: undefined, error: undefined })

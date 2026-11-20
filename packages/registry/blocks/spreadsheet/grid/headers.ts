@@ -25,8 +25,7 @@ export const nameFrom = (
         })
         .join(' ')
 
-// Header ids repeat across tables (a column id means the same field everywhere), so the table's id is part of each;
-// `scope` is the form's, so two forms on a page never share one.
+/** Scopes an otherwise reusable header ID to one form and one table. */
 export const headerDomId = (scope: string, tableId: string, headerId: string) =>
     `${scope}-${tableId}-header-${headerId}`
 
@@ -34,9 +33,8 @@ export const rowHeaderDomId = (scope: string, tableId: string, rowId: string) =>
     `${scope}-${tableId}-row-${rowId}`
 
 /** For each column, the ids of the header cells above it, top row first, ready for `aria-labelledby`. */
-export const columnHeaderIds = (scope: string, table: GridTable): string[] => {
-    const ids = table.columns.map((): string[] => [])
-    // The heading row below which each column is free again; a heading taller than one row holds its columns till then.
+export const columnHeaderIds = (scope: string, table: GridTable) => {
+    const ids = table.columns.map<string[]>(() => [])
     const coveredUntil = ids.map(() => 0)
     table.headerRows.forEach((cells, level) => {
         let column = 0

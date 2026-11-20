@@ -5,11 +5,11 @@ import { onTestFinished } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { nextFrame } from '../grid/__tests__/gridRig'
-import search from './__tests__/fixtures/org-unit-search.json'
-import lookup from './__tests__/fixtures/user-lookup.json'
-import { CELL, HEADER, inputOf, rig } from './__tests__/harness'
-import type { ServerRequest } from './__tests__/harness'
+import { nextFrame } from '../grid/test/gridRig'
+import search from './test/fixtures/org-unit-search.json'
+import lookup from './test/fixtures/user-lookup.json'
+import { CELL, HEADER, inputOf, rig } from './test/harness'
+import type { ServerRequest } from './test/harness'
 import { Cell } from './Cell'
 
 const PLACE: Field = { valueType: 'ORGANISATION_UNIT' }
@@ -24,27 +24,25 @@ const NONE = {
 interface Search {
     params: ServerRequest['params']
     signal?: AbortSignal
-    /** When the request was made (`performance.now()`). */
-    at: number
 }
 
-/**
- * A search cell over a fake server. Org units: "ngel…" finds the two Ngelehun org units, "many" finds them as 2 of
- * 120 matches, any other none. Users: "adm…" finds two, "offline" fails as a dropped connection, "down" fails
- * otherwise, any other finds none. `hold` keeps answers waiting.
- */
 const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
     const searches: Search[] = []
+    const pendingSearches = new Map<string, PromiseWithResolvers<Search>>()
     let held = false
     const answer = async (
         params: ServerRequest['params'],
         signal: AbortSignal | undefined
     ) => {
-        searches.push({ params, signal, at: performance.now() })
+        const query = String(params?.query)
+        const request = { params, signal }
+        searches.push(request)
+        pendingSearches.get(query)?.resolve(request)
+        pendingSearches.delete(query)
         if (held) {
             await new Promise(() => {})
         }
-        return String(params?.query)
+        return query
     }
     const setup = rig(field, {
         ...options,
@@ -89,6 +87,11 @@ const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
     return {
         ...setup,
         searches,
+        nextSearch(query: string) {
+            const pending = Promise.withResolvers<Search>()
+            pendingSearches.set(query, pending)
+            return pending.promise
+        },
         hold() {
             held = true
         },
@@ -96,27 +99,27 @@ const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
     }
 }
 
-const later = (ms: number) =>
-    new Promise((resolve) => {
-        setTimeout(resolve, ms)
-    })
-
 const option = (name: string) => page.getByRole('option', { name })
 const options = page.getByRole('option')
 
 test("typing in the cell lists org units within the user's search scope with their path; picking saves the id", async () => {
-    const { cell, stored, searches, announced } = await mount(PLACE, {
-        value: MCHP,
-        orgUnitNames: new Map([[MCHP, 'Ngelehun MCHP']]),
-    })
+    const firstAnswer = Promise.withResolvers<void>()
+    const secondAnswer = Promise.withResolvers<void>()
+    const answers = [firstAnswer, secondAnswer]
+    const { cell, stored, searches, announced, nextSearch } = await mount(
+        PLACE,
+        {
+            value: MCHP,
+            orgUnitNames: new Map([[MCHP, 'Ngelehun MCHP']]),
+            onAnnouncement: () => answers.shift()?.resolve(),
+        }
+    )
     await expect.element(cell).toHaveValue('Ngelehun MCHP')
     inputOf(cell).focus()
-    // Typing replaces the name and searches; no dialog opens.
     await userEvent.keyboard('ngel')
     await expect.element(cell).toHaveValue('ngel')
     await expect.element(option('Ngelehun CHC')).toBeVisible()
     expect(page.getByRole('dialog').elements()).toHaveLength(0)
-    // Typed in one go: one search, once typing stops.
     expect(searches.map(({ params }) => params)).toEqual([
         {
             query: 'ngel',
@@ -124,7 +127,6 @@ test("typing in the cell lists org units within the user's search scope with the
             fields: 'id,displayName,ancestors[displayName]',
         },
     ])
-    // Each with its path, from the top of the hierarchy; the first is highlighted.
     await expect
         .element(option('Ngelehun CHC'))
         .toHaveTextContent('Ngelehun CHCSierra Leone / Bo / Badjia')
@@ -134,19 +136,20 @@ test("typing in the cell lists org units within the user's search scope with the
     await expect
         .element(option('Ngelehun CHC'))
         .toHaveAttribute('aria-selected', 'true')
+    await firstAnswer.promise
     expect(announced).toEqual(['Results: 2'])
-    // Each answer is said as it arrives, even when it says what the one before did.
+    const secondSearch = nextSearch('ngele')
     await userEvent.keyboard('e')
-    await expect.poll(() => searches.length).toBe(2)
-    await expect.poll(() => announced).toEqual(['Results: 2', 'Results: 2'])
+    await secondSearch
+    await secondAnswer.promise
+    expect(searches).toHaveLength(2)
+    expect(announced).toEqual(['Results: 2', 'Results: 2'])
 
     await userEvent.click(option('Ngelehun CHC'))
     expect(stored()?.value).toBe(CHC)
     await expect.element(cell).toHaveFocus()
-    // The pick's name is the cell's.
     await expect.element(cell).toHaveValue('Ngelehun CHC')
 
-    // From the keyboard: ↓ and Enter pick, and the cell stays.
     await userEvent.keyboard('ngel')
     await expect.element(option('Ngelehun MCHP')).toBeVisible()
     await userEvent.keyboard('{ArrowDown}{Enter}')
@@ -159,7 +162,6 @@ test('no match says "No organisation units found" under the cell', async () => {
     inputOf(cell).focus()
     await userEvent.keyboard('ngel')
     await expect.element(option('Ngelehun CHC')).toBeVisible()
-    // While the next search waits, the results for the text before are gone, and Enter picks none of them.
     await userEvent.keyboard('{Backspace}{Backspace}zz{Enter}')
     expect(options.elements()).toHaveLength(0)
     expect(stored()?.value).toBeUndefined()
@@ -171,26 +173,30 @@ test('no match says "No organisation units found" under the cell', async () => {
 })
 
 test('a search starts at two characters, 250 ms after typing stops, and aborts the one before', async () => {
-    const { cell, searches, hold } = await mount(PLACE)
+    const { cell, searches, nextSearch, hold } = await mount(PLACE)
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    onTestFinished(() => {
+        vi.useRealTimers()
+    })
     inputOf(cell).focus()
     await userEvent.keyboard('n')
-    await later(400)
+    await vi.advanceTimersByTimeAsync(250)
     expect(searches).toEqual([])
     hold()
-    const typed: number[] = []
-    const onInput = () => typed.push(performance.now())
-    document.addEventListener('input', onInput, true)
-    onTestFinished(() => document.removeEventListener('input', onInput, true))
+    const firstSearch = nextSearch('ng')
     await userEvent.keyboard('g')
-    await expect.poll(() => searches.length).toBe(1)
-    expect(searches[0].params?.query).toBe('ng')
-    // Not before 250 ms after the key: the search waits for typing to stop.
-    expect(searches[0].at - typed[0]).toBeGreaterThanOrEqual(250)
+    await vi.advanceTimersByTimeAsync(249)
+    expect(searches).toEqual([])
+    await vi.advanceTimersByTimeAsync(1)
+    const first = await firstSearch
+    expect(searches).toEqual([first])
+    const next = nextSearch('nge')
     await userEvent.keyboard('e')
-    await expect.poll(() => searches.length).toBe(2)
-    expect(searches[1].params?.query).toBe('nge')
-    expect(searches[0].signal?.aborted).toBe(true)
-    expect(searches[1].signal?.aborted).toBe(false)
+    await vi.advanceTimersByTimeAsync(250)
+    const second = await next
+    expect(searches).toEqual([first, second])
+    expect(first.signal?.aborted).toBe(true)
+    expect(second.signal?.aborted).toBe(false)
 })
 
 test('leaving saves no result that was not picked; Tab picks the highlighted one; emptied text clears the cell', async () => {
@@ -201,7 +207,6 @@ test('leaving saves no result that was not picked; Tab picks the highlighted one
     inputOf(cell).focus()
     await userEvent.keyboard('ngel')
     await expect.element(option('Ngelehun CHC')).toBeVisible()
-    // A press outside keeps the value: the typing was a search, not a value.
     await userEvent.click(page.getByText('Age (years)'))
     expect(stored()?.value).toBe(MCHP)
     await expect.element(cell).toHaveValue('Ngelehun MCHP')
@@ -231,7 +236,6 @@ test('more matches than listed are counted; Enter and Tab do nothing while a sea
     await expect.element(page.getByText(count)).toBeVisible()
     expect(announced).toEqual([count])
 
-    // Nothing to pick yet: the search for what the cell holds has not answered.
     hold()
     await userEvent.keyboard('x{Enter}{Tab}')
     await expect.element(cell).toHaveFocus()
@@ -280,7 +284,6 @@ test('typing in a username cell lists users by name and username; picking saves 
     const { cell, stored, searches, announced } = await mount(USERNAME, {
         value: 'admin',
     })
-    // The cell shows the username.
     await expect.element(cell).toHaveValue('admin')
     inputOf(cell).focus()
     await userEvent.keyboard('admin')
@@ -311,7 +314,6 @@ test('a search that finds nothing or fails says so under the cell', async () => 
     const again = 'Could not search. Try again.'
     await expect.element(page.getByText(again)).toBeVisible()
     expect(announced).toEqual(['No users found', 'You are offline', again])
-    // Nothing to pick: Enter keeps the value.
     await userEvent.keyboard('{Enter}')
     expect(stored()?.value).toBe('admin')
 })

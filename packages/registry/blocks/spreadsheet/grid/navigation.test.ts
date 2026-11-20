@@ -4,11 +4,10 @@ import type { NavGrid } from './navigation'
 interface TableSpec {
     rows: number
     columns: number
-    /** Cells without a control, as "row,column". */
     closed?: string[]
 }
 
-const gridOf = (...specs: TableSpec[]): NavGrid => ({
+const gridOf: (...specs: TableSpec[]) => NavGrid = (...specs) => ({
     tables: specs.map(({ rows, columns, closed = [] }) => ({
         rows,
         columns,

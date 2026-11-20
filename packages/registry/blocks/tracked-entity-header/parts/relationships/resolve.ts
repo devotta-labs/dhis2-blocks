@@ -29,7 +29,7 @@ export const labelFor = (
     end: RelationshipEnd | 'both',
     fallback: string,
     override?: RelationshipLabel
-): string => {
+) => {
     if (override instanceof Object) {
         return end === 'to' ? override.to : override.from
     }
@@ -48,9 +48,9 @@ const linkName = (
     otherEnd: RelationshipEnd,
     attributes: Map<string, AttributeMeta>,
     display: DisplayOptions
-): string => {
+) => {
     const end = meta?.ends[otherEnd]
-    // Without the type's metadata the values still come back, in the order they arrived.
+
     const uids = end ? end.view : [...other.values.keys()]
     const parts = uids.flatMap((uid) => {
         const raw = other.values.get(uid)
@@ -86,7 +86,7 @@ export const resolveRelationships = ({
     attributes: Map<string, AttributeMeta>
     display: DisplayOptions
     labels?: Readonly<Record<string, RelationshipLabel>>
-}): RelationshipGroup[] => {
+}) => {
     const groups = new Map<string, RelationshipGroup>()
     for (const record of records) {
         const meta = types.get(record.type)

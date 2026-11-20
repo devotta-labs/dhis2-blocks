@@ -7,7 +7,7 @@ const text = z.string().optional().catch(undefined)
 const LinkedTrackedEntitySchema = z.looseObject({
     trackedEntity: z.string().min(1),
     trackedEntityType: z.string().min(1),
-    // Required: without `attributes` the viewer may not read the entity, so it is unreadable.
+
     attributes: z
         .array(z.unknown())
         .pipe(
@@ -25,7 +25,6 @@ interface ParsedEnd {
     linked: LinkedEnd
 }
 
-/** `entityId` is the raw tracked entity id, kept even when the entity is unreadable, so the record's own end can be found. */
 const EndSchema = z
     .looseObject({
         trackedEntity: lenient(
@@ -34,7 +33,7 @@ const EndSchema = z
         enrollment: lenient(z.looseObject({ enrollment: z.string() })),
         event: lenient(z.looseObject({ event: z.string() })),
     })
-    .transform((end): ParsedEnd => {
+    .transform<ParsedEnd>((end) => {
         const entityId = end.trackedEntity?.trackedEntity
         const entity = LinkedTrackedEntitySchema.safeParse(end.trackedEntity)
         if (entity.success) {
@@ -55,14 +54,20 @@ const EndSchema = z
                 },
             }
         }
-        const linked = ((): LinkedEnd => {
+        const linked: LinkedEnd = (() => {
             if (end.enrollment) {
-                return { kind: 'enrollment', id: end.enrollment.enrollment }
+                return {
+                    kind: 'enrollment',
+                    id: end.enrollment.enrollment,
+                } satisfies LinkedEnd
             }
             if (end.event) {
-                return { kind: 'event', id: end.event.event }
+                return {
+                    kind: 'event',
+                    id: end.event.event,
+                } satisfies LinkedEnd
             }
-            return { kind: 'unreadable' }
+            return { kind: 'unreadable' } satisfies LinkedEnd
         })()
         return { ...(entityId !== undefined && { entityId }), linked }
     })
@@ -108,7 +113,7 @@ const RelationshipTypeSchema = z
         fromConstraint: ConstraintSchema,
         toConstraint: ConstraintSchema,
     })
-    .transform((type): RelationshipTypeMeta => ({
+    .transform<RelationshipTypeMeta>((type) => ({
         id: type.id,
         name: type.displayName,
         ...(type.fromToName !== undefined && {
@@ -142,8 +147,8 @@ const ViewAttributeSchema = z
             .nullish()
             .transform((set) => set ?? undefined),
     })
-    .transform(
-        ({ id, displayFormName, valueType, optionSet }): AttributeMeta => ({
+    .transform<AttributeMeta>(
+        ({ id, displayFormName, valueType, optionSet }) => ({
             id,
             label: displayFormName,
             valueType,

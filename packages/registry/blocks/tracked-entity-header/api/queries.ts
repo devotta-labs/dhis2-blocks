@@ -6,11 +6,7 @@ import {
     TrackedEntityResponseSchema,
     TypeAttributesResponseSchema,
 } from './schemas'
-import type {
-    AttributeMetadata,
-    EnrollmentRecord,
-    TrackedEntityRecord,
-} from './types'
+import type { EnrollmentRecord } from './types'
 
 const TRACKED_ENTITY_FIELDS =
     'trackedEntity,trackedEntityType,orgUnit,inactive,potentialDuplicate,attributes[attribute,displayName,valueType,value],enrollments[enrollment,program,status,orgUnit,enrolledAt,occurredAt,followUp,completedAt],programOwners[orgUnit,program]'
@@ -22,14 +18,7 @@ const PROGRAM_FIELDS = `displayName,accessLevel,incidentDateLabel,enrollmentDate
 
 const TYPE_FIELDS = `displayName,trackedEntityTypeAttributes[displayInList,${ATTRIBUTE_FIELDS}]`
 
-/**
- * A tracked entity re-enrolled after completing has several enrollments in the program:
- * the ACTIVE one stands, else the latest enrolledAt. ISO date-times in one
- * format order as text.
- */
-const pickEnrollment = (
-    enrollments: EnrollmentRecord[]
-): EnrollmentRecord | undefined => {
+const pickEnrollment = (enrollments: EnrollmentRecord[]) => {
     const active = enrollments.filter(({ status }) => status === 'ACTIVE')
     return (active.length > 0 ? active : enrollments).reduce<
         EnrollmentRecord | undefined
@@ -48,7 +37,7 @@ export const fetchTrackedEntity = async (
     client: TrackedEntityHeaderResourceClient,
     { trackedEntity, program }: { trackedEntity: string; program?: string },
     signal?: AbortSignal
-): Promise<Result<TrackedEntityRecord, Error>> => {
+) => {
     const request = (inProgram?: string) =>
         client.query(
             {
@@ -64,7 +53,7 @@ export const fetchTrackedEntity = async (
         )
     let enrolledIn = program
     let result = await request(program)
-    // DHIS2 answers 404 for a tracked entity not enrolled in the program; it is still there without it.
+
     if (
         program !== undefined &&
         Result.isError(result) &&
@@ -112,7 +101,7 @@ export const fetchAttributeMetadata = (
     client: TrackedEntityHeaderResourceClient,
     subject: { program: string } | { trackedEntityType: string },
     signal?: AbortSignal
-): Promise<Result<AttributeMetadata, Error>> =>
+) =>
     'program' in subject
         ? client.query(
               {
@@ -137,7 +126,7 @@ export const fetchOrgUnitName = (
     client: TrackedEntityHeaderResourceClient,
     id: string,
     signal?: AbortSignal
-): Promise<Result<string, Error>> =>
+) =>
     client.query(
         {
             resource: 'organisationUnits',

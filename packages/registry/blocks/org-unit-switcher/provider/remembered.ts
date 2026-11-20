@@ -15,9 +15,15 @@ const RememberedSchema = z.object({
 const keyOf = (userId: string) => `dhis2-blocks:org-unit-switcher:${userId}`
 
 /** Storage can be blocked or full, and the choice is only a convenience, so neither call throws. */
-export const readRemembered = (userId: string): Remembered => {
+export const readRemembered: (
+    userId: string,
+    browserWindow?: Window
+) => Remembered = (userId, browserWindow) => {
     try {
-        const raw = localStorage.getItem(keyOf(userId))
+        const storage = browserWindow
+            ? browserWindow.localStorage
+            : localStorage
+        const raw = storage.getItem(keyOf(userId))
         const parsed = RememberedSchema.safeParse(
             raw === null ? undefined : JSON.parse(raw)
         )
@@ -27,14 +33,12 @@ export const readRemembered = (userId: string): Remembered => {
     }
 }
 
-export const writeRemembered = (userId: string, value: Remembered): void => {
+export const writeRemembered = (userId: string, value: Remembered) => {
     try {
         localStorage.setItem(keyOf(userId), JSON.stringify(value))
-    } catch {
-        // The choice is lost on reload; nothing else depends on it.
-    }
+    } catch {}
 }
 
 /** id to the front, deduped, capped at MAX_RECENT */
-export const withRecent = (recent: string[], id: string): string[] =>
+export const withRecent = (recent: string[], id: string) =>
     [id, ...recent.filter((r) => r !== id)].slice(0, MAX_RECENT)

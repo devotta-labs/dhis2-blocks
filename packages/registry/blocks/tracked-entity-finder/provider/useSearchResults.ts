@@ -27,13 +27,15 @@ const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
  * Runs the submitted search for the current page. The provider calls it
  * once; parts read the answer from context.
  */
-export const useSearchResults = ({
+export const useSearchResults: (
+    props: SearchResultsOptions
+) => FinderResultsView = ({
     program,
     model,
     status: finderStatus,
     submission,
     page,
-}: SearchResultsOptions): FinderResultsView => {
+}) => {
     const engine = useDataEngine()
     const { baseUrl } = useConfig()
     const submissionId = submission?.id ?? 0
@@ -61,7 +63,7 @@ export const useSearchResults = ({
             finderStatus === 'ready' &&
             model !== undefined &&
             submission !== undefined,
-        // Only a page change of the same search keeps the old page on screen.
+
         placeholderData: (previous, previousQuery) =>
             previousQuery &&
             hashKey(previousQuery.queryKey.slice(0, -1)) ===
@@ -94,7 +96,7 @@ export const useSearchResults = ({
                 announce(i18n.t('At least {{count}} people found', { count }))
                 return
             }
-            // Both keys are extractable; count also reaches i18next's plural rules.
+
             announce(
                 count === 1
                     ? i18n.t('{{count}} person found', { count })

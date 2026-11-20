@@ -24,7 +24,7 @@ export const formatValue = (
     attribute: FinderAttribute | undefined,
     raw: string,
     info: FinderSystemInfo
-): string => {
+) => {
     if (raw.trim() === '') {
         return EMPTY
     }
@@ -34,7 +34,6 @@ export const formatValue = (
                 attribute.options?.find(({ code }) => code === raw)?.name ?? raw
             )
         case 'multiText':
-            // Stored as comma-separated codes.
             return raw
                 .split(',')
                 .map(

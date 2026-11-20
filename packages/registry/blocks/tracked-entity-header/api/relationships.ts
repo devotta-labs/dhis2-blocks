@@ -5,12 +5,7 @@ import {
     RelationshipTypesResponseSchema,
     ViewAttributesResponseSchema,
 } from './relationshipSchemas'
-import type {
-    AttributeMeta,
-    RelationshipEnd,
-    RelationshipRecord,
-    RelationshipTypeMeta,
-} from './types'
+import type { RelationshipEnd, RelationshipRecord } from './types'
 
 const END =
     'trackedEntity[trackedEntity,trackedEntityType,attributes[attribute,value]],enrollment[enrollment],event[event]'
@@ -27,10 +22,10 @@ const ATTRIBUTE_FIELDS =
 
 const idsFilter = (ids: string[]) => `id:in:[${ids.join(',')}]`
 
-const endOf = (
-    { from, to }: { from: { entityId?: string }; to: { entityId?: string } },
+const endOf: (
+    options: { from: { entityId?: string }; to: { entityId?: string } },
     id: string
-): RelationshipEnd | undefined => {
+) => RelationshipEnd | undefined = ({ from, to }, id) => {
     if (from.entityId === id) {
         return 'from'
     }
@@ -38,11 +33,15 @@ const endOf = (
 }
 
 /** Every relationship the tracked entity is an end of, with the end opposite it. */
-export const fetchRelationships = async (
+export const fetchRelationships: (
     client: TrackedEntityHeaderResourceClient,
     trackedEntity: string,
     signal?: AbortSignal
-): Promise<Result<RelationshipRecord[], Error>> => {
+) => Promise<Result<RelationshipRecord[], Error>> = async (
+    client,
+    trackedEntity,
+    signal
+) => {
     const result = await client.query(
         {
             resource: 'tracker/relationships',
@@ -69,7 +68,7 @@ export const fetchRelationships = async (
                         name: r.relationshipName,
                     }),
                     end,
-                    // A self-link is one record: its other end is the entity itself.
+
                     other: (end === 'from' ? r.to : r.from).linked,
                 },
             ]
@@ -81,7 +80,7 @@ export const fetchRelationshipTypes = (
     client: TrackedEntityHeaderResourceClient,
     ids: string[],
     signal?: AbortSignal
-): Promise<Result<Map<string, RelationshipTypeMeta>, Error>> =>
+) =>
     client.query(
         {
             resource: 'relationshipTypes',
@@ -100,7 +99,7 @@ export const fetchViewAttributes = (
     client: TrackedEntityHeaderResourceClient,
     ids: string[],
     signal?: AbortSignal
-): Promise<Result<Map<string, AttributeMeta>, Error>> =>
+) =>
     client.query(
         {
             resource: 'trackedEntityAttributes',

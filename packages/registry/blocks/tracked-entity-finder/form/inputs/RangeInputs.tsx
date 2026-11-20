@@ -12,7 +12,6 @@ import { CalendarDateInput } from '../../calendar/CalendarDateInput'
 import { useFinderContext } from '../../provider/context'
 import type { FieldInputProps } from './types'
 
-/** The labelled group around a From–To pair. */
 const RangeFrame = ({
     label,
     description,
@@ -29,7 +28,7 @@ const RangeFrame = ({
     <Field
         render={<fieldset />}
         invalid={error !== undefined}
-        // Left only when focus moves out of both ends, not from From to To.
+
         onBlur={(event) => {
             if (
                 !(event.relatedTarget instanceof Node) ||
@@ -44,8 +43,7 @@ const RangeFrame = ({
         )}
     >
         <legend className="mb-1 p-0 text-sm leading-snug">{label}</legend>
-        {/* A grid, not flex: the date sides sit in display: contents
-            wrappers, which take no flex sizing. Side by side down to 8rem. */}
+        {}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
             {children}
         </div>
@@ -128,7 +126,7 @@ export const DateRangeInput = ({
     const range: { from?: string; to?: string } =
         value?.kind === 'dateRange' ? value : {}
     const { from, to } = range
-    // Each end's callback carries the other end, so it changes only with it.
+
     const setFrom = useCallback(
         (next: string) => setValue({ kind: 'dateRange', from: next, to }),
         [setValue, to]

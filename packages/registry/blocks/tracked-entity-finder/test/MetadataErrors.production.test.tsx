@@ -1,0 +1,174 @@
+import React, { useState } from 'react'
+import { page, userEvent } from 'vitest/browser'
+import { FinderField } from '../form/FinderField'
+import { FinderForm } from '../form/FinderForm'
+import { FinderSubmit } from '../form/FinderSubmit'
+import { useFinderField } from '../hooks'
+import { describeMetadataError } from '../rules/describeMetadataError'
+import { buildProgramModel } from '../rules/programModel'
+import { hivProgram } from './fixtures/program'
+import { renderInFinder } from './finderTestSupport'
+
+const model = buildProgramModel(hivProgram, { multiTextSearch: true })
+const notSearchable = describeMetadataError(model, {
+    kind: 'not-searchable',
+    attribute: 'legacyId',
+})
+const cannotSearch = describeMetadataError(model, {
+    kind: 'form-cannot-search',
+})
+
+const LegacyIdSetter = () => {
+    const { field } = useFinderField('legacyId')
+    return (
+        <button
+            type="button"
+            onClick={() => field.handleChange({ kind: 'text', text: 'L-1' })}
+        >
+            Set legacy ID
+        </button>
+    )
+}
+
+describe('metadata errors in production', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('shows the short message and logs in production', async () => {
+        const error = vi.spyOn(console, 'error')
+        await renderInFinder(
+            <FinderForm>
+                <FinderField attribute="legacyId" />
+                <LegacyIdSetter />
+                <FinderField attribute="firstName" />
+                <FinderField attribute="dob" />
+                <FinderSubmit />
+            </FinderForm>
+        )
+
+        await expect
+            .element(page.getByRole('alert'))
+            .toHaveTextContent("This search isn't set up correctly")
+        await expect
+            .element(page.getByRole('alert'))
+            .not.toHaveTextContent('legacyId')
+
+        await page.getByRole('button', { name: 'Set legacy ID' }).click()
+        await userEvent.fill(page.getByLabelText('First name'), 'Joe')
+        await userEvent.fill(page.getByLabelText('Date of birth'), '2001-02-03')
+        await userEvent.tab()
+        await page.getByRole('button', { name: 'Search' }).click()
+
+        await expect
+            .element(page.getByTestId('submission'))
+            .toHaveTextContent('firstName:like:Joe dob:eq:2001-02-03')
+        await expect
+            .element(page.getByTestId('submission'))
+            .not.toHaveTextContent('legacyId')
+        expect(
+            error.mock.calls.filter(([message]) => message === notSearchable)
+        ).toHaveLength(1)
+    })
+
+    it('reports a form that can never search, in production', async () => {
+        const error = vi.spyOn(console, 'error')
+        await renderInFinder(
+            <FinderForm aria-label="Legacy">
+                <FinderField attribute="legacyId" />
+            </FinderForm>
+        )
+
+        await expect
+            .element(
+                page
+                    .getByRole('form', { name: 'Legacy' })
+                    .getByText("This search isn't set up correctly")
+                    .first()
+            )
+            .toBeVisible()
+        await expect
+            .poll(() =>
+                error.mock.calls.filter(([message]) => message === cannotSearch)
+            )
+            .toHaveLength(1)
+    })
+
+    it('logs no problem when one form swaps for another', async () => {
+        const error = vi.spyOn(console, 'error')
+        const Swap = () => {
+            const [hasId, setHasId] = useState(true)
+            return hasId ? (
+                <FinderForm aria-label="ID">
+                    <FinderField attribute="artNumber" />
+                    <button type="button" onClick={() => setHasId(false)}>
+                        No ID?
+                    </button>
+                </FinderForm>
+            ) : (
+                <FinderForm aria-label="Details">
+                    <FinderField attribute="firstName" />
+                    <FinderField attribute="dob" />
+                    <button type="button" onClick={() => setHasId(true)}>
+                        Search by ID instead
+                    </button>
+                </FinderForm>
+            )
+        }
+        await renderInFinder(<Swap />)
+        await expect
+            .element(page.getByLabelText('ART number'))
+            .not.toBeDisabled()
+
+        await page.getByRole('button', { name: 'No ID?' }).click()
+        await expect.element(page.getByLabelText('First name')).toBeVisible()
+        await page.getByRole('button', { name: 'Search by ID instead' }).click()
+        await expect.element(page.getByLabelText('ART number')).toBeVisible()
+
+        expect(error).not.toHaveBeenCalled()
+        await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('reports a form that can never search when it mounts after loading', async () => {
+        const error = vi.spyOn(console, 'error')
+        const Later = () => {
+            const [shown, setShown] = useState(false)
+            return (
+                <>
+                    <FinderForm aria-label="ID">
+                        <FinderField attribute="artNumber" />
+                    </FinderForm>
+                    {shown ? (
+                        <FinderForm aria-label="Legacy">
+                            <FinderField attribute="legacyId" />
+                        </FinderForm>
+                    ) : (
+                        <button type="button" onClick={() => setShown(true)}>
+                            Show legacy form
+                        </button>
+                    )}
+                </>
+            )
+        }
+        await renderInFinder(<Later />)
+        await expect
+            .element(page.getByLabelText('ART number'))
+            .not.toBeDisabled()
+
+        await page.getByRole('button', { name: 'Show legacy form' }).click()
+
+        await expect
+            .element(
+                page
+                    .getByRole('form', { name: 'Legacy' })
+                    .getByText("This search isn't set up correctly")
+                    .first()
+            )
+            .toBeVisible()
+        await expect
+            .poll(() =>
+                error.mock.calls.filter(([message]) => message === cannotSearch)
+            )
+            .toHaveLength(1)
+    })
+})

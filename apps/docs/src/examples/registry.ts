@@ -35,18 +35,17 @@ import popoverDetailsSource from './ui/PopoverDetails.tsx?raw'
 import radioGroupDescriptionSource from './ui/RadioGroupDescription.tsx?raw'
 import radioGroupOutcomeSource from './ui/RadioGroupOutcome.tsx?raw'
 import selectPeriodSource from './ui/SelectPeriod.tsx?raw'
+import sidebarAppSource from './ui/SidebarApp.tsx?raw'
 import spinnerSizesSource from './ui/SpinnerSizes.tsx?raw'
 import switchSettingsSource from './ui/SwitchSettings.tsx?raw'
 import tableRecordsSource from './ui/TableRecords.tsx?raw'
 import textareaNotesSource from './ui/TextareaNotes.tsx?raw'
 import toggleGroupViewSource from './ui/ToggleGroupView.tsx?raw'
 import tooltipHintSource from './ui/TooltipHint.tsx?raw'
-import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import { TimelinePlaceholder } from './timeline/TimelinePlaceholder'
 import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
 import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
 import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
-import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 import spreadsheetTargetsSource from './spreadsheet/TargetsGrid.tsx?raw'
 import trackerDataEntryCohortAncSource from './tracker-data-entry/CohortAncRegister.tsx?raw'
 import trackerDataEntryEventProgramSource from './tracker-data-entry/EventProgramGrid.tsx?raw'
@@ -97,20 +96,12 @@ const examples = [
         minHeight: 640,
     },
     {
-        slug: 'sidebar/basic',
-        title: 'Sidebar navigation',
+        slug: 'sidebar/app',
+        title: 'App navigation',
         live: false,
-        Component: lazy(() => import('./sidebar/SidebarBasic')),
-        source: sidebarBasicSource,
-        minHeight: 680,
-    },
-    {
-        slug: 'sidebar/controlled',
-        title: 'Controlled sidebar',
-        live: false,
-        Component: lazy(() => import('./sidebar/SidebarControlled')),
-        source: sidebarControlledSource,
-        minHeight: 360,
+        Component: lazy(() => import('./ui/SidebarApp')),
+        source: sidebarAppSource,
+        minHeight: 600,
     },
     {
         slug: 'working-list/default',

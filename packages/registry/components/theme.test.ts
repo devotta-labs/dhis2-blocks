@@ -111,13 +111,6 @@ const SPEC = {
     'destructive-fill': ['red-100', 'red-100'],
     'destructive-indicator': ['red-600', 'red-800'],
     'destructive-strong': ['red-900', 'red-900'],
-    sidebar: ['grey-900', 'grey-900'],
-    'sidebar-foreground': ['grey-300', 'grey-050'],
-    'sidebar-accent': ['grey-800', 'grey-800'],
-    'sidebar-accent-foreground': ['grey-050', 'white'],
-    'sidebar-border': ['grey-700', 'grey-500'],
-    'sidebar-primary': ['teal-400', 'teal-200'],
-    'sidebar-ring': ['grey-050', 'white'],
 } satisfies Record<string, [string, string]>
 // Not palette steps: the overlay is a translucent grey and the shadows are lists.
 const NOT_IN_PALETTE = [
@@ -229,7 +222,6 @@ describe('theme.css', () => {
         ['ring', 'background', 3],
         ['selected-strong', 'background', 3],
         ['foreground', 'selected', 7],
-        ['sidebar-foreground', 'sidebar', 7],
     ])(
         'default theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {
@@ -253,15 +245,12 @@ describe('theme.css', () => {
         ['info', 'info-subtle', 7],
         ['foreground', 'selected', 7],
         ['foreground', 'accent-strong', 7],
-        ['sidebar-foreground', 'sidebar', 7],
         ['input', 'background', 4.5],
         ['control', 'background', 4.5],
         ['border-strong', 'background', 4.5],
         ['ring', 'background', 4.5],
         ['selected-strong', 'background', 4.5],
         ['selected-foreground', 'background', 4.5],
-        ['sidebar-border', 'sidebar', 4.5],
-        ['sidebar-primary', 'sidebar-accent', 4.5],
         ['border', 'background', 3],
     ])(
         'high-contrast theme: %s on %s is at least %s:1',

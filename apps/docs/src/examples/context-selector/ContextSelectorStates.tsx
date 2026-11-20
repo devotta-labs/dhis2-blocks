@@ -10,12 +10,6 @@ import {
 } from '@/components/context-selector'
 import { useState } from 'react'
 
-/**
- * Every selector and every shared state.
- *
- * The controls below toggle the `loading`, `disabled`, `readOnly`, and
- * `onClear` props that every selector accepts.
- */
 const enrollmentOptions: readonly Option[] = [
     { value: 'active', label: 'Active enrollment · 14 Mar 2026' },
     { value: 'completed', label: 'Completed enrollment · 3 Sep 2025' },
@@ -174,4 +168,10 @@ const ContextSelectorStates = () => {
     )
 }
 
+/**
+ * Every selector and every shared state.
+ *
+ * The controls below toggle the `loading`, `disabled`, `readOnly`, and
+ * `onClear` props that every selector accepts.
+ */
 export default ContextSelectorStates

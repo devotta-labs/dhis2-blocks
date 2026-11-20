@@ -4,22 +4,6 @@ import type { ReactNode } from 'react'
 import { useCallback, useLayoutEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-/**
- * Shared live preview host.
- *
- * The adapter owns the DHIS2 session for every live preview: it discovers the
- * server version and API version, loads the current user and locale, renders
- * the sign-in dialog in standalone mode when credentials are needed, and
- * reloads the page when the authenticated identity changes — which also discards the query cache
- * below. The adapter's data engine strips leading slashes when joining
- * paths, so `url` carries the absolute same-origin `/dhis2` prefix —
- * the host still never talks to an arbitrary server.
- *
- * Previews always run in plugin mode: no DHIS2 header bar and no page-wide
- * loading mask, so the docs own the loading UI. `placeholder` shows while the
- * adapter starts the session (it renders nothing meanwhile); pass the same
- * placeholder the example suspends with, and the hand-over is invisible.
- */
 const createQueryClient = () =>
     new QueryClient({
         defaultOptions: {
@@ -34,8 +18,6 @@ const createQueryClient = () =>
     })
 
 const ContentReady = ({ onReady }: { onReady: () => void }) => {
-    // Layout effect: the outer placeholder is removed before the browser paints
-    // the example's own placeholder in its place.
     useLayoutEffect(onReady, [onReady])
 
     return null

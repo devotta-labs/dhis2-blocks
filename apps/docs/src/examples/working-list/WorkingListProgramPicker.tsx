@@ -10,13 +10,6 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { WorkingListProgramPickerPlaceholder } from './WorkingListPlaceholders'
 
-/**
- * Working List with a program picker.
- *
- * Tracker programs and the signed-in user's organisation units are loaded
- * from the API, so this works on any DHIS2 instance. `key={programId}` gives
- * each program a fresh list.
- */
 const metadataQuery = {
     programs: {
         resource: 'programs',
@@ -54,7 +47,6 @@ const WorkingListProgramPicker = () => {
     const [programId, setProgramId] = useState<string | undefined>()
     const [menuOpen, setMenuOpen] = useState(false)
 
-    // Replace with your app's loading state.
     if (loading) {
         return <WorkingListProgramPickerPlaceholder />
     }
@@ -88,8 +80,6 @@ const WorkingListProgramPicker = () => {
 
     const selectedProgramId = programId ?? options[0]?.value
 
-    // Prefer one of the user's units that the program is assigned to;
-    // records only exist in units the program is assigned to.
     const selectedProgram = metadata.programs.programs.find(
         (program) => program.id === selectedProgramId
     )
@@ -102,8 +92,6 @@ const WorkingListProgramPicker = () => {
 
     const assignedUserUnits = userUnits.filter((unit) => assigned.has(unit.id))
 
-    // The list shows records in the selected unit only, so a user assigned
-    // only to the root unit falls back to one of the program's own units.
     const orgUnitId =
         assignedUserUnits[0]?.id ??
         selectedProgram?.organisationUnits[0]?.id ??
@@ -143,4 +131,11 @@ const WorkingListProgramPicker = () => {
     )
 }
 
+/**
+ * Working List with a program picker.
+ *
+ * Tracker programs and the signed-in user's organisation units are loaded
+ * from the API, so this works on any DHIS2 instance. `key={programId}` gives
+ * each program a fresh list.
+ */
 export default WorkingListProgramPicker

@@ -5,29 +5,15 @@ import {
     useTrackerDataEntry,
     type TrackerDataEntrySource,
     type LoadedForm,
-    type SaveOutcome,
     type TrackerColumn,
 } from '@/components/tracker-data-entry'
-
-/**
- * A source of your own, with a column for every value type.
- *
- * Any data can fill the grid: a source loads a form and saves what changes.
- * This one keeps a small form in memory and saves each change there at once;
- * a source for your own backend would send the records to it in `save` and
- * say what became of each. Searching org units and users, and uploading
- * files, still go to the DHIS2 the app is connected to: `DiszpKrYNg8`
- * (Ngelehun CHC) and `admin` exist in the DHIS2 Sierra Leone demo database.
- * A saved file's download and an image's preview do not work here: they read
- * each row as a DHIS2 event and each column as its data element.
- */
 
 const column = (
     id: string,
     label: string,
     valueType: string,
     options?: TrackerColumn['field']['options']
-): TrackerColumn => ({ id, label, field: { valueType, options } })
+) => ({ id, label, field: { valueType, options } })
 
 const SEVERITY = [
     { code: 'MILD', name: 'Mild' },
@@ -42,7 +28,6 @@ const SYMPTOMS = [
     { code: 'HEADACHE', name: 'Headache' },
 ]
 
-// Typed in the cell, then edited in a small editor under it, then shown only.
 const COLUMNS: TrackerColumn[] = [
     column('text', 'Text', 'TEXT'),
     column('letter', 'Letter', 'LETTER'),
@@ -75,7 +60,6 @@ const COLUMNS: TrackerColumn[] = [
     column('geoJson', 'GeoJSON', 'GEOJSON'),
 ]
 
-// Values as DHIS2 stores them: ISO dates, option codes, `[lng,lat]`, ids.
 const SAMPLES = {
     row1: {
         text: 'Outreach visit',
@@ -118,69 +102,67 @@ const SAMPLES = {
     row3: {},
 } satisfies Record<string, Record<string, string>>
 
-// Kept for as long as the page is open: a form loaded again shows what was saved.
 const stored = new Map(
     Object.entries(SAMPLES).flatMap(([row, values]) =>
-        Object.entries(values).map(([field, value]): [CellKey, string] => [
+        Object.entries(values).map<[CellKey, string]>(([field, value]) => [
             `${row}.${field}`,
             value,
         ])
     )
 )
 
-const formOf = (values: ReadonlyMap<CellKey, string>): LoadedForm => ({
-    tables: [
-        {
-            id: 'samples',
-            title: 'Every value type',
-            rows: Object.keys(SAMPLES).map((id, at) => ({
-                id,
-                label: `Row ${at + 1}`,
-            })),
-            columns: COLUMNS,
-            headerRows: [
-                COLUMNS.map(({ id, label }) => ({ id, label, span: 1 })),
-            ],
-            closed: new Map(),
-        },
-    ],
-    values,
-    // One event record per row, in the one stage, which holds every column.
-    records: new Map(
-        Object.keys(SAMPLES).map((id) => [
-            id,
+const formOf = (values: ReadonlyMap<CellKey, string>) =>
+    ({
+        tables: [
             {
-                kind: 'event' as const,
-                id,
-                programStageId: 'values',
-                orgUnitId: 'DiszpKrYNg8',
-                status: 'ACTIVE' as const,
+                id: 'samples',
+                title: 'Every value type',
+                rows: Object.keys(SAMPLES).map((id, at) => ({
+                    id,
+                    label: `Row ${at + 1}`,
+                })),
+                columns: COLUMNS,
+                headerRows: [
+                    COLUMNS.map(({ id, label }) => ({ id, label, span: 1 })),
+                ],
+                closed: new Map(),
             },
-        ])
-    ),
-    fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
-    fieldNames: new Map(COLUMNS.map(({ id, label }) => [id, label])),
-    fieldsByForm: new Map([['values', new Set(COLUMNS.map(({ id }) => id))]]),
-    // Nothing required, no sections, no stages to block entry, no rules.
-    required: new Map(),
-    strategy: new Map(),
-    sections: new Map(),
-    readOnlyRecords: new Map(),
-    canReopen: new Set(),
-    readOnlyWhenCompleted: new Map(),
-    mayUncomplete: false,
-    // An org unit cell shows the name of the id it holds.
-    orgUnitNames: new Map([['DiszpKrYNg8', 'Ngelehun CHC']]),
-    fileNames: new Map(),
-    hasMore: false,
-})
+        ],
+        values,
+        records: new Map(
+            Object.keys(SAMPLES).map((id) => [
+                id,
+                {
+                    kind: 'event' as const,
+                    id,
+                    programStageId: 'values',
+                    orgUnitId: 'DiszpKrYNg8',
+                    status: 'ACTIVE' as const,
+                },
+            ])
+        ),
+        fields: new Map(COLUMNS.map(({ id, field }) => [id, field])),
+        fieldNames: new Map(COLUMNS.map(({ id, label }) => [id, label])),
+        fieldsByForm: new Map([
+            ['values', new Set(COLUMNS.map(({ id }) => id))],
+        ]),
+        required: new Map(),
+        strategy: new Map(),
+        sections: new Map(),
+        readOnlyRecords: new Map(),
+        canReopen: new Set(),
+        readOnlyWhenCompleted: new Map(),
+        mayUncomplete: false,
+        orgUnitNames: new Map([['DiszpKrYNg8', 'Ngelehun CHC']]),
+        fileNames: new Map(),
+        hasMore: false,
+    }) satisfies LoadedForm
 
-// Made once, outside the component: a source with a new key loads the form again.
 const inMemory: TrackerDataEntrySource = {
     key: 'value-types',
     load: async () => formOf(new Map(stored)),
     save: async (_engine, records) =>
-        records.map(({ sourceKey, key, value }): SaveOutcome => {
+        records.map(({ sourceKey, key, value }) => {
             if (value === null) {
                 stored.delete(key)
             } else {
@@ -188,12 +170,10 @@ const inMemory: TrackerDataEntrySource = {
             }
             return { sourceKey, key, result: 'saved' }
         }),
-    // Rows here are never completed, and none is added.
     setStatus: async () => [],
     restoreRows: async () => ({ rows: [], records: [] }),
 }
 
-// Replace with your app's loading and error states.
 const Status = () => {
     const status = useTrackerDataEntry((view) => view.status)
 
@@ -212,4 +192,16 @@ const ValueTypesGrid = () => (
     </TrackerDataEntry>
 )
 
+/**
+ * A source of your own, with a column for every value type.
+ *
+ * Any data can fill the grid: a source loads a form and saves what changes.
+ * This one keeps a small form in memory and saves each change there at once;
+ * a source for your own backend would send the records to it in `save` and
+ * say what became of each. Searching org units and users, and uploading
+ * files, still go to the DHIS2 the app is connected to: `DiszpKrYNg8`
+ * (Ngelehun CHC) and `admin` exist in the DHIS2 Sierra Leone demo database.
+ * A saved file's download and an image's preview do not work here: they read
+ * each row as a DHIS2 event and each column as its data element.
+ */
 export default ValueTypesGrid

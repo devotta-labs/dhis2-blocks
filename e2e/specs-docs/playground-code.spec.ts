@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { expect, test } from './fixtures'
+import { expect, test } from './docs.fixture'
 
 test.describe('playground Canvas / Code', () => {
     for (const [path, composition, part, prop, value] of [

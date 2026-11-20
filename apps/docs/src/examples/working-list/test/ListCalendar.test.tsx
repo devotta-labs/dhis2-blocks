@@ -4,7 +4,7 @@ import { Result } from 'better-result'
 import React, { useState, type ReactNode } from 'react'
 import { render } from 'vitest-browser-react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { useWorkingListDateRange } from '@/components/working-list'
+import { WorkingList, useWorkingListDateRange } from '@/components/working-list'
 import { resolveWorkingListCapabilities } from '@/components/working-list/api/capabilities'
 import type {
     DataEngineValue,
@@ -27,7 +27,6 @@ import {
     WorkingListPrivateUiContext,
     type WorkingListPrivateUiContextValue,
 } from '@/components/working-list/provider/WorkingListPrivateContext'
-import { SavedListNotFoundError } from '@/components/working-list/provider/errors'
 import { createWorkingListProviderStore } from '@/components/working-list/provider/store'
 import { createWorkingListValueTransformers } from '@/components/working-list/registry/transformers'
 import {
@@ -38,6 +37,17 @@ import {
     useCalendarDay,
 } from '@/components/calendar'
 import { ListCalendar } from '../ListCalendar'
+import { LabServerScope } from '../../../playground/LabServer'
+import {
+    LAB_ORG_UNIT,
+    LAB_PROGRAM,
+    generateWorld,
+} from '../../../playground/working-list/table/labData'
+import {
+    createLabServer,
+    RESOURCES,
+} from '../../../playground/working-list/table/labServer'
+import { DEFAULT_CONFIG } from '../../../playground/working-list/table/presets'
 
 i18n.addResources('nb', 'translation', {
     Calendar: 'Kalender',
@@ -80,28 +90,26 @@ const transformers = createWorkingListValueTransformers({
     locale: 'en',
 })
 
-const configuration = (
-    filters: AppliedFilter[] = []
-): WorkingListConfiguration => ({
-    mode: 'trackedEntity',
-    programId: 'Program0001',
-    columns: ['programOwnerId', 'Attribute01'],
-    sort: { fieldId: 'createdAt', direction: 'desc' },
-    filters,
-})
+const configuration = (filters: AppliedFilter[] = []) =>
+    ({
+        mode: 'trackedEntity',
+        programId: 'Program0001',
+        columns: ['programOwnerId', 'Attribute01'],
+        sort: { fieldId: 'createdAt', direction: 'desc' },
+        filters,
+    }) satisfies WorkingListConfiguration
 
-const publicConfiguration = (
-    filters: AppliedFilter[] = []
-): PublicConfiguration => ({
-    mode: 'trackedEntity',
-    columns: ['programOwnerId', 'Attribute01'],
-    sort: { fieldId: 'createdAt', direction: 'desc' },
-    filters: filters.map(({ field, operator, value }) => ({
-        fieldId: field.id,
-        operator,
-        value,
-    })),
-})
+const publicConfiguration = (filters: AppliedFilter[] = []) =>
+    ({
+        mode: 'trackedEntity',
+        columns: ['programOwnerId', 'Attribute01'],
+        sort: { fieldId: 'createdAt', direction: 'desc' },
+        filters: filters.map(({ field, operator, value }) => ({
+            fieldId: field.id,
+            operator,
+            value,
+        })),
+    }) satisfies PublicConfiguration
 
 const entity = (id: string, name: string, enrolledAt: string) => ({
     trackedEntity: id,
@@ -126,31 +134,34 @@ const actions: WorkingListActions = {
     setPage: () => Result.ok(),
     setPageSize: () => Result.ok(),
     selectView: () => Result.ok(),
-    clearViewSelection: vi.fn(() => Result.ok()),
+    clearViewSelection: () => {
+        throw new Error('Use the working-list provider to change views')
+    },
     createView: async () => Result.ok({ viewId: 'new-view' }),
     updateSelectedView: async () => Result.ok(),
     deleteView: async () => Result.ok(),
     downloadVisibleRows: () => Result.ok(),
 }
 
-const meta = (selection: WorkingListMeta['selection']): WorkingListMeta => ({
-    lifecycle: { status: 'ready' },
-    selection,
-    activeConfiguration: {
-        status: selection.status === 'ready' ? 'ready' : 'unavailable',
-    },
-    savedViews: { status: 'pending', views: [] },
-    mutations: {
-        create: { status: 'idle' },
-        update: { status: 'idle' },
-        delete: { status: 'idle' },
-    },
-    results: { status: 'pending' },
-    dirty: false,
-    online: true,
-    pagination: { page: 1, pageSize: 15 },
-    fields: [],
-})
+const meta = (selection: WorkingListMeta['selection']) =>
+    ({
+        lifecycle: { status: 'ready' },
+        selection,
+        activeConfiguration: {
+            status: selection.status === 'ready' ? 'ready' : 'unavailable',
+        },
+        savedViews: { status: 'pending', views: [] },
+        mutations: {
+            create: { status: 'idle' },
+            update: { status: 'idle' },
+            delete: { status: 'idle' },
+        },
+        results: { status: 'pending' },
+        dirty: false,
+        online: true,
+        pagination: { page: 1, pageSize: 15 },
+        fields: [],
+    }) satisfies WorkingListMeta
 
 interface HarnessOptions {
     respond?: (
@@ -421,7 +432,6 @@ describe('working list calendar in a list', () => {
                 })
             )
             .toHaveTextContent('Ngelehun CHC Amina')
-        // November 2026 fills full weeks from Monday 26 October to Sunday 6 December.
         expect(
             requests.find(
                 ({ resource }) => resource === 'tracker/trackedEntities'
@@ -521,21 +531,34 @@ describe('working list calendar in a list', () => {
     })
 
     it('offers the default list when the saved list is unavailable', async () => {
-        const view = await renderInList(<ListCalendar />, {
-            selection: {
-                status: 'error',
-                requestedSavedListId: 'SavedList01',
-                error: new SavedListNotFoundError({
-                    savedListId: 'SavedList01',
-                    message: 'Not found',
-                }),
-            },
-        }).screen
-
-        await view
-            .getByRole('button', { name: 'Use the default working list' })
-            .click()
-        expect(actions.clearViewSelection).toHaveBeenCalled()
+        const config = DEFAULT_CONFIG
+        const respond = createLabServer(config, generateWorld(config.data))
+        const view = await render(
+            <LabServerScope
+                apiVersion={config.server.apiVersion}
+                network={config.network}
+                resources={RESOURCES}
+                respond={respond}
+                log={() => {}}
+            >
+                <WorkingList
+                    defaultViewId="MissingList"
+                    programId={LAB_PROGRAM}
+                    orgUnitId={LAB_ORG_UNIT}
+                >
+                    <ListCalendar>
+                        <CalendarGrid />
+                    </ListCalendar>
+                </WorkingList>
+            </LabServerScope>
+        )
+        const useDefault = view.getByRole('button', {
+            name: 'Use the default working list',
+        })
+        await expect.element(useDefault).toBeVisible()
+        await useDefault.click()
+        await expect.element(view.getByRole('grid')).toBeVisible()
+        await expect.element(useDefault).not.toBeInTheDocument()
     })
 
     it('says the Coptic calendar is not supported yet', async () => {

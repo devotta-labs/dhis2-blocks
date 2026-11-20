@@ -1,17 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
 import { readdirSync, readFileSync } from 'node:fs'
-import { expect, test } from './fixtures'
+import { expect, test } from './docs.fixture'
 
-/**
- * Every docs example at WCAG 2.2 AA: axe with the default and the more-contrast
- * theme, then a Tab walk that checks each stop shows where focus is. Axe finds
- * about a third of WCAG problems; the rest need a person, so this is the floor.
- */
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const TAB_STOPS = 60
 
-// Every example list in the examples folder: the registry, and the lists it spreads in.
 const EXAMPLES = 'apps/docs/src/examples'
 const slugs = readdirSync(EXAMPLES)
     .filter((name) => name.endsWith('.ts'))
@@ -43,11 +37,6 @@ declare global {
     }
 }
 
-/**
- * Before a Tab press, how each focusable element and its row look; after it,
- * whether the newly focused element looks any different. Only real Tab presses
- * move focus, so the page's own focus and blur handlers see what a person does.
- */
 const focusStep = (page: Page, phase: 'before' | 'after') =>
     page.evaluate((phase) => {
         const marks = (element: Element) =>

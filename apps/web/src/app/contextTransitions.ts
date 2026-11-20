@@ -1,10 +1,10 @@
 import type { AppUrlState } from './urlState'
 
-export const getGuardedOrganisationUnitState = (
+export const getGuardedOrganisationUnitState: (
     current: AppUrlState,
     orgUnitId: string | undefined,
     confirmDiscard: () => boolean
-): AppUrlState => {
+) => AppUrlState = (current, orgUnitId, confirmDiscard) => {
     if (!confirmDiscard()) {
         return current
     }

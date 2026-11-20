@@ -97,6 +97,17 @@ export default defineConfig({
     },
     overrides: [
         {
+            files: [
+                'packages/registry/blocks/observation-cards/format/display.ts',
+            ],
+            rules: {
+                'landmines-style/no-comments': [
+                    'error',
+                    { allow: ['WARNING', 'colour-literal'] },
+                ],
+            },
+        },
+        {
             files: ['e2e/**/*.spec.ts'],
             rules: {
                 'landmines-structure/test-file-names': 'off',

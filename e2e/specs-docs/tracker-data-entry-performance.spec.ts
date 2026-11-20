@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { resolve } from 'node:path'
 import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test'
 import {
@@ -10,7 +11,7 @@ import {
     gridReady,
     readEvent,
     settled,
-    test,
+    test as base,
     valuesOf,
 } from './tracker-data-entry.support'
 
@@ -123,14 +124,26 @@ const medianWithinBudget = (
 
 const WOMEN = 25
 
-const seedCohort = () => {
-    test.skip(!localDhis2, 'Requires the disposable docs DHIS2 stack')
+const cohortData = (action: 'seed' | 'cleanup', batch: string) => {
     execFileSync(
         resolve(__dirname, '../metadata/seed-cohort-performance.sh'),
-        [process.env.E2E_VERSION_SLUG ?? '42'],
+        [process.env.E2E_VERSION_SLUG ?? '42', action, batch],
         { stdio: 'inherit' }
     )
 }
+
+const test = base.extend<{ cohortBatch: string }>({
+    cohortBatch: async ({}, use) => {
+        test.skip(!localDhis2, 'Requires the disposable docs DHIS2 stack')
+        const batch = randomBytes(4).toString('hex').slice(0, 7)
+        try {
+            cohortData('seed', batch)
+            await use(batch)
+        } finally {
+            cohortData('cleanup', batch)
+        }
+    },
+})
 
 const diastolic = (page: Page) => page.locator(`tbody [id$=".${DIASTOLIC}"]`)
 
@@ -153,8 +166,8 @@ test('register of 50 rows by 50 columns shows within 1 s', async ({
 test('cohort register shows 25 women by 41 columns within 1 s', async ({
     page,
     browser,
+    cohortBatch: _cohortBatch,
 }, testInfo) => {
-    seedCohort()
     const loads = await onThreeLoads(
         page,
         browser,
@@ -247,8 +260,11 @@ test('no keypress slower than 150 ms while saving online', async ({
     )
 })
 
-const editAfterTenPages = async (page: Page, context: BrowserContext) => {
-    seedCohort()
+const editAfterTenPages = async (
+    page: Page,
+    context: BrowserContext,
+    cohortBatch: string
+) => {
     await openSlowed(page, COHORT)
     const more = page.getByRole('button', { name: /show more/i })
     const rulesVisible = 'data-entry:rules-visible'
@@ -262,7 +278,7 @@ const editAfterTenPages = async (page: Page, context: BrowserContext) => {
     }
 
     await context.setOffline(true)
-    const pressure = cell(page, 'CpFirstV000', DIASTOLIC)
+    const pressure = cell(page, `F${cohortBatch}000`, DIASTOLIC)
     await expect(pressure).toHaveValue('70')
     const timing = await watchKeys(page)
     const before = (await durations(page, 'data-entry:rules-edit')).length
@@ -282,16 +298,18 @@ const editAfterTenPages = async (page: Page, context: BrowserContext) => {
 test('after 10 pages, rules for an edit within 100 ms', async ({
     page,
     context,
+    cohortBatch,
 }, testInfo) => {
-    const { edit } = await editAfterTenPages(page, context)
+    const { edit } = await editAfterTenPages(page, context, cohortBatch)
     withinBudget(testInfo, 'data-entry:rules-edit (after 10 pages)', edit, 100)
 })
 
 test('after 10 pages, no keypress over 150 ms', async ({
     page,
     context,
+    cohortBatch,
 }, testInfo) => {
-    const { timing } = await editAfterTenPages(page, context)
+    const { timing } = await editAfterTenPages(page, context, cohortBatch)
     const slowest = await slowestKey(timing)
     withinBudget(
         testInfo,

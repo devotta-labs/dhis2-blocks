@@ -142,7 +142,7 @@ export const newRow = (ids: {
     }
 }
 
-export type Row = ReturnType<typeof newRow>
+type Row = ReturnType<typeof newRow>
 
 /** The row's records, for the form. */
 export const recordsOf: (row: Row) => DataRecord[] = (row) => Object.values(row)
@@ -178,7 +178,7 @@ export const typed = (
 ]
 
 /** What DHIS2 holds, by the list a read returns it in. */
-export interface Server {
+interface Server {
     events?: unknown[]
     enrollments?: unknown[]
     trackedEntities?: unknown[]

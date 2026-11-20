@@ -87,9 +87,7 @@ type Query = Parameters<DataEngine['query']>[0]
 type QueryOptions = Parameters<DataEngine['query']>[1]
 type Mutation = Parameters<DataEngine['mutate']>[0]
 type MutateOptions = Parameters<DataEngine['mutate']>[1]
-export type Answer = (
-    options: MutateOptions
-) => ReturnType<DataEngine['mutate']>
+type Answer = (options: MutateOptions) => ReturnType<DataEngine['mutate']>
 /** The events DHIS2 holds, as the read before each import returns them. */
 type Server = ReadonlyArray<{ event: string }>
 

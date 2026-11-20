@@ -1,20 +1,27 @@
+import { openDhis2TestServer } from '../../../test/dhis2-server.test-utils'
 import { Result } from 'better-result'
 import { z } from 'zod'
 import {
     createTrackedEntityHeaderClient,
     createTrackedEntityHeaderResourceClient,
-    type DataEngineLike,
     isForbidden,
     resourceClientOf,
     shouldRetryTrackedEntityHeaderRequest,
+    toRequestError,
     type TrackedEntityHeaderClient,
 } from './client'
 
-const failWith = async (cause: unknown) => {
-    const query = vi.fn<DataEngineLike['query']>().mockRejectedValue(cause)
-    const result = await createTrackedEntityHeaderResourceClient({
-        query,
-    }).query({ resource: 'programs' }, z.unknown())
+const servePrograms = (response: Response) =>
+    openDhis2TestServer((url) =>
+        url.pathname === '/api/42/programs' ? response : undefined
+    )
+
+const failWith = async (response: Response) => {
+    const { engine } = await servePrograms(response)
+    const result = await createTrackedEntityHeaderResourceClient(engine).query(
+        { resource: 'programs' },
+        z.unknown()
+    )
     if (Result.isOk(result)) {
         throw new Error('expected an error result')
     }
@@ -22,12 +29,12 @@ const failWith = async (cause: unknown) => {
 }
 
 const httpError = (httpStatusCode: number) =>
-    failWith(Object.assign(new Error('Failed'), { httpStatusCode }))
+    failWith(Response.json({ httpStatusCode }, { status: httpStatusCode }))
 
 describe('shouldRetryTrackedEntityHeaderRequest', () => {
     it('retries server and network failures twice', async () => {
         const serverError = await httpError(500)
-        const networkError = await failWith(new Error('Failed to fetch'))
+        const networkError = await failWith(Response.error())
 
         expect(shouldRetryTrackedEntityHeaderRequest(0, serverError)).toBe(true)
         expect(shouldRetryTrackedEntityHeaderRequest(1, networkError)).toBe(
@@ -48,13 +55,10 @@ describe('shouldRetryTrackedEntityHeaderRequest', () => {
     })
 
     it('does not retry a response that fails the schema', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockResolvedValue({ trackedEntityHeaderResource: { odd: true } })
-
-        const result = await createTrackedEntityHeaderResourceClient({
-            query,
-        }).query({ resource: 'programs' }, z.object({ id: z.string() }))
+        const { engine } = await servePrograms(Response.json({ odd: true }))
+        const result = await createTrackedEntityHeaderResourceClient(
+            engine
+        ).query({ resource: 'programs' }, z.object({ id: z.string() }))
 
         expect(Result.isError(result)).toBe(true)
         expect(
@@ -65,30 +69,31 @@ describe('shouldRetryTrackedEntityHeaderRequest', () => {
 })
 
 describe('isForbidden', () => {
-    it('is true for a thrown 403, however the engine nests the status', async () => {
+    it('recognises a 403 from app-runtime and from either host error shape', async () => {
         expect(isForbidden(await httpError(403))).toBe(true)
-        expect(
-            isForbidden(
-                await failWith({
-                    message: 'Forbidden',
-                    details: { httpStatusCode: 403 },
-                })
-            )
-        ).toBe(true)
+        const direct = Object.assign(new Error('Forbidden'), {
+            httpStatusCode: 403,
+        })
+        const nested = {
+            message: 'Forbidden',
+            details: { httpStatusCode: 403 },
+        }
+        expect(isForbidden(toRequestError(direct, 'programs'))).toBe(true)
+        expect(isForbidden(toRequestError(nested, 'programs'))).toBe(true)
     })
 
     it('is false for other failures, and never reads the message', async () => {
         expect(isForbidden(await httpError(500))).toBe(false)
-        expect(isForbidden(await failWith(new Error('403 Forbidden')))).toBe(
-            false
-        )
+        expect(
+            isForbidden(toRequestError(new Error('403 Forbidden'), 'programs'))
+        ).toBe(false)
         expect(isForbidden(new Error('403'))).toBe(false)
     })
 })
 
 describe('resourceClientOf', () => {
-    it('runs requests only for a client made by createTrackedEntityHeaderClient', () => {
-        const engine: DataEngineLike = { query: vi.fn() }
+    it('runs requests only for a client made by createTrackedEntityHeaderClient', async () => {
+        const { engine } = await openDhis2TestServer(() => undefined)
 
         expect(
             resourceClientOf(createTrackedEntityHeaderClient(engine))

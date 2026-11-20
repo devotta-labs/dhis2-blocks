@@ -145,7 +145,8 @@ test('counts new searches once, not paging, cached pages or background refreshes
         .toBeVisible()
 
     await page.getByRole('button', { name: 'Refresh results' }).click()
-    await expect.poll(() => server.pendingSearches.length).toBe(3)
+    await server.waitForSearch(2)
+    expect(server.pendingSearches).toHaveLength(3)
     await expect.element(results).toHaveAttribute('aria-busy', 'true')
     server.pendingSearches[2].respond(answer([amina]))
     await expect.element(results).toHaveAttribute('aria-busy', 'false')

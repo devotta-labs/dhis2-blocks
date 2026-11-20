@@ -83,7 +83,7 @@ const RequestFailureSchema = z.looseObject({
 const detailOf = (cause: unknown) =>
     cause instanceof Error ? cause.message : String(cause)
 
-const toRequestError = (cause: unknown, resource: string) => {
+export const toRequestError = (cause: unknown, resource: string) => {
     const failure = RequestFailureSchema.safeParse(cause).data
     return new TrackedEntityHeaderRequestError(
         `Request to ${resource} failed: ${detailOf(cause)}`,

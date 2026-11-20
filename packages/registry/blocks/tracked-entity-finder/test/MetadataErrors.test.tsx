@@ -123,7 +123,6 @@ describe('metadata errors', () => {
     })
 
     it('throws when a field is outside a form or a part is outside the provider', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {})
         const server = createFakeServer()
         await renderWithQueries(
             <>

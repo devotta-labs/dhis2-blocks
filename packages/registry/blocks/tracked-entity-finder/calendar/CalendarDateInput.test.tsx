@@ -60,12 +60,13 @@ const typeDate = async (text: string) => {
 
 describe('CalendarDateInput', () => {
     it('does not crash on the ethiopian calendar', async () => {
-        const onChange = vi.fn()
+        const changed = Promise.withResolvers<string>()
+        const onChange = (value: string) => changed.resolve(value)
         await render(<Harness info={ethiopian} onChange={onChange} />)
 
         await typeDate('2017-01-01')
 
-        await expect.poll(() => onChange.mock.lastCall?.[0]).toBe('2024-09-11')
+        expect(await changed.promise).toBe('2024-09-11')
         await expect.element(dateField()).toHaveValue('2017-01-01')
     })
 
@@ -81,12 +82,13 @@ describe('CalendarDateInput', () => {
     })
 
     it('reports a typed date in the system format as ISO', async () => {
-        const onChange = vi.fn()
+        const changed = Promise.withResolvers<string>()
+        const onChange = (value: string) => changed.resolve(value)
         await render(<Harness info={gregorianDayFirst} onChange={onChange} />)
 
         await typeDate('23-05-2024')
 
-        await expect.poll(() => onChange.mock.lastCall?.[0]).toBe('2024-05-23')
+        expect(await changed.promise).toBe('2024-05-23')
     })
 
     it('passes the calendar and format to CalendarInput', async () => {
@@ -109,7 +111,8 @@ describe('CalendarDateInput', () => {
     })
 
     it('reports a cleared date as empty', async () => {
-        const onChange = vi.fn()
+        const changed = Promise.withResolvers<string>()
+        const onChange = (value: string) => changed.resolve(value)
         await render(
             <Harness
                 info={gregorianDayFirst}
@@ -120,7 +123,7 @@ describe('CalendarDateInput', () => {
 
         await typeDate('')
 
-        await expect.poll(() => onChange.mock.lastCall?.[0]).toBe('')
+        expect(await changed.promise).toBe('')
     })
 
     describe('when CalendarInput throws', () => {

@@ -1,3 +1,4 @@
+import { exhaustLocalStorage } from './storage.test-utils'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { useEffect, useState, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
@@ -389,9 +390,8 @@ describe('OrgUnitProvider', () => {
     it('switches when storage throws', async () => {
         const rendered = await renderOrgUnit(createServer())
         await settled(rendered)
-        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-            throw new Error('full')
-        })
+        exhaustLocalStorage()
+        expect(() => localStorage.setItem('probe', 'will not fit')).toThrow()
 
         await rendered.act(() => rendered.result.current.hook.setOrgUnit(OCEAN))
 

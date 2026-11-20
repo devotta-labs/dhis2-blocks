@@ -290,7 +290,7 @@ describe('FinderResults', () => {
             useFinderPerson()
             return null
         }
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderFinder({
             results: (
                 <Catch>

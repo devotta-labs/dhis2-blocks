@@ -5,7 +5,7 @@ import { renderParts } from './valuePartsSupport'
 
 describe('a misconfigured part in production', () => {
     it('shows a short message and logs the details once', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderParts(
             <>
                 <TrackedEntityAttribute attribute="nope0000001" />

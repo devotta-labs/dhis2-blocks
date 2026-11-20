@@ -49,10 +49,16 @@ describe('OrgUnitProvider freshness', () => {
 
     it('typing in the search box does not re-render a page that reads the unit', async () => {
         const server = createServer({ assigned: [district('Root')] })
+        const ready = Promise.withResolvers<void>()
         let pageRenders = 0
         let type = (_query: string) => {}
         const Page = () => {
-            useOrgUnit()
+            const { status } = useOrgUnit()
+            useEffect(() => {
+                if (status !== 'pending') {
+                    ready.resolve()
+                }
+            }, [status])
             pageRenders += 1
             return null
         }
@@ -69,8 +75,8 @@ describe('OrgUnitProvider freshness', () => {
                 </OrgUnitProvider>
             </QueryClientProvider>
         )
-        await expect.poll(() => server.meRequests()).toHaveLength(1)
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await ready.promise
+        expect(server.meRequests()).toHaveLength(1)
         const before = pageRenders
 
         await act(() => type('nge'))

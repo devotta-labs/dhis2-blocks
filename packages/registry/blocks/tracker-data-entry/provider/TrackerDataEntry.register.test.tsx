@@ -26,7 +26,7 @@ import {
     engineFor,
     FIRST_NAME,
     immunisationRegister,
-} from '../register/__tests__/registerRig'
+} from '../register/test/registerRig'
 import type { FormPage, LoadedForm, NewRow } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 

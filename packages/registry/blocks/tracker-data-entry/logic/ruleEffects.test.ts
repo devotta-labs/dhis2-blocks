@@ -2,7 +2,7 @@ import type { Attribution, RuleEffects } from '@/components/program-rules'
 import type { CellState } from '@/components/spreadsheet'
 import { rowRuleOutcome, ruleRowsCache, ruleRowsOf } from './ruleEffects'
 
-const by = (ruleName: string): Attribution => ({
+const by: (ruleName: string) => Attribution = (ruleName) => ({
     ruleId: ruleName,
     ruleName,
     actionId: `${ruleName} action`,
@@ -10,8 +10,7 @@ const by = (ruleName: string): Attribution => ({
     readsFields: [],
 })
 
-// Built here: the block's index loads the app runtime, which needs a browser.
-const effectsWith = (edit: Partial<RuleEffects>): RuleEffects => ({
+const effectsWith: (edit: Partial<RuleEffects>) => RuleEffects = (edit) => ({
     hiddenFields: new Map(),
     hiddenSections: new Map(),
     mandatoryFields: new Map(),
@@ -29,7 +28,7 @@ const effectsWith = (edit: Partial<RuleEffects>): RuleEffects => ({
 
 type Row = Parameters<typeof rowRuleOutcome>[1]
 
-const row = (edit: Partial<Row> = {}): Row => ({
+const row: (edit?: Partial<Row>) => Row = (edit = {}) => ({
     stageFields: new Set(['a', 'b', 'r', 'f1', 'f2', 'opt', 'multi']),
     required: new Set(),
     options: new Map(),
@@ -44,7 +43,6 @@ test('clears a hidden field’s value unless assigned', () => {
 
     const cleared = rowRuleOutcome(effectsWith(hide), row())
     expect(cleared.assignments).toEqual(new Map([['a', null]]))
-    // Rule names are shown as DHIS2 gives them, not HTML-escaped.
     expect(cleared.cells.get('a')?.hiddenBy).toBe(
         'Hidden by rule: Hide if age < 5'
     )
@@ -99,7 +97,6 @@ test('hiding a section hides its fields', () => {
     expect(outcome.cells.get('f1')?.hiddenBy).toBe('Hidden by rule: Hide S')
     expect(outcome.cells.get('f2')?.hiddenBy).toBe('Hidden by rule: Hide S')
     expect(outcome.cells.get('a')?.hiddenBy).toBeUndefined()
-    // A hidden section keeps its fields' values.
     expect(outcome.assignments.size).toBe(0)
 })
 
@@ -133,7 +130,6 @@ test('an assigned value outside the option set clears the field', () => {
 
     expect(assign('opt', 'A')).toBe('A')
     expect(assign('opt', 'C')).toBeNull()
-    // Only a MULTI_TEXT value is a list of codes.
     expect(assign('opt', 'A,B')).toBeNull()
     expect(assign('multi', 'A,B')).toBe('A,B')
     expect(assign('multi', 'A,C')).toBeNull()
@@ -305,7 +301,6 @@ test("a new where-slot event's rules see its where values", () => {
         slot: 'bcg',
         createdWith: { vaccine: 'BCG', dose: '0' },
     }
-    /** The slot's dataValues with `values` held and `others` as given. */
     const rows = (
         values: Record<string, string>,
         others: Record<string, Partial<CellState>> = {}
@@ -316,10 +311,11 @@ test("a new where-slot event's rules see its where values", () => {
             Object.fromEntries(
                 [
                     ...Object.entries(values).map(
-                        ([k, value]): [string, Partial<CellState>] => [
-                            k,
-                            { value },
-                        ]
+                        ([k, value]) =>
+                            [k, { value }] satisfies [
+                                string,
+                                Partial<CellState>,
+                            ]
                     ),
                     ...Object.entries(others),
                 ].map(([k, cell]) => [
@@ -338,8 +334,6 @@ test("a new where-slot event's rules see its where values", () => {
         weight: '4',
     })
     expect(rows({ weight: '4', dose: '2' })).toMatchObject({ dose: '2' })
-    // No change in the cell, a draft alone included: createdWith stays, as the payload sends it. A cleared cell (a
-    // change, no value): the field is absent.
     expect(rows({ weight: '4' })).toMatchObject({ dose: '0' })
     expect(
         rows(
@@ -355,12 +349,10 @@ test("a new where-slot event's rules see its where values", () => {
         vaccine: 'BCG',
         weight: '4',
     })
-    // A saved clear stays `saved` until the records load again, from DHIS2, without `createdWith`.
     expect(rows({ weight: '4' }, { dose: { sync: 'saved' } })).toEqual({
         vaccine: 'BCG',
         weight: '4',
     })
-    // A draft dropped unsaved leaves the cell idle, and the payload still sends `createdWith`.
     expect(rows({ weight: '4' }, { dose: {} })).toMatchObject({ dose: '0' })
 })
 

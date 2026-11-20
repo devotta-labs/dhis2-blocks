@@ -1,7 +1,7 @@
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
-import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import rmnchEvents from './test/fixtures/rmnch-person-events.json'
+import rmnchProgram from './test/fixtures/rmnch-program.json'
 import {
     A,
     ADMISSION,
@@ -31,7 +31,7 @@ import {
     openGrid,
     person,
     saved,
-} from './__tests__/saveRig'
+} from './test/saveRig'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { eventSource } from './eventSource'
 
@@ -71,7 +71,6 @@ test('a changed event date keeps the time of day', async () => {
 })
 
 test('builds every update from what DHIS2 holds now, not the loaded form', async () => {
-    // Loaded while A was open; it has been completed since.
     const stale = {
         ...INPATIENT_LOAD,
         events: {
@@ -119,7 +118,6 @@ test('every update sends back the event fields DHIS2 would otherwise erase', asy
 })
 
 test('a new row whose event DHIS2 already has is sent as an update', async () => {
-    // Its create was saved, but the answer was lost.
     const created = {
         ...NEW_VISIT_EVENT,
         occurredAt: '2026-10-26T00:00:00.000',
@@ -235,7 +233,6 @@ test('clearing a required value is refused before sending', async () => {
     ])
     expect(grid.mutations).toEqual([])
 
-    // The event's other changes are still sent.
     const outcomes = await grid.save(cleared, change(A, AGE, '6'))
     expect(outcomes.map(({ result }) => result)).toEqual(['failed', 'saved'])
     expect(grid.sent().map(({ dataValues }) => dataValues)).toEqual([
@@ -244,7 +241,6 @@ test('clearing a required value is refused before sending', async () => {
 })
 
 test('an ON_COMPLETE stage requires its fields once the event is completed', async () => {
-    // Gestational age made compulsory in the second visit stage, which checks on completion.
     const program = {
         ...rmnchProgram,
         programStages: rmnchProgram.programStages.map((stage) => ({
@@ -325,7 +321,6 @@ test('names fields as DHIS2 shows them', async () => {
 })
 
 test('a change to an event DHIS2 does not return fails, whether or not this grid loaded it', async () => {
-    // Loaded by another grid of the program, then deleted or moved out of the user's reach.
     const grid = await inpatient()
     const record = change('Zz9yX8wV7uT', AGE, '6', {
         ...NEW_INPATIENT,

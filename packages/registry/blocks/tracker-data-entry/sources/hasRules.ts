@@ -5,11 +5,11 @@ import { ruleIdSchema } from './eventSchemas'
  * Whether the program has any rules, from the id of one of them. A request that fails, or an answer that is not
  * understood, says no: the form still opens, and the rules hook loads the rules and reports its own failures.
  */
-export const hasRulesIn = (
+export const hasRulesIn: (
     engine: DataEngine,
     programId: string,
     signal?: AbortSignal
-): Promise<boolean> =>
+) => Promise<boolean> = (engine, programId, signal) =>
     engine
         .query(
             {

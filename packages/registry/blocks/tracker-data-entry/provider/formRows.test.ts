@@ -1,6 +1,6 @@
 import type { GridTable } from '@/components/spreadsheet'
 import type { TrackerColumn, TrackerRow } from '../model/types'
-import { registerForm } from '../sources/__tests__/trackerRig'
+import { registerForm } from '../sources/test/trackerRig'
 import { formEffects, withRows } from './formRows'
 
 test('the event date is an event’s field, not a person’s or an enrolment’s', () => {

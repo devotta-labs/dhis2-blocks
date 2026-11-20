@@ -71,7 +71,6 @@ export type SupportedTrackerDataEntryTypes = [
     TrackerRow,
 ]
 
-// A source of events, a grid, and the summary beside it.
 const source = eventSource({
     programId: 'eBAyeGv0exc',
     orgUnitId: 'DiszpKrYNg8',
@@ -81,7 +80,6 @@ export const sourceKeys: [string, string | undefined] = [
     source.cacheKey,
 ]
 
-// A paper register: one person a row, the layout its columns, the period its enrolments.
 const layout: RegisterLayout = {
     columns: [
         { field: { attribute: 'w75KJ2mc4zz' } },
@@ -111,7 +109,8 @@ const registerOptions: RegisterSourceOptions = {
 export const register = registerSource(registerOptions)
 export const checked: RegisterLayout = registerLayoutSchema.parse(layout)
 export const refs: FieldRef[] = layout.columns.flatMap(
-    (node: LayoutNode): FieldRef[] => ('field' in node ? [node.field] : [])
+    (node: LayoutNode) =>
+        ('field' in node ? [node.field] : []) satisfies FieldRef[]
 )
 export const column: LayoutColumn = {
     field: { attribute: 'w75KJ2mc4zz' },
@@ -123,23 +122,21 @@ export const noPeriod: RegisterSourceOptions = {
     orgUnitId: 'o',
     layout,
 }
-// What a new row is and what a person's records are.
-export const rowOf = (row: NewRow): string => row.row.id
-export const personOf = (
+export const rowOf = (row: NewRow) => row.row.id
+export const personOf: (
     record: DataRecord
-): PersonRecord | EnrollmentRecord | undefined =>
+) => PersonRecord | EnrollmentRecord | undefined = (record) =>
     record.kind === 'trackedEntity' || record.kind === 'enrollment'
         ? record
         : undefined
 
-// A field's control replaced for one field, and for a value type everywhere.
 const Notes: CellComponent = ({ cellKey, readOnly }) =>
     readOnly ?? `notes ${cellKey}`
 const overrides: CellOverrides = {
     valueTypes: { LONG_TEXT: Notes },
     fields: { qrur9Dvnyt5: Notes },
 }
-export const page = (): ReactNode =>
+export const page: () => ReactNode = () =>
     TrackerDataEntry({
         source,
         cells: overrides,
@@ -149,10 +146,9 @@ export const page = (): ReactNode =>
         ],
     })
 
-// Anything else, selected.
-export const useCanComplete = (): boolean =>
+export const useCanComplete = () =>
     useTrackerDataEntry((view) => view.summary.canComplete)
-export const useUnsent = (): number =>
+export const useUnsent = () =>
     useTrackerDataEntry((view) => view.summary.unsent)
 export const useActions = () =>
     useTrackerDataEntry((view) => view.complete) satisfies (
@@ -172,27 +168,26 @@ export const useDiscard = () =>
     useTrackerDataEntry(
         (view) => view.discardFailed
     ) satisfies () => Promise<void>
-// A row's cell for a column, named as the grid names it: through the record the column's slot picks.
-export const cellOf = (row: TrackerRow, column: TrackerColumn): CellKey =>
-    trackerKeyOf(row, column)
-// What a row's cells save to, and the form the record has fields of.
-export const useRecord = (rowId: string): DataRecord | undefined =>
+export const cellOf: (row: TrackerRow, column: TrackerColumn) => CellKey = (
+    row,
+    column
+) => trackerKeyOf(row, column)
+export const useRecord: (rowId: string) => DataRecord | undefined = (rowId) =>
     useTrackerDataEntry((view) => view.records.get(rowId))
-export const eventOf = (record: DataRecord): EventRecord | undefined =>
-    record.kind === 'event' ? record : undefined
+export const eventOf: (record: DataRecord) => EventRecord | undefined = (
+    record
+) => (record.kind === 'event' ? record : undefined)
 export const badSlots: TrackerRow = {
     id: 'r',
     label: 'R',
     // @ts-expect-error A row's slots name records by slot: a record id is a string, not a record.
     slots: { person: 1 },
 }
-// The form's rows, to lay out controls of your own by, such as a "Complete" button per row.
-export const useRows = (): TrackerRow[] => {
+export const useRows: () => TrackerRow[] = () => {
     const tables = useTrackerDataEntry((view) => view.tables)
     return tables.flatMap(({ rows }) => rows)
 }
-export const useLoadError = (): string | undefined =>
-    useTrackerDataEntry((view) => view.error)
+export const useLoadError = () => useTrackerDataEntry((view) => view.error)
 export const statuses: TrackerDataEntryView['status'][] = [
     'loading',
     'ready',

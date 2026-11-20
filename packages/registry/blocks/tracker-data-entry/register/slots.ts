@@ -12,18 +12,15 @@ export interface SlotEvent {
 
 const dateOf = (event: SlotEvent) => event.occurredAt ?? event.scheduledAt ?? ''
 
-// A date is `YYYY-MM-DD` or a date-time, so text order is date order; an event with no date goes last.
 const byDate = (a: SlotEvent, b: SlotEvent) => {
     const [x, y] = [dateOf(a), dateOf(b)]
     if (x !== y) {
-        // An empty date sorts last.
         const [left, right] = [x || '\uffff', y || '\uffff']
         return left < right ? -1 : 1
     }
     if (a.id === b.id) {
         return 0
     }
-    // Ordinal, not locale, order.
     return a.id < b.id ? -1 : 1
 }
 
@@ -38,10 +35,10 @@ export interface FilledSlots {
  * `single` slot, else the nth visit of an `occurrence` slot by date. An event fills at most one slot. The notes say
  * what the register leaves out.
  */
-export const fillSlots = (
+export const fillSlots: (
     events: ReadonlyArray<SlotEvent>,
     slots: ReadonlyArray<SlotDef>
-): FilledSlots => {
+) => FilledSlots = (events, slots) => {
     const bySlot = new Map<string, string>()
     const notes: string[] = []
     const claimed = new Set<string>()
@@ -89,7 +86,6 @@ export const fillSlots = (
         }
     }
 
-    // The nth visit among the events no `where` or `single` slot took, so a layout that skips a number leaves it empty.
     const rest = new Map<string, SlotEvent[]>()
     for (const slot of slots) {
         const { stageId, occurrence } = slot

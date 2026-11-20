@@ -1,14 +1,13 @@
 import type { DataEngine } from '@/components/spreadsheet'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import meAdmin from './__tests__/fixtures/me-admin.json'
-import systemInfo from './__tests__/fixtures/system-info.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import meAdmin from './test/fixtures/me-admin.json'
+import systemInfo from './test/fixtures/system-info.json'
 import { eventSource } from './eventSource'
 
 type Request = Parameters<DataEngine['query']>[0]
 type Options = Parameters<DataEngine['query']>[1]
 
-// The fixture holds five events.
 const engineFor = () => {
     const requests: Array<[Request, Options]> = []
     // SAFETY: loading only calls `query`, which answers every request from the fixtures.
@@ -52,7 +51,6 @@ test('loadPage asks for the next page in the same order and size', async () => {
     const signal = new AbortController().signal
     const page = await inpatient(50).loadPage?.(next.engine, 2, signal)
 
-    // A page asks only for its own events: whether the program has rules is the first load's question.
     expect(next.requests).toHaveLength(1)
     const [[request, options]] = next.requests
     expect(request.events.params).toEqual({
@@ -65,7 +63,6 @@ test('loadPage asks for the next page in the same order and size', async () => {
         fields: expect.stringContaining('dataValues'),
     })
     expect(options).toEqual({ signal })
-    // The rest of the query is the load's.
     const [[loaded]] = first.requests
     expect({
         ...request,

@@ -157,7 +157,6 @@ test('an empty required cell is listed by its column’s label and blocks comple
 
     for (const empty of [{}, { 'e1.a': { ...FILLED, value: undefined } }]) {
         expect(summarised(empty)).toMatchObject({
-            // Column labels are shown as DHIS2 gives them, not HTML-escaped.
             items: [
                 {
                     key: 'e1.a',
@@ -244,7 +243,6 @@ test('a cell’s own error blocks completion; its warning does not', () => {
 })
 
 test('a cell’s own error and warning are listed as their value type made them, not translated again', async () => {
-    // Made in French when the value was refused; one French text happens to be a key of its own.
     i18n.addResources('xx', 'translation', {
         'Saisissez un nombre entier': 'Ne pas traduire deux fois',
     })

@@ -91,9 +91,9 @@ export interface RegisterMetadata {
 }
 
 /** The parts of the program a register reads, keyed by id. */
-export const registerMetadataOf = (
+export const registerMetadataOf: (
     program: RegisterProgram
-): RegisterMetadata => ({
+) => RegisterMetadata = (program) => ({
     programId: program.id,
     programName: program.displayName,
     trackedEntityTypeId: program.trackedEntityType.id,

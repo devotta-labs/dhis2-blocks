@@ -5,17 +5,13 @@ import type { TrackerRow } from '../model/types'
 import type { SlotDef } from '../register/compileLayout'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 
-/** "1st", "2nd", "3rd", "4th": the number as the language orders it. */
 const ordinal = (n: number) => {
     let rule: Intl.LDMLPluralRule = 'other'
     try {
-        // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
         rule = new Intl.PluralRules(i18n.language.replace('_', '-'), {
             type: 'ordinal',
         }).select(n)
-    } catch {
-        // A locale Intl cannot read keeps the general form.
-    }
+    } catch {}
     switch (rule) {
         case 'one':
             return i18n.t('{{number}}st', { number: n })
@@ -33,11 +29,11 @@ const ordinal = (n: number) => {
  * it, or after the nearest dated one after it, would fill another visit's slot once loaded again. Only slots with a
  * date column have a cell to say it on; dates are `YYYY-MM-DD`, so text order is date order.
  */
-export const slotOrderWarnings = (
+export const slotOrderWarnings: (
     rows: ReadonlyArray<TrackerRow>,
     cells: Partial<Record<CellKey, Pick<CellState, 'value'>>>,
     slots: ReadonlyArray<SlotDef>
-): ReadonlyMap<CellKey, string> => {
+) => ReadonlyMap<CellKey, string> = (rows, cells, slots) => {
     const byStage = new Map<string, SlotDef[]>()
     for (const slot of slots) {
         if (slot.kind === 'occurrence' && slot.stageId !== undefined) {

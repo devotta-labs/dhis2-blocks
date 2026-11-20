@@ -9,20 +9,12 @@ import { cn } from './cn'
 import { Label } from './label'
 import { Separator } from './separator'
 
-/** shadcn Field, restyled to match @dhis2/ui Field spacing and colors. */
-
-/**
- * Inside a Field, its label, description and error are Base UI's, linked to the field's control. Outside one they are
- * plain, as shadcn's are: a description under a fieldset's legend, a label for a control by `htmlFor`.
- */
 const InField = React.createContext(false)
 
-/** Says that a fieldset's own description or error (by id) is on the page, so the fieldset is described by it. */
 const FieldSetMessages = React.createContext<
     ((id: string, shown: boolean) => void) | undefined
 >(undefined)
 
-/** Describes the fieldset around with `id`, while the part is on the page; nothing for `undefined`. */
 const useFieldSetMessage = (id: string | undefined) => {
     const say = React.useContext(FieldSetMessages)
     React.useEffect(() => {
@@ -63,12 +55,9 @@ function FieldSet({
             <FieldsetPrimitive.Root
                 data-slot="field-set"
                 className={cn(
-                    // Rendered as a radio group (`render={<RadioGroup />}`), the options' spacing holds: the role marks
-                    // it, as its slot and classes are the fieldset's.
                     'm-0 flex min-w-0 flex-col gap-(--dhis2-field-group-gap) border-0 p-0 has-[>[data-slot=checkbox-group]]:gap-2 has-[>[data-slot=radio-group]]:gap-2 [&[role=radiogroup]]:gap-2',
                     className
                 )}
-                // Only when there is one: an empty one would replace what a radio group's field describes it with.
                 {...(ids === '' ? {} : { 'aria-describedby': ids })}
                 {...props}
             />
@@ -82,7 +71,6 @@ const fieldLegendVariants = cva(
         variants: {
             variant: {
                 legend: 'mb-1 text-base leading-snug font-medium',
-                // As a field's label: for a group of options, or a fieldset inside another.
                 label: 'text-sm leading-snug font-medium',
             },
         },
@@ -134,7 +122,10 @@ const fieldVariants = cva(
     }
 )
 
-/** Links its label, description and error to the control inside it, and marks the control invalid with `invalid`. */
+/**
+ * shadcn Field, restyled to match @dhis2/ui Field spacing and colors.
+ * Links its label, description and error to the control inside it, and marks it invalid with `invalid`.
+ */
 function Field({
     className,
     orientation = 'vertical',
@@ -182,7 +173,6 @@ function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-// Medium, so a field's label leads; an option's label, in a FieldItem, is regular.
 const LABEL_CLASS =
     'group/field-label peer/field-label flex w-fit gap-2 leading-snug font-medium group-data-disabled/field:text-dhis2-disabled-foreground in-data-[slot=field-item]:font-normal'
 
@@ -230,7 +220,6 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-// Right under a fieldset's legend, it reads with the legend, as shadcn's does.
 const DESCRIPTION_CLASS =
     'm-0 text-start text-sm leading-normal font-normal text-dhis2-muted-foreground [[data-variant=legend]+&]:-mt-3'
 
@@ -334,7 +323,6 @@ function FieldError({
     }
 
     return (
-        // Shown whenever it has content, not only when the browser finds the control invalid.
         <FieldPrimitive.Error
             id={id}
             render={render}

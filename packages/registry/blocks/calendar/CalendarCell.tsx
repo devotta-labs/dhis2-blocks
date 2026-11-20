@@ -29,7 +29,7 @@ interface DayContextValue {
 export const CalendarDayContext = createContext<DayContextValue | null>(null)
 
 /** The day a cell part is drawing, for cell parts of your own. */
-export const useCalendarDay = (): DayContextValue => {
+export const useCalendarDay = () => {
     const context = useContext(CalendarDayContext)
     if (!context) {
         throw new Error('useCalendarDay must be used within CalendarGrid.')
@@ -43,7 +43,6 @@ const NO_STATUS: CalendarStatus = {
     tone: 'neutral',
 }
 
-/** Status groups, largest first; records without a status count as neutral. */
 const groupByStatus = (records: readonly CalendarRecord[]) => {
     const groups = new Map<string, { status: CalendarStatus; count: number }>()
     for (const record of records) {
@@ -52,7 +51,6 @@ const groupByStatus = (records: readonly CalendarRecord[]) => {
         group.count += 1
         groups.set(status.id, group)
     }
-    // Ties break by label, so groups keep one order from day to day.
     return [...groups.values()].sort(
         (a, b) =>
             b.count - a.count || a.status.label.localeCompare(b.status.label)
@@ -75,11 +73,9 @@ const TONE_TINT = {
     critical: 'bg-dhis2-destructive-subtle',
 } satisfies Record<CalendarTone, string>
 
-/** Labels a count of records that have no status: "1 record", "7 records". */
 const recordsWord = (count: number) =>
     count === 1 ? i18n.t('record') : i18n.t('records')
 
-/** The records a day has beyond what it shows, on a row of their own. */
 const MoreRow = ({ count }: { count: number }) =>
     count > 0 ? (
         <span className="px-1 pt-0.5 text-[13px] leading-5 text-dhis2-muted-foreground">

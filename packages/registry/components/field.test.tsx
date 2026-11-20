@@ -29,7 +29,6 @@ import { Select, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
 import { roleColour } from '../test/roleColour'
 
-/** A labelled, described field with an error, around `control`. */
 const Invalid = ({ children }: { children: ReactNode }) => (
     <Field invalid data-testid="field">
         <FieldLabel>Name</FieldLabel>
@@ -46,9 +45,8 @@ const expectLinked = async (control: ReturnType<typeof page.getByRole>) => {
     await expect.element(control).toHaveAttribute('aria-invalid', 'true')
 }
 
-// First: React warns about a ref only once per component.
 test('renders FieldLabel without a ref warning', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error')
     await render(
         <Field>
             <FieldLabel>Name</FieldLabel>

@@ -8,7 +8,6 @@ function Collapsible({ ...props }: CollapsiblePrimitive.Root.Props) {
     return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const CollapsibleTrigger = React.forwardRef<
     HTMLButtonElement,
     CollapsiblePrimitive.Trigger.Props

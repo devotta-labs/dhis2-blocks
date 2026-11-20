@@ -9,7 +9,6 @@ function Popover({ ...props }: PopoverPrimitive.Root.Props) {
     return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const PopoverTrigger = React.forwardRef<
     HTMLButtonElement,
     PopoverPrimitive.Trigger.Props

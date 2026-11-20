@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { cn } from './cn'
 
-/*
+/**
  * shadcn Table restyled to match @dhis2/ui DataTable: a bordered table with
  * a grey-200 header row, 14px/12px body cells on white, and grey-100 / grey-200
  * row hover / press states.
@@ -11,7 +11,6 @@ import { cn } from './cn'
  * Unlike shadcn, cells wrap by default (as DataTable's do); add
  * `whitespace-nowrap` where a column must stay on one line.
  */
-
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
     return (
         <div

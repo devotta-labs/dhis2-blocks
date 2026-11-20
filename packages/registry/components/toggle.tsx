@@ -32,7 +32,6 @@ const toggleVariants = cva(
     }
 )
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const Toggle = React.forwardRef<
     HTMLButtonElement,
     TogglePrimitive.Props & VariantProps<typeof toggleVariants>

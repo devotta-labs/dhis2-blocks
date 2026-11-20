@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { cn } from './cn'
 
-// React 18 drops `ref` from function component props; Base UI's FieldLabel passes one.
 const Label = React.forwardRef<
     HTMLLabelElement,
     React.ComponentPropsWithoutRef<'label'>

@@ -12,8 +12,6 @@ type PickerCalendar = NonNullable<
 >
 export type CalendarSystem = keyof typeof PICKER_CALENDARS
 
-// useDatePicker maps DHIS2 calendar ids at runtime, but its types accept only
-// Temporal ids and the library does not export its map.
 export const PICKER_CALENDARS = {
     coptic: 'coptic',
     ethiopian: 'ethiopic',
@@ -27,14 +25,12 @@ export const PICKER_CALENDARS = {
 
 const pad = (value: number, length = 2) => String(value).padStart(length, '0')
 
-/** Today in `calendar`, written the way the date picker writes days. */
 const todayIn = (calendar: string, timeZone: string) => {
     const now = getNowInCalendar(calendar, timeZone)
     const year = calendar === 'iso8601' ? now.year : (now.eraYear ?? now.year)
     return `${pad(year, 4)}-${pad(now.month)}-${pad(now.day)}`
 }
 
-/** Moves `day` inside `bounds`, so the calendar opens where records can be. */
 const clampDay = (day: string, bounds: { start?: string; end?: string }) => {
     if (bounds.end && day > bounds.end) return bounds.end
     if (bounds.start && day < bounds.start) return bounds.start
@@ -69,7 +65,7 @@ export const useCalendarState = ({
     display: controlledDisplay,
     defaultDisplay = 'counts',
     onDisplayChange,
-}: CalendarOptions = {}): CalendarState => {
+}: CalendarOptions = {}) => {
     const [uncontrolledSelectedDay, setUncontrolledSelectedDay] =
         useState(defaultSelectedDay)
     const selectedDate =
@@ -97,9 +93,6 @@ export const useCalendarState = ({
         [controlledDisplay, onDisplayChange]
     )
 
-    // The picker opens on `date` and moves when it changes. Clearing the
-    // selection keeps the month in view, so only a newly selected day or,
-    // before any selection, the filter's dates move it.
     const [lastSelectedDay, setLastSelectedDay] = useState(selectedDate)
     if (selectedDate !== null && selectedDate !== lastSelectedDay) {
         setLastSelectedDay(selectedDate)
@@ -131,7 +124,6 @@ export const useCalendarState = ({
     )
     const selectedDay =
         weeks.flat().find((day) => day.date === selectedDate) ?? null
-    // Picker days are written YYYY-MM-DD in the system calendar.
     const monthOf = (date: string) => Number(date.slice(5, 7))
     const yearOf = (date: string) => Number(date.slice(0, 4))
     const monthName: CalendarState['monthName'] = (day) =>
@@ -141,7 +133,7 @@ export const useCalendarState = ({
 
     const firstDay = monthDays[0]?.dateValue
     const lastDay = monthDays.at(-1)?.dateValue
-    return {
+    const state: CalendarState = {
         weeks,
         visibleRange: {
             start: gridDays[0]?.dateValue ?? anchor,
@@ -165,4 +157,5 @@ export const useCalendarState = ({
         atStart: Boolean(start && firstDay && firstDay <= start),
         atEnd: Boolean(end && lastDay && lastDay >= end),
     }
+    return state
 }

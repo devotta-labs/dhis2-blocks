@@ -19,10 +19,7 @@ const record = (id: string, date: string, status: CalendarStatus = ACTIVE) => ({
     status,
 })
 
-const day = (
-    date: string,
-    overrides: Partial<CalendarDay> = {}
-): CalendarDay => ({
+const day = (date: string, overrides: Partial<CalendarDay> = {}) => ({
     date,
     label: Number(date.slice(8)),
     isToday: false,
@@ -32,7 +29,6 @@ const day = (
     ...overrides,
 })
 
-// A two-week month starting on a Tuesday, enough to exercise every key.
 const weeks = [
     [
         day('2026-10-31', {
@@ -343,7 +339,6 @@ describe('calendar parts', () => {
             .toBeVisible()
         dayButton(screen.container, '2026-11-01')?.focus()
         await userEvent.keyboard('{ArrowDown}')
-        // Five visible columns: down from Tuesday the 1st is Tuesday the 8th.
         expect(document.activeElement).toBe(
             dayButton(screen.container, '2026-11-08')
         )
@@ -373,7 +368,7 @@ describe('calendar parts', () => {
     })
 
     it('caps status counts and keeps tied groups in one order', async () => {
-        const status = (label: string): CalendarStatus => ({
+        const status: (label: string) => CalendarStatus = (label) => ({
             id: label,
             label,
             tone: 'neutral',
@@ -395,7 +390,6 @@ describe('calendar parts', () => {
         )
         const screen = await render(tree)
 
-        // Kenema leads with two; Bo beats Kono and Makeni on the tie.
         expect(dayButton(screen.container, '2026-11-01')?.textContent).toBe(
             '1 November2Kenema1Bo+2 more'
         )

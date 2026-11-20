@@ -6,13 +6,12 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { cn } from './cn'
 
-/*
+/**
  * shadcn Select (Base UI) restyled to match @dhis2/ui SingleSelect.
  * size `sm` = DHIS2 `dense` (32px), `default` = the density's (40px, or 32px
  * compact). Menus open below the
  * trigger, as DHIS2's do, instead of over it.
  */
-
 const Select = SelectPrimitive.Root
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
@@ -52,7 +51,6 @@ const selectTriggerVariants = cva(
     }
 )
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const SelectTrigger = React.forwardRef<
     HTMLButtonElement,
     SelectPrimitive.Trigger.Props & VariantProps<typeof selectTriggerVariants>

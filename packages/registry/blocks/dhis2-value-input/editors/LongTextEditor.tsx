@@ -5,7 +5,6 @@ import { Textarea } from '@/components/dhis2/ui/textarea'
 import type { FormEditorProps, PopupEditorProps } from './popupEditors'
 import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
-/** The text, reported on each change; a save the field mask refuses keeps the text with its message. */
 const useLongText = ({
     field,
     value,
@@ -18,7 +17,6 @@ const useLongText = ({
     'field' | 'value' | 'settings' | 'firstKey' | 'save' | 'report'
 >) => {
     const [text, setText] = useState(firstKey ?? value ?? '')
-    // Said on a save the field mask refused, until the text changes.
     const [problem, setProblem] = useState<string>()
     const area = useRef<HTMLTextAreaElement>(null)
 
@@ -46,14 +44,12 @@ const useLongText = ({
                 save(parsed.value ?? null)
             } else {
                 setProblem(parsed.problem.message)
-                // Back to the text, where the message is about, whether Save was clicked or Ctrl+Enter pressed.
                 area.current?.focus()
             }
         },
     }
 }
 
-/** The text area and the message of a refused save. */
 const LongTextBox = ({
     editor: { text, problem, area, change, commit },
     labelledBy,
@@ -71,7 +67,6 @@ const LongTextBox = ({
             <Textarea
                 ref={area}
                 value={text}
-                // Typed text follows its own script, on a right-to-left page too.
                 dir="auto"
                 aria-labelledby={labelledBy}
                 aria-describedby={idList(
@@ -110,7 +105,6 @@ export const LongTextEditor = (props: PopupEditorProps) => {
         const box = editor.area.current
         box?.focus()
         box?.setSelectionRange(editor.text.length, editor.text.length)
-        // The text that opened the editor is already a change.
         if (props.firstKey !== undefined) {
             editor.tell(editor.text)
         }

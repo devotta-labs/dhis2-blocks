@@ -56,7 +56,6 @@ const resourceClients = new WeakMap<
     ObservationsResourceClient
 >()
 
-/** A failed DHIS2 request, with the HTTP status kept. */
 class ObservationsRequestError extends Error {
     readonly status?: number
     override readonly cause: unknown
@@ -71,7 +70,6 @@ class ObservationsRequestError extends Error {
     }
 }
 
-/** `.catch` makes every field lenient: a malformed one loses only itself. */
 const lenient = <T extends z.ZodType>(schema: T) =>
     schema.optional().catch(undefined)
 
@@ -121,9 +119,9 @@ const QueryEnvelopeSchema = z
  * failures (HTTP, network, abort) and schema failures both come back as
  * error results; nothing here throws.
  */
-export const createObservationsResourceClient = (
+export const createObservationsResourceClient: (
     engine: DataEngineLike
-): ObservationsResourceClient => ({
+) => ObservationsResourceClient = (engine) => ({
     async query<T>(
         request: ResourceRequest,
         schema: ZodType<T>,
@@ -160,14 +158,10 @@ export const createObservationsResourceClient = (
     },
 })
 
-/** Each client's place in the query cache, so two engines never share results. */
 const cacheIds = new WeakMap<ObservationsClient, number>()
 let lastCacheId = 0
 
-const newClient = (
-    engine: DataEngineLike,
-    cacheId: number
-): ObservationsClient => {
+const newClient = (engine: DataEngineLike, cacheId: number) => {
     const client: ObservationsClient = Object.freeze({
         [CLIENT]: true as const,
     })
@@ -181,9 +175,7 @@ const newClient = (
  * app-runtime's). Create it once, outside render: each client caches its own
  * results.
  */
-export const createObservationsClient = (
-    engine: DataEngineLike
-): ObservationsClient => {
+export const createObservationsClient = (engine: DataEngineLike) => {
     lastCacheId += 1
     return newClient(engine, lastCacheId)
 }
@@ -192,18 +184,15 @@ export const createObservationsClient = (
  * Internal: app-runtime's client. An app has one data engine, so its results
  * share cache id 0 however often the client is rebuilt.
  */
-export const createRuntimeObservationsClient = (
-    engine: DataEngineLike
-): ObservationsClient => newClient(engine, 0)
+export const createRuntimeObservationsClient = (engine: DataEngineLike) =>
+    newClient(engine, 0)
 
 /** Internal: the client's part of every query key. */
-export const cacheIdOf = (client: ObservationsClient): number =>
+export const cacheIdOf = (client: ObservationsClient) =>
     cacheIds.get(client) ?? 0
 
 /** Internal: the request runner an observations client stands for. */
-export const resourceClientOf = (
-    client: ObservationsClient
-): ObservationsResourceClient => {
+export const resourceClientOf = (client: ObservationsClient) => {
     const resourceClient = resourceClients.get(client)
     if (!resourceClient) {
         throw new Error(

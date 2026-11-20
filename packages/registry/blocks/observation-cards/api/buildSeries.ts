@@ -1,7 +1,5 @@
 import type {
     DataElementMetadata,
-    ObservationLegendBand,
-    ObservationOption,
     ObservationPoint,
     ObservationSeries,
     StageMetadata,
@@ -19,7 +17,7 @@ const NUMERIC_VALUE_TYPES = new Set([
 ])
 
 /** Value types whose readings carry a `numericValue`. */
-export const isNumericValueType = (valueType: string): boolean =>
+export const isNumericValueType = (valueType: string) =>
     NUMERIC_VALUE_TYPES.has(valueType)
 
 const ELIGIBLE_STATUSES = new Set(['ACTIVE', 'COMPLETED'])
@@ -32,7 +30,7 @@ const HAS_ZONE = /(Z|[+-]\d{2}(:?\d{2})?)$/i
  * strings are read as UTC so they order consistently with zoned strings.
  * Returns NaN when the string is not a date.
  */
-export const toInstant = (iso: string): number => {
+export const toInstant = (iso: string) => {
     if (DATE_ONLY.test(iso)) {
         return Date.parse(`${iso}T00:00:00Z`)
     }
@@ -40,7 +38,7 @@ export const toInstant = (iso: string): number => {
     return Date.parse(HAS_ZONE.test(time) ? iso : `${iso}Z`)
 }
 
-const parseNumber = (value: string): number | undefined => {
+const parseNumber = (value: string) => {
     if (value.trim() === '') {
         return undefined
     }
@@ -48,18 +46,15 @@ const parseNumber = (value: string): number | undefined => {
     return Number.isFinite(parsed) ? parsed : undefined
 }
 
-/** Digits after the point in `value` as JavaScript writes it, exponent included. */
-const decimalsOf = (value: number): number => {
+const decimalsOf = (value: number) => {
     const [, fraction = '', exponent = '0'] =
         /(?:\.(\d+))?(?:e([+-]\d+))?$/.exec(String(value)) ?? []
     return Math.max(0, fraction.length - Number(exponent))
 }
 
-/** `latest - previous` without float noise: 10.8 - 10.6 is 0.2, not 0.20000000000000107. */
-const difference = (latest: number, previous: number): number =>
+const difference = (latest: number, previous: number) =>
     Number(
         (latest - previous).toFixed(
-            // toFixed takes at most 100 digits.
             Math.min(100, Math.max(decimalsOf(latest), decimalsOf(previous)))
         )
     )
@@ -70,7 +65,7 @@ interface DatedPoint {
     createdInstant: number
 }
 
-const compareDated = (a: DatedPoint, b: DatedPoint): number => {
+const compareDated = (a: DatedPoint, b: DatedPoint) => {
     if (a.occurredInstant !== b.occurredInstant) {
         return a.occurredInstant - b.occurredInstant
     }
@@ -85,9 +80,7 @@ const compareDated = (a: DatedPoint, b: DatedPoint): number => {
     return idA < idB ? -1 : 1
 }
 
-const buildLegends = (
-    dataElement: DataElementMetadata
-): ObservationLegendBand[] | undefined => {
+const buildLegends = (dataElement: DataElementMetadata) => {
     const legends = dataElement.legendSets?.[0]?.legends
     if (!legends || legends.length === 0) {
         return undefined
@@ -95,9 +88,7 @@ const buildLegends = (
     return [...legends].sort((a, b) => a.startValue - b.startValue)
 }
 
-const buildOptions = (
-    dataElement: DataElementMetadata
-): ObservationOption[] | undefined =>
+const buildOptions = (dataElement: DataElementMetadata) =>
     dataElement.optionSet?.options.map(({ code, name, style }) =>
         style?.color ? { code, name, color: style.color } : { code, name }
     )
@@ -110,7 +101,7 @@ export function buildSeries({
     dataElement: DataElementMetadata
     stages: StageMetadata[]
     events: TrackerEventRecord[]
-}): ObservationSeries {
+}) {
     const isNumeric = isNumericValueType(dataElement.valueType)
     const isTrueOnly = dataElement.valueType === 'TRUE_ONLY'
     const stageById = new Map(stages.map((stage) => [stage.id, stage]))
@@ -130,8 +121,6 @@ export function buildSeries({
         if (Number.isNaN(occurredInstant)) {
             continue
         }
-        // Only stages that capture the element now: DHIS2 shows no other stage's
-        // value for it, so a card must not either.
         if (!capturingStageIds.has(event.programStage)) {
             continue
         }
@@ -182,7 +171,6 @@ export function buildSeries({
     const points = dated.sort(compareDated).map(({ point }) => point)
     const latest = points.at(-1)
     const previous = points.at(-2)
-    // Option codes are categories, so a difference between two codes means nothing.
     const change =
         dataElement.optionSet === undefined &&
         latest?.numericValue !== undefined &&
@@ -190,7 +178,7 @@ export function buildSeries({
             ? difference(latest.numericValue, previous.numericValue)
             : undefined
 
-    return {
+    const series: ObservationSeries = {
         dataElementId: dataElement.id,
         label: dataElement.displayFormName || dataElement.displayName,
         valueType: dataElement.valueType,
@@ -206,4 +194,5 @@ export function buildSeries({
                 stage.dataElementIds.includes(dataElement.id)
         ),
     }
+    return series
 }

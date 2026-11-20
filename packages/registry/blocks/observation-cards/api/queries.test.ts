@@ -1,9 +1,9 @@
 import { Result } from 'better-result'
-import { programMetadataResponse } from '../__tests__/fixtures'
+import { serveDhis2 } from '../test/dhis2Server.test-utils'
+import { programMetadataResponse } from '../test/observations.fixture'
 import { buildSeries } from './buildSeries'
 import {
     createObservationsResourceClient,
-    type DataEngineLike,
     type DataEngineValue,
 } from './client'
 import {
@@ -23,16 +23,14 @@ const eventsOf = (count: number, offset = 0) =>
         dataValues: [],
     }))
 
-const engineReturning = (pages: DataEngineValue[]) => {
-    const query = vi.fn<DataEngineLike['query']>()
-    for (const page of pages) {
-        query.mockResolvedValueOnce({ observationsResource: page })
-    }
-    return { engine: { query } satisfies DataEngineLike, query }
-}
+const engineReturning = (pages: DataEngineValue[]) =>
+    serveDhis2((_url, index) => {
+        const body = pages[index]
+        return body === undefined ? undefined : { body }
+    })
 
 const requestOf = (
-    query: ReturnType<typeof engineReturning>['query'],
+    query: Awaited<ReturnType<typeof engineReturning>>['query'],
     call: number
 ) => Object.values(query.mock.calls[call]?.[0] ?? {})[0]
 
@@ -40,7 +38,7 @@ describe('fetchEvents', () => {
     const subject = { trackedEntityId: 'te1', programId: 'p1' }
 
     it('requests pages until a short page', async () => {
-        const { engine, query } = engineReturning([
+        const { engine, query } = await engineReturning([
             { events: eventsOf(200) },
             { events: eventsOf(200, 200) },
             { events: eventsOf(13, 400) },
@@ -67,7 +65,9 @@ describe('fetchEvents', () => {
     })
 
     it('stops after one call when the first page is short', async () => {
-        const { engine, query } = engineReturning([{ instances: eventsOf(3) }])
+        const { engine, query } = await engineReturning([
+            { instances: eventsOf(3) },
+        ])
 
         const result = await fetchEvents(
             createObservationsResourceClient(engine),
@@ -79,32 +79,25 @@ describe('fetchEvents', () => {
     })
 
     it('returns an error result on HTTP failure', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockRejectedValue(
-                Object.assign(new Error('Server error'), { status: 500 })
-            )
+        const { engine } = await serveDhis2(() => ({ status: 500 }))
 
         const result = await fetchEvents(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             subject
         )
 
         expect(Result.isError(result) && result.error.message).toContain(
-            'Server error'
+            'Internal Server Error'
         )
     })
 
     it('returns an error result when a later page fails', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockResolvedValueOnce({
-                observationsResource: { events: eventsOf(200) },
-            })
-            .mockRejectedValueOnce(new Error('Gateway timeout'))
+        const { engine } = await serveDhis2((_url, index) =>
+            index === 0 ? { body: { events: eventsOf(200) } } : { status: 504 }
+        )
 
         const result = await fetchEvents(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             subject
         )
 
@@ -112,7 +105,7 @@ describe('fetchEvents', () => {
     })
 
     it('returns an error result for a malformed response', async () => {
-        const { engine } = engineReturning([{ unexpected: true }])
+        const { engine } = await engineReturning([{ unexpected: true }])
 
         const result = await fetchEvents(
             createObservationsResourceClient(engine),
@@ -123,7 +116,7 @@ describe('fetchEvents', () => {
     })
 
     it('asks for the tracked entity and a stable order', async () => {
-        const { engine, query } = engineReturning([{ events: [] }])
+        const { engine, query } = await engineReturning([{ events: [] }])
 
         await fetchEvents(createObservationsResourceClient(engine), subject)
 
@@ -137,7 +130,7 @@ describe('fetchEvents', () => {
 
     it('drops events that belong to another tracked entity', async () => {
         const [own, other, unstated] = eventsOf(3)
-        const { engine } = engineReturning([
+        const { engine } = await engineReturning([
             {
                 events: [
                     { ...own, trackedEntity: 'te1' },
@@ -159,7 +152,7 @@ describe('fetchEvents', () => {
 
     it('counts an event repeated across pages once', async () => {
         const firstPage = eventsOf(EVENTS_PAGE_SIZE)
-        const { engine, query } = engineReturning([
+        const { engine, query } = await engineReturning([
             { events: firstPage },
             { events: [firstPage[EVENTS_PAGE_SIZE - 1], ...eventsOf(2, 500)] },
         ])
@@ -176,24 +169,17 @@ describe('fetchEvents', () => {
     })
 
     it(`is an error, not a truncated list, past ${EVENTS_MAX_PAGES} full pages`, async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockImplementation(async (request) => {
-                const page = Number(
-                    Object.values(request)[0]?.params?.page ?? 0
-                )
-                return {
-                    observationsResource: {
-                        events: eventsOf(
-                            EVENTS_PAGE_SIZE,
-                            page * EVENTS_PAGE_SIZE
-                        ),
-                    },
-                }
-            })
+        const { engine, query } = await serveDhis2((request) => {
+            const page = Number(request.searchParams.get('page'))
+            return {
+                body: {
+                    events: eventsOf(EVENTS_PAGE_SIZE, page * EVENTS_PAGE_SIZE),
+                },
+            }
+        })
 
         const result = await fetchEvents(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             subject
         )
 
@@ -205,27 +191,23 @@ describe('fetchEvents', () => {
     })
 
     it(`loads exactly ${EVENTS_MAX_PAGES} full pages when the next one is empty`, async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockImplementation(async (request) => {
-                const page = Number(
-                    Object.values(request)[0]?.params?.page ?? 0
-                )
-                return {
-                    observationsResource: {
-                        events:
-                            page > EVENTS_MAX_PAGES
-                                ? []
-                                : eventsOf(
-                                      EVENTS_PAGE_SIZE,
-                                      page * EVENTS_PAGE_SIZE
-                                  ),
-                    },
-                }
-            })
+        const { engine, query } = await serveDhis2((request) => {
+            const page = Number(request.searchParams.get('page'))
+            return {
+                body: {
+                    events:
+                        page > EVENTS_MAX_PAGES
+                            ? []
+                            : eventsOf(
+                                  EVENTS_PAGE_SIZE,
+                                  page * EVENTS_PAGE_SIZE
+                              ),
+                },
+            }
+        })
 
         const result = await fetchEvents(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             subject
         )
 
@@ -240,7 +222,7 @@ describe('fetchEnrollment', () => {
     const subject = { trackedEntityId: 'te1', programId: 'p1' }
 
     it('asks for one enrollment of the person in the program', async () => {
-        const { engine, query } = engineReturning([
+        const { engine, query } = await engineReturning([
             { enrollments: [{ enrollment: 'en1' }] },
         ])
 
@@ -262,7 +244,7 @@ describe('fetchEnrollment', () => {
     })
 
     it('reads the legacy instances envelope', async () => {
-        const { engine } = engineReturning([
+        const { engine } = await engineReturning([
             { instances: [{ enrollment: 'en1' }] },
         ])
 
@@ -275,7 +257,7 @@ describe('fetchEnrollment', () => {
     })
 
     it('is an error when the person has no visible enrollment', async () => {
-        const { engine } = engineReturning([{ enrollments: [] }])
+        const { engine } = await engineReturning([{ enrollments: [] }])
 
         const result = await fetchEnrollment(
             createObservationsResourceClient(engine),
@@ -288,12 +270,10 @@ describe('fetchEnrollment', () => {
     })
 
     it('returns an error result on HTTP failure', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockRejectedValue(new Error('Forbidden'))
+        const { engine } = await serveDhis2(() => ({ status: 403 }))
 
         const result = await fetchEnrollment(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             subject
         )
 
@@ -305,7 +285,9 @@ describe('fetchEnrollment', () => {
 
 describe('fetchProgramMetadata', () => {
     const fetchFixture = async () => {
-        const { engine, query } = engineReturning([programMetadataResponse()])
+        const { engine, query } = await engineReturning([
+            programMetadataResponse(),
+        ])
         const result = await fetchProgramMetadata(
             createObservationsResourceClient(engine),
             'p1'
@@ -334,7 +316,7 @@ describe('fetchProgramMetadata', () => {
     })
 
     it("keeps each stage's data-read access", async () => {
-        const { engine } = engineReturning([
+        const { engine } = await engineReturning([
             {
                 programStages: [
                     {
@@ -401,12 +383,10 @@ describe('fetchProgramMetadata', () => {
     })
 
     it('returns an error result on HTTP failure', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockRejectedValue(new Error('Forbidden'))
+        const { engine } = await serveDhis2(() => ({ status: 403 }))
 
         const result = await fetchProgramMetadata(
-            createObservationsResourceClient({ query }),
+            createObservationsResourceClient(engine),
             'p1'
         )
 

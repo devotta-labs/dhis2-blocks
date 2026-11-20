@@ -1,23 +1,20 @@
 import { buildSeries } from './buildSeries'
 import type {
     DataElementMetadata,
-    ObservationLegendBand,
     StageMetadata,
     TrackerEventRecord,
 } from './types'
 
 const DE = 'deWeight'
 
-const dataElement = (
-    overrides: Partial<DataElementMetadata> = {}
-): DataElementMetadata => ({
+const dataElement = (overrides: Partial<DataElementMetadata> = {}) => ({
     id: DE,
     displayName: 'Weight (kg)',
     valueType: 'NUMBER',
     ...overrides,
 })
 
-const stage = (overrides: Partial<StageMetadata> = {}): StageMetadata => ({
+const stage = (overrides: Partial<StageMetadata> = {}) => ({
     id: 'stageA',
     displayName: 'Antenatal visit',
     canReadData: true,
@@ -25,12 +22,12 @@ const stage = (overrides: Partial<StageMetadata> = {}): StageMetadata => ({
     ...overrides,
 })
 
-const event = (
+const event: (
     id: string,
     occurredAt: string | undefined,
     value: string | undefined,
-    overrides: Partial<TrackerEventRecord> = {}
-): TrackerEventRecord => ({
+    overrides?: Partial<TrackerEventRecord>
+) => TrackerEventRecord = (id, occurredAt, value, overrides = {}) => ({
     event: id,
     programStage: 'stageA',
     status: 'COMPLETED',
@@ -82,7 +79,6 @@ describe('buildSeries', () => {
         const series = build(
             [
                 event('visit', '2026-01-01T00:00:00.000Z', '12'),
-                // Saved before the element was taken off this stage's form.
                 event('old', '2026-02-01T00:00:00.000Z', '8', {
                     programStage: 'stageOld',
                 }),
@@ -294,7 +290,6 @@ describe('buildSeries', () => {
             }),
         ])
 
-        // Same instant, so order falls through to createdAt then eventId.
         expect(ids(series)).toEqual(['zoned', 'dateOnly', 'unzoned'])
     })
 
@@ -316,7 +311,6 @@ describe('buildSeries', () => {
                 event('e2', '2026-02-01T00:00:00.000Z', latest),
             ]).change
 
-        // 10.8 - 10.6 is 0.20000000000000107 in floating point.
         expect(change('10.6', '10.8')).toBe(0.2)
         expect(change('0.1', '0.3')).toBe(0.2)
         expect(change('1e-7', '3e-7')).toBe(2e-7)
@@ -350,7 +344,7 @@ describe('buildSeries', () => {
             name: string,
             startValue: number,
             endValue: number
-        ): ObservationLegendBand => ({
+        ) => ({
             name,
             color: '#000',
             startValue,

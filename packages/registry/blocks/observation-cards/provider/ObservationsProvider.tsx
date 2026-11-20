@@ -26,8 +26,7 @@ export interface ObservationsProviderProps {
     children?: ReactNode
 }
 
-/** Unwraps a Result so React Query owns the error state. */
-const unwrap = <T,>(result: Result<T, Error>): T => {
+const unwrap = <T,>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
@@ -46,7 +45,6 @@ const ObservationsScope = ({
     const clientId = cacheIdOf(chosen)
     const teId = trackedEntity.trim()
     const progId = program.trim()
-    // Nothing to ask for yet: every query waits, so every card stays pending.
     const enabled = teId !== '' && progId !== ''
     const subject = { trackedEntityId: teId, programId: progId }
 
@@ -57,7 +55,6 @@ const ObservationsScope = ({
         enabled,
         retry: shouldRetryObservationsRequest,
     })
-    // No visible enrollment means no access, never "nothing recorded".
     const enrollment = useQuery({
         queryKey: observationQueryKeys.enrollments(clientId, teId, progId),
         queryFn: async ({ signal }) =>
@@ -108,8 +105,6 @@ const ObservationsScope = ({
  * It renders only its children.
  */
 export function ObservationsProvider(props: ObservationsProviderProps) {
-    // Another person or program starts from nothing, so a card never shows
-    // the previous person's values while the new ones load.
     return (
         <ObservationsScope
             key={`${props.trackedEntity}:${props.program}`}

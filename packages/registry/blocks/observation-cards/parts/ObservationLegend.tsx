@@ -49,7 +49,6 @@ export function ObservationLegend({
     ...props
 }: ObservationLegendProps) {
     const { series } = useObservationCard()
-    // Option codes are categories, not amounts on a legend's scale.
     const legend = series.options
         ? undefined
         : legendFor(series.legends, series.latest?.numericValue)

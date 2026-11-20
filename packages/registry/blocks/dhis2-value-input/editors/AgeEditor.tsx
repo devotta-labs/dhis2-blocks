@@ -22,9 +22,7 @@ import { DatePickerButton, dateFormatHint } from '../kinds/DateInput'
 import type { FormEditorProps, PopupEditorProps } from './popupEditors'
 import { EditorButtons, idList, saveOnCtrlEnter } from './EditorButtons'
 
-// The date of birth is typed and shown as any date is: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
-// Up to three digits, or none (zero): more would reach back past the calendar.
 const WHOLE = /^\s*\d{0,3}\s*$/
 const AGE_PARTS = ['years', 'months', 'days'] as const
 
@@ -37,24 +35,17 @@ interface Texts {
 
 const NO_TEXTS: Texts = { years: '', months: '', days: '' }
 
-/** What the editor would save: a date of birth (null clears), or what is wrong, and in which field. */
 interface Reading {
     value: string | null
     problem?: { message: string; part: Part }
 }
 
-/** The age of a date of birth that is a date up to today; undefined for none, or any other. */
-const ageOf = (
-    field: Field,
-    birth: string | null,
-    today: string
-): Age | undefined =>
+const ageOf = (field: Field, birth: string | null, today: string) =>
     birth === null || checkStored(field, birth) !== undefined || birth > today
         ? undefined
         : ageFromBirth(birth, today)
 
-/** The age as the fields show it; empty for none. */
-const textsOf = (age: Age | undefined): Texts =>
+const textsOf = (age: Age | undefined) =>
     age === undefined
         ? NO_TEXTS
         : {
@@ -63,11 +54,11 @@ const textsOf = (age: Age | undefined): Texts =>
               days: String(age.days),
           }
 
-const readBirth = (
+const readBirth: (
     text: string,
     settings: ValueSettings,
     today: string
-): Reading => {
+) => Reading = (text, settings, today) => {
     const parsed = parseTyped(DATE, text, settings)
     if (!parsed.ok) {
         return {
@@ -84,7 +75,6 @@ const readBirth = (
         : { value: null, problem: { message: future, part: 'birth' } }
 }
 
-/** The parts as the cell keeps them when they cannot be saved; an empty part reads as the zero it counts as. */
 const partsText = (texts: Texts) =>
     i18n.t('Years: {{years}}, months: {{months}}, days: {{days}}', {
         nsSeparator: '::',
@@ -94,8 +84,11 @@ const partsText = (texts: Texts) =>
         interpolation: { escapeValue: false },
     })
 
-/** An empty part counts as zero; all three empty is no age. */
-const readAge = (texts: Texts, field: Field, today: string): Reading => {
+const readAge: (texts: Texts, field: Field, today: string) => Reading = (
+    texts,
+    field,
+    today
+) => {
     if (AGE_PARTS.every((part) => texts[part].trim() === '')) {
         return { value: null }
     }
@@ -137,7 +130,6 @@ interface Today {
     today?: string
 }
 
-/** The date of birth and the parts, each filling the other as it is typed, and each change reported. */
 const useAge = ({
     field,
     value,
@@ -156,13 +148,10 @@ const useAge = ({
     const [age, setAge] = useState(() =>
         textsOf(ageOf(field, value ?? null, today))
     )
-    // The date of birth given, stored or typed: an age that is its age means it, not another day the age also reaches.
     const given = useRef(value ?? null)
     const [reading, setReading] = useState<Reading>({ value: value ?? null })
-    // Said on a save that was refused, until the next change.
     const [shown, setShown] = useState<Reading['problem']>()
 
-    /** Reports what was typed; `text` is what the cell keeps if it cannot be saved. */
     const settle = (next: Reading, text: string) => {
         setReading(next)
         setShown(undefined)
@@ -173,7 +162,6 @@ const useAge = ({
                 : { message: next.problem.message, text }
         )
     }
-    // Text that cannot be read leaves the other fields as they were.
     const typeBirth = (text: string) => {
         setBirth(text)
         const next = readBirth(text, settings, today)
@@ -208,10 +196,8 @@ const useAge = ({
             return
         }
         setShown(reading.problem)
-        // Back to the field the message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${reading.problem.part}`)?.focus()
     }
-    /** What each of the four fields shares; `describedBy` is what else describes it, `className` sizes it. */
     const fieldProps = (
         part: Part,
         {
@@ -221,7 +207,6 @@ const useAge = ({
         }: { describedBy?: string; invalid?: boolean; className?: string }
     ) => ({
         id: `${id}-${part}`,
-        // A date and whole numbers, in order on a right-to-left page too.
         dir: 'ltr',
         autoComplete: 'off',
         spellCheck: false,
@@ -260,7 +245,6 @@ const AgeLabel = ({ editor, part }: { editor: AgeState; part: Part }) => {
     return <Label htmlFor={`${editor.id}-${part}`}>{labels[part]}</Label>
 }
 
-/** The refused save's message: under the date of birth, or under the parts, whichever it is about. */
 const AgeProblem = ({
     editor: { shown, problemId },
     aboutBirth,
@@ -280,7 +264,6 @@ const AgeProblem = ({
         </p>
     )
 
-/** Years, months and days, each with its label. */
 const AgeParts = ({
     editor,
     describedBy,

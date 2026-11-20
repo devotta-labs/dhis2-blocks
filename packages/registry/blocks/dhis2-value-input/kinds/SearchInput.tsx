@@ -44,9 +44,7 @@ export const SearchInput = ({
 }) => {
     const server = searchFor(field.valueType)
     const { isDisconnected } = useDhis2ConnectionStatus()
-    // What has been typed since the field showed its value; null shows the value.
     const [typed, setTyped] = useState<string | null>(null)
-    // A value from the host that is not the one last reported (a rule assigned it) replaces what was typed.
     const echo = useReported(value)
     if (echo.isNew) {
         setTyped(null)
@@ -55,18 +53,15 @@ export const SearchInput = ({
         echo.report(next)
         onChange(next)
     }
-    // A value picked here keeps the name it was listed under.
     const [picked, setPicked] = useState<{ value: string; name: string }>()
     const query = typed === null || isDisconnected ? '' : typed.trim()
     const found = useServerSearch(server?.search, query)
-    // The answer for what was typed is still to come.
     const waiting = query.length >= MIN_LENGTH && found === undefined
     const highlighted = useRef<string>()
     const results = new Map(
         found?.results.map((result) => [result.value, result])
     )
     const disconnected = i18n.t('Connect to the internet to search')
-    // Why the list is empty: offline, too little typed, still searching, the search failed, or found nothing.
     let none = ''
     if (isDisconnected) {
         none = disconnected
@@ -77,7 +72,6 @@ export const SearchInput = ({
     } else {
         none = i18n.t('Searching…')
     }
-    // A search's answer is said as it arrives.
     useAnnounced(
         found === undefined ? '' : none || matchCount(results.size, found.total)
     )
@@ -98,7 +92,6 @@ export const SearchInput = ({
     return (
         <>
             <Combobox
-                // Ranked by the server, not filtered again.
                 items={[...results.keys()]}
                 filter={null}
                 autoHighlight
@@ -110,7 +103,6 @@ export const SearchInput = ({
                     }
                 }}
                 onItemHighlighted={(each, { reason }) => {
-                    // As in the data entry grid, the mouse highlights nothing for Tab to pick.
                     highlighted.current =
                         reason === 'pointer' ? undefined : each
                 }}
@@ -130,7 +122,6 @@ export const SearchInput = ({
                     autoComplete="off"
                     spellCheck={false}
                     aria-required={required || undefined}
-                    // Not for a required field, which is emptied by deleting the text and refused when left.
                     showClear={!required}
                     clearLabel={i18n.t('Clear')}
                     onBlur={leave}
@@ -142,8 +133,6 @@ export const SearchInput = ({
                             return
                         }
                         if (waiting) {
-                            // Nothing to pick yet. Enter waits: what was typed is not dropped, nor a form submitted
-                            // without it, and the list stays open for the answer. Tab leaves, as it always may.
                             if (event.key === 'Enter') {
                                 event.preventDefault()
                                 event.preventBaseUIHandler()
@@ -157,13 +146,11 @@ export const SearchInput = ({
                                 ? results.get(highlighted.current)
                                 : undefined
                         if (event.key === 'Tab' && result !== undefined) {
-                            // Picked as the field is left, as Tab in the data entry grid does.
                             pick(result)
                         } else if (
                             event.key === 'Enter' &&
                             typed?.trim() === ''
                         ) {
-                            // Here, not on keyup: a surrounding form submits on Enter, and must get the cleared field.
                             leave()
                         }
                     }}

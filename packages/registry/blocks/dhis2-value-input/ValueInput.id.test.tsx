@@ -8,7 +8,7 @@ const NUMBER: Field = { valueType: 'NUMBER' }
 const BOOLEAN: Field = { valueType: 'BOOLEAN' }
 const COORDINATE: Field = { valueType: 'COORDINATE' }
 const LABEL = 'Temperature'
-const multiSelect = (count: number): Field => ({
+const multiSelect = (count: number) => ({
     valueType: 'MULTI_TEXT',
     options: Array.from({ length: count }, (_, index) => ({
         code: `O${index + 1}`,
@@ -16,7 +16,6 @@ const multiSelect = (count: number): Field => ({
     })),
 })
 
-/** A field with the id `given`, as a host that links to or focuses it gives one. */
 const mount = async (props: Partial<ValueInputProps>) => {
     const onChange = vi.fn()
     await render(
@@ -70,7 +69,6 @@ test.each([
         const { onChange } = await mount({ field, value })
         document.getElementById('given')?.focus()
         await expect.element(page.getByRole(role, { name })).toHaveFocus()
-        // Focus alone picks nothing, in an empty radio group too.
         expect(onChange).not.toHaveBeenCalled()
     }
 )

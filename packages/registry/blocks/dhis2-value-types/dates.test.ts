@@ -61,7 +61,6 @@ test('a Coptic date is shown as stored and refused when typed, as the calendar l
 test('the epagomenal days of the Ethiopian year are real only when the year has them', () => {
     const s = { calendar: 'ethiopian', dateFormat: 'YYYY-MM-DD' } as const
     const field = { valueType: 'DATE' }
-    // 2015 is a leap year (Pagume has 6 days), 2016 is not (5).
     expect(parseTyped(field, '2015-13-06', s)).toMatchObject({ ok: true })
     expect(parseTyped(field, '2016-13-06', s)).toMatchObject({ ok: false })
     expect(parseTyped(field, '2016-13-05', s)).toMatchObject({ ok: true })

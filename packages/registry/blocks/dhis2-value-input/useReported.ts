@@ -22,11 +22,9 @@ export const useReported = (value: string | undefined) => {
     }
     return {
         isNew,
-        /** Call with each value reported to the host. */
         report: (next: string | null) =>
             setState((now) => ({
                 ...now,
-                // One the host holds already will not come back.
                 pending:
                     next === (now.given ?? null) ? [] : [...now.pending, next],
             })),

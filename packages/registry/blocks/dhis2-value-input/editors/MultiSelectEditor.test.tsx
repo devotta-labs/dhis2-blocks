@@ -12,9 +12,13 @@ const MANY: Field = {
 }
 const COUNT = 'Showing 50 of 60 matches'
 
-/** The multi-select over 60 options, in a form or in a cell's dialog, and what it says. */
 const mount = async (inForm: boolean) => {
-    const announce = vi.fn()
+    const announcement = Promise.withResolvers<string>()
+    const messages: string[] = []
+    const announce = (message: string) => {
+        messages.push(message)
+        announcement.resolve(message)
+    }
     const props = {
         field: MANY,
         value: undefined,
@@ -34,22 +38,24 @@ const mount = async (inForm: boolean) => {
             )}
         </>
     )
-    return { announce }
+    return { messages, announced: announcement.promise }
 }
 
 test('in a form, the count is said once the combobox is typed in, not when the editor appears', async () => {
-    const { announce } = await mount(true)
+    const { messages, announced } = await mount(true)
     const search = page.getByRole('combobox', { name: 'Symptoms' })
     await expect.element(search).toBeVisible()
-    expect(announce).not.toHaveBeenCalled()
+    expect(messages).toEqual([])
 
     await userEvent.click(search)
     await userEvent.keyboard('option')
-    await expect.poll(() => announce.mock.calls).toEqual([[COUNT]])
+    expect(await announced).toBe(COUNT)
+    expect(messages).toEqual([COUNT])
 })
 
 test('in a dialog, the count is shown and said when the editor opens', async () => {
-    const { announce } = await mount(false)
+    const { messages, announced } = await mount(false)
     await expect.element(page.getByText(COUNT)).toBeVisible()
-    await expect.poll(() => announce.mock.calls).toEqual([[COUNT]])
+    expect(await announced).toBe(COUNT)
+    expect(messages).toEqual([COUNT])
 })

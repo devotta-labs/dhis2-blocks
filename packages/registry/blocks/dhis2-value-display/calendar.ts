@@ -4,8 +4,6 @@ import {
 } from '@dhis2/multi-calendar-dates'
 import type { Dhis2Calendar } from './types'
 
-// Also exported here so a block can import the type from this file: a
-// consumer's import rewriting resolves `./types` to the wrong block's.
 export type { Dhis2Calendar }
 
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
@@ -21,34 +19,24 @@ const CALENDARS: readonly Dhis2Calendar[] = [
     'thai',
 ]
 
-/** The system calendar from `systemInfo.calendar`; anything unknown is Gregorian. */
-// This is the parser: it takes the raw `systemInfo.calendar` and returns the domain type.
 // oxlint-disable-next-line anti-slop/no-unknown-parameters
-export const parseDhis2Calendar = (value: unknown): Dhis2Calendar =>
+export const parseDhis2Calendar = (value: unknown) =>
     CALENDARS.find((calendar) => calendar === value) ?? 'gregorian'
 
 const STORED_DAY = /^\d{4}-\d{2}-\d{2}/
 const STORED_TIME = /^\d{4}-\d{2}-\d{2}[T ](\d{2}:\d{2})/
 
 /** The `YYYY-MM-DD` prefix exactly as stored, never routed through `Date`. */
-export const storedDay = (value: string): string | undefined =>
-    STORED_DAY.exec(value)?.[0]
+export const storedDay = (value: string) => STORED_DAY.exec(value)?.[0]
 
 /** The `HH:mm` of a stored date-time exactly as written, or undefined. */
-export const storedTime = (value: string): string | undefined =>
-    STORED_TIME.exec(value)?.[1]
+export const storedTime = (value: string) => STORED_TIME.exec(value)?.[1]
 
-/** Calendars `Intl` can name months for, so dates read as "Oct 14, 2026". */
 const INTL_CALENDARS = new Set<Dhis2Calendar>(['gregorian', 'iso8601'])
 
-/**
- * One formatter per locale: building one costs far more than formatting, and
- * the timeline formats a date per entry. `calendar: 'gregory'`, since `th` or
- * `fa` would otherwise switch to the Buddhist or Persian calendar.
- */
 const dayFormats = new Map<string, Intl.DateTimeFormat>()
 
-const dayFormat = (locale?: string): Intl.DateTimeFormat => {
+const dayFormat = (locale?: string) => {
     const known = dayFormats.get(locale ?? '')
     if (known !== undefined) {
         return known
@@ -73,7 +61,7 @@ export const formatCalendarDate = (
     isoDay: string,
     calendar: Dhis2Calendar,
     locale?: string
-): string => {
+) => {
     const day = storedDay(isoDay)
     if (day === undefined) {
         return isoDay
@@ -95,7 +83,6 @@ export const formatCalendarDate = (
             convertFromIso8601(day, calendar as MultiCalendarIdentifier)
         )
     } catch {
-        // shortcut: the library cannot convert Coptic, so a Coptic day shows as the ISO day; upgrade when it can.
         return day
     }
 }

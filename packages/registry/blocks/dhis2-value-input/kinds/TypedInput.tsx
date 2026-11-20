@@ -46,7 +46,6 @@ export const TypedInput = ({
             value={draft.text}
             onChange={(event) => draft.change(event.target.value)}
             onBlur={(event) => {
-                // The input's own calendar is drawn outside it, and is still the field.
                 if (
                     !intoOwnCalendar(event.currentTarget, event.relatedTarget)
                 ) {
@@ -54,12 +53,10 @@ export const TypedInput = ({
                 }
             }}
             onKeyDown={(event) => {
-                // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed.
                 if (event.key === 'Enter' && !composing(event)) {
                     draft.commit()
                 }
             }}
-            // On a right-to-left page the text keeps to the page's start, whatever its own direction.
             className={cn(
                 readOnly && READ_ONLY_CLASS,
                 'rtl:text-right',

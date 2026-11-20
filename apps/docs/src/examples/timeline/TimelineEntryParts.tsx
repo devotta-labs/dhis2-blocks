@@ -11,14 +11,6 @@ import {
     type ProgramInfo,
 } from '@/components/timeline/dhis2'
 
-/**
- * One event's parts in a card, outside any timeline.
- *
- * The parts are presentational: they render from the entry and the calendar,
- * so they work wherever `TimelineMetaProvider` is. The event and program
- * below are placeholders shaped like DHIS2's answers; in your app they come
- * from `useEventEntries` or your own requests.
- */
 const program: ProgramInfo = {
     id: 'placeholderProgram',
     name: 'Antenatal care',
@@ -57,7 +49,6 @@ const program: ProgramInfo = {
     ]),
 }
 
-// An answer from `tracker/events`, parsed as the hooks parse it.
 const [event] = EventsPageSchema.parse({
     events: [
         {
@@ -103,4 +94,12 @@ const TimelineEntryParts = () => (
     </TimelineMetaProvider>
 )
 
+/**
+ * One event's parts in a card, outside any timeline.
+ *
+ * The parts are presentational: they render from the entry and the calendar,
+ * so they work wherever `TimelineMetaProvider` is. The event and program
+ * below are placeholders shaped like DHIS2's answers; in your app they come
+ * from `useEventEntries` or your own requests.
+ */
 export default TimelineEntryParts

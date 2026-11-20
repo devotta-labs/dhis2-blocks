@@ -13,16 +13,6 @@ import {
     Pagination,
 } from '@dhis2/ui'
 
-/**
- * Loading placeholders for the Working List examples.
- *
- * These belong to the docs, not the block: they cover the time before the
- * example can mount the block at all — its code loading and the adapter
- * starting the DHIS2 session. They copy the shape of the block's own loading
- * state (10 rows, matching the examples' `defaultPagination`) so the preview
- * does not change layout when the block takes over. If the block's layout
- * changes, update these to match.
- */
 const PAGE_SIZE = 10
 
 const COLUMN_COUNT = 4

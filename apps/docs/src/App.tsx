@@ -13,8 +13,6 @@ type DocsPageModule = {
     }
 }
 
-// Pages are .mdx files below src/pages; import.meta.glob keeps page
-// registration automatic while knip and TypeScript stay out of MDX parsing.
 const pageModules = import.meta.glob<DocsPageModule>('./pages/**/*.mdx')
 
 const pageLoading = <div aria-hidden="true" className="h-48 animate-pulse" />
@@ -59,7 +57,6 @@ const router = createBrowserRouter([
                 children: [
                     docRoute('/', './pages/index.mdx'),
                     docRoute('/installation', './pages/installation.mdx'),
-                    // The former name of the installation page.
                     {
                         path: '/getting-started',
                         element: <Navigate to="/installation" replace />,
@@ -68,7 +65,6 @@ const router = createBrowserRouter([
                         '/blocks/working-list',
                         './pages/blocks/working-list.mdx'
                     ),
-                    // The calendar is now part of the Working List page.
                     {
                         path: '/blocks/working-list-calendar',
                         element: (

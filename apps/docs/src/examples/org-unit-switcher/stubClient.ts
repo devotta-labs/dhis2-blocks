@@ -19,7 +19,7 @@ const FACILITIES = {
  * makes without a server. Your own data layer goes through
  * `createOrgUnitClient` the same way: it needs one `query` method.
  */
-export const stubClient = (scenario: Scenario): OrgUnitClient =>
+export const stubClient: (scenario: Scenario) => OrgUnitClient = (scenario) =>
     createOrgUnitClient({
         query: async (query) => {
             const [[key, request]] = Object.entries(query)
@@ -37,7 +37,6 @@ export const stubClient = (scenario: Scenario): OrgUnitClient =>
                     },
                 }
             }
-            // Searching and remembered-id checks find nothing in a stub.
             return { [key]: { organisationUnits: [] } }
         },
     })

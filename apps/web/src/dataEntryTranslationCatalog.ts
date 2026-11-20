@@ -119,7 +119,7 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('You do not have access to change people of this type'),
     i18n.t('You do not have access to enter data in this program'),
     i18n.t('You do not have access to enter data in this stage'),
-    // The value types' problems, translated where they arise.
+
     i18n.t('Choose one of the options'),
     i18n.t('Enter a number'),
     i18n.t('Enter a number between 0 and 1'),
@@ -142,6 +142,6 @@ export const dataEntryTranslationCatalog = () => [
     i18n.t('Select a valid organisation unit'),
     i18n.t('Select Yes or No'),
     i18n.t('Use a full stop for decimals'),
-    // The program rules' failures, translated where they arise.
+
     i18n.t('The enrollment of this event could not be read'),
 ]

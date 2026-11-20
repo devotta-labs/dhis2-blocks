@@ -6,7 +6,6 @@ import { canvasSourcePlugin } from './canvasSourcePlugin'
 
 export default defineConfig({
     plugins: [canvasSourcePlugin()],
-    // A lab server test checks its answers against the block's own schemas.
     test: {
         projects: [
             {
@@ -26,7 +25,7 @@ export default defineConfig({
                     include: [
                         'server/**/*.test.mjs',
                         'src/playground/**/*.test.ts',
-                        'src/__tests__/*.test.ts',
+                        'src/test/*.test.ts',
                     ],
                     environment: 'node',
                 },
@@ -96,7 +95,14 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright(),
+                        provider: playwright({
+                            contextOptions: {
+                                permissions: [
+                                    'clipboard-read',
+                                    'clipboard-write',
+                                ],
+                            },
+                        }),
                         instances: [{ browser: 'chromium' }],
                     },
                 },

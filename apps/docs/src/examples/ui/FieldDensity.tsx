@@ -9,7 +9,6 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 
-/** One visit form at each density: regular, and compact inside `data-density="compact"`. */
 const Visit = ({ id, legend }: { id: string; legend: string }) => (
     <FieldSet>
         <FieldLegend>{legend}</FieldLegend>

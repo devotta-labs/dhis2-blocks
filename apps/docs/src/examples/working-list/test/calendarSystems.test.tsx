@@ -34,13 +34,10 @@ const MonthDays = ({
     )
 }
 
-// Records are placed by the working list's date conversion and the grid by
-// the date picker's; a record lands on a day only when the two agree.
 describe('the calendar grid and the working list agree on days', () => {
     it.each([
         ['gregorian', '2026-11-14'],
         ['ethiopian', '2026-11-14'],
-        // Pagume, the Ethiopian thirteenth month.
         ['ethiopian', '2026-09-08'],
         ['nepali', '2026-11-14'],
     ] as const)('%s for %s', async (calendar, isoDate) => {

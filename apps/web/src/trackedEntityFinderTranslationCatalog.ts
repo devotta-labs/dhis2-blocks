@@ -1,7 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 
-// Extraction markers for the source-installed tracked entity finder. Never
-// invoked.
 export const trackedEntityFinderTranslationCatalog = () => [
     i18n.t('Search'),
     i18n.t('Searching…'),

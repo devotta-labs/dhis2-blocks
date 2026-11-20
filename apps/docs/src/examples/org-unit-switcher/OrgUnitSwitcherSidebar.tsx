@@ -6,7 +6,6 @@ import {
 import { Button } from '@/components/dhis2/ui/button'
 import { useState } from 'react'
 
-/** Any page under the provider can scope its data to the current organisation unit. */
 function OrgUnitPage() {
     const { orgUnit, status } = useOrgUnit()
     return (
@@ -29,7 +28,7 @@ export default function OrgUnitSwitcherSidebar() {
                 <aside
                     className={`flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0 ${collapsed ? 'md:w-12' : 'md:w-60'}`}
                 >
-                    {/* At the top of the navigation, where it stays while the links below collapse. */}
+                    {}
                     <OrgUnitSwitcher collapsed={collapsed} />
                     <nav
                         aria-label="Workspace navigation"

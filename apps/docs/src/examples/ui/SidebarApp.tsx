@@ -40,7 +40,6 @@ const reports = ['Visits this month', 'Missed appointments', 'Stock']
 /** A clinic app's navigation: it collapses to icons, and to a sheet on a narrow window. */
 export default function SidebarApp() {
     const [page, setPage] = useState('Today')
-    // A router's NavLink sets `aria-current="page"` itself.
     const link = (label: string) => ({
         href: `#${label.toLowerCase().replaceAll(' ', '-')}`,
         'aria-current': page === label ? ('page' as const) : undefined,

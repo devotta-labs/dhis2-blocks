@@ -5,13 +5,6 @@ import {
     type TimelineEntry,
 } from '@/components/timeline'
 
-/**
- * The timeline with data your app already has.
- *
- * Entries are a plain array: an id, the stored date or date-time, and your own
- * data. Dates are placeholders relative to 2026-10-23 so the preview always
- * has something in each phase; in your app they come from your records.
- */
 interface Visit {
     clinic: string
     reason: string
@@ -72,4 +65,11 @@ const TimelineOwnData = () => (
     </Timeline>
 )
 
+/**
+ * The timeline with data your app already has.
+ *
+ * Entries are a plain array: an id, the stored date or date-time, and your own
+ * data. Dates are placeholders relative to 2026-10-23 so the preview always
+ * has something in each phase; in your app they come from your records.
+ */
 export default TimelineOwnData

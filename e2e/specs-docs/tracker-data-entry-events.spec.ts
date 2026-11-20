@@ -23,10 +23,6 @@ import {
     valuesOf,
 } from './tracker-data-entry.support'
 
-/**
- * The data entry gallery against the docs DHIS2 (Sierra Leone demo), whose
- * events are shared test data: see `data-entry.support.ts`.
- */
 const EVENT_PROGRAM = 'tracker-data-entry/event-program'
 const REGISTER = 'tracker-data-entry/tracker-register'
 const PERSON = 'tracker-data-entry/person-events'
@@ -49,7 +45,6 @@ const DIAGNOSIS = 'K6uUAvq500H'
 const LMP = 'w4ky6EkVahL'
 const GESTATIONAL_AGE = 'roKuXYfw1BW'
 const CHRONIC_CONDITIONS = 'de0FEHSIoxh'
-// The fields "Hide all fields for chronic conitions unless the w" hides.
 const CHRONIC_FOLLOW_UPS = [
     'UQ2Zo8CruPB',
     'zzGNbeMnTd6',
@@ -70,7 +65,6 @@ const PersonSchema = z.object({
     events: z.array(PersonEventSchema),
 })
 
-/** The register's first visits as the grid loads them, each with her other events. */
 const registerVisits = async (request: APIRequestContext) => {
     const visits = await readEvents(request, {
         program: RMNCH,
@@ -102,7 +96,6 @@ const registerVisits = async (request: APIRequestContext) => {
     }))
 }
 
-/** A field's newest value across a person's events, as a newest-event rule variable reads it. */
 const newestValue = (
     events: ReadonlyArray<z.infer<typeof PersonEventSchema>>,
     field: string
@@ -112,7 +105,6 @@ const newestValue = (
         .map((event) => valuesOf(event).get(field))
         .find((value) => value !== undefined)
 
-/** An active first visit whose person has no LMP anywhere, so the LMP typed is the one rules read. */
 const visitWithoutLmp = async (request: APIRequestContext) => {
     const { visit } = found(
         (await registerVisits(request)).find(
@@ -128,7 +120,6 @@ const visitWithoutLmp = async (request: APIRequestContext) => {
     }
 }
 
-/** The grid's request for many people at once: `tracker/enrollments?enrollments=<id>,<id>,…`. */
 const isBatchedEnrollments = (response: Response) => {
     const url = new URL(response.url())
     return (
@@ -146,7 +137,6 @@ test.describe('each example', () => {
     }) => {
         await openGrid(page, EVENT_PROGRAM)
         await expectNoAxeViolations(page)
-        // A new row's option list open: nothing is saved without an event date.
         shared.adds(await addRow(page))
         await page.keyboard.press('Tab')
         await page.keyboard.type('M')
@@ -166,7 +156,6 @@ test.describe('each example', () => {
     }) => {
         await openGrid(page, PERSON)
         await expectNoAxeViolations(page)
-        // A hidden cell with its note shown.
         const [firstVisit] = await readEvents(page.request, {
             program: RMNCH,
             enrollments: WOMAN,
@@ -271,7 +260,6 @@ test('register: an LMP 70 days before the visit assigns gestational age 10, read
 }) => {
     const visit = await visitWithoutLmp(request)
     shared.keep([visit])
-    // Every person in one request: the rules read each woman's other events.
     const batched = page.waitForResponse(isBatchedEnrollments)
     await openGrid(page, REGISTER)
     expect((await batched).ok()).toBe(true)
@@ -309,7 +297,6 @@ test('register: an LMP after the visit is an error described on the cell', async
     await expect(lmp).toHaveAccessibleDescription(
         /LMP date entered is after the date of the antenatal care visit\./
     )
-    // DHIS2 takes or refuses the change; either way the event is restored afterwards.
     await settled(page)
 })
 
@@ -317,7 +304,6 @@ test('register: a person whose enrollment DHIS2 leaves out has no rules run, and
     page,
     request,
 }) => {
-    // With no chronic conditions, the follow-ups are hidden while her rules run.
     const { visit } = found(
         (await registerVisits(request)).find(
             ({ visit: own }) =>
@@ -331,7 +317,6 @@ test('register: a person whose enrollment DHIS2 leaves out has no rules run, and
     await openGrid(page, REGISTER)
     await expect(followUp).toHaveAccessibleDescription(HIDDEN)
 
-    // As for a woman the user may not read: DHIS2 leaves her out of the batch, no sharing is changed.
     await page.route('**/tracker/enrollments?*', async (route) => {
         const response = await route.fetch()
         const body = z
@@ -354,7 +339,6 @@ test('register: a person whose enrollment DHIS2 leaves out has no rules run, and
     await page.reload()
     await gridReady(page)
     expect((await batched).ok()).toBe(true)
-    // Her rules do not run without her enrollment, so nothing they decide is applied from missing data.
     const herRow = page.getByRole('row').filter({ has: followUp })
     await expect(herRow.getByRole('listitem')).toHaveText([
         /The enrollment of this event could not be read/,
@@ -378,7 +362,6 @@ test('one woman: chronic conditions Yes and No show and hide the follow-ups in a
     )
     await openGrid(page, PERSON)
 
-    // Her rows of other stages have no control for these fields ("Not in this stage").
     const followUps = page.locator(
         events
             .flatMap(({ event }) =>
@@ -400,7 +383,6 @@ test('one woman: chronic conditions Yes and No show and hide the follow-ups in a
     await allFollowUps(valuesOf(firstVisit).get(CHRONIC_CONDITIONS) !== 'true')
 
     await chronic.focus()
-    // The cell shows the Yes/No label; DHIS2 stores true or false.
     await page.keyboard.press('y')
     await expect(chronic).toHaveValue('Yes')
     await allFollowUps(false)
@@ -446,12 +428,10 @@ test('keeps a new row through offline and reload', async ({
     )
     expect(await readEvent(request, rowId)).toBeUndefined()
 
-    // The browser cannot load the page while offline; the page keeps reporting offline across the reload instead.
     await page.evaluate(() =>
         sessionStorage.setItem('data-entry-e2e', 'offline')
     )
     await context.setOffline(false)
-    // Leaving with unsent changes asks first.
     page.once('dialog', (dialog) => dialog.accept())
     await page.reload()
     await gridReady(page)
@@ -496,7 +476,6 @@ test('fills the inpatient form by keyboard alone within 60 keystrokes per row', 
         await page.keyboard.type(text)
     }
 
-    // Past the grid by its skip link, back to "Add event".
     await press('Tab')
     await press('Enter')
     await press('Shift+Tab')
@@ -505,19 +484,18 @@ test('fills the inpatient form by keyboard alone within 60 keystrokes per row', 
     const rowId = await focusedRow(page)
     shared.adds(rowId)
 
-    // Each field typed, then Tab: an option cell takes its top match.
     for (const text of [
-        date, // Event date
-        'F', // Gender: Female
-        'n', // Pregnant: No
-        '34', // Age (years)
-        '160', // Height in cm
-        '60', // Weight in kg
-        addDays(date, -7), // Date of admission
-        addDays(date, -1), // Date of discharge
-        '', // Place of Infection: an org unit, left empty
-        'Dis', // Mode of Discharge: Discharged
-        'A00', // Diagnosis (ICD-10)
+        date,
+        'F',
+        'n',
+        '34',
+        '160',
+        '60',
+        addDays(date, -7),
+        addDays(date, -1),
+        '',
+        'Dis',
+        'A00',
     ]) {
         await type(text)
         await press('Tab')

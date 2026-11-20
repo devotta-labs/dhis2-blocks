@@ -35,7 +35,9 @@ const ALLOWED_KEYS = [
 
 const SingleUrlParameterSchema = z.array(z.string()).length(1)
 
-export const parseAppUrlState = (parameters: URLSearchParams): AppUrlState => {
+export const parseAppUrlState: (parameters: URLSearchParams) => AppUrlState = (
+    parameters
+) => {
     const candidate = Object.fromEntries(
         ALLOWED_KEYS.flatMap((key) => {
             if (!parameters.has(key)) {

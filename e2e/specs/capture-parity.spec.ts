@@ -166,9 +166,6 @@ test.describe('Capture context and generated tracker views', () => {
             (url) => !url.searchParams.has(statusParameter)
         )
         expect(initialQuery.searchParams.has('filter')).toBe(false)
-        // An absent URL selection is controlled null. The provider resolves
-        // it to the generated default without echoing an external selection
-        // through the persistence callback.
         await expect(page).not.toHaveURL(/selectedTemplateId=/)
         await expect(
             page.locator(
@@ -179,8 +176,6 @@ test.describe('Capture context and generated tracker views', () => {
             page.locator('[data-testid="working-list-table"] tbody')
         ).toHaveAttribute('aria-busy', 'false', { timeout: 30_000 })
 
-        // Reloading the controlled null state must keep the unfiltered default
-        // instead of falling back to the first visible saved list.
         const reloadedQuery = await waitForTrackerResponse(
             page,
             'trackedEntities',
@@ -270,13 +265,10 @@ test.describe('Capture context and generated tracker views', () => {
         )
         expect(deselectedQuery.searchParams.get('page')).toBe('1')
         await expect(activeView).not.toHaveAttribute('aria-pressed', 'true')
-        // Deselection selects the synthetic default template so the
-        // preference survives a reload.
         await expect(page).toHaveURL(
             new RegExp(`selectedTemplateId=${PROGRAM}-default`)
         )
 
-        // React Query can satisfy this recently loaded query from cache.
         await activeView.click()
         await expect(activeView).toHaveAttribute('aria-pressed', 'true')
         await expect(page).toHaveURL(/selectedTemplateId=active/)

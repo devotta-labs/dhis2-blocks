@@ -13,22 +13,8 @@ import {
 import type { Option } from '@/components/context-selector'
 import { useMemo, useState } from 'react'
 
-/**
- * A child immunisation register: one child a row, a date for each dose.
- *
- * `ImmReg00001` is the "Child immunisation register" program the docs
- * database is seeded with. Its one repeatable stage, `ImmVaccin01`, holds a
- * vaccination per event, with data elements Vaccine (`ImmVaccine1`: BCG, OPV,
- * DPT, MEASLES) and Dose (`ImmDose0001`: 0 to 3). "DPT 2" is the event of
- * that stage whose Vaccine is DPT and Dose is 2, so each date column is a
- * `where` slot: typing the date makes that event, with the vaccine and dose no
- * column shows. Replace the ids with ones from your own instance; the children
- * were enrolled at Ngelehun CHC (`DiszpKrYNg8`) in October 2026.
- */
-
 const STAGE = 'ImmVaccin01'
 
-// One date column for a dose: the vaccination event of this vaccine and dose.
 const dose = (vaccine: string, dose: string, label = dose) => ({
     field: {
         stage: STAGE,
@@ -38,7 +24,6 @@ const dose = (vaccine: string, dose: string, label = dose) => ({
     label,
 })
 
-// The paper's headings, in the paper's order.
 export const layout: RegisterLayout = {
     columns: [
         {
@@ -67,7 +52,6 @@ export const layout: RegisterLayout = {
     ],
 }
 
-// Whole months written out, so the example does no calendar maths of its own.
 const months = [
     {
         value: '2026-01',
@@ -221,7 +205,6 @@ const orgUnits: readonly Option[] = [
     { value: 'm7fBMpmVpSM', label: 'Kolisokor MCHP' },
 ]
 
-// Replace with your app's loading and error states.
 const Status = () => {
     const status = useTrackerDataEntry((view) => view.status)
     const error = useTrackerDataEntry((view) => view.error)
@@ -251,7 +234,6 @@ const ImmunisationRegister = () => {
     const month = months.find(({ value }) => value === monthValue) ?? months[0]
     const orgUnit = orgUnits.find(({ value }) => value === orgUnitId)
 
-    // A new source, with new keys, loads the register again: make one per choice, not per render.
     const source = useMemo(
         () =>
             registerSource({
@@ -314,4 +296,16 @@ const ImmunisationRegister = () => {
     )
 }
 
+/**
+ * A child immunisation register: one child a row, a date for each dose.
+ *
+ * `ImmReg00001` is the "Child immunisation register" program the docs
+ * database is seeded with. Its one repeatable stage, `ImmVaccin01`, holds a
+ * vaccination per event, with data elements Vaccine (`ImmVaccine1`: BCG, OPV,
+ * DPT, MEASLES) and Dose (`ImmDose0001`: 0 to 3). "DPT 2" is the event of
+ * that stage whose Vaccine is DPT and Dose is 2, so each date column is a
+ * `where` slot: typing the date makes that event, with the vaccine and dose no
+ * column shows. Replace the ids with ones from your own instance; the children
+ * were enrolled at Ngelehun CHC (`DiszpKrYNg8`) in October 2026.
+ */
 export default ImmunisationRegister

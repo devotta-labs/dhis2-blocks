@@ -4,7 +4,6 @@ import {
     intersectOrganisationUnitScopes,
     isOrganisationUnitInScope,
     resolveCaptureOrganisationUnitRoots,
-    type OrganisationUnitReference,
 } from '../organisationUnitScope'
 
 describe('areOrganisationUnitPathsRelated', () => {
@@ -16,7 +15,7 @@ describe('areOrganisationUnitPathsRelated', () => {
     })
 })
 
-const unit = (id: string, path: string): OrganisationUnitReference => ({
+const unit = (id: string, path: string) => ({
     id,
     displayName: id,
     path,

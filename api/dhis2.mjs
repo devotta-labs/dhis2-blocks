@@ -15,15 +15,13 @@ export default function handler(req, res) {
 
     const backend = resolveDocsBackend(process.env.DOCS_DHIS2_URL)
 
-    // Vercel's forwarding headers describe the docs host. DHIS2 uses them
-    // to determine its own origin, which would break the proxy's CORS handling.
+    // WARNING: Forwarded host headers make DHIS2 misidentify its origin and break CORS.
     for (const header of Object.keys(req.headers)) {
         if (header === 'forwarded' || header.startsWith('x-forwarded-')) {
             delete req.headers[header]
         }
     }
 
-    // Keep the function alive until the streamed upstream response completes.
     return new Promise((resolve, reject) => {
         res.once('finish', resolve)
         res.once('close', resolve)

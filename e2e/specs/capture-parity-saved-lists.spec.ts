@@ -218,8 +218,6 @@ test.describe('owner pagination and saved-list lifecycle', () => {
             ).toBeVisible()
             await page.keyboard.press('Escape')
 
-            // This query was loaded before Save As, so React Query may satisfy
-            // the restored text sort from cache without another HTTP request.
             await page.getByTestId(`sort-${TEXT_ATTRIBUTE}`).click()
             await expect(
                 page.getByTestId('working-list-dirty-indicator')

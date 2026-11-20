@@ -7,12 +7,9 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { stubClient, type Scenario } from './stubClient'
 
-// Only for this example: your app already has its own QueryClientProvider.
 const queryClient = new QueryClient()
-// Created once, outside render: each client caches its own results.
 const clients = { one: stubClient('one'), three: stubClient('three') }
 
-// These units are clinics, so the app names them; pass i18n.t() strings in yours.
 const CLINICS: Partial<OrgUnitSwitcherTexts> = {
     label: 'Clinic',
     choose: 'Choose a clinic',

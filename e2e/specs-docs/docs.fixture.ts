@@ -32,8 +32,6 @@ const urlPath = (value?: string) => {
     }
 }
 
-// Paths the adapter's bootstrap probes before sign-in. The list is shared
-// with the AbortError exemption below so both stay in sync.
 const bootstrapApiPath =
     /\/api(?:\/\d+)?\/(me|system\/info|loginConfig|userSettings)$/
 
@@ -43,8 +41,6 @@ const isAbortedBootstrapRead = (diagnostic: BrowserDiagnostic) =>
     diagnostic.method === 'GET' &&
     bootstrapApiPath.test(urlPath(diagnostic.url) ?? '')
 
-// The data entry specs run program rules, and so does the accessibility scan of
-// the data entry examples; no other spec does.
 const DATA_ENTRY_SPEC = /(?:tracker-data-entry-[^/]*|accessibility)\.spec\.ts$/
 
 const isKnownBenignDiagnostic = (
@@ -84,8 +80,6 @@ const isKnownBenignDiagnostic = (
         diagnostic.method === 'GET' &&
         /\/api(?:\/\d+)?\/tracker\/(trackedEntities|events)$/.test(path ?? '')
     ) {
-        // React Query aborts obsolete Tracker reads when the result level or
-        // selected list changes.
         return true
     }
 
@@ -94,8 +88,6 @@ const isKnownBenignDiagnostic = (
         diagnostic.status === 401 &&
         bootstrapApiPath.test(path ?? '')
     ) {
-        // Signed-out previews probe these endpoints before the adapter shows
-        // its sign-in dialog — the 401 is the expected trigger.
         return true
     }
 
@@ -108,8 +100,6 @@ const isKnownBenignDiagnostic = (
     }
 
     if (isAbortedBootstrapRead(diagnostic)) {
-        // Navigating between examples aborts the adapter's bootstrap reads,
-        // and React StrictMode remounts do the same under the dev server.
         return true
     }
 
@@ -121,9 +111,6 @@ const isKnownBenignDiagnostic = (
             diagnostic.message
         )
     ) {
-        // The DHIS2 rule engine logs, and skips, a rule that reads a value the
-        // person lacks, such as an attribute of a person DHIS2 left out, or the
-        // event date in a rule a register runs for the enrolment.
         return true
     }
 
@@ -231,9 +218,6 @@ export const test = base.extend<DocsFixtures>({
         page.off('requestfailed', onRequestFailed)
         page.off('response', onResponse)
 
-        // Each aborted bootstrap read surfaces a console AbortError too —
-        // allow one console error per aborted request so an unrelated abort
-        // later in the test is still reported.
         let consoleAbortAllowance = diagnostics.filter(
             isAbortedBootstrapRead
         ).length

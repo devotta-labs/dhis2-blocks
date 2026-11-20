@@ -19,15 +19,8 @@ import {
     type HistoryEntryData,
 } from '@/components/timeline/dhis2'
 
-/**
- * A tracked entity's history across every program it is enrolled in.
- *
- * `Y8aEiTpHSSQ` is a person in the WHO RMNCH Tracker in the Sierra Leone
- * demo database. Replace it with a tracked entity from your own instance.
- */
 const TRACKED_ENTITY = 'Y8aEiTpHSSQ'
 
-/** A host action: it reads the event the surrounding entry shows. */
 const OpenEvent = () => {
     const { baseUrl } = useConfig()
     const { data } = useTimelineEventEntry()
@@ -80,4 +73,10 @@ const TimelineCaseHistory = () => {
     )
 }
 
+/**
+ * A tracked entity's history across every program it is enrolled in.
+ *
+ * `Y8aEiTpHSSQ` is a person in the WHO RMNCH Tracker in the Sierra Leone
+ * demo database. Replace it with a tracked entity from your own instance.
+ */
 export default TimelineCaseHistory

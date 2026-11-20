@@ -52,7 +52,6 @@ const accountSchema = z.object({
     }),
 })
 
-// A bulk action leaves a register's person and enrolment alone: it fills events.
 const bulkColumn = ({ slot }: TrackerColumn) =>
     slot !== PERSON && slot !== ENROLLMENT
 
@@ -76,7 +75,6 @@ export const TrackerDataEntry = ({
 }: TrackerDataEntryProps) => {
     const queryClient = useQueryClient()
     const { baseUrl } = useConfig()
-    // Absolute, so the outbox is named for the server however the app reaches it.
     const serverUrl = new URL(baseUrl, window.location.href).href
     const engine = useServerEngine(serverUrl)
     const account = useQuery({
@@ -90,14 +88,11 @@ export const TrackerDataEntry = ({
     )
     useEffect(() => {
         let live = true
-        // Fetched once per mount and not watched: loading again, as an app-wide invalidation would, replaces the cells
-        // under the person's edits.
         queryClient
             .fetchQuery({
                 queryKey: ['data-entry', 'form', cacheKey],
                 queryFn: async ({ signal }) => {
                     const fetched = await source.load(engine, signal)
-                    // The engine loads while the rules' metadata does; a program without rules never asks for it.
                     if (fetched.rules?.hasRules) {
                         preloadRuleEngine()
                     }
@@ -113,7 +108,6 @@ export const TrackerDataEntry = ({
             live = false
             setLoaded({})
         }
-        // A source with the same keys is the same form.
     }, [queryClient, cacheKey, engine])
     const form = loaded.form
     const orgUnitNames = useMemo(
@@ -131,7 +125,6 @@ export const TrackerDataEntry = ({
         [form]
     )
     const userId = account.data?.me.id
-    // The user this mount opened the form for. Once DHIS2 names someone else, the form stays locked until a reload.
     const [openedFor, setOpenedFor] = useState<string>()
     if (openedFor === undefined && userId !== undefined) {
         setOpenedFor(userId)
@@ -155,7 +148,6 @@ export const TrackerDataEntry = ({
         [calendar, dateFormat]
     )
 
-    // Every DOM id of the form starts with it, so two forms on one page never share one.
     const id = useId()
     const idScope = `data-entry-${id.replaceAll(':', '')}`
     const [start] = useState(() => performance.now())
@@ -179,7 +171,6 @@ export const TrackerDataEntry = ({
         }))
     )
     const [opened, setOpened] = useState<OpenForm>()
-    // Why opening the loaded form failed.
     const [failed, setFailed] = useState<string>()
 
     useEffect(() => {
@@ -199,7 +190,6 @@ export const TrackerDataEntry = ({
             announce,
             onSignedInAsOther() {
                 setLocked(true)
-                // So every grid of this server, and the next mount, learn who is signed in now.
                 void queryClient.invalidateQueries({
                     queryKey: ['data-entry', 'account', serverUrl],
                 })
@@ -225,7 +215,6 @@ export const TrackerDataEntry = ({
             setOpened(undefined)
             setFailed(undefined)
         }
-        // A source with the same keys is the same form: its keys are in the form's query key.
     }, [
         form,
         openedFor,
@@ -237,7 +226,6 @@ export const TrackerDataEntry = ({
         queryClient,
     ])
 
-    // Every page loaded stays when the form locks.
     const paged = usePages({
         open: opened,
         form,
@@ -273,7 +261,6 @@ export const TrackerDataEntry = ({
             discardFailed: active.discardFailed,
         })
     }, [view, status, error, active])
-    // Locked, nothing is sent: the form's last sync state no longer applies.
     useEffect(() => {
         if (lockedView !== undefined && paged !== undefined) {
             view.setState({
@@ -290,7 +277,6 @@ export const TrackerDataEntry = ({
         }
     }, [opened, start])
 
-    // A failed change may be only on this page: the device could not store it.
     const unsaved = useStore(
         view,
         ({ summary }) => summary.unsent + summary.failed > 0
@@ -326,8 +312,6 @@ export const TrackerDataEntry = ({
             )
         )
     }, [active, people])
-    // Undo after sending cannot delete an event, so a bulk write that creates events asks first. It reads the records
-    // when asked: a completion changes them, and a new function would render every cell again.
     const confirmBulk = useMemo(() => {
         const store = active.store
         return (keys: ReadonlyArray<CellKey>) => {
@@ -338,7 +322,6 @@ export const TrackerDataEntry = ({
                     return record?.kind === 'event' && record.isNew === true
                 })
             )
-            // `isNew` stays once DHIS2 creates the event; a cell it saved (a base, or `saved`) says it holds it.
             for (const [key, cell] of Object.entries(store.getState().cells)) {
                 if (cell?.base !== undefined || cell?.sync === 'saved') {
                     created.delete(recordIdOf(key))
@@ -351,8 +334,7 @@ export const TrackerDataEntry = ({
                       body:
                           created.size === 1
                               ? i18n.t('This creates 1 event on this page.')
-                              : // `replace`, as `count` must be a number: the count in the person's digits.
-                                i18n.t(
+                              : i18n.t(
                                     'This creates {{count}} events on this page.',
                                     {
                                         replace: {
@@ -365,14 +347,15 @@ export const TrackerDataEntry = ({
         }
     }, [active])
     const tracker = useMemo(
-        (): TrackerContext => ({
-            tables,
-            records,
-            fieldNames: form?.fieldNames,
-            store: active.store,
-            settings,
-            idScope,
-        }),
+        () =>
+            ({
+                tables,
+                records,
+                fieldNames: form?.fieldNames,
+                store: active.store,
+                settings,
+                idScope,
+            }) satisfies TrackerContext,
         [tables, records, form, active, settings, idScope]
     )
     return (

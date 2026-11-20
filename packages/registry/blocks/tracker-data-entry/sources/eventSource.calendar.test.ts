@@ -1,24 +1,21 @@
 import type { DataEngine } from '@/components/spreadsheet'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import meAdmin from './__tests__/fixtures/me-admin.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import meAdmin from './test/fixtures/me-admin.json'
 import { eventSource } from './eventSource'
 
 type Request = Parameters<DataEngine['query']>[0]
 
-// The first fixture event, moved into the month before the tests' today.
 const events = {
     ...inpatientEvents,
     events: inpatientEvents.events.map((event, at) =>
         at === 0 ? { ...event, occurredAt: '2026-10-05T00:00:00.000' } : event
     ),
 }
-// A user with no authority to edit expired events.
 const me = { ...meAdmin, authorities: [] }
 
 const EXPIRED = new Map([['NGxc7JpmqqD', 'This event is in an expired period']])
 
-/** A server on `calendar` that answers every request from the fixtures, and the calendar only when asked. */
 const engineFor = (calendar: string, expiryDays = 1) => {
     const requests: Request[] = []
     const program = {
@@ -58,7 +55,6 @@ test('with no expiry days, an event of an earlier period stays writable, as DHIS
 })
 
 test('a page builds its expiry in the calendar the load found, without asking again', async () => {
-    // Gregorian, the calendar it would assume, would expire the event.
     const { engine, requests } = engineFor('ethiopian')
     const events = source()
     await events.load(engine)

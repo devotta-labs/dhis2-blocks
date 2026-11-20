@@ -23,7 +23,7 @@ import {
     recordsOf,
     registerForm,
     typed,
-} from './__tests__/trackerRig'
+} from './test/trackerRig'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import type {
     EnrollmentFields,
@@ -51,7 +51,6 @@ const holding = ({
 const NOTHING_HELD = holding({})
 const CONTEXT = { programId: PROGRAM }
 
-// A woman DHIS2 holds, enrolled in the program, with a visit scheduled.
 const WOMAN = 'Y8aEiTpHSSQ'
 const ENROLMENT = 'PE6abx7Zhn0'
 const ELSEWHERE = 'm7fBMpmVpSM'
@@ -143,7 +142,6 @@ test('a person update sends the held person fields and only the changed attribut
         enrollments: [],
         events: [],
     })
-    // A mandatory attribute is not cleared.
     expect(waiting).toEqual(waits([cleared], 'Last name is required', 'failed'))
 })
 
@@ -268,7 +266,6 @@ test('a new person waits for its enrolment date, and is never sent alone', () =>
 })
 
 test('values typed before a visit’s date wait with it', () => {
-    // A new visit: the person and enrolment go, the undated visit waits.
     const undated = edit(ROW.anc2, GESTATIONAL_AGE, '20')
     const records = [
         ...typed(ROW).filter(({ key }) => !key.startsWith(ROW.anc2.id)),
@@ -282,7 +279,6 @@ test('values typed before a visit’s date wait with it', () => {
         waits([undated], 'Waiting for required fields: ANC 2 date')
     )
 
-    // A scheduled visit holds no values until its date: then both go in one update.
     const form = registerForm([SCHEDULED_VISIT])
     const held = holding({ events: [SCHEDULED] })
     const value = edit(SCHEDULED_VISIT, GESTATIONAL_AGE, '20')
@@ -347,7 +343,6 @@ test('a new enrolment’s scheduled events go in its import, once each', () => {
             ]
         },
     })
-    // The slot events typed in this import, whichever tab made the row.
     expect(asked).toEqual([
         [
             ROW.enrollment,
@@ -358,7 +353,6 @@ test('a new enrolment’s scheduled events go in its import, once each', () => {
             ]),
         ],
     ])
-    // The typed visit fills the scheduled slot: it is created once, dated, keeping its due date.
     expect(payload.events).toEqual([
         expect.objectContaining({ event: ROW.anc1.id }),
         expect.objectContaining({
@@ -386,7 +380,6 @@ test('a visit in a slot with no date column takes the enrolment date', () => {
 })
 
 test('a scheduled visit in a slot with no date column takes the enrolment date when a value is typed', () => {
-    // DHIS2 scheduled care at birth when the woman was enrolled: it has no date, and its slot no date column.
     const birth: EventRecord = {
         ...SCHEDULED_VISIT,
         id: 'EvtBirth001',

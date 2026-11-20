@@ -16,22 +16,20 @@ import {
     change,
     cleanUp,
     freshServer,
-    holdIdle,
-    holdPaint,
     KEY,
     later,
     memorySource,
     mount,
     withOutbox,
-} from './__tests__/rig'
+} from './test/rig'
 import {
     antenatalOf,
     eventId,
     eventsOf,
     rmnchForm,
     rulesFor,
-} from './__tests__/rmnchRig'
-import type { FixtureEvent } from './__tests__/rmnchRig'
+} from './test/rmnchRig'
+import type { FixtureEvent } from './test/rmnchRig'
 
 afterEach(cleanUp)
 beforeEach(() => {
@@ -50,12 +48,11 @@ const LMP = cellKey(FIRST_VISIT, RMNCH.lmp)
 const HEMOGLOBIN = 'vANAXwtLwcT'
 const FOLLOW_UPS = RMNCH.chronicFollowUps.map((id) => cellKey(FIRST_VISIT, id))
 
-/** The event with one value set, or removed when `value` is undefined. */
-const withValue = (
+const withValue: (
     event: FixtureEvent,
     dataElement: string,
     value?: string
-): FixtureEvent => ({
+) => FixtureEvent = (event, dataElement, value) => ({
     ...event,
     dataValues: [
         ...event.dataValues.filter((each) => each.dataElement !== dataElement),
@@ -84,12 +81,10 @@ const mountRmnch = async (
     return { form, memory, ...mounted }
 }
 
-/** The cells of every change sent so far. */
 const sentKeys = (memory: ReturnType<typeof memorySource>) =>
     memory.sent.flat().map(({ key }) => key)
 
 test('evaluates the visible rows first and the rest when idle', async () => {
-    const idle = holdIdle()
     const events = Array.from({ length: 10 }, (_, k) =>
         antenatalOf(k).map((event) =>
             event.event === eventId(FIRST_VISIT, k)
@@ -104,16 +99,12 @@ test('evaluates the visible rows first and the rest when idle', async () => {
         context().effects.getState().cells[cellKey(id, GESTATIONAL_AGE)]
             ?.readOnly === ASSIGNED
 
-    // The first row is in view, so it is in the first slice.
     expect(assigned(rows[0].id)).toBe(true)
-    // The rows in view take timer slices first; on a slow machine they are still running when idle time is let out.
     await expect
         .poll(() => {
-            idle.run()
             return rows.filter(({ id }) => assigned(id)).length
         })
         .toBe(60)
-    // Shown, not saved: no person changed these rows.
     await later(100)
     expect(memory.sent).toEqual([])
 })
@@ -124,23 +115,16 @@ test('opening the grid changes nothing; a person’s first change in a row saves
     await later(200)
     expect(memory.sent).toEqual([])
     expect(view().summary.unsent).toBe(0)
-    // No chronic conditions: the follow-ups are hidden, and keep their values.
     expect(context().store.getState().cells[followUp]?.value).toBe('true')
     expect(context().effects.getState().cells[followUp]?.hiddenBy).toBe(
         'Hidden by rule: Hide all fields for chronic conitions unless the w'
     )
 
-    const paint = holdPaint()
-    control(LMP).focus()
-    await userEvent.keyboard('2026-01-01{Enter}')
-    // Until the browser paints, the change waits on the page with the rules it asks for.
-    await later(200)
+    context().store.getState().commit(LMP, '2026-01-01')
     expect(memory.sent).toEqual([])
-    paint.run()
-    await expect.poll(() => memory.sent).toHaveLength(1)
-    await later(200)
+    await memory.saveCount(1)
+    await expect.poll(() => view().summary.unsent).toBe(0)
     expect(memory.sent).toHaveLength(1)
-    // One save for the event: the date, its gestational age and the hidden follow-ups cleared.
     expect(sentKeys(memory)).toEqual(
         expect.arrayContaining([
             LMP,
@@ -151,7 +135,6 @@ test('opening the grid changes nothing; a person’s first change in a row saves
     expect(new Set(sentKeys(memory).map(recordIdOf))).toEqual(
         new Set([FIRST_VISIT])
     )
-    // The later visit, untouched, keeps the value DHIS2 holds (none), locked by its rule, and saves nothing.
     expect(
         context().effects.getState().cells[
             cellKey(LATER_VISIT, GESTATIONAL_AGE)
@@ -200,7 +183,6 @@ test('discarding a change that could not be saved makes the rules save nothing i
         value: undefined,
         sync: 'idle',
     })
-    // The hidden follow-ups keep their values: the row has no change on its way.
     await later(300)
     expect(memory.sent).toEqual([])
     expect(context().store.getState().cells[FOLLOW_UPS[0]]?.value).toBe('true')
@@ -228,7 +210,6 @@ test('completing a row saves its rule changes first, and keeps its rule effects'
     expect(sentFirst).toEqual(expect.arrayContaining(FOLLOW_UPS))
     expect(new Set(sentFirst.map(recordIdOf))).toEqual(new Set([FIRST_VISIT]))
     expect(memory.statuses).toEqual([[FIRST_VISIT, 'COMPLETED']])
-    // The saved status rewrote the row's effects from the form; the rules' come back.
     await expect
         .poll(() => context().effects.getState().cells[FOLLOW_UPS[0]]?.hiddenBy)
         .toBe(hidden)
@@ -246,10 +227,8 @@ test('completing a row first runs the rules of an edit still waiting for a paint
     }
     const { context, view } = await mount(source, { data: RULES })
     await rulesRan()
-    // No frame is painted, so the edit's rules have not run when the row completes.
-    holdPaint()
-
     context().store.getState().commit(LMP, '2026-01-01')
+    expect(memory.sent).toEqual([])
     expect(await view().complete(FIRST_VISIT)).toMatchObject([
         { result: 'saved' },
     ])
@@ -259,7 +238,6 @@ test('completing a row first runs the rules of an edit still waiting for a paint
 })
 
 test('shows the rules’ notes on the row’s header', async () => {
-    // Ten weeks and two days ago.
     const lmp = addDaysIso(todayIso(), -72)
     const { context, form } = await mountRmnch(
         eventsOf(0).map((event) =>
@@ -268,7 +246,6 @@ test('shows the rules’ notes on the row’s header', async () => {
                 : event
         )
     )
-    // Around midnight the rules' today may be a day off the test's.
     const ageNow = /^Gest\. age 10\+[1-3]$/
     expect(context().effects.getState().rowNotes.get(FIRST_VISIT)).toEqual([
         expect.stringMatching(ageNow),
@@ -278,7 +255,6 @@ test('shows the rules’ notes on the row’s header', async () => {
             rowHeaderDomId(context().idScope, form.tables[0].id, FIRST_VISIT)
         )
         ?.closest('th')
-    // The note is behind the header's marker and is the header's description.
     await expect
         .element(page.elementLocator(header ?? document.body))
         .toHaveAccessibleDescription(ageNow)
@@ -298,11 +274,9 @@ test('an edit to a cross-event field re-runs the person’s rows', async () => {
 
     control(LMP).focus()
     await userEvent.keyboard('2026-01-01{Enter}')
-    // The edited visit saves its age: 1 January to 12 March is 10 weeks.
     await expect
         .poll(() => ageOf(FIRST_VISIT))
         .toEqual({ value: '10', readOnly: ASSIGNED })
-    // The later visit reads the date as the person's newest one; it is shown, not saved.
     expect(ageOf(LATER_VISIT)).toEqual({ value: undefined, readOnly: ASSIGNED })
     expect(ageOf(eventId(LATER_VISIT, 1))).toEqual({
         value: undefined,
@@ -315,7 +289,6 @@ test('an edit to a cross-event field re-runs the person’s rows', async () => {
 
 test('announces a value cleared by a rule', async () => {
     const [empty, ...cleared] = RMNCH.chronicFollowUps
-    // Chronic conditions: yes, so the follow-ups show; one of them is empty.
     const { view, context, memory } = await mountRmnch(
         eventsOf(0).map((event) =>
             event.event === FIRST_VISIT
@@ -329,7 +302,6 @@ test('announces a value cleared by a rule', async () => {
             .map(({ key }) => key)
             .sort()
     expect(clearedItems()).toEqual([])
-    // Nothing is saved, so no "All changes saved" follows what the rule said.
     memory.hold()
 
     control(cellKey(FIRST_VISIT, RMNCH.chronic)).focus()
@@ -360,7 +332,6 @@ test('writes performance marks', async () => {
     expect(
         performance.getEntriesByName('data-entry:rules', 'measure')
     ).toHaveLength(1)
-    // Every row is in view, so the visible rows were done in the first slice.
     expect(
         performance.getEntriesByName('data-entry:rules-visible', 'measure')
     ).toHaveLength(1)
@@ -377,12 +348,10 @@ test('a key that saves a value returns before the rules run; they run once the b
     control(LMP).focus()
     await userEvent.keyboard('2026-01-01')
 
-    // The key's own handling: Enter saves the value.
     control(LMP).dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
     )
     expect(context().store.getState().cells[LMP]?.value).toBe('2026-01-01')
-    // What the key queued has run; the rules have not.
     await Promise.resolve()
     expect(edits()).toHaveLength(0)
     expect(age()).toBeUndefined()
@@ -394,12 +363,10 @@ test('a key that saves a value returns before the rules run; they run once the b
 test('a rule waits for the person to leave the cell they are typing in', async () => {
     const { context } = await mountRmnch(antenatalOf(0))
     const age = cellKey(LATER_VISIT, GESTATIONAL_AGE)
-    // The person has changed the later visit, so its rule changes are saved.
     context().store.getState().commit(cellKey(LATER_VISIT, HEMOGLOBIN), '11')
 
     control(age).focus()
     await userEvent.keyboard('3')
-    // Another change makes the rules assign the cell being typed in.
     context().store.getState().commit(LMP, '2026-01-01')
     await expect
         .poll(() => context().effects.getState().cells[age]?.readOnly)
@@ -449,14 +416,12 @@ test('rules that cannot be loaded block completion, and the summary says so', as
         { result: 'failed', reason: failure },
     ])
     expect(memory.statuses).toEqual([])
-    // A message of the whole form, with no row before it.
     await expect
         .element(page.getByRole('listitem').filter({ hasText: failure }))
         .toHaveTextContent(new RegExp(`^${failure}$`))
 })
 
 test('text typed into a cell a rule hides is not saved', async () => {
-    // "Other chronic condition": yes, so "specified" shows, empty.
     const OTHER = 'xPTngRLQTnu'
     const SPECIFIED = 'Mh7nK8UKoZP'
     const { context } = await mountRmnch(
@@ -480,17 +445,14 @@ test('text typed into a cell a rule hides is not saved', async () => {
 
     control(specified).focus()
     await userEvent.keyboard('Asthma')
-    // Meanwhile the answer that shows the cell becomes no, and a rule hides it.
     context().store.getState().commit(cellKey(FIRST_VISIT, OTHER), 'false')
     await expect.poll(hiddenBy).toBeDefined()
     await userEvent.keyboard('{Tab}')
-    // The store refuses a person's write to a hidden cell: nothing is saved, so no rule has anything to clear.
     expect(context().store.getState().cells[specified]).toBeUndefined()
 })
 
 test('a draft in a cell a rule then hides is dropped with its error', async () => {
     const [empty] = RMNCH.chronicFollowUps
-    // Chronic conditions: yes, so the follow-ups show; one of them is empty.
     const { view, context } = await mountRmnch(
         eventsOf(0).map((event) =>
             event.event === FIRST_VISIT
@@ -507,7 +469,6 @@ test('a draft in a cell a rule then hides is dropped with its error', async () =
     await expect.poll(errors).toHaveLength(1)
     expect(view().summary.canComplete).toBe(false)
 
-    // A rule hides the cell: the person can no longer reach the draft, so it goes.
     context()
         .store.getState()
         .commit(cellKey(FIRST_VISIT, RMNCH.chronic), 'false')

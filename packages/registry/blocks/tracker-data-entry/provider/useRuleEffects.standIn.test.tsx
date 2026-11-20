@@ -9,19 +9,11 @@ import {
     rowHeaderDomId,
 } from '@/components/spreadsheet'
 import type { CellKey, CellStoreState } from '@/components/spreadsheet'
-import {
-    HIDDEN_FIELD,
-    holdIdle,
-    later,
-    visit,
-    visitForm,
-} from './__tests__/rig'
+import { HIDDEN_FIELD, later, visit, visitForm } from './test/rig'
 import { connectRules } from './connectRules'
 import type { TrackerEffectsState } from '../logic/effects'
 import type { FormTables } from './openForm'
 import { formEffects } from './formRows'
-
-// Stand-in rules, to reach what the RMNCH rules never do: failures, slow rules, values the stand-in chooses.
 
 afterEach(() => vi.restoreAllMocks())
 beforeEach(() => performance.clearMeasures('data-entry:rules'))
@@ -34,11 +26,10 @@ const by = {
     readsFields: [],
 }
 
-/** Rules that give each row what `effectsOf` says: effects, an error, or nothing (not evaluated). */
-const standIn = (
+const standIn: (
     effectsOf: (rowId: string) => RuleEffects | Error | undefined,
-    affected: (rowId: string) => string[] = (rowId) => [rowId]
-): EventsRules => ({
+    affected?: (rowId: string) => string[]
+) => EventsRules = (effectsOf, affected = (rowId) => [rowId]) => ({
     evaluate(_rows, rowIds) {
         const effects = new Map<string, RuleEffects>()
         const failures = new Map<string, Error>()
@@ -63,24 +54,19 @@ const hiding = (field: string) => {
     return effects
 }
 
-/** Keeps the page busy, as slow rules do. */
 const busy = (ms: number) => {
     const end = performance.now() + ms
-    while (performance.now() < end) {
-        // the rules are thinking
-    }
+    while (performance.now() < end) {}
 }
 
 const FIVE_ROWS = ['r1', 'r2', 'r3', 'r4', 'r5'].map((id) => visit(id, id))
 
-/** `visitForm`'s stores, wired to the rules as the provider wires them. */
 const connect = (
     rules: EventsRules,
     {
         before,
         ...options
     }: Parameters<typeof visitForm>[0] & {
-        /** Runs on the store before the rules connect, as changes restored from the outbox do. */
         before?(store: StoreApi<CellStoreState>): void
     } = {}
 ) => {
@@ -121,7 +107,6 @@ const connect = (
         ruleNotes: new Map<string, ReadonlyArray<string>>(),
         seen: new Set<string>(),
     }
-    // As the provider does when the rules change: the same stores and session.
     const reconnect = (next: EventsRules) =>
         connectRules({
             open,
@@ -173,7 +158,6 @@ test('a row the rules fail on says why and keeps no stale effects; a row not eva
         .toEqual([
             { tone: 'error', text: 'The engine stopped', source: 'rule' },
         ])
-    // The form's own effects stay: Children is required.
     expect(effects.getState().cells[r1]).toBeUndefined()
     expect(effects.getState().cells[cellKey('r1', 'c1')]).toEqual({
         required: true,
@@ -188,7 +172,6 @@ test('a row the rules fail on says why and keeps no stale effects; a row not eva
 test('assignments are saved only in rows a person changed, into open cells of the row’s stage, when they change', async () => {
     const assigning = () => {
         const effects = emptyEffects()
-        // c3 is not in stage s1; c2 already holds A.
         for (const [field, value] of [
             ['c1', '7'],
             ['c2', 'A'],
@@ -205,7 +188,6 @@ test('assignments are saved only in rows a person changed, into open cells of th
         ],
         readOnlyRecords: [['r2', 'Locked']],
     })
-    // Opening changes nothing: the cell shows its stored value, locked by the rule.
     expect(queued).toEqual([])
     expect(store.getState().cells[cellKey('r1', 'c1')]).toBeUndefined()
     expect(effects.getState().cells[cellKey('r1', 'c1')]?.readOnly).toBe(
@@ -223,7 +205,6 @@ test('assignments are saved only in rows a person changed, into open cells of th
         value: '7',
         source: 'rule',
     })
-    // The next pass sees the same values: nothing more is sent.
     store.getState().commit(cellKey('r1', 'c3'), 'again')
     await later(50)
     expect(queued).toEqual([
@@ -249,7 +230,6 @@ test('a value a rule assigns to a field with no column is saved with the row', a
         value: '5',
         source: 'rule',
     })
-    // Only the row a person changed.
     expect(store.getState().cells[cellKey('r2', HIDDEN_FIELD)]).toBeUndefined()
     stop()
 })
@@ -264,7 +244,6 @@ test('no rule value is committed in a read-only record, shown or not', async () 
     const { store, queued, stop } = connect(standIn(assigning), {
         readOnlyRecords: [['r2', 'Locked']],
     })
-    // An unsent change touches r2 as it is on its way to DHIS2; a person's commit there is refused.
     store.getState().restore([
         {
             key: cellKey('r2', 'c2'),
@@ -274,7 +253,6 @@ test('no rule value is committed in a read-only record, shown or not', async () 
         },
     ])
     store.getState().commit(cellKey('r1', 'c2'), 'A')
-    // The open record's rules ran; the locked one's did not save anything.
     await expect.poll(() => queued).toContain(cellKey('r1', HIDDEN_FIELD))
     await later(50)
     expect(queued.filter((key) => key.startsWith('r2.'))).toEqual([])
@@ -293,7 +271,6 @@ test('a change touches its row only while it is on its way to DHIS2: only there 
         rows: FIVE_ROWS,
     })
     const assigned = () => queued.filter((key) => key.endsWith('.c1')).sort()
-    // A value as a page loads it, and a failed change put back, are no change on its way.
     store.getState().restore([
         { key: cellKey('r1', 'c2'), value: 'A', base: 'A', sync: 'idle' },
         {
@@ -306,7 +283,6 @@ test('a change touches its row only while it is on its way to DHIS2: only there 
     ])
     await later(50)
     expect(assigned()).toEqual([])
-    // A change put back while it waits to be sent is; so is what a person types.
     store.getState().restore([
         {
             key: cellKey('r3', 'c2'),
@@ -335,7 +311,6 @@ test('what a rule cleared stays on the cell until it holds a value again', async
     )
     const note = 'Cleared by rule: Stand-in rule'
     const r1 = cellKey('r1', 'c2')
-    // Hidden, not cleared, until a person changes the row.
     expect(said).toEqual([])
     expect(store.getState().cells[r1]?.value).toBe('A')
 
@@ -358,17 +333,17 @@ test('what a rule cleared stays on the cell until it holds a value again', async
     ])
     store.getState().commit(r1, 'Bravo')
     await expect.poll(() => effects.getState().cells[r1]).toBeUndefined()
-    // Emptied by the person, it was not the rule.
     store.getState().commit(r1, '')
     await later(50)
     expect(effects.getState().cells[r1]).toBeUndefined()
     stop()
 })
 
-test('loading runs rules for about 100 ms at once, then about 16 ms at a time when idle, a row at least', () => {
-    const idle = holdIdle()
+const atIdle = () =>
+    new Promise<void>((resolve) => requestIdleCallback(() => resolve()))
+
+test('loading runs rules for about 100 ms at once, then about 16 ms at a time when idle, a row at least', async () => {
     const rows = FIVE_ROWS
-    // Each row's rules take 60 ms.
     const slow = standIn(() => {
         busy(60)
         return hiding('c2')
@@ -383,16 +358,15 @@ test('loading runs rules for about 100 ms at once, then about 16 ms at a time wh
     expect(
         performance.getEntriesByName('data-entry:rules', 'measure')
     ).toHaveLength(1)
-    idle.next()
+    await atIdle()
     expect(done()).toBe(3)
-    idle.run()
+    await atIdle()
+    await atIdle()
     expect(done()).toBe(5)
     stop()
 })
 
-test('a rule’s change re-runs only rows already evaluated; the others wait for their turn', () => {
-    const idle = holdIdle()
-    // r1, changed before the grid opened, gets a value from its rules; every row reads it.
+test('a rule’s change re-runs only rows already evaluated; the others wait for their turn', async () => {
     const slow = standIn(
         (rowId) => {
             busy(60)
@@ -414,13 +388,12 @@ test('a rule’s change re-runs only rows already evaluated; the others wait for
     expect(store.getState().cells[cellKey('r1', 'c1')]?.value).toBe('7')
     expect(hidden('r2')).toBeDefined()
     expect(hidden('r3')).toBeUndefined()
-    idle.next()
+    await atIdle()
     expect(hidden('r3')).toBeDefined()
     stop()
 })
 
 test('completing a changed row the rules have not reached yet runs its rules first', () => {
-    holdIdle()
     const slow = standIn(() => {
         busy(60)
         const effects = hiding('c2')
@@ -486,10 +459,8 @@ test('a rule’s value its type refuses leaves no draft in the locked cell', () 
 })
 
 test('rows in view take their slices one after another, without waiting for idle time', async () => {
-    const idle = holdIdle()
     const rows = FIVE_ROWS
     const tableId = visitForm({ rows }).tables[0].id
-    // The row headers the grid would draw, in view.
     const headers = rows.map(({ id }) => {
         const header = document.createElement('div')
         header.id = rowHeaderDomId('data-entry', tableId, id)
@@ -513,20 +484,16 @@ test('rows in view take their slices one after another, without waiting for idle
 
     expect(done()).toBe(2)
     await later(400)
-    // No idle callback ran: the rows in view were not left waiting for one.
     expect(done()).toBe(5)
     expect(
         performance.getEntriesByName('data-entry:rules-visible', 'measure')
     ).toHaveLength(measuresBefore + 1)
-    idle.run()
     stop()
     headers.forEach((header) => header.remove())
 })
 
-test('a reconnection runs the rows in view, then the rest; in each, the rows not evaluated yet before the rows seen', () => {
-    const idle = holdIdle()
+test('a reconnection runs the rows in view, then the rest; in each, the rows not evaluated yet before the rows seen', async () => {
     const tableId = visitForm({ rows: FIVE_ROWS }).tables[0].id
-    // r1 and r4 are in view.
     const headers = ['r1', 'r4'].map((id) => {
         const header = document.createElement('div')
         header.id = rowHeaderDomId('data-entry', tableId, id)
@@ -534,14 +501,13 @@ test('a reconnection runs the rows in view, then the rest; in each, the rows not
         document.body.append(header)
         return header
     })
-    // r4 and r5 wait for their person, as rows of a chunk not loaded yet do: not evaluated.
     const { stop, reconnect } = connect(
         standIn((rowId) =>
             rowId === 'r4' || rowId === 'r5' ? undefined : hiding('c2')
         ),
         { rows: FIVE_ROWS }
     )
-    idle.run()
+    await atIdle()
     stop()
 
     const ran: string[] = []
@@ -553,14 +519,15 @@ test('a reconnection runs the rows in view, then the rest; in each, the rows not
         })
     )
     expect(ran).toEqual(['r4', 'r1'])
-    idle.run()
+    await atIdle()
+    await atIdle()
+    await atIdle()
     expect(ran).toEqual(['r4', 'r1', 'r5', 'r2', 'r3'])
     again()
     headers.forEach((header) => header.remove())
 })
 
-test('completing a changed row still waiting to run again after a reconnection runs the new rules first', () => {
-    const idle = holdIdle()
+test('completing a changed row still waiting to run again after a reconnection runs the new rules first', async () => {
     const { effects, beforeComplete, stop, reconnect } = connect(
         standIn(() => hiding('c2')),
         {
@@ -569,7 +536,7 @@ test('completing a changed row still waiting to run again after a reconnection r
                 opened.getState().commit(cellKey('r4', 'c3'), 'changed'),
         }
     )
-    idle.run()
+    await atIdle()
     stop()
     const again = reconnect(
         standIn((rowId) => {
@@ -580,7 +547,6 @@ test('completing a changed row still waiting to run again after a reconnection r
         })
     )
     const failure = () => effects.getState().rowMessages.get('r4')?.[0]?.text
-    // r4 was touched and seen, and waits for its idle turn with the new rules.
     expect(failure()).toBeUndefined()
     expect([...beforeComplete].map((prepare) => prepare('r4'))).toEqual([
         undefined,

@@ -30,14 +30,12 @@ import type { TrackerDataEntrySource, LoadedForm } from './types'
 /** A request of a save (a read or an import) that takes longer is aborted, so the sync loop backs off and tries again. */
 export const SAVE_TIMEOUT = 60_000
 
-// OBJECT saves the valid objects of an import and reports the refused ones by id.
 const IMPORT_PARAMS = {
     async: false,
     importStrategy: 'CREATE_AND_UPDATE',
     atomicMode: 'OBJECT',
 }
 
-// A refused import (HTTP 409) throws with its report as the error's details.
 const refusalSchema = z.object({ details: importReportSchema })
 
 /** Runs `task` with a signal that aborts after `timeout` ms. */
@@ -45,7 +43,6 @@ export const withinLimit = async <T>(
     timeout: number,
     task: (signal: AbortSignal) => Promise<T>
 ) => {
-    // Not `AbortSignal.timeout`, which older Safari lacks.
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), timeout)
     try {
@@ -55,10 +52,8 @@ export const withinLimit = async <T>(
     }
 }
 
-// Records per read and per import, so each request stays well within URL and server limits however many wait.
 const CHUNK = 100
 
-/** What DHIS2 holds now of each id, read 100 at a time; one it does not return is new or gone. */
 const readHeld = async <T>(
     engine: DataEngine,
     ids: ReadonlyArray<string>,
@@ -92,12 +87,12 @@ export const heldPeopleSchema = z.object({
 })
 
 /** What DHIS2 holds now for each event of `ids` in the program; an event it does not return is new or gone. */
-export const readEvents = (
+export const readEvents: (
     engine: DataEngine,
     programId: string,
     ids: ReadonlyArray<string>,
     signal: AbortSignal
-): Promise<Map<string, EventFields>> =>
+) => Promise<Map<string, EventFields>> = (engine, programId, ids, signal) =>
     readHeld(
         engine,
         ids,
@@ -115,17 +110,19 @@ export const readEvents = (
         ({ event }) => event
     )
 
-/**
- * The people, enrolments and events of the records and of what their new records belong to, read before an import.
- * People are read by their type, not the program: one whose enrolment DHIS2 refused is saved but not enrolled.
- */
-const readRecords = async (
+const readRecords: (
     engine: DataEngine,
     programId: string,
     ids: ReadonlyArray<string>,
     recordOf: (id: string) => DataRecord | undefined,
     signal: AbortSignal
-): Promise<HeldRecords> => {
+) => Promise<HeldRecords> = async (
+    engine,
+    programId,
+    ids,
+    recordOf,
+    signal
+) => {
     const events: string[] = []
     const enrollments = new Set<string>()
     const peopleByType = new Map<string, Set<string>>()
@@ -153,7 +150,6 @@ const readRecords = async (
                 break
             default:
                 events.push(id)
-                // An event's enrolment, when the form knows it: whether it is saved, and its date for a slot with none.
                 if (
                     record?.kind === 'event' &&
                     record.enrollmentId !== undefined &&
@@ -205,7 +201,6 @@ const readRecords = async (
     }
 }
 
-/** The lists of the payload that hold anything: an event grid's import is `{ events }`. */
 const dataOf = (payload: TrackerPayload) =>
     Object.fromEntries(
         Object.entries(payload).filter(([, list]) => list.length > 0)
@@ -237,7 +232,6 @@ const importRecords = async (
         )
     } catch (error) {
         const refusal = refusalSchema.safeParse(error)
-        // A refusal that names none of the sent objects is about the request, so the sync loop refuses its records.
         const namesAnObject =
             refusal.success &&
             refusal.data.details.validationReport.errorReports.some(
@@ -250,10 +244,6 @@ const importRecords = async (
     }
 }
 
-/**
- * The records in groups of at most 100 records, in their order, each person, enrolment and event whose records are
- * saved together kept in one group: an import never splits a new person from its enrolment.
- */
 const groupsOf = (
     records: ReadonlyArray<OutboxRecord>,
     recordOf: (id: string) => DataRecord | undefined
@@ -299,11 +289,9 @@ export const trackerSaver = (
     options: { timeout?: number; scheduledEvents?: ScheduledEvents } = {}
 ) => {
     const timeout = options.timeout ?? SAVE_TIMEOUT
-    // Records DHIS2 held when loaded or saved here: never restored as new rows, failed once no longer returned.
     const remembered = new Set<string>()
     const known: ReadonlySet<string> = remembered
 
-    // One import at a time, each read after the one before was saved, so a save never undoes a status change.
     let last = Promise.resolve()
     const inTurn = <T>(task: () => Promise<T>) => {
         const turn = last.then(task)
@@ -338,13 +326,12 @@ export const trackerSaver = (
         return outcomes
     }
 
-    /** One group's records: what DHIS2 holds of them is read, then they are imported. */
-    const saveGroup = async (
+    const saveGroup: (
         engine: DataEngine,
         records: ReadonlyArray<OutboxRecord>,
         form: LoadedForm,
         recordOf: (id: string) => DataRecord | undefined
-    ): Promise<SaveOutcome[]> => {
+    ) => Promise<SaveOutcome[]> = async (engine, records, form, recordOf) => {
         const held = await withinLimit(timeout, (signal) =>
             readRecords(
                 engine,
@@ -381,24 +368,16 @@ export const trackerSaver = (
     }
 
     return {
-        /** Notes the records a load found, so they are not restored as new rows. */
         remember(ids: ReadonlyArray<string>) {
             for (const id of ids) {
                 remembered.add(id)
             }
         },
 
-        /** The records DHIS2 held when loaded or saved here. */
         remembered: known,
 
-        /**
-         * Sends the records 100 at a time, one group after another: each read, then imported, each request within
-         * its own limit. A failure keeps the outcomes of the groups before it and names the records of the groups
-         * after it (`PartlySaved`).
-         */
         save: ((engine, records, form) =>
             inTurn(async () => {
-                // As a change made it new, else as a change or the form holds it.
                 const changed = new Map<string, DataRecord>()
                 for (const { key, record } of records) {
                     const id = recordIdOf(key)
@@ -434,10 +413,9 @@ export const trackerSaver = (
                 return outcomes
             })) satisfies TrackerDataEntrySource['save'],
 
-        /** Completes or reopens an event DHIS2 holds; its one outcome is keyed `<event>.status`. */
         setStatus: ((engine, recordId, status) =>
             inTurn(() =>
-                withinLimit(timeout, async (signal): Promise<SaveOutcome[]> => {
+                withinLimit(timeout, async (signal) => {
                     const key = cellKey(recordId, 'status')
                     const event = (
                         await readEvents(engine, programId, [recordId], signal)

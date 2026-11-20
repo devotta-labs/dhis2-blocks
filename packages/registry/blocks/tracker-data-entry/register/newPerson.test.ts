@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { cellKey } from '@/components/spreadsheet'
 import type { DataEngine } from '@/components/spreadsheet'
-import immunisation from './__tests__/fixtures/immunisation-program.json'
+import immunisation from './test/fixtures/immunisation-program.json'
 import { compileLayout } from './compileLayout'
 import type { RegisterLayout } from './layout'
 import { registerMetadataOf, registerProgramSchema } from './metadata'
@@ -94,9 +94,7 @@ describe('newPerson', () => {
                 status: 'ACTIVE',
                 isNew: true,
                 slot: BCG,
-                // The slot's values, which no column shows, go with the event.
                 createdWith: { [VACCINE]: 'BCG', [DOSE]: '0' },
-                // A reload rebuilds the row from this event alone.
                 trackedEntityId: person,
             },
             {
@@ -115,7 +113,6 @@ describe('newPerson', () => {
 })
 
 describe('reservedValues', () => {
-    /** DHIS2 reserving numbered values, each request after the last. */
     const reserving = (refusal?: Error) => {
         const requests: Request[] = []
         let next = 0
@@ -161,7 +158,6 @@ describe('reservedValues', () => {
             values.take(engine).get(UNIQUE_ID)
         )
         expect(taken).toEqual(['1', '2', '3', '4', '5', '6', '7', '8'])
-        // Two left: it tops up to ten, once.
         expect(requests).toEqual([ask(10), ask(8)])
         await Promise.resolve()
         expect(values.take(engine).get(UNIQUE_ID)).toBe('9')

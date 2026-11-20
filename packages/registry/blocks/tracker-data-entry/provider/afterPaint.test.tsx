@@ -1,28 +1,29 @@
 import { afterPaint } from './afterPaint'
-import { later } from './__tests__/rig'
-
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => vi.useRealTimers())
 
 test('runs work after the next paint, in the order it was asked for; cancelled work does not run', async () => {
     const ran: string[] = []
     afterPaint(() => ran.push('rules'))
     const cancel = afterPaint(() => ran.push('cancelled'))
-    afterPaint(() => ran.push('outbox'))
+    const painted = Promise.withResolvers<void>()
+    afterPaint(() => {
+        ran.push('outbox')
+        painted.resolve()
+    })
     cancel()
     await Promise.resolve()
     expect(ran).toEqual([])
 
-    await new Promise((resolve) => requestAnimationFrame(resolve))
-    await later(0)
+    await painted.promise
     expect(ran).toEqual(['rules', 'outbox'])
 })
 
-test('a page that paints no frame, as a hidden one, runs the work after 100 ms', async () => {
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0)
+test('when no frame arrives, the fallback runs the work after 100 ms', () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     const ran: string[] = []
     afterPaint(() => ran.push('rules'))
-    await later(50)
+    vi.advanceTimersByTime(99)
     expect(ran).toEqual([])
-    await later(100)
+    vi.advanceTimersByTime(1)
     expect(ran).toEqual(['rules'])
 })

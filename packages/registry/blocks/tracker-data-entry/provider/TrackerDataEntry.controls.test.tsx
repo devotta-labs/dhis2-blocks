@@ -15,14 +15,13 @@ import {
     mount,
     records,
     visitForm,
-} from './__tests__/rig'
+} from './test/rig'
 
 afterEach(cleanUp)
 
 const CHILDREN = cellKey('r1', 'c1')
 const NOTES = cellKey('r1', 'c3')
 
-/** A replacement control that saves what was typed when it loses focus, and keeps each cell's `commit`. */
 const typist = () => {
     const results: CommitResult[] = []
     const commits = new Map<CellKey, (text: string) => CommitResult>()
@@ -90,7 +89,6 @@ test('a replacement control saves through useCell as the built-in controls do', 
 
 test('commit checks the value as the built-in controls do', async () => {
     const memory = memorySource(visitForm())
-    // Nothing is sent, so the outbox keeps what was queued for the test to read.
     memory.hold()
     const { Typist, commitTo } = typist()
     const { server, context } = await mount(memory.source, {
@@ -107,7 +105,6 @@ test('commit checks the value as the built-in controls do', async () => {
     expect(commitTo(CHILDREN, '4')).toBe('queued')
     expect(commitTo(CHILDREN, '4')).toBe('unchanged')
 
-    // An option a rule hid is not an option.
     context().effects.setState((state) => ({
         cells: {
             ...state.cells,
@@ -134,7 +131,6 @@ test('commit writes nothing to a cell that is locked', async () => {
             readOnlyRecords: [['r2', 'Completed events cannot be edited']],
         })
     )
-    // Nothing is sent, so the outbox keeps what was queued for the test to read.
     memory.hold()
     const { Typist, commitTo } = typist()
     const { server, context } = await mount(memory.source, {
@@ -154,7 +150,6 @@ test('commit writes nothing to a cell that is locked', async () => {
                 messages: [],
                 hiddenBy: 'Hidden by rule: Referral',
             },
-            // Hidden by a rule in a row that is read-only: the lock wins.
             'r2.c2': {
                 ...locked('Completed events cannot be edited'),
                 hiddenBy: 'Hidden by rule: Referral',
@@ -162,10 +157,8 @@ test('commit writes nothing to a cell that is locked', async () => {
         },
     }))
 
-    // A rule locked the cell, and the row is read-only.
     expect(commitTo(CHILDREN, '3')).toBe('unchanged')
     expect(commitTo('r2.c1', '3')).toBe('unchanged')
-    // A rule hid it: a person's write is refused too.
     expect(commitTo('r1.c2', '')).toBe('unchanged')
     expect(commitTo('r2.c2', 'A')).toBe('unchanged')
     expect(context().store.getState().cells[CHILDREN]).toBeUndefined()

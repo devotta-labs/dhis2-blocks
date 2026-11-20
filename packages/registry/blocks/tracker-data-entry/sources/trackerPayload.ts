@@ -49,35 +49,25 @@ export type SentObjects = ReadonlyMap<
     { kind: DataRecord['kind']; parent?: string }
 >
 
-/** The enrolment date's field: its cells are `<enrolment>.enrolledAt`. */
 const ENROLLED_AT = 'enrolledAt'
-/** The incident date's field: its cells are `<enrolment>.occurredAt`. */
 const INCIDENT_DATE = 'occurredAt'
 const ENROLLMENT_DATES = new Set<string>([ENROLLED_AT, INCIDENT_DATE])
 
-/**
- * An update replaces the event's own fields with what is sent, so they are sent as DHIS2 holds them, and merges
- * `dataValues` into its values.
- */
 type EventPayload = EventFields & {
     dataValues: Array<{ dataElement: string; value: string | null }>
 }
 
-// What the saver reads of a scheduled event it is given: which slot event it is, and when it is due.
 const scheduledEventSchema = z.object({
     event: z.string(),
     enrollment: z.string().optional(),
     scheduledAt: z.string().optional(),
 })
 
-// Field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-/** A date cell is date-only; a new date keeps the time of day DHIS2 holds. */
 const withTime = (date: string, held: string | undefined) =>
     `${date}${held?.slice(10) ?? ''}`
 
-/** An enrolment's incident date to send: the held one, a typed one, or none once cleared (DHIS2 then takes the enrolment date). */
 const incidentDate = (
     change: OutboxRecord | undefined,
     held: string | undefined
@@ -123,7 +113,6 @@ export const buildImport = (
 ) => {
     const { programId, remembered = new Set<string>() } = extra
     const columns = form.tables.flatMap((table) => table.columns)
-    /** A field's name as its column shows it: a slot's own column first. */
     const nameOf = (field: string, slot?: string) => {
         if (slot === undefined && field === EVENT_DATE_COLUMN) {
             return i18n.t('Event date')
@@ -143,16 +132,13 @@ export const buildImport = (
         byRecord.set(id, [...(byRecord.get(id) ?? []), record])
     }
     const changesOf = (id: string) => byRecord.get(id) ?? []
-    /** The value typed into a field of a record, unless it was cleared or not typed. */
     const typedIn = (id: string, field: string) =>
         changesOf(id).find(({ key }) => fieldIdOfKey(key) === field)?.value ??
         undefined
-    /** A record as a change made it new, else as a change or the form holds it. */
     const recordOf = (id: string) =>
         changesOf(id).find(({ record }) => record?.isNew)?.record ??
         changesOf(id).find(({ record }) => record)?.record ??
         form.records.get(id)
-    /** The record made here as new, which DHIS2 did not hold when loaded or saved here. */
     const newRecord = (id: string) => {
         const record = recordOf(id)
         return record?.isNew && !remembered.has(id) ? record : undefined
@@ -168,9 +154,7 @@ export const buildImport = (
         { kind: DataRecord['kind']; parent?: string }
     >()
     const waiting: SaveOutcome[] = []
-    // New records that wait, with why: their enrolments and events wait with them.
     const blocked = new Map<string, string>()
-    // Each change gets one outcome: the first decided.
     const decided = new Set<CellKey>()
     const hold = (
         changes: ReadonlyArray<OutboxRecord>,
@@ -184,17 +168,14 @@ export const buildImport = (
             }
         }
     }
-    /** A new record waits, and so do the records that belong to it. */
     const wait = (id: string, reason: string) => {
         blocked.set(id, reason)
         hold(changesOf(id), 'waiting', reason)
     }
-    /** The register slot of a record's cells, which names them by that slot's columns. */
     const slotOf = (id: string) => {
         const record = recordOf(id)
         return record?.kind === 'event' ? record.slot : undefined
     }
-    /** Refuses clearing a required field; the record's other changes are returned to send. */
     const refuseCleared = (
         changes: ReadonlyArray<OutboxRecord>,
         required: ReadonlySet<string>
@@ -216,7 +197,6 @@ export const buildImport = (
         }
         return changes.filter((change) => !refused.includes(change))
     }
-    /** Refuses a change to anything an enrolment does not save (only its dates); the others are returned. */
     const refuseForeign = (changes: ReadonlyArray<OutboxRecord>) => {
         const foreign = changes.filter(
             ({ key }) => !ENROLLMENT_DATES.has(fieldIdOfKey(key))
@@ -233,8 +213,7 @@ export const buildImport = (
         }
         return changes.filter((change) => !foreign.includes(change))
     }
-    // What DHIS2 holds it as, else what the records say; a change with no record is to an event (an event grid's).
-    const kindOf = (id: string): DataRecord['kind'] => {
+    const kindOf: (id: string) => DataRecord['kind'] = (id) => {
         if (held.people.has(id)) {
             return 'trackedEntity'
         }
@@ -249,7 +228,6 @@ export const buildImport = (
     const ids = [...byRecord.keys()]
     const ofKind = (kind: DataRecord['kind']) =>
         ids.filter((id) => kindOf(id) === kind)
-    /** Changes to a record DHIS2 does not hold, and that was not made here as a new one, fail. */
     const gone = (id: string, kind: DataRecord['kind']) => {
         if (newRecord(id)?.kind === kind) {
             return false
@@ -258,7 +236,6 @@ export const buildImport = (
         return true
     }
 
-    // New enrolments of this save, so a new person knows whether its enrolment can go with it.
     const newEnrollments = ofKind('enrollment').flatMap((id) => {
         const record = newRecord(id)
         return record?.kind === 'enrollment' && !held.enrollments.has(id)
@@ -266,7 +243,6 @@ export const buildImport = (
             : []
     })
 
-    // People: those changed here, and the new person of a new enrolment, typed or not.
     const newPeople = new Set<string>()
     for (const id of ofKind('trackedEntity')) {
         const base = held.people.get(id)
@@ -306,7 +282,6 @@ export const buildImport = (
         }
         const attributes = changesOf(id).filter(({ value }) => value !== null)
         const filled = new Set(attributes.map(({ key }) => fieldIdOfKey(key)))
-        // The enrolment's own required date is its own wait, not an attribute.
         const missing = [
             ...requiredOf(programId, person.trackedEntityTypeId),
         ].filter((field) => !filled.has(field) && !ENROLLMENT_DATES.has(field))
@@ -337,7 +312,6 @@ export const buildImport = (
         objects.set(id, { kind: 'trackedEntity' })
     }
 
-    /** Why a new record waits for the person or enrolment it belongs to, if it does. */
     const parentWait = (
         parent: string | undefined,
         kind: 'trackedEntity' | 'enrollment'
@@ -351,14 +325,12 @@ export const buildImport = (
         ) {
             return undefined
         }
-        // Only a parent made here waits; any other (an event grid's enrolment) is DHIS2's to check.
         return (
             blocked.get(parent) ??
             (recordOf(parent)?.isNew ? waitingForParent(kind) : undefined)
         )
     }
 
-    // Enrolments, then the scheduled events their creation brings.
     const scheduled: unknown[] = []
     for (const id of ofKind('enrollment')) {
         const base = held.enrollments.get(id)
@@ -417,7 +389,6 @@ export const buildImport = (
             kind: 'enrollment',
             parent: enrollment.trackedEntityId,
         })
-        // The enrolment's slot events in this import, by slot: whichever tab or load made them, they are its row's.
         const slotEvents = new Map(
             ids.flatMap((event) => {
                 const record = recordOf(event)
@@ -437,7 +408,6 @@ export const buildImport = (
         )
     }
 
-    // An ON_UPDATE_AND_INSERT stage always requires its fields; an ON_COMPLETE stage once the event is completed.
     const requiredIn = (stage: string, status: EventStatus) =>
         form.strategy.get(stage) === 'ON_UPDATE_AND_INSERT' ||
         status === 'COMPLETED'
@@ -451,7 +421,6 @@ export const buildImport = (
                 value,
             }))
 
-    /** A slot with no date column (a non-repeatable stage) happens on the enrolment date. */
     const datedByEnrollment = (slot: string | undefined) =>
         slot !== undefined &&
         !columns.some(
@@ -479,7 +448,6 @@ export const buildImport = (
             if (sent.length === 0) {
                 continue
             }
-            // A scheduled event in a slot with no date column takes the enrolment date, as a new one does.
             const fromEnrollment = datedByEnrollment(slotOf(id))
                 ? enrolledAtOf(base.enrollment)
                 : undefined
@@ -487,7 +455,6 @@ export const buildImport = (
                 date === undefined
                     ? (base.occurredAt ?? fromEnrollment)
                     : withTime(date, base.occurredAt)
-            // A scheduled event holds no values (DHIS2 refuses them) until it has a date.
             if (occurredAt === undefined) {
                 hold(
                     sent,
@@ -498,7 +465,6 @@ export const buildImport = (
             }
             events.push({
                 ...base,
-                // Dated, a scheduled event happens; DHIS2 keeps its `scheduledAt`.
                 status: base.status === 'SCHEDULE' ? 'ACTIVE' : base.status,
                 occurredAt,
                 dataValues: valuesOf(sent),
@@ -532,7 +498,6 @@ export const buildImport = (
             continue
         }
         const reason = parentWait(event.enrollmentId, 'enrollment')
-        // Dated by an enrolment DHIS2 does not return: it waits for that enrolment.
         if (reason !== undefined || occurredAt === undefined) {
             hold(
                 changesOf(id),
@@ -552,7 +517,6 @@ export const buildImport = (
             ...(event.scheduledAt !== undefined && {
                 scheduledAt: event.scheduledAt,
             }),
-            // A where slot's values, unless the clerk typed that field too.
             dataValues: [
                 ...Object.entries(event.createdWith ?? {})
                     .filter(
@@ -568,7 +532,6 @@ export const buildImport = (
         objects.set(id, { kind: 'event', parent: event.enrollmentId })
     }
 
-    // A scheduled event the clerk dated goes once, as typed, keeping its due date.
     const brought: unknown[] = []
     for (const payload of scheduled) {
         const { event, enrollment, scheduledAt } =

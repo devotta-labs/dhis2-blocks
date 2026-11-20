@@ -1,4 +1,3 @@
-// @vitest-environment node
 import { it } from 'vitest'
 import {
     programEditSchema,
@@ -8,11 +7,10 @@ import * as restore from '../register/restore'
 import { eventFormSchema } from './eventSchemas'
 import * as save from './trackerSave'
 
-const dir = './__tests__/fixtures/contract'
+const dir = './test/fixtures/contract'
 const load = async (version: string, name: string) =>
     (await import(`${dir}/${version}/${name}.json`)).default
 
-// Each version's captures, parsed by the schemas that read them, wrapped as each query nests them.
 it.each(['41', '42', '43'])(
     'the %s captures parse with the blocks’ schemas',
     async (v) => {
@@ -54,7 +52,6 @@ it('the 42 captures carry an event’s assigned user and a person’s duplicate 
     const people = save.heldPeopleSchema.parse({
         current: await load('42', 'held-people'),
     }).current.trackedEntities
-    // No person on the server is flagged (a write would flag one): the key and its type are what is pinned.
     expect(
         people.find(({ trackedEntity }) => trackedEntity === 'Pe1Throw001')
             ?.potentialDuplicate

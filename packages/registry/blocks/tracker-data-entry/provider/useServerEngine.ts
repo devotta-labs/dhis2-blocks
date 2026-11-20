@@ -3,8 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 
 type DataEngine = ReturnType<typeof useDataEngine>
 
-/** An engine whose every call goes to the engine `latest` holds at that moment. */
-const forwardTo = (latest: { current: DataEngine }): DataEngine =>
+const forwardTo: (latest: { current: DataEngine }) => DataEngine = (latest) =>
     new Proxy(latest.current, {
         get: (_, name) => {
             if (name === 'query') {

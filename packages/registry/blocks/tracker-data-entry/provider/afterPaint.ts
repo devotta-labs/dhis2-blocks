@@ -1,12 +1,11 @@
 import { rowHeaderDomId } from '@/components/spreadsheet'
 
-// A hidden page paints no frames; its work waits this long instead.
 const NO_FRAME_MS = 100
 
 /** When the browser has painted. Tests hold it to control when deferred work runs. */
 export const paintClock = {
     /** Calls `next` in a task after the next paint, or after 100 ms when no frame comes; returns how to cancel it. */
-    wait(next: () => void): () => void {
+    wait(next: () => void) {
         let task: ReturnType<typeof setTimeout> | undefined
         const frame = requestAnimationFrame(() => {
             clearTimeout(fallback)
@@ -24,19 +23,16 @@ export const paintClock = {
     },
 }
 
-// Work waiting for the next paint, run in the order it was asked for.
 const waiting = new Set<() => void>()
 let cancelWait: (() => void) | undefined
 
 const drain = () => {
     cancelWait = undefined
-    // Work added while draining (by the work before it) runs in this drain too.
     for (const work of waiting) {
         waiting.delete(work)
         try {
             work()
         } catch (error) {
-            // One failing piece of work never holds back the rest, such as a change on its way to the outbox.
             reportError(error)
         }
     }
@@ -68,7 +64,6 @@ export const whenIdle = (work: () => void) => {
     return () => clearTimeout(id)
 }
 
-// The rows in view do not wait for the browser to be idle, which it rarely is while it renders the grid.
 export const soon = (work: () => void) => {
     const id = setTimeout(work)
     return () => clearTimeout(id)

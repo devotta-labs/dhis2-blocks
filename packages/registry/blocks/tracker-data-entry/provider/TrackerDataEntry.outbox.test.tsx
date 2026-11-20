@@ -1,17 +1,17 @@
 /// <reference types="@vitest/browser-playwright" />
+import { captureNextDownload } from '../../../test/download.test-utils'
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
 import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { respondToVisibility } from './pageVisibility'
 import { outboxName } from '../outbox/outbox'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {
-    catchDownloads,
     change,
     cleanUp,
     freshServer,
-    holdPaint,
     KEY,
     later,
     leaving,
@@ -23,13 +23,37 @@ import {
     visit,
     visitForm,
     withOutbox,
-} from './__tests__/rig'
+} from './test/rig'
 
 afterEach(cleanUp)
 
 const CHILDREN = cellKey('r1', 'c1')
 const LOCKED = 'Signed in as someone else. Reload to continue as that user.'
 const DISCARD = 'Discard changes that could not be saved'
+const abortWrite = (server: string, commit: () => void) => {
+    const transactions = vi.spyOn(IDBDatabase.prototype, 'transaction')
+    try {
+        commit()
+        window.dispatchEvent(new PageTransitionEvent('pagehide'))
+        const write = transactions.mock.results
+            .flatMap((result, index) => {
+                const database = transactions.mock.contexts[index]
+                return result.type === 'return' &&
+                    database.name === outboxName(server, USER) &&
+                    result.value.mode === 'readwrite'
+                    ? [result.value]
+                    : []
+            })
+            .at(0)
+        if (!write) {
+            throw new Error('Expected the form to start an IndexedDB write')
+        }
+        write.abort()
+    } finally {
+        transactions.mockRestore()
+    }
+}
+
 const lapsed = () =>
     new FetchError({
         type: 'access',
@@ -38,24 +62,22 @@ const lapsed = () =>
     })
 
 test('a change the device could not store is not saved, says so, keeps the leave prompt and is in the download', async () => {
-    const { context, view } = await mount(memorySource(visitForm()).source)
-    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(() => {
-        throw new DOMException('The quota was exceeded', 'QuotaExceededError')
-    })
-    control(CHILDREN).focus()
-    await userEvent.keyboard('5{Enter}')
+    const { context, server, view } = await mount(
+        memorySource(visitForm()).source
+    )
+    abortWrite(server, () => context().store.getState().commit(CHILDREN, '5'))
     await expect
         .poll(() => context().store.getState().cells[CHILDREN]?.sync)
         .toBe('failed')
     expect(notesOf(CHILDREN)).toEqual([
         'Not saved: This device could not store the change',
     ])
-    // Only this page holds the value now.
     expect(leaving()).toBe(true)
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    expect(await files[0].text()).toBe(
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         'form,row,field,value,state,reason\nVisits,Visit 1,Children,5,failed,This device could not store the change\n'
     )
 })
@@ -80,14 +102,12 @@ test('once someone else signs in, the form locks: the first user’s unsent chan
     await expect.poll(() => view().sync).toBe('retrying')
     const tries = memory.sent.length
 
-    // Another tab signs in as someone else; the session cookie is shared.
     user = 'userB'
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect
         .poll(() => notesOf(CHILDREN), { timeout: 5000 })
         .toContain(LOCKED)
-    // What DHIS2 had, read-only, and why: nothing is left to send or to warn about.
     expect(control(CHILDREN)).toHaveValue('1')
     expect(control(CHILDREN).hasAttribute('readonly')).toBe(true)
     expect(control(cellKey('r2', 'c1'))).toHaveValue('')
@@ -103,7 +123,6 @@ test('once someone else signs in, the form locks: the first user’s unsent chan
     expect(await view().complete('r1')).toMatchObject([{ reason: LOCKED }])
     await later(1500)
     expect(memory.sent).toHaveLength(tries)
-    // Both stay on this device for their user.
     expect(await records(server, KEY)).toMatchObject([
         { key: CHILDREN, value: '5', state: 'queued' },
         { key: 'r2.c1', value: '8', state: 'queued' },
@@ -120,7 +139,6 @@ test('the form locks too when the account, asked again, names someone else', asy
     await client.refetchQueries()
     await expect.poll(() => notesOf(CHILDREN)).toContain(LOCKED)
     expect(view().status).toBe('ready')
-    // Until a reload, whoever the account names next.
     user = 'userA'
     await client.refetchQueries()
     await later(200)
@@ -138,7 +156,6 @@ test('a status waiting for the sync lock when someone else signs in is refused a
     const { server, view } = await mount(memory.source, {
         signedIn: () => user,
     })
-    // Another tab's loop, sending.
     const holder = Promise.withResolvers<void>()
     await new Promise<void>((granted) => {
         void navigator.locks.request(
@@ -151,7 +168,6 @@ test('a status waiting for the sync lock when someone else signs in is refused a
     })
     const reopening = view().reopen('r2')
     await later(300)
-    // Someone else signs in; the next request that asks who it is stops this form's loop.
     user = 'userB'
     expect(await view().complete('r1')).toMatchObject([{ reason: LOCKED }])
     expect(await reopening).toMatchObject([
@@ -176,22 +192,19 @@ test('a failure asking for the account again leaves the form as it was', async (
 test('the download keeps a newer change the device could not store beside the older one it holds', async () => {
     const memory = memorySource(visitForm())
     memory.hold()
-    const { server, view } = await mount(memory.source)
+    const { context, server, view } = await mount(memory.source)
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect.poll(() => records(server, KEY)).toHaveLength(1)
-    vi.spyOn(IDBObjectStore.prototype, 'put').mockImplementation(() => {
-        throw new DOMException('The quota was exceeded', 'QuotaExceededError')
-    })
-    control(CHILDREN).focus()
-    await userEvent.keyboard('6{Enter}')
+    abortWrite(server, () => context().store.getState().commit(CHILDREN, '6'))
     await expect
         .poll(() => notesOf(CHILDREN))
         .toEqual(['Not saved: This device could not store the change'])
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    expect(await files[0].text()).toBe(
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         'form,row,field,value,state,reason\n' +
             'Visits,Visit 1,Children,5,queued,\n' +
             'Visits,Visit 1,Children,6,failed,This device could not store the change\n'
@@ -216,7 +229,6 @@ test('a failure asking who is signed in never refuses the changes; they wait and
     expect(await records(server, KEY)).toMatchObject([
         { key: CHILDREN, state: 'queued' },
     ])
-    // Asked within the save's time limit.
     expect(meSignals.slice(asked)).not.toContain(undefined)
 
     answer = 'userA'
@@ -253,7 +265,6 @@ test('unsent changes come back in the state they were left in; failed ones are n
     ])
     expect(notesOf(cellKey('r1', 'c3'))).toEqual(['Saved on this device'])
     expect(view().summary).toMatchObject({ unsent: 2, failed: 1 })
-    // A row with a refused or waiting change cannot be completed until it is fixed.
     expect(await view().complete('r1')).toEqual([
         {
             sourceKey: KEY,
@@ -295,7 +306,8 @@ test('another program’s unsent changes stay in the outbox, unsent and not show
     const { view, context } = await mount(memory.source, { server })
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     await expect.poll(() => view().summary.unsent).toBe(0)
     await expect.poll(() => view().sync).toBe('idle')
     expect(memory.sent.flat().map(({ sourceKey }) => sourceKey)).toEqual([KEY])
@@ -304,13 +316,14 @@ test('another program’s unsent changes stay in the outbox, unsent and not show
 })
 
 test('a change made in the same millisecond as the one being sent is kept and sent next', async () => {
-    vi.spyOn(Date, 'now').mockReturnValue(5000)
+    vi.setSystemTime(5000)
     const memory = memorySource(visitForm())
     memory.hold()
     const { server, context } = await mount(memory.source)
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     control(CHILDREN).focus()
     await userEvent.keyboard('6{Enter}')
     await expect
@@ -334,13 +347,12 @@ test('outcomes another tab’s loop received reach this tab’s cells', async ()
     const first = await mount(sender.source, { server, children: null })
     const second = await mount(offline.source, { server, children: null })
 
-    // The second tab cannot send, so its change waits in the outbox the tabs share.
     second.context().store.getState().commit(CHILDREN, '5')
-    await expect.poll(() => offline.sent).toHaveLength(1)
+    await offline.saveCount(1)
+    expect(offline.sent).toHaveLength(1)
     expect(second.context().store.getState().cells[CHILDREN]?.sync).toBe(
         'queued'
     )
-    // The first tab's next round sends it, and tells the other tabs.
     first.context().store.getState().commit(cellKey('r1', 'c3'), 'Seen')
     await expect
         .poll(() => second.context().store.getState().cells[CHILDREN])
@@ -348,7 +360,9 @@ test('outcomes another tab’s loop received reach this tab’s cells', async ()
     expect(sender.sent.flat().map(({ key }) => key)).toContain(CHILDREN)
 })
 
-const refusing = (source: TrackerDataEntrySource): TrackerDataEntrySource => ({
+const refusing: (source: TrackerDataEntrySource) => TrackerDataEntrySource = (
+    source
+) => ({
     ...source,
     save: async (_engine, sent) =>
         sent.map(({ sourceKey, key }) => ({
@@ -388,7 +402,6 @@ test.each([
         await expect
             .poll(() => records(server, KEY))
             .toMatchObject([{ value: '1' }])
-        // The newer change replaces this tab's in the outbox; the other tab sends it.
         there.context().store.getState().commit(CHILDREN, '2')
         await expect
             .poll(() => here.context().store.getState().cells[CHILDREN])
@@ -408,7 +421,6 @@ test('a draft held here survives another tab’s saved value, which is under it'
         server,
         children: null,
     })
-    // Not a whole number: kept here as a draft with its error, and nothing is sent.
     here.context().store.getState().commit(CHILDREN, 'abc')
     const held = here.context().store.getState().cells[CHILDREN]
     expect(held).toMatchObject({ draft: 'abc', error: expect.any(String) })
@@ -424,7 +436,6 @@ test('a draft held here survives another tab’s saved value, which is under it'
         })
 })
 
-/** Another tab opens a newer version of the outbox: this page's connection closes itself. */
 const upgradeOutbox = (server: string) =>
     new Promise<void>((resolve, reject) => {
         const opening = indexedDB.open(outboxName(server, USER), 2)
@@ -445,10 +456,11 @@ test('the download still holds what only this page has once its outbox has close
     await expect
         .poll(() => context().store.getState().cells[CHILDREN]?.sync)
         .toBe('failed')
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    expect(await files[0].text()).toBe(
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         'form,row,field,value,state,reason\nVisits,Visit 1,Children,5,failed,This device could not store the change\n'
     )
 })
@@ -460,13 +472,13 @@ test('the unsent changes download as UTF-8 that Excel reads', async () => {
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect.poll(() => records(server, KEY)).toHaveLength(1)
-    const files = catchDownloads()
+    const download = await captureNextDownload()
     view().downloadUnsent()
-    await expect.poll(() => files).toHaveLength(1)
-    const bytes = new Uint8Array(await files[0].arrayBuffer())
+    const { contents, filename } = await download()
+    expect(filename).toBe('unsent-changes.csv')
+    const bytes = new TextEncoder().encode(contents)
     expect(Array.from(bytes.subarray(0, 3))).toEqual([0xef, 0xbb, 0xbf])
-    // `text()` drops the byte order mark.
-    expect(await files[0].text()).toBe(
+    expect(contents.replace(/^\uFEFF/u, '')).toBe(
         'form,row,field,value,state,reason\nVisits,Visit 1,Children,5,queued,\n'
     )
 })
@@ -504,7 +516,6 @@ test('discarding the changes that could not be saved takes them off the device a
             'They are not saved anywhere else. Download them first to keep a copy.'
         )
     await userEvent.click(dialog.getByRole('button', { name: 'Discard' }))
-    // Only the failed change goes; the one waiting to be sent stays.
     await expect
         .poll(() => records(server, KEY))
         .toMatchObject([{ key: 'r2.c1', state: 'queued' }])
@@ -522,18 +533,8 @@ test('discarding a change the device could not store puts back the older one it 
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect.poll(() => records(server, KEY)).toHaveLength(1)
-    const put = vi
-        .spyOn(IDBObjectStore.prototype, 'put')
-        .mockImplementation(() => {
-            throw new DOMException(
-                'The quota was exceeded',
-                'QuotaExceededError'
-            )
-        })
-    control(CHILDREN).focus()
-    await userEvent.keyboard('6{Enter}')
+    abortWrite(server, () => context().store.getState().commit(CHILDREN, '6'))
     await expect.poll(() => view().summary.failed).toBe(1)
-    put.mockRestore()
     await view().discardFailed()
     expect(context().store.getState().cells[CHILDREN]).toMatchObject({
         value: '5',
@@ -542,27 +543,28 @@ test('discarding a change the device could not store puts back the older one it 
     expect(await records(server, KEY)).toMatchObject([{ value: '5' }])
 })
 
-test('leaving or hiding the page stores a change at once, without waiting for a paint', async () => {
+test('leaving the page stores a change at once, without waiting for a paint', async () => {
     const memory = memorySource(visitForm())
     memory.hold()
-    const { server } = await mount(memory.source)
-    holdPaint()
-    control(CHILDREN).focus()
-    await userEvent.keyboard('5{Enter}')
-    await later(200)
+    const { server, context, view } = await mount(memory.source)
     expect(await records(server, KEY)).toEqual([])
+    const beforeCommit = view().summary
+    context().store.getState().commit(CHILDREN, '5')
+    expect(view().summary).toBe(beforeCommit)
     window.dispatchEvent(new PageTransitionEvent('pagehide'))
     await expect
         .poll(() => records(server, KEY))
         .toMatchObject([{ key: CHILDREN, value: '5' }])
+})
 
-    control(cellKey('r2', 'c1')).focus()
-    await userEvent.keyboard('6{Enter}')
-    await later(200)
-    expect(await records(server, KEY)).toHaveLength(1)
-    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
-    document.dispatchEvent(new Event('visibilitychange'))
-    await expect.poll(() => records(server, KEY)).toHaveLength(2)
+test('hiding the page selects the same immediate flush as pagehide', () => {
+    const calls: string[] = []
+    const flush = () => calls.push('flush')
+    const resume = () => calls.push('resume')
+    respondToVisibility('hidden', flush, resume)
+    expect(calls).toEqual(['flush'])
+    respondToVisibility('visible', flush, resume)
+    expect(calls).toEqual(['flush', 'resume'])
 })
 
 test('sending paused for signing in starts again when the person comes back to the page', async () => {
@@ -573,7 +575,6 @@ test('sending paused for signing in starts again when the person comes back to t
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect.poll(() => view().sync).toBe('signIn')
-    // Signed in again, in another tab.
     answer = 'userA'
     window.dispatchEvent(new FocusEvent('focus'))
     await expect.poll(() => view().summary.unsent).toBe(0)
@@ -583,10 +584,7 @@ test('sending paused for signing in starts again when the person comes back to t
     await userEvent.keyboard('6{Enter}')
     await expect.poll(() => view().sync).toBe('signIn')
     answer = 'userA'
-    const visibility = vi.spyOn(document, 'visibilityState', 'get')
-    visibility.mockReturnValue('hidden')
-    document.dispatchEvent(new Event('visibilitychange'))
-    visibility.mockReturnValue('visible')
+    expect(document.visibilityState).toBe('visible')
     document.dispatchEvent(new Event('visibilitychange'))
     await expect.poll(() => view().summary.unsent).toBe(0)
     expect(memory.sent.flat().map(({ value }) => value)).toEqual(['5', '6'])

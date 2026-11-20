@@ -147,7 +147,6 @@ describe('MoreFilters keyboard focus', () => {
         await expect
             .element(screen.getByTestId('filter-programStage'))
             .toHaveTextContent('Visit')
-        // The chip uses the dense (32px) select size, as Capture's does.
         expect(
             screen.container
                 .querySelector(

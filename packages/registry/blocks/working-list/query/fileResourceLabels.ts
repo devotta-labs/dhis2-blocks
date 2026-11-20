@@ -17,10 +17,6 @@ const FileResourceSchema = z
     })
     .passthrough()
 
-/**
- * Only FILE_RESOURCE cells need display names; IMAGE cells render previews
- * without a name, mirroring the Capture app's subvalue handling.
- */
 const collectValueFileResources = (
     result: Set<string>,
     values: WorkingListRowValues,
@@ -40,7 +36,7 @@ const collectValueFileResources = (
 export const collectFileResourceIds = (
     page: WorkingListPage,
     fields: FieldCatalog
-): string[] => {
+) => {
     const result = new Set<string>()
     if (page.mode === 'trackedEntity') {
         page.records.forEach((record) =>
@@ -57,15 +53,15 @@ export const collectFileResourceIds = (
     return [...result].sort()
 }
 
-export const fetchFileResourceNames = async ({
-    client,
-    ids,
-    signal,
-}: {
+export const fetchFileResourceNames: (options: {
     client: WorkingListClient
     ids: string[]
     signal?: AbortSignal
-}): Promise<ReadonlyMap<string, string>> => {
+}) => Promise<ReadonlyMap<string, string>> = async ({
+    client,
+    ids,
+    signal,
+}) => {
     const uniqueIds = [...new Set(ids)].sort()
     const entries = await Promise.all(
         uniqueIds.map(async (id) => {
@@ -84,8 +80,6 @@ export const fetchFileResourceNames = async ({
                 if (signal?.aborted) {
                     throw error
                 }
-                // Capture parity: a missing file resource blanks its cell
-                // instead of failing the page.
                 console.warn(
                     `[working-list] file resource ${id} could not be resolved`,
                     error

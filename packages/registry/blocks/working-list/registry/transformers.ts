@@ -25,7 +25,6 @@ type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 const DATE_VALUE_TYPES = new Set<Dhis2ValueType>(['AGE', 'DATE', 'DATETIME'])
 
-/** Official Unicode calendar identifiers for DHIS2 calendars supported by Intl. */
 const INTL_CALENDAR_BY_DHIS2 = {
     coptic: 'coptic',
     ethiopian: 'ethiopic',
@@ -61,7 +60,7 @@ interface CalendarDateParts {
     day: number
 }
 
-const parseClientDate = (value: string): CalendarDateParts => {
+const parseClientDate = (value: string) => {
     const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
     if (!match) {
         throw new Error(`Invalid client date: ${value}`)
@@ -74,9 +73,9 @@ const parseClientDate = (value: string): CalendarDateParts => {
  * Normalises DHIS2's server calendar names to the identifiers understood by
  * `@dhis2/multi-calendar-dates` and Temporal.
  */
-export const toMultiCalendarIdentifier = (
+export const toMultiCalendarIdentifier: (
     calendar: WorkingListSystemInfo['calendar']
-): MultiCalendarIdentifier =>
+) => MultiCalendarIdentifier = (calendar) =>
     (
         ({
             coptic: 'coptic',
@@ -100,11 +99,7 @@ const isEpagomenalCalendar = (
 
 const isEpagomenalLeapYear = (year: number) => year % 4 === 3
 
-const isValidEpagomenalDate = ({
-    year,
-    month,
-    day,
-}: CalendarDateParts): boolean => {
+const isValidEpagomenalDate = ({ year, month, day }: CalendarDateParts) => {
     const epagomenalDays = isEpagomenalLeapYear(year) ? 6 : 5
     const daysInMonth = month <= 12 ? 30 : epagomenalDays
 
@@ -163,7 +158,7 @@ const gregorianToJulianDay = ({ year, month, day }: CalendarDateParts) => {
     )
 }
 
-const julianDayToGregorian = (julianDay: number): CalendarDateParts => {
+const julianDayToGregorian = (julianDay: number) => {
     const offset = julianDay + 32044
     const century = Math.floor((4 * offset + 3) / 146097)
     const dayOfCentury = offset - Math.floor((146097 * century) / 4)
@@ -197,7 +192,7 @@ const epagomenalToJulianDay = (
 const julianDayToEpagomenal = (
     julianDay: number,
     calendar: keyof typeof EPAGOMENAL_EPOCHS
-): CalendarDateParts => {
+) => {
     const epoch = EPAGOMENAL_EPOCHS[calendar]
     let year = Math.floor((4 * (julianDay - epoch) + 1463) / 1461)
     while (
@@ -281,9 +276,9 @@ export interface WorkingListValueTransformers {
     formattingContext: CellFormattingContext
 }
 
-export const createWorkingListValueTransformers = (
+export const createWorkingListValueTransformers: (
     options: WorkingListTransformerOptions
-): WorkingListValueTransformers => {
+) => WorkingListValueTransformers = (options) => {
     const { systemInfo } = options
 
     const serverToClient = (value: string, valueType: Dhis2ValueType) => {
@@ -342,9 +337,6 @@ export const createWorkingListValueTransformers = (
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
-                    // Tracker values are calendar-local. Constructing the
-                    // original ISO lexical fields in UTC preserves their date
-                    // and time instead of applying a host-zone or offset shift.
                     timeZone: 'UTC',
                 }
                 if (valueType === 'DATETIME' && timePart) {
@@ -359,10 +351,7 @@ export const createWorkingListValueTransformers = (
                 if (formatter.resolvedOptions().calendar === intlCalendar) {
                     return formatter.format(lexicalServerValue)
                 }
-            } catch {
-                // Older runtimes can reject a valid Unicode calendar. The
-                // validated DHIS2 client-format fallback below remains safe.
-            }
+            } catch {}
         }
         const [year, month, day] = datePart.split('-').map(Number)
         const formatted = localDateString({ year, month, day }, systemInfo)
@@ -430,7 +419,7 @@ export const createWorkingListValueTransformers = (
     const monthsInYear = () =>
         isEpagomenalCalendar(systemInfo.calendar) ? 13 : 12
 
-    const monthBefore = (date: CalendarDateParts): CalendarDateParts =>
+    const monthBefore = (date: CalendarDateParts) =>
         date.month === 1
             ? { year: date.year - 1, month: monthsInYear(), day: 1 }
             : { year: date.year, month: date.month - 1, day: 1 }

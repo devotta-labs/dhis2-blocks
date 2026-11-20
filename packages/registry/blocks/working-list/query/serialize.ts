@@ -77,10 +77,10 @@ const optionalDate = (value: DataEngineQueryParameters[string]) =>
     value === undefined ? undefined : String(value)
 
 /** The API dates a request's filters allow on `fieldId`. */
-export const requestDateBounds = (
+export const requestDateBounds: (
     request: ResourceRequest,
     fieldId: string
-): DateBounds => {
+) => DateBounds = (request, fieldId) => {
     const { after, before } = dateRangeParametersFor(fieldId)
     return {
         start: optionalDate(request.params?.[after]),
@@ -95,10 +95,10 @@ const earlierDate = (left?: string, right?: string) =>
     left === undefined || (right !== undefined && right < left) ? right : left
 
 /** The overlap of two date bounds, or `undefined` when they do not overlap. */
-export const intersectDateBounds = (
+export const intersectDateBounds: (
     left: DateBounds,
     right: DateBounds
-): DateBounds | undefined => {
+) => DateBounds | undefined = (left, right) => {
     const start = laterDate(left.start, right.start)
     const end = earlierDate(left.end, right.end)
     if (start !== undefined && end !== undefined && start > end) {
@@ -117,7 +117,9 @@ export interface SerializeWorkingListRequestInput {
     range?: WorkingListDateRange
 }
 
-export const serializeWorkingListRequest = ({
+export const serializeWorkingListRequest: (
+    options: SerializeWorkingListRequestInput
+) => ResourceRequest = ({
     context,
     configuration: rawConfiguration,
     pagination: rawPagination,
@@ -125,7 +127,7 @@ export const serializeWorkingListRequest = ({
     fields,
     serializationContext,
     range,
-}: SerializeWorkingListRequestInput): ResourceRequest => {
+}) => {
     const configuration = WorkingListConfigurationSchema.parse(rawConfiguration)
     const pagination = WorkingListPaginationSchema.parse(rawPagination)
     const parsedContext = WorkingListContextSchema.parse(context)
@@ -239,8 +241,6 @@ export const serializeWorkingListRequest = ({
             )
         }
         const { after, before } = dateRangeParametersFor(range.fieldId)
-        // The API takes one value per bound, so a saved filter on the same
-        // field and the window combine into their overlap.
         const bounds = intersectDateBounds(
             {
                 start: optionalDate(params[after]),
@@ -272,15 +272,11 @@ export interface TrackedEntityJoinPlan {
     request: ResourceRequest
 }
 
-export const planTrackedEntityJoin = ({
-    events,
-    programId,
-    pageSize,
-}: {
+export const planTrackedEntityJoin: (options: {
     events: TrackerEvent[]
     programId: string
     pageSize: number
-}): TrackedEntityJoinPlan | null => {
+}) => TrackedEntityJoinPlan | null = ({ events, programId, pageSize }) => {
     const trackedEntityIds = [
         ...new Set(
             events

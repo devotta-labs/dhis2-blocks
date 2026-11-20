@@ -22,11 +22,7 @@ import {
     type WorkingListTranslate,
 } from '../WorkingListText'
 import { CalendarRangeFields } from './CalendarRangeFields'
-import {
-    ComboboxField,
-    SelectField,
-    type SelectFieldOption,
-} from './FilterSelectFields'
+import { ComboboxField, SelectField } from './FilterSelectFields'
 import {
     type FilterCalendarContext,
     optionDisplayName,
@@ -36,9 +32,7 @@ import {
     UserFilterSelect,
 } from './ReferenceFilterSelects'
 
-const relativePeriodOptions = (
-    translate: WorkingListTranslate
-): SelectFieldOption<RelativeDatePeriod>[] => {
+const relativePeriodOptions = (translate: WorkingListTranslate) => {
     const labels = {
         TODAY: translate('Today'),
         THIS_WEEK: translate('This week'),
@@ -114,8 +108,6 @@ export const EditorValue = ({
             value: option.code,
             label: optionDisplayName(field, option, translate),
         }))
-        // Tracker supports multiple option-set values on capable servers, but
-        // Capture's system status filters are intentionally single-valued.
         if (usesMultipleOptionSelection(field, capabilities)) {
             return (
                 <ComboboxField
@@ -381,7 +373,6 @@ export const EditorValue = ({
     )
 }
 
-/** A labelled dense Input, with an optional description read with it. */
 const ValueInput = ({
     label,
     description,

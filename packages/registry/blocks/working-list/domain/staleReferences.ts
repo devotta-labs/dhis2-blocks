@@ -37,18 +37,17 @@ export class StaleWorkingListError extends Error {
     }
 }
 
-export const validateConfigurationReferences = (
+export const validateConfigurationReferences: (
     configuration: WorkingListConfiguration,
-    {
-        expectedProgramId,
-        fields,
-        readableProgramStageIds,
-    }: {
+    options2: {
         expectedProgramId: string
         fields: FieldCatalog
         readableProgramStageIds: ReadonlySet<string>
     }
-): ReferenceValidationResult => {
+) => ReferenceValidationResult = (
+    configuration,
+    { expectedProgramId, fields, readableProgramStageIds }
+) => {
     const issues: StaleReferenceIssue[] = []
     if (configuration.programId !== expectedProgramId) {
         issues.push({
@@ -185,17 +184,17 @@ export type StaleReferenceRepairResult =
  * Applies only explicit repair choices. Program and stage mismatches remain
  * blocking because changing either changes the meaning and endpoint of a list.
  */
-export const repairConfigurationReferences = ({
-    configuration,
-    issues,
-    decisions,
-    metadata,
-}: {
+export const repairConfigurationReferences: (options: {
     configuration: WorkingListConfiguration
     issues: StaleReferenceIssue[]
     decisions: StaleReferenceRepairDecision[]
     metadata: Parameters<typeof validateConfigurationReferences>[1]
-}): StaleReferenceRepairResult => {
+}) => StaleReferenceRepairResult = ({
+    configuration,
+    issues,
+    decisions,
+    metadata,
+}) => {
     const decisionsByPath = new Map(
         decisions.map((decision) => [decision.path, decision])
     )

@@ -7,9 +7,9 @@ import {
     rmnchResponses,
 } from '@/components/program-rules/__tests__/rmnch'
 import type { DataEngine } from '@/components/spreadsheet'
-import meAdmin from '../../sources/__tests__/fixtures/me-admin.json'
-import rmnchProgram from '../../sources/__tests__/fixtures/rmnch-program.json'
-import systemInfo from '../../sources/__tests__/fixtures/system-info.json'
+import meAdmin from '../../sources/test/fixtures/me-admin.json'
+import rmnchProgram from '../../sources/test/fixtures/rmnch-program.json'
+import systemInfo from '../../sources/test/fixtures/system-info.json'
 import { eventSource } from '../../sources/eventSource'
 
 const ANTENATAL = new Set<string>([RMNCH.stageId, 'edqlbukwRfQ'])
@@ -31,12 +31,11 @@ export const eventId = (id: string, k: number) => {
     if (k === 0) {
         return id
     }
-    // Event ids are unique: person `k` never shares one with person 0.
     return `${id.slice(0, -1)}${id.at(-1) === String(k) ? 0 : k}`
 }
 
 /** Person `k`'s events, as the server has them. */
-export const eventsOf = (k: number): FixtureEvent[] =>
+export const eventsOf: (k: number) => FixtureEvent[] = (k) =>
     rmnchEnrollmentResponse.events.map((event) => ({
         event: eventId(event.event, k),
         enrollment: personId(k),
@@ -53,7 +52,6 @@ export const eventsOf = (k: number): FixtureEvent[] =>
 export const antenatalOf = (k: number) =>
     eventsOf(k).filter(({ programStage }) => ANTENATAL.has(programStage))
 
-/** What the server sends: plain JSON, no `undefined` members. */
 const json = <T>(body: T) => z.json().parse(JSON.parse(JSON.stringify(body)))
 
 export const answering = <T>(answer: T) =>

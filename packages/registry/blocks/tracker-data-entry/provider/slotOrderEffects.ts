@@ -17,7 +17,6 @@ export const watchSlotOrder = (
     if (!slots.some(({ kind }) => kind === 'occurrence')) {
         return () => {}
     }
-    // What this wrote last, by cell: only these messages are its own to take back.
     let written: ReadonlyMap<CellKey, string> = new Map()
     const update = () => {
         const wanted = slotOrderWarnings(

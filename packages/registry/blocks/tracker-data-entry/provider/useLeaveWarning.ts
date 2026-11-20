@@ -8,7 +8,6 @@ export const useLeaveWarning = (armed: boolean) => {
         }
         const warn = (event: BeforeUnloadEvent) => {
             event.preventDefault()
-            // Browsers older than the standard prompt only ask when this is set.
             event.returnValue = ''
         }
         window.addEventListener('beforeunload', warn)

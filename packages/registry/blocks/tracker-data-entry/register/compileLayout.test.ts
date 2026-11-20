@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import immunisation from './__tests__/fixtures/immunisation-program.json'
-import rmnch from './__tests__/fixtures/rmnch-register-program.json'
+import immunisation from './test/fixtures/immunisation-program.json'
+import rmnch from './test/fixtures/rmnch-register-program.json'
 import { compileLayout } from './compileLayout'
 import type { LayoutNode, RegisterLayout } from './layout'
 import { registerMetadataOf, registerProgramSchema } from './metadata'
@@ -16,7 +16,6 @@ const BIRTH_DATE = { attribute: 'gHGyrwKPzej' }
 const ENROLLED = { enrollment: 'enrolledAt' } as const
 const ANC = 'edqlbukwRfQ'
 
-// What a new row needs, as the paper lists it first.
 const PERSON: LayoutNode[] = [
     { field: FIRST_NAME },
     { field: LAST_NAME },
@@ -24,7 +23,9 @@ const PERSON: LayoutNode[] = [
     { field: ENROLLED },
 ]
 
-const layoutOf = (columns: LayoutNode[]): RegisterLayout => ({ columns })
+const layoutOf: (columns: LayoutNode[]) => RegisterLayout = (columns) => ({
+    columns,
+})
 
 const errorsOf = (...args: Parameters<typeof compileLayout>) => {
     const result = compileLayout(...args)
@@ -516,7 +517,6 @@ describe('compileLayout', () => {
         if (stage === undefined || compulsory === undefined) {
             throw new Error('The fixture has no ANC stage')
         }
-        // A stage that checks on insert would demand its compulsory element if the row label's slot counted.
         const strict = {
             ...RMNCH,
             stages: new Map(RMNCH.stages).set(ANC, {

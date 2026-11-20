@@ -8,7 +8,7 @@ export const eventFileUrl = (
     eventId: string,
     dataElementId: string,
     image: boolean
-): string =>
+) =>
     `${baseUrl}/api/tracker/events/${eventId}/dataValues/${dataElementId}/${image ? 'image' : 'file'}`
 
 /**
@@ -17,7 +17,7 @@ export const eventFileUrl = (
  */
 export const fileUrlOf =
     (baseUrl: string, records: () => ReadonlyMap<string, DataRecord>) =>
-    (key: CellKey, image: boolean): string | undefined => {
+    (key: CellKey, image: boolean) => {
         const record = records().get(recordIdOf(key))
         return record?.kind === 'event'
             ? eventFileUrl(baseUrl, record.id, fieldIdOfKey(key), image)

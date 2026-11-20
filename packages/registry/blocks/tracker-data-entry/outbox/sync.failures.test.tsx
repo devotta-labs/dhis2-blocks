@@ -1,3 +1,5 @@
+import { setBrowserOffline } from '../../../test/network-status.test-utils'
+import { recording } from '../test/recording'
 import { FetchError } from '@dhis2/app-runtime'
 import { PartlySaved } from './failure'
 import {
@@ -9,7 +11,7 @@ import {
     cleanUp,
     later,
     setup,
-} from './__tests__/syncRig'
+} from './test/syncRig'
 
 afterEach(cleanUp)
 
@@ -71,7 +73,6 @@ test('starts again from a second after a success within the same loop', async ()
         }
         return records.map((record) => answer(record, 'saved'))
     })
-    // The fourth call succeeds; a nudge while it is held keeps the loop going into a fifth round.
     await vi.waitFor(() => expect(calls).toBe(4))
     await outbox.put(change({ key: 'r2.c1' }))
     run.sync.nudge()
@@ -262,16 +263,16 @@ test('a save that stopped partway keeps what it saved and tries again with only 
         change({ key: 'r1.c1', at: 1 }),
         change({ key: 'r2.c1', at: 2 }),
     ])
-    const sent: string[][] = []
+    const sent = recording<string[]>()
     const run = begin(outbox, lockName, async (_, records) => {
-        sent.push(records.map(({ key }) => key))
-        if (sent.length === 1) {
+        sent.add(records.map(({ key }) => key))
+        if (sent.values.length === 1) {
             throw new PartlySaved([answer(records[0], 'saved')], networkDown())
         }
         return records.map((record) => answer(record, 'saved'))
     })
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
-    expect(sent).toEqual([['r1.c1', 'r2.c1'], ['r2.c1']])
+    expect(sent.values).toEqual([['r1.c1', 'r2.c1'], ['r2.c1']])
     expect(run.statuses).toEqual(['sending', 'retrying', 'sending', 'idle'])
     expect(run.outcomes.map(({ key }) => key)).toEqual(['r1.c1', 'r2.c1'])
     expect(await outbox.list()).toEqual([])
@@ -309,10 +310,10 @@ test('a refusal of the first of three chunks leaves the two never sent queued, a
         change({ key: 'r2.c1', at: 2 }),
         change({ key: 'r3.c1', at: 3 }),
     ])
-    const sent: string[][] = []
+    const sent = recording<string[]>()
     const run = begin(outbox, lockName, async (_, records) => {
-        sent.push(records.map(({ key }) => key))
-        if (sent.length === 1) {
+        sent.add(records.map(({ key }) => key))
+        if (sent.values.length === 1) {
             throw new PartlySaved(
                 [],
                 fetchError('unknown', 'Payload Too Large (413)', {}),
@@ -321,9 +322,10 @@ test('a refusal of the first of three chunks leaves the two never sent queued, a
         }
         return records.map((record) => answer(record, 'saved'))
     })
-    await vi.waitFor(() => expect(sent).toHaveLength(2))
+    await sent.reached(2)
+    expect(sent.values).toHaveLength(2)
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
-    expect(sent).toEqual([
+    expect(sent.values).toEqual([
         ['r1.c1', 'r2.c1', 'r3.c1'],
         ['r2.c1', 'r3.c1'],
     ])
@@ -377,22 +379,20 @@ test.each([
 test('waits while offline and sends when the connection returns', async () => {
     const { outbox, lockName } = await setup()
     await outbox.put(change())
-    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    await setBrowserOffline(true)
     const { save, calls } = answering('saved')
     const run = begin(outbox, lockName, save)
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('offline'))
     await later(50)
     expect(calls).toEqual([])
 
-    online.mockReturnValue(true)
-    window.dispatchEvent(new Event('online'))
+    await setBrowserOffline(false)
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
     expect(calls).toHaveLength(1)
     expect(await outbox.list()).toEqual([])
 
-    online.mockReturnValue(false)
-    window.dispatchEvent(new Event('offline'))
-    expect(run.statuses.at(-1)).toBe('offline')
+    await setBrowserOffline(true)
+    await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('offline'))
 })
 
 test('reports offline, not idle, when the connection dropped during the round', async () => {
@@ -406,15 +406,14 @@ test('reports offline, not idle, when the connection dropped during the round', 
         return records.map((record) => answer(record, 'saved'))
     })
     await vi.waitFor(() => expect(entered).toBe(true))
-    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
-    window.dispatchEvent(new Event('offline'))
+    await setBrowserOffline(true)
     gate.resolve()
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(1))
+    await run.outcomeCount(1)
+    expect(run.outcomes).toHaveLength(1)
     await later(50)
     expect(run.statuses).toEqual(['sending', 'offline'])
 
-    online.mockReturnValue(true)
-    window.dispatchEvent(new Event('online'))
+    await setBrowserOffline(false)
     await vi.waitFor(() => expect(run.statuses.at(-1)).toBe('idle'))
 })
 
@@ -453,7 +452,8 @@ test('stop lets the source in flight record what the server took and sends no ot
     await vi.waitFor(() => expect(sent).toEqual(['dataset:d1']))
     run.sync.stop()
     gate.resolve()
-    await vi.waitFor(() => expect(run.outcomes).toHaveLength(1))
+    await run.outcomeCount(1)
+    expect(run.outcomes).toHaveLength(1)
     await later(50)
     expect(sent).toEqual(['dataset:d1'])
     expect(await outbox.list()).toMatchObject([{ sourceKey: SOURCE }])

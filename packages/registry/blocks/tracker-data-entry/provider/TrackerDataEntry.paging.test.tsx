@@ -4,9 +4,9 @@ import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
 import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'
-import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
-import rmnchProgram from '../sources/__tests__/fixtures/rmnch-program.json'
-import systemInfo from '../sources/__tests__/fixtures/system-info.json'
+import meAdmin from '../sources/test/fixtures/me-admin.json'
+import rmnchProgram from '../sources/test/fixtures/rmnch-program.json'
+import systemInfo from '../sources/test/fixtures/system-info.json'
 import type {
     TrackerDataEntrySource,
     FormPage,
@@ -26,7 +26,7 @@ import {
     visit,
     visitForm,
     withOutbox,
-} from './__tests__/rig'
+} from './test/rig'
 import {
     answering,
     antenatalOf,
@@ -37,8 +37,8 @@ import {
     rmnchForm,
     rmnchSource,
     rulesFor,
-} from './__tests__/rmnchRig'
-import type { FixtureEvent } from './__tests__/rmnchRig'
+} from './test/rmnchRig'
+import type { FixtureEvent } from './test/rmnchRig'
 import { signedInAsOther } from './signedIn'
 import { liveRegion } from '../../../test/liveRegion'
 
@@ -50,7 +50,6 @@ const visits = (from: number, count: number) =>
         visit(`r${from + at}`, `Visit ${from + at}`)
     )
 
-/** The source of `form`, whose pages 2, 3, … are `pages` in turn; every page asked for is in `asked`. */
 const paged = (
     form: LoadedForm,
     pages: Array<() => Promise<FormPage>>,
@@ -74,8 +73,7 @@ const paged = (
 
 const ASSIGNED = 'Assigned by rule: Calculate gestational age from LMP'
 
-/** The event with an LMP: the rules give its person's visits a gestational age, and say it under each row's label. */
-const withLmp = (event: FixtureEvent, lmp = '2026-01-01'): FixtureEvent => ({
+const withLmp = (event: FixtureEvent, lmp = '2026-01-01') => ({
     ...event,
     dataValues: [...event.dataValues, { dataElement: RMNCH.lmp, value: lmp }],
 })
@@ -105,7 +103,6 @@ test('"Show more events" appends the page, keeps focus on the button and announc
     )
     const { context } = await mount(source)
     await userEvent.click(showMore())
-    // Busy, and still focused: a second press asks for nothing.
     await expect.element(showMore()).toHaveAttribute('aria-busy', 'true')
     await expect.element(showMore()).toHaveAttribute('aria-disabled', 'true')
     await expect.element(showMore()).toHaveFocus()
@@ -121,7 +118,6 @@ test('"Show more events" appends the page, keeps focus on the button and announc
     await expect.element(showMore()).toHaveAttribute('aria-disabled', 'false')
     await expect.element(showMore()).toHaveFocus()
     expect(control(cellKey('r100', 'c1'))).toBeInstanceOf(HTMLElement)
-    // "Skip past the grid" lands before the button.
     const end = document.getElementById(
         page
             .getByRole('link', { name: 'Skip past the grid' })
@@ -136,7 +132,6 @@ test('"Show more events" appends the page, keeps focus on the button and announc
     expect(context().store.getState().cells[cellKey('r51', 'c3')]?.value).toBe(
         'Late'
     )
-    // A page's names join the form's, so its cells show them.
     expect(context().orgUnitNames.getState().names.get('ou2')).toBe('Bo')
 })
 
@@ -154,7 +149,6 @@ test('the button is gone when there is nothing more', async () => {
     await userEvent.click(showMore())
     await expect.element(showMore()).not.toBeInTheDocument()
     expect(context().tables[0].rows).toHaveLength(3)
-    // Focus the button held goes past the grid, where the skip link leads.
     const skip = page.getByRole('link', { name: 'Skip past the grid' })
     expect(`#${document.activeElement?.id}`).toBe(
         skip.element().getAttribute('href')
@@ -185,7 +179,6 @@ test('a page that cannot be loaded is said and shown beside the button, which st
     await expect.element(showMore()).toHaveAttribute('aria-disabled', 'false')
     await expect.element(showMore()).toHaveFocus()
     expect(context().tables[0].rows).toHaveLength(2)
-    // Shown, not only said: the reason stays beside the button, which it describes.
     expect(view().loadMoreError).toBe('The connection dropped')
     await expect
         .element(showMore())
@@ -201,14 +194,12 @@ test('a page that cannot be loaded is said and shown beside the button, which st
         .toHaveTextContent('The connection dropped')
     await expect.element(page.elementLocator(reason)).toBeVisible()
 
-    // Trying again takes the reason away at once.
     await userEvent.click(showMore())
     expect(view().loadMoreError).toBe(undefined)
     await expect.poll(() => reason.isConnected).toBe(false)
     await expect.element(showMore()).not.toHaveAttribute('aria-describedby')
     answer()
     await expect.poll(() => context().tables[0].rows).toHaveLength(3)
-    // The page that failed is asked for again.
     expect(asked).toEqual([2, 2])
 })
 
@@ -234,8 +225,8 @@ test('rows already shown are not added twice', async () => {
     added = context().tables[0].rows[2].id
     control(cellKey(added, 'c1')).focus()
     await userEvent.keyboard('7{Enter}')
-    // Saved this session, the new event comes back on the next page.
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
 
     await view().loadMore()
     expect(context().tables[0].rows.map(({ id }) => id)).toEqual([
@@ -270,7 +261,6 @@ test('a page restores unsent changes for its rows', async () => {
         }),
     ])
     const { view, context } = await mount(source, { server })
-    // Not in the form yet, it is counted as another grid's.
     expect(view().summary.failed).toBe(1)
 
     await view().loadMore()
@@ -279,7 +269,6 @@ test('a page restores unsent changes for its rows', async () => {
         sync: 'failed',
         reason: 'Too high',
     })
-    // Now the form's own: counted once.
     await later(100)
     expect(view().summary.failed).toBe(1)
 })
@@ -318,14 +307,12 @@ test('a row already shown keeps what the form knows of it when a page brings it 
             { id: 'r3', status: 'ACTIVE' },
         ]
     )
-    // The page's facts hold for its new row only.
     expect(table.closed.has(cellKey('r1', 'c2'))).toBe(false)
     expect(table.closed.get(cellKey('r3', 'c2'))).toBe('Not used')
     const readOnly = (key: CellKey) =>
         context().effects.getState().cells[key]?.readOnly
     expect(readOnly(cellKey('r1', 'c1'))).toBe(undefined)
     expect(readOnly(cellKey('r3', 'c1'))).toBe(BLOCKED)
-    // Completed here, it may be reopened, as the form knew it: not read-only.
     expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
     expect(await view().reopen('r1')).toMatchObject([{ result: 'saved' }])
     expect(memory.statuses).toEqual([
@@ -392,7 +379,6 @@ const rulesRan = () =>
         )
         .toHaveLength(1)
 
-/** The RMNCH form of `events`, whose next page `loadPage` reads from `next`. */
 const rmnchPaged = async (
     events: ReadonlyArray<FixtureEvent>,
     next: ReadonlyArray<FixtureEvent>
@@ -429,7 +415,6 @@ test('a page with a stage the table has no columns for adds those columns', asyn
 
     await view().loadMore()
     const [table] = context().tables
-    // The second visit's own fields join at the end.
     const added = ['QM5d0hfSbKk', 'DCUDZxqOxUo', 'SeXllT5ypsh', 'yTDoF5b1OhI']
     expect(table.columns.map(({ id }) => id)).toEqual([...before, ...added])
     await expect
@@ -443,14 +428,12 @@ test('a page with a stage the table has no columns for adds those columns', asyn
     )
     expect(table.closed.has(cellKey(secondVisit, 'SeXllT5ypsh'))).toBe(false)
 
-    // A cell of a new column takes a value.
     control(cellKey(secondVisit, 'yTDoF5b1OhI')).focus()
     await userEvent.keyboard('Not checked{Enter}')
     expect(
         context().store.getState().cells[cellKey(secondVisit, 'yTDoF5b1OhI')]
             ?.value
     ).toBe('notchecked')
-    // The new stage's rows are evaluated too.
     await expect
         .poll(
             () =>
@@ -467,13 +450,11 @@ test('a page row whose unsent change is put back is changed: its rules save ther
     await withOutbox(server, (outbox) =>
         outbox.put(change(cellKey(changed, RMNCH.lmp), '2026-01-01'))
     )
-    // Both pages hold both antenatal stages, so the rules stay as they are and learn of the change from the cell.
     const onPage2 = new Set([changed, other])
     const { memory, source } = await rmnchPaged(
         antenatalOf(0).filter(({ event }) => !onPage2.has(event)),
         antenatalOf(0).filter(({ event }) => onPage2.has(event))
     )
-    // The change is on its way when the page loads.
     memory.hold()
     const { view, context } = await mount(source, { data: rulesFor(), server })
     await rulesRan()
@@ -487,7 +468,6 @@ test('a page row whose unsent change is put back is changed: its rules save ther
     await expect
         .poll(sentKeys)
         .toContain(cellKey(changed, RMNCH.gestationalAge))
-    // Shown in the other rows, saved only in the changed one.
     expect(
         context().effects.getState().cells[cellKey(other, RMNCH.gestationalAge)]
             ?.readOnly
@@ -502,7 +482,6 @@ test('rows of a new person on a page are evaluated with that person', async () =
         answer = resolve
     })
     const NEW = personId(1)
-    // The person's newest visit is only on their record, with an LMP ten weeks and two days ago.
     const newest = eventId('LCam2n68lD4', 1)
     const rules = rulesFor(async (id) => {
         const person = fixturePerson(id)
@@ -517,7 +496,6 @@ test('rows of a new person on a page are evaluated with that person', async () =
             ),
         }
     })
-    // The page has their other later visits; the oldest says the LMP was twenty weeks ago.
     const oldest = eventId('yDPqyTvcRpA', 1)
     const laterVisits = antenatalOf(1)
         .filter(
@@ -538,7 +516,6 @@ test('rows of a new person on a page are evaluated with that person', async () =
     )
     const notesOf = (row: string) =>
         context().effects.getState().rowNotes.get(row)
-    // Until the person loads, their rows are not evaluated: never with the page's LMP alone.
     await later(300)
     for (const row of rows) {
         expect(notesOf(row)).toBe(undefined)
@@ -550,13 +527,11 @@ test('rows of a new person on a page are evaluated with that person', async () =
     }
 
     answer()
-    // Around midnight the rules' today may be a day off the test's.
     for (const row of rows) {
         await expect
             .poll(() => notesOf(row))
             .toEqual([expect.stringMatching(/^Gest\. age 10\+[1-3]$/)])
     }
-    // Loading a page writes nothing: no one changed these rows.
     await later(200)
     expect(memory.sent).toEqual([])
 })

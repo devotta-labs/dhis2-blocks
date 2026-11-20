@@ -21,10 +21,8 @@ export const PERSON = 'PE6abx7Zhn0'
 export const PERSON_ORG_UNIT = 'm7fBMpmVpSM'
 export const SECOND_VISIT = 'edqlbukwRfQ'
 export const GESTATIONAL_AGE = 'roKuXYfw1BW'
-// Two completed inpatient events: the import fixtures refuse B's age.
 export const A = 'NGxc7JpmqqD'
 export const B = 'wAiGPfJGMxt'
-// Two second visits of the RMNCH person, at 12:05.
 export const VISIT = 'yDPqyTvcRpA'
 export const LATER_VISIT = 'fwaWno2Vvua'
 export const NEW = 'Qa1bC2dE3fG'
@@ -117,7 +115,6 @@ export const fakeEngine = <L>(
             }
             reads.push(query)
             readSignals.push(options?.signal)
-            // Like the platform, a read gives up when its signal aborts.
             await new Promise((resolve, reject) => {
                 const timer = setTimeout(resolve, readTime)
                 options?.signal?.addEventListener('abort', () => {
@@ -185,12 +182,12 @@ export const person = (server: Server = rmnchEvents.events, answer?: Answer) =>
     )
 
 let clock = 0
-export const change = (
+export const change: (
     rowId: string,
     columnId: string,
     value: string | null,
     record?: ChangeRecord
-): OutboxRecord => ({
+) => OutboxRecord = (rowId, columnId, value, record) => ({
     sourceKey: SOURCE,
     key: cellKey(rowId, columnId),
     value,
@@ -206,7 +203,6 @@ export const saved = (record: OutboxRecord) => ({
     result: 'saved',
 })
 
-// Shaped like the platform's `FetchError`, whose module cannot load outside a browser.
 export const fetchError = <D>(
     type: 'access' | 'unknown',
     message: string,

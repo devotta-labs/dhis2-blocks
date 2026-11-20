@@ -39,11 +39,9 @@ export interface EventSourceOptions {
     today?: string
 }
 
-// An org unit value is its id, and so is a file's: both are DHIS2 ids.
 const ORG_UNIT: Field = { valueType: 'ORGANISATION_UNIT' }
 const ORG_UNIT_TYPES: ReadonlySet<string> = new Set([ORG_UNIT.valueType])
 const FILE_TYPES: ReadonlySet<string> = new Set(['FILE_RESOURCE', 'IMAGE'])
-// The most ids one names request lists: DHIS2 refuses a URL much longer.
 const IDS_PER_REQUEST = 200
 
 type DataElement =
@@ -51,11 +49,9 @@ type DataElement =
 
 const dateOf = (dateTime: string | undefined) => dateTime?.slice(0, 10)
 
-/** The date an event happened or, before it has, the date it is scheduled for. */
 const eventDate = ({ occurredAt, scheduledAt }: TrackerEvent) =>
     dateOf(occurredAt ?? scheduledAt)
 
-/** The day an event is due while it has no event date. */
 const dueDay = ({ occurredAt, scheduledAt }: TrackerEvent) =>
     occurredAt === undefined ? dateOf(scheduledAt) : undefined
 
@@ -63,21 +59,24 @@ const dataElementsOf = (list: ProgramStage[]) =>
     new Map(
         list.flatMap(({ programStageDataElements }) =>
             programStageDataElements.map(
-                ({ dataElement }): [string, DataElement] => [
-                    dataElement.id,
-                    dataElement,
-                ]
+                ({ dataElement }) =>
+                    [dataElement.id, dataElement] satisfies [
+                        string,
+                        DataElement,
+                    ]
             )
         )
     )
 
-const toColumn = (dataElement: DataElement): TrackerColumn => ({
+const toColumn: (dataElement: DataElement) => TrackerColumn = (
+    dataElement
+) => ({
     id: dataElement.id,
     label: dataElement.displayFormName,
     field: fieldOf(dataElement),
 })
 
-const toForm = (
+const toForm: (
     {
         program,
         events: { events },
@@ -87,7 +86,12 @@ const toForm = (
     options: EventSourceOptions,
     today: string,
     hasRules: boolean
-): Omit<LoadedForm, 'orgUnitNames' | 'fileNames' | 'hasMore'> => {
+) => Omit<LoadedForm, 'orgUnitNames' | 'fileNames' | 'hasMore'> = (
+    { program, events: { events }, me, systemInfo },
+    options,
+    today,
+    hasRules
+) => {
     const { programStageId, orgUnitId, enrollmentId, newRowStageId } = options
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
     const tracker = program.programType === 'WITH_REGISTRATION'
@@ -104,10 +108,8 @@ const toForm = (
         ])
     )
     const eventStages = new Set(events.map((event) => event.programStage))
-    // Every stage's fields, not only the columns shown: a page may bring another stage's.
     const everyElement = dataElementsOf(stages)
 
-    // The stages the rows belong to; with no rows yet, the stages asked for.
     const used = stages.filter(
         ({ id }) => id === newRowStageId || eventStages.has(id)
     )
@@ -181,7 +183,6 @@ const toForm = (
         }
     }
 
-    /** An event program adds rows at one org unit; a tracker program only for one person, in the stage the host names. */
     const findNewRowStage = () => {
         if (!tracker) {
             return orgUnitMode === 'SELECTED' ? shown.at(0) : undefined
@@ -190,7 +191,6 @@ const toForm = (
             return undefined
         }
         const stage = stageById.get(newRowStageId)
-        // A stage that is not repeatable takes one event per person.
         return stage?.repeatable || !eventStages.has(newRowStageId)
             ? stage
             : undefined
@@ -201,7 +201,6 @@ const toForm = (
         programId: program.id,
         programStageIds: shown.map(({ id }) => id),
         tracker,
-        // One person's grid names them even before their first event, so a new row's rules see them.
         enrollmentIds: tracker
             ? [
                   ...new Set(
@@ -248,17 +247,19 @@ const toForm = (
         ),
         fields: new Map([
             [EVENT_DATE_COLUMN, { valueType: 'DATE' }],
-            ...Array.from(everyElement, ([id, element]): [string, Field] => [
-                id,
-                toColumn(element).field,
-            ]),
+            ...Array.from(
+                everyElement,
+                ([id, element]) =>
+                    [id, toColumn(element).field] satisfies [string, Field]
+            ),
         ]),
         fieldNames: new Map([
             [EVENT_DATE_COLUMN, i18n.t('Event date')],
-            ...Array.from(everyElement, ([id, element]): [string, string] => [
-                id,
-                element.displayFormName,
-            ]),
+            ...Array.from(
+                everyElement,
+                ([id, element]) =>
+                    [id, element.displayFormName] satisfies [string, string]
+            ),
         ]),
         fieldsByForm: fieldsOf,
         required: new Map(
@@ -310,19 +311,19 @@ const toForm = (
     }
 }
 
-/**
- * The names of the ids the columns of these value types hold, 200 ids a request, sent together; none is made when they
- * hold none, and a value that is no id is not asked for. Names only help: a request that fails leaves its ids without
- * names, which the cells then show, and only an abort of the load stops it.
- */
-const loadNames = async (
+const loadNames: (
     { tables, values }: Pick<LoadedForm, 'tables' | 'values'>,
     valueTypes: ReadonlySet<string>,
     nameSome: (
         some: ReadonlyArray<string>
     ) => Promise<ReadonlyArray<[string, string]>>,
     signal?: AbortSignal
-): Promise<ReadonlyMap<string, string>> => {
+) => Promise<ReadonlyMap<string, string>> = async (
+    { tables, values },
+    valueTypes,
+    nameSome,
+    signal
+) => {
     const ids = new Set<string>()
     for (const { rows, columns } of tables) {
         for (const column of columns) {
@@ -386,15 +387,11 @@ export const loadNamesOf = (
                         )
                     )
                     .orgUnits.organisationUnits.map(
-                        ({ id, displayName }): [string, string] => [
-                            id,
-                            displayName,
-                        ]
+                        ({ id, displayName }) =>
+                            [id, displayName] satisfies [string, string]
                     ),
             signal
         ),
-        // Listing file resources needs the ALL authority (2.42.7.1), so each is read by id: one that fails loses only
-        // its own name.
         loadNames(
             form,
             FILE_TYPES,
@@ -413,10 +410,12 @@ export const loadNamesOf = (
                                     },
                                     { signal }
                                 )
-                                .then((answer): Array<[string, string]> => {
+                                .then((answer) => {
                                     const { file } =
                                         fileNameSchema.parse(answer)
-                                    return [[file.id, file.name]]
+                                    return [
+                                        [file.id, file.name],
+                                    ] satisfies Array<[string, string]>
                                 })
                                 .catch((error: Error) => {
                                     if (signal?.aborted) {
@@ -432,26 +431,22 @@ export const loadNamesOf = (
     ])
 
 /** Events of a program as grid rows: the event date, then the data elements of the rows' stages. */
-export const eventSource = (
+export const eventSource: (
     options: EventSourceOptions
-): TrackerDataEntrySource => {
+) => TrackerDataEntrySource = (options) => {
     const { programId, programStageId, orgUnitId, enrollmentId } = options
     const orgUnitMode = options.orgUnitMode ?? 'SELECTED'
-    // One person's events are read wherever they happened, not only at one org unit.
     const atOrgUnit = enrollmentId === undefined
-    // Unsent changes belong to the program's event grids, so any of them sends them; a register keeps its own.
     const key = `events:${programId}`
     const pageSize = options.pageSize ?? 50
     const order = options.order ?? 'occurredAt:desc'
     const saver = trackerSaver(key, programId)
-    // The server's calendar as this source last loaded it: a page builds its expiry in it without asking again.
     let systemInfo: z.infer<typeof eventFormSchema>['systemInfo'] | undefined
-    /** One page of the events, page 1 unless named, with the names of what its values hold. */
-    const loadEvents = async (
+    const loadEvents: (
         engine: DataEngine,
         page: number | undefined,
         signal?: AbortSignal
-    ): Promise<LoadedForm> => {
+    ) => Promise<LoadedForm> = async (engine, page, signal) => {
         const query: Parameters<DataEngine['query']>[0] = {
             program: {
                 resource: 'programs',
@@ -477,7 +472,6 @@ export const eventSource = (
                 params: { fields: 'id,authorities' },
             },
         }
-        // Expiry periods are built in the server's calendar.
         if (page === undefined || systemInfo === undefined) {
             query.systemInfo = {
                 resource: 'system/info',
@@ -485,8 +479,6 @@ export const eventSource = (
             }
         }
         const loading = engine.query(query, { signal })
-        // Asked beside the form's query, on the first load only. The form never waits for the answer: a question still
-        // out when the form is ready says no rules, and only the head start is lost.
         let hasRules = false
         if (page === undefined) {
             void hasRulesIn(engine, programId, signal).then((has) => {
@@ -502,19 +494,16 @@ export const eventSource = (
             options.today ?? todayIso(),
             hasRules
         )
-        // Asked once the values are known: cells show org units and files by name.
         const [orgUnitNames, fileNames] = await loadNamesOf(
             engine,
             form,
             signal
         )
-        // No total is asked for: counting costs DHIS2 a query on large databases.
         const hasMore = loaded.events.events.length === pageSize
         return { ...form, orgUnitNames, fileNames, hasMore }
     }
     return {
         key,
-        // Everything that changes the load; the outbox keeps the program's one key, so no change is stranded.
         cacheKey: [
             key,
             programStageId ?? '-',

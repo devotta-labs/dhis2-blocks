@@ -1,12 +1,12 @@
 import i18n from '@dhis2/d2-i18n'
 import { cellKey } from '@/components/spreadsheet'
 import type { DataEngine } from '@/components/spreadsheet'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import meAdmin from './__tests__/fixtures/me-admin.json'
-import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
-import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
-import systemInfo from './__tests__/fixtures/system-info.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import meAdmin from './test/fixtures/me-admin.json'
+import rmnchEvents from './test/fixtures/rmnch-person-events.json'
+import rmnchProgram from './test/fixtures/rmnch-program.json'
+import systemInfo from './test/fixtures/system-info.json'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { eventSource } from './eventSource'
 import type { EventSourceOptions } from './eventSource'
@@ -31,7 +31,6 @@ const INPATIENT_ROWS = [
 
 type Request = Parameters<DataEngine['query']>[0]
 type Stage = (typeof inpatientProgram)['programStages'][number]
-// The inpatient events were never scheduled, so their type lacks `scheduledAt`.
 type Event = (typeof inpatientEvents)['events'][number] & {
     scheduledAt: string
 }
@@ -217,7 +216,6 @@ test('one person’s events across stages share one table with "Not in this stag
         EVENT_DATE_COLUMN,
         ...union,
     ])
-    // A stage the person has no event in adds no columns.
     expect(table.columns.map(({ id }) => id)).not.toContain('mrVkW9h2Rdp')
     expect(table.closed.get(cellKey('yDPqyTvcRpA', 'de0FEHSIoxh'))).toBe(
         'Not in this stage'
@@ -226,7 +224,6 @@ test('one person’s events across stages share one table with "Not in this stag
     expect(table.closed.has(cellKey('yDPqyTvcRpA', EVENT_DATE_COLUMN))).toBe(
         false
     )
-    // One person's events wherever they happened, not only at one org unit.
     expect(requests[0].events.params).toMatchObject({
         program: RMNCH,
         enrollments: PERSON,
@@ -341,16 +338,13 @@ test('new rows: one org unit for event programs, a named stage for one person', 
         programStageId: SECOND_VISIT,
         orgUnitId: PERSON_ORG_UNIT,
         enrollmentId: PERSON,
-        // A grid of several stages names each row's stage, new rows' too.
         stage: 'Second antenatal care visit',
     })
-    // First visit only; in both visits; the event date.
     const secondVisitFields = repeatable.fieldsByForm.get(SECOND_VISIT)
     expect(secondVisitFields?.has('de0FEHSIoxh')).toBe(false)
     expect(secondVisitFields?.has('roKuXYfw1BW')).toBe(true)
     expect(secondVisitFields?.has(EVENT_DATE_COLUMN)).toBe(false)
     expect((await personLoad({})).newRows).toBeUndefined()
-    // A stage that is not repeatable takes one event per person.
     expect(
         (await personLoad({ newRowStageId: FIRST_VISIT })).newRows
     ).toBeUndefined()
@@ -364,7 +358,6 @@ test('new rows: one org unit for event programs, a named stage for one person', 
     expect(firstOfItsStage.rules?.programStageIds).toContain(
         PREVIOUS_DELIVERIES
     )
-    // Many people's events: a new row would mean enrolling someone.
     expect(
         (
             await personLoad({
@@ -387,7 +380,6 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
         meAdmin
     )
     expect(form.tables[0].rows[0]).toMatchObject({ label: '2026-11-02' })
-    // For the grid to show in the system's calendar and format.
     expect(form.records.get('NGxc7JpmqqD')).toMatchObject({
         scheduledAt: '2026-11-02',
     })
@@ -415,7 +407,6 @@ test('an event that has not happened yet is labelled by its scheduled date', asy
     expect(personForm.tables[0].rows[1].label).toBe(
         '2026-11-02 · Second antenatal care visit'
     )
-    // With no date at all, the stage still names the row.
     expect(personForm.tables[0].rows[2].label).toBe(
         'Second antenatal care visit'
     )
@@ -439,7 +430,6 @@ test('a completed event in a blockEntryForm stage is read-only; reopening needs 
         )
     )
     expect(blocked.canReopen).toEqual(new Set(INPATIENT_ROWS))
-    // What a status saved later changes: the stage blocks entry once completed.
     expect(blocked.readOnlyWhenCompleted).toEqual(
         new Map([
             [
@@ -556,7 +546,6 @@ test('a scheduled event expires by its scheduled date', async () => {
 })
 
 test('an event completed longer ago than completeEventsExpiryDays is read-only unless the user has F_EDIT_EXPIRED', async () => {
-    // Every fixture event was completed on 2026-04-21.
     const program = { ...inpatientProgram, completeEventsExpiryDays: 7 }
     const events = withEvent(0, { status: 'ACTIVE', completedAt: undefined })
 

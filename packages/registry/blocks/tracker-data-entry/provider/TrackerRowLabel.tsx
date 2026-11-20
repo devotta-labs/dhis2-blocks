@@ -62,7 +62,6 @@ export const labelOf = (
 export const useRowLabel = (row: TrackerRow | undefined) => {
     const { store, settings, records } = useTrackerContext()
     const id = row?.id ?? ''
-    // The cells the label reads, so it changes only with them.
     const selectCells = useShallow((state: CellStoreState) =>
         Object.fromEntries(
             [

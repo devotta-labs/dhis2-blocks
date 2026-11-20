@@ -90,7 +90,6 @@ const request = <T>(idbRequest: IDBRequest<T>) =>
         idbRequest.onerror = () => reject(idbRequest.error)
     })
 
-/** A record that does not parse is treated as absent, so one bad record never blocks the rest. */
 const readRecord = async (store: IDBObjectStore, ref: RecordRef) => {
     const parsed = recordSchema.safeParse(await request(store.get(keyOf(ref))))
     return parsed.success ? parsed.data : undefined
@@ -107,12 +106,11 @@ const open = (name: string) =>
         opening.onerror = () => reject(opening.error)
     })
 
-export const openOutbox = async (
+export const openOutbox: (
     serverBaseUrl: string,
     userId: string
-): Promise<Outbox> => {
+) => Promise<Outbox> = async (serverBaseUrl, userId) => {
     const db = await open(outboxName(serverBaseUrl, userId))
-    // Lets a schema change or a deleted database in another tab go ahead.
     db.onversionchange = () => db.close()
 
     const inTransaction = async (
@@ -125,14 +123,11 @@ export const openOutbox = async (
                 reject(tx.error ?? new Error('The outbox transaction aborted'))
         })
         try {
-            // A failed request rejects `work` with its own error before the abort reaches `finished`.
             await Promise.all([finished, work(tx.objectStore(STORE))])
         } catch (error) {
             try {
                 tx.abort()
-            } catch {
-                // A failed request has aborted the transaction already.
-            }
+            } catch {}
             throw error
         }
     }
@@ -170,7 +165,6 @@ export const openOutbox = async (
         putMany,
         async list(sourceKey) {
             const store = db.transaction(STORE, 'readonly').objectStore(STORE)
-            // Array keys sort after strings, so this spans every key of the source.
             const stored = await request(
                 store.getAll(
                     sourceKey === undefined

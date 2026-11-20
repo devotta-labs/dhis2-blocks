@@ -49,18 +49,16 @@ type Resolved = {
 }
 
 const DATE: Field = { valueType: 'DATE' }
-// Names and ids are said as they are, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 /** The slots of a register row's person and enrolment; every other slot is an event's. */
 export const PERSON = 'person'
 export const ENROLLMENT = 'enrollment'
 
-/** The slot a stage's column names: its name, kind and label. */
-const eventSlotOf = (
+const eventSlotOf: (
     stageId: string,
     stage: RegisterStage,
     { occurrence, where }: EventSlot
-): SlotDef => {
+) => SlotDef = (stageId, stage, { occurrence, where }) => {
     const base = {
         stageId,
         stageName: stage.name,
@@ -83,7 +81,6 @@ const eventSlotOf = (
     for (const [id, { field }] of stage.dataElements) {
         const code = where[id]
         if (code !== undefined) {
-            // The paper shows an option's name, as its heading does.
             values.push(
                 field.options?.find((o) => o.code === code)?.name ?? code
             )
@@ -101,23 +98,19 @@ const eventSlotOf = (
     }
 }
 
-const depthOf = (nodes: LayoutNode[]): number =>
+const depthOf: (nodes: LayoutNode[]) => number = (nodes) =>
     Math.max(
         0,
         ...nodes.map((node) => (isGroup(node) ? 1 + depthOf(node.children) : 1))
     )
 
-const leavesOf = (nodes: LayoutNode[]): LayoutColumn[] =>
+const leavesOf: (nodes: LayoutNode[]) => LayoutColumn[] = (nodes) =>
     nodes.flatMap((node) => (isGroup(node) ? leavesOf(node.children) : [node]))
 
-/**
- * The paper's heading rows: a group is a cell as wide as its columns, and a column under fewer groups than the deepest
- * spans the rows below it.
- */
-const headerRowsOf = (
+const headerRowsOf: (
     nodes: LayoutNode[],
     heads: Map<LayoutColumn, { id: string; label: string }>
-): HeaderCell[][] => {
+) => HeaderCell[][] = (nodes, heads) => {
     const rows: HeaderCell[][] = Array.from(
         { length: depthOf(nodes) },
         () => []
@@ -150,10 +143,12 @@ const headerRowsOf = (
  * Turns the paper's layout into the grid's slotted columns and heading rows, or says what the program cannot do for
  * it. Nothing here reads DHIS2.
  */
-export const compileLayout = (
+export const compileLayout: (
     layout: RegisterLayout,
     metadata: RegisterMetadata
-): { ok: true; compiled: CompiledLayout } | { ok: false; errors: string[] } => {
+) =>
+    | { ok: true; compiled: CompiledLayout }
+    | { ok: false; errors: string[] } = (layout, metadata) => {
     const errors: string[] = []
     const person: SlotDef = {
         name: PERSON,
@@ -171,14 +166,12 @@ export const compileLayout = (
         [PERSON, person],
         [ENROLLMENT, enrollment],
     ])
-    // The slot already made for this name, else this one; a column that is kept registers its slot.
     const slotOf = (def: SlotDef) => slots.get(def.name) ?? def
 
-    // The column's field in its slot, or why the program has none; `label` heads the message.
-    const resolve = (
+    const resolve: (
         ref: FieldRef,
         label: string | undefined
-    ): Resolved | undefined => {
+    ) => Resolved | undefined = (ref, label) => {
         const missing = (id: string) => {
             errors.push(
                 i18n.t('Column "{{label}}": the program has no field {{id}}', {
@@ -232,7 +225,6 @@ export const compileLayout = (
             )
             return undefined
         }
-        // A repeatable stage has many events: a column names which, or it would take whichever comes first.
         if (
             occurrence === undefined &&
             where === undefined &&
@@ -258,7 +250,6 @@ export const compileLayout = (
         }
         for (const [id, code] of Object.entries(where ?? {})) {
             const { name, field } = stage.dataElements.get(id) ?? {}
-            // A field with no options takes any value.
             if (
                 field?.options?.length &&
                 !field.options.some((o) => o.code === code)
@@ -268,7 +259,6 @@ export const compileLayout = (
                     field: name,
                     interpolation: AS_IS,
                 })
-                // Every column of the slot says it: once is enough.
                 if (!errors.includes(error)) {
                     errors.push(error)
                 }
@@ -317,7 +307,6 @@ export const compileLayout = (
         }
         slots.set(slot.name, slot)
         heads.set(leaf, { id, label })
-        // The enrolment's date is `enrolledAt`; its `occurredAt` is the incident date.
         const dateField =
             slot.kind === 'enrollment' ? 'enrolledAt' : EVENT_DATE_COLUMN
         if (slot.kind !== 'person' && fieldId === dateField) {
@@ -363,8 +352,6 @@ export const compileLayout = (
             .slice(0, 2)
             .map(({ slot, fieldId }) => ({ slot, fieldId }))
 
-    // A repeatable stage's slot needs its date: a later visit must not be dated at registration. A single stage's slot
-    // takes the enrolment date.
     for (const slot of slots.values()) {
         const stage = metadata.stages.get(slot.stageId ?? '')
         if (
@@ -381,7 +368,6 @@ export const compileLayout = (
         }
     }
 
-    // What DHIS2 refuses a new row without. Generated attributes are reserved when the row is added.
     const required = (name: string) =>
         errors.push(
             i18n.t(
@@ -403,7 +389,6 @@ export const compileLayout = (
             continue
         }
         for (const [id, { name, compulsory }] of stage.dataElements) {
-            // A where slot's own values are what its new events are created with.
             if (
                 compulsory &&
                 !has(slot.name, id) &&

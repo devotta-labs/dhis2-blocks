@@ -3,12 +3,7 @@ import i18n from '@dhis2/d2-i18n'
 import { page } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
 import type { TrackerColumn } from '../model/types'
-import {
-    cleanUp,
-    memorySource,
-    mount,
-    visitForm,
-} from '../provider/__tests__/rig'
+import { cleanUp, memorySource, mount, visitForm } from '../provider/test/rig'
 import { TrackerDataEntrySummary } from './TrackerDataEntrySummary'
 
 afterEach(cleanUp)
@@ -19,7 +14,6 @@ const EVENT_DATE: TrackerColumn = {
     field: { valueType: 'DATE' },
 }
 
-/** Visit 1 has its date and its required Children, so only Visit 2, which has neither, is in the summary. */
 const visits = () => {
     const form = visitForm({
         values: [
@@ -46,7 +40,6 @@ const visits = () => {
 
 test('a change to a row the summary does not list leaves its items alone, and a listed row’s name follows its date', async () => {
     const { source, hold } = memorySource(visits())
-    // Unsent changes stay counted, so the summary is seen to change.
     hold()
     const { context } = await mount(source, {
         children: (
@@ -62,7 +55,6 @@ test('a change to a row the summary does not list leaves its items alone, and a 
         )
         .toBeVisible()
 
-    // Each time an item names its row, it asks for the message's text.
     const named = vi.spyOn(i18n, 't')
     const namings = () =>
         named.mock.calls.filter(([key]) => String(key).startsWith('{{row}}'))

@@ -24,8 +24,10 @@ export interface SummaryItem {
     namesField?: true
 }
 
-/** The summary's item kind of a message: its tone, and whether it only holds back completion. */
-const kindOf = ({ tone, onComplete }: TrackerMessage): SummaryItem['kind'] => {
+const kindOf: ({ tone, onComplete }: TrackerMessage) => SummaryItem['kind'] = ({
+    tone,
+    onComplete,
+}) => {
     if (!onComplete) {
         return tone
     }
@@ -38,7 +40,6 @@ const BLOCKS_COMPLETION = new Set<SummaryItem['kind']>([
     'errorOnComplete',
 ])
 
-// Server reasons and field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
 /**
@@ -52,7 +53,6 @@ export const fieldNamer = (
     }>,
     fieldNames: ReadonlyMap<string, string> = new Map()
 ) => {
-    // By slot and field id; a column with no slot is under the empty slot.
     const headings = new Map<string, string>()
     const slotOf = new Map<string, string>()
     for (const { rows, columns } of tables) {
@@ -88,12 +88,9 @@ export const blocksCompletion = ({ kind }: SummaryItem) =>
 export const summarise = (
     cells: Partial<Record<CellKey, CellState>>,
     effects: Partial<Record<CellKey, TrackerEffects>>,
-    /** Record id → the messages without a field. */
     rowMessages: ReadonlyMap<string, ReadonlyArray<TrackerMessage>>,
     tables: ReadonlyArray<GridTable<TrackerRow, TrackerColumn>>,
-    /** Every field's name, for a required field no column shows. */
     fieldNames?: ReadonlyMap<string, string>,
-    /** Whether a record is a slot's new event nobody typed in: its required fields are not asked for yet. */
     emptySlot?: (recordId: string) => boolean
 ) => {
     const items: SummaryItem[] = []
@@ -127,7 +124,6 @@ export const summarise = (
                 add({ key, kind: 'unsent', text: cell.reason })
             }
         }
-        // A draft its value type refuses, and a stored value the field's checks now reject; translated when made.
         if (cell?.error !== undefined) {
             add({ key, kind: 'error', text: cell.error })
         }
@@ -136,7 +132,6 @@ export const summarise = (
         }
     }
 
-    // Named only when a required cell is empty: building the names reads every row.
     let nameOf: ReturnType<typeof fieldNamer> | undefined
     for (const [key, cellEffects] of Object.entries(effects)) {
         if (cellEffects === undefined) {

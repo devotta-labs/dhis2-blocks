@@ -14,7 +14,6 @@ export const formKeys = (
     form: Pick<LoadedForm, 'fieldsByForm'>,
     tables: StoreApi<FormTables>
 ) => {
-    // The cell index, made again only when the tables change.
     let indexed:
         | { of: FormTables['tables']; cells: ReturnType<typeof indexCells> }
         | undefined

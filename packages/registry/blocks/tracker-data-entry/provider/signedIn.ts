@@ -22,12 +22,7 @@ export const userCheck = (
     userId: string,
     onOther: () => void
 ) => {
-    /**
-     * Whether the server's signed-in user is this outbox's (`here`), someone else (another tab may have signed in; the
-     * session is shared) or no one: a lapsed session. Any other failure says nothing of the changes: it throws a plain
-     * error, which the sync loop retries and never takes as a refusal.
-     */
-    const signedIn = async (): Promise<'here' | 'other' | 'lapsed'> => {
+    const signedIn: () => Promise<'here' | 'other' | 'lapsed'> = async () => {
         let id: string
         try {
             id = meSchema.parse(
@@ -52,7 +47,6 @@ export const userCheck = (
     }
     return {
         signedIn,
-        /** Why nothing should be sent now: offline, signed out, or signed in as someone else. */
         notNow: async () => {
             if (!navigator.onLine) {
                 return pauseReason('offline')

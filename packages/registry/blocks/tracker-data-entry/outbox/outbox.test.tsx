@@ -5,7 +5,6 @@ import type { Outbox, OutboxRecord } from './outbox'
 
 const SOURCE = 'program:p1'
 
-// A fresh server URL per test, so no test sees another's database.
 const freshServer = () => `https://${crypto.randomUUID()}.example.org`
 
 const deleteDatabase = (name: string) =>
@@ -28,7 +27,9 @@ afterEach(async () => {
     await Promise.all(names.splice(0).map(deleteDatabase))
 })
 
-const change = (overrides: Partial<PendingChange> = {}): PendingChange => ({
+const change: (overrides?: Partial<PendingChange>) => PendingChange = (
+    overrides = {}
+) => ({
     sourceKey: SOURCE,
     key: 'r1.c1',
     value: '5',
@@ -240,7 +241,9 @@ test('marks and removes records', async () => {
     await outbox.put(change({ key: 'r1.c2' }))
 
     await outbox.mark([{ sourceKey: SOURCE, key: 'r1.c1' }], 'failed', 'E1302')
-    const byKey = async (): Promise<Partial<Record<CellKey, OutboxRecord>>> =>
+    const byKey: () => Promise<
+        Partial<Record<CellKey, OutboxRecord>>
+    > = async () =>
         Object.fromEntries((await outbox.list()).map((r) => [r.key, r]))
     expect((await byKey())['r1.c1']).toMatchObject({
         state: 'failed',
@@ -333,7 +336,7 @@ test('a batch that fails midway writes nothing', async () => {
     await outbox.put(change({ key: 'r0.c1', value: '0' }))
     const unreadable: PendingChange = {
         ...change({ key: 'r3.c1' }),
-        get value(): string {
+        get value(): never {
             throw new Error('cannot read the value')
         },
     }
@@ -361,7 +364,6 @@ test('skips a record that cannot be read and returns the rest', async () => {
     await first.put(change({ key: 'r1.c1' }))
     first.close()
 
-    // The database exists now; add a record the outbox never wrote.
     const raw = await new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open(outboxName(server, 'userA'))
         request.onsuccess = () => resolve(request.result)
@@ -382,7 +384,6 @@ test('skips a record that cannot be read and returns the rest', async () => {
     const again = await open(server, 'userA')
     await again.put(change({ key: 'r3.c1' }))
     expect((await again.list()).map((r) => r.key)).toEqual(['r1.c1', 'r3.c1'])
-    // A bad record in the way of a new change is replaced, not an error.
     await again.put(change({ key: 'r2.c1', base: '9' }))
     expect(await again.list()).toHaveLength(3)
 })

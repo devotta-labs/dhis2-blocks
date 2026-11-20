@@ -47,7 +47,6 @@ export function ObservationInline({
     const display = useDisplayOptions()
     const { metadata } = useObservationsContext()
     const element = metadata?.dataElements.get(dataElement)
-    // An empty label is no label.
     const earlyName =
         label ||
         element?.displayFormName ||
@@ -96,7 +95,6 @@ export function ObservationInline({
 
     let body
     if (series && !isSupportedValueType(series)) {
-        // As the card: a type it can't format is never shown as a stored string.
         body = (
             <>
                 <span className="text-dhis2-muted-foreground">
@@ -128,7 +126,7 @@ export function ObservationInline({
                         display={display}
                     />
                 </span>
-                {/* Newer visits may be ones this user can't read. */}
+                {}
                 {series.partial ? <PartialNote className="ms-0" /> : null}
             </>
         )
@@ -148,7 +146,7 @@ export function ObservationInline({
 
     return (
         <div data-slot="observation-inline" className={cn(ROW, className)}>
-            {/* Without a name, just the value: a dd needs a dt. */}
+            {}
             {name ? (
                 <dl className={cn(ROW, 'm-0')}>
                     <dt className="text-dhis2-muted-foreground">{name}</dt>

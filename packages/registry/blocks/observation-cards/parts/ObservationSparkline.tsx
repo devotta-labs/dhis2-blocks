@@ -17,10 +17,8 @@ import {
 } from '../format/display'
 
 const DEFAULT_POINTS = 12
-/** Matches the default `h-10` wrapper: the chart's height before it is measured. */
 const DEFAULT_CHART_HEIGHT = 40
 const MARGIN = 4
-/** The gap between the hovered point and the tooltip's bottom edge, in pixels. */
 const TOOLTIP_GAP = 6
 
 export interface ObservationSparklineProps {
@@ -40,20 +38,17 @@ export function ObservationSparkline({
     className,
 }: ObservationSparklineProps) {
     const { series, unit, staleAfterDays, display } = useObservationCard()
-    // Where the hovered point sits, so the tooltip can stand just above it.
     const [anchor, setAnchor] = useState<{
         index: number
         x: number
         y: number
     }>()
     const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null)
-    // The container query hides the wrapper in a narrow card; the chart mounts only while it shows, so recharts never measures a hidden box.
     const [shown, setShown] = useState(false)
     useLayoutEffect(() => {
         if (!wrapper) {
             return undefined
         }
-        // Measured now, so the chart mounts before paint; the observer only follows later resizes.
         setShown(wrapper.getBoundingClientRect().width > 0)
         const observer = new ResizeObserver(([entry]) =>
             setShown((entry?.contentRect.width ?? 0) > 0)
@@ -65,13 +60,11 @@ export function ObservationSparkline({
     const numeric = series.points.filter(
         (point) => point.numericValue !== undefined
     )
-    // Not `slice(-points)`: -0 would keep every reading.
     const plotted = numeric.slice(
         Math.max(0, numeric.length - Math.floor(points))
     )
     const first = plotted.at(0)
     const last = plotted.at(-1)
-    // One reading has no trend: a lone dot would read as a glitch.
     if (
         !showsTrend(series) ||
         numeric.length < 2 ||
@@ -84,7 +77,6 @@ export function ObservationSparkline({
     const config: ChartConfig = {
         value: {
             label: series.label,
-            // An out-of-date line greys with the rest of the card, so it never reads as current.
             color:
                 series.latest &&
                 isStale(series.latest, staleAfterDays, new Date())
@@ -101,13 +93,11 @@ export function ObservationSparkline({
     }))
     const lastIndex = data.length - 1
 
-    // Fit the readings, not zero up: a weight of 79 to 77 kg would otherwise look flat.
     const values = data.map((entry) => entry.value ?? 0)
     const low = Math.min(...values)
     const high = Math.max(...values)
     const domain: [number, number] =
         low === high ? [low - 1, high + 1] : [low, high]
-    // The height is measured, since a className can resize the chart.
     const yFor = (value: number, height: number) =>
         MARGIN +
         ((domain[1] - value) / (domain[1] - domain[0])) * (height - 2 * MARGIN)
@@ -132,9 +122,6 @@ export function ObservationSparkline({
               )
 
     return (
-        // The query container is here, not on the card, so the card still sizes
-        // from its content; the summary stays readable when the chart is hidden.
-        // Right above the recorded note, it sits on the card's foot, so sparklines in a grid row line up; anywhere else it stays where it is placed.
         <div
             data-slot="observation-sparkline"
             className="@container w-full [&:has(+[data-slot=observation-recorded])]:mt-auto"
@@ -180,16 +167,14 @@ export function ObservationSparkline({
                             }}
                             onMouseLeave={() => setAnchor(undefined)}
                         >
-                            {/* Recharts places the wrapper's top-left corner at the position; the content lifts itself above it. */}
+                            {}
                             <ChartTooltip
                                 position={anchor}
                                 allowEscapeViewBox={{ x: true, y: true }}
-                                // Recharts slides the tooltip in from its last position, the chart's corner on first hover.
                                 isAnimationActive={false}
                                 content={({ active }) => {
                                     const entry = anchor && data[anchor.index]
                                     const width = wrapper?.clientWidth
-                                    // Left-aligned on the first point, centred midway, right-aligned on the last, so it never runs past the chart.
                                     const shift =
                                         anchor && width
                                             ? Math.min(
@@ -216,7 +201,7 @@ export function ObservationSparkline({
                                 }}
                             />
                             <YAxis hide domain={domain} />
-                            {/* Straight segments: a smoothed curve invents values between visits. */}
+                            {}
                             <Line
                                 dataKey="value"
                                 type="linear"

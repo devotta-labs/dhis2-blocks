@@ -11,9 +11,6 @@ import {
     WEIGHT,
 } from './observationsTestSupport'
 
-// Runs in the `browser-production` project, built with
-// `process.env.NODE_ENV` set to "production" as an app's production build is.
-
 const message = `Data element typoDE0001 is not captured by any stage of program prog1. Captured data elements: ${WEIGHT} (Weight), ${TEMP} (Temperature), ${HEIGHT} (Height)`
 
 describe('a misconfigured data element in production', () => {
@@ -22,7 +19,7 @@ describe('a misconfigured data element in production', () => {
     })
 
     it('logs the full message once per provider', async () => {
-        const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const errors = vi.spyOn(console, 'error')
         const server = createFakeServer()
         const Wrapper = createWrapper()
 
@@ -46,7 +43,6 @@ describe('a misconfigured data element in production', () => {
             </Wrapper>
         )
 
-        // The state keeps the full message; the card decides what to show.
         await expect
             .element(page.getByTestId('first'))
             .toHaveTextContent(`misconfigured ${message}`)
@@ -54,7 +50,8 @@ describe('a misconfigured data element in production', () => {
             .element(page.getByTestId('other'))
             .toHaveTextContent(`misconfigured ${message}`)
         await expect
-            .poll(() => errors.mock.calls)
-            .toEqual([[message], [message]])
+            .element(page.getByTestId('second'))
+            .toHaveTextContent(`misconfigured ${message}`)
+        expect(errors.mock.calls).toEqual([[message], [message]])
     })
 })

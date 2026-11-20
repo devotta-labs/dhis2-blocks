@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import type { ExampleDefinition } from '../examples/registry'
-import { LivePreviewHost } from './LivePreviewHost'
+import { ExampleHost } from './ExampleHost'
 import { PreviewSpinner, previewShellClassName } from './PreviewShell'
 
 /**
@@ -44,16 +44,13 @@ export const ExampleSurface = ({
                 .join(' ')}
             style={{ minHeight: example.minHeight }}
         >
-            {example.live ? (
-                <LivePreviewHost
-                    placeholder={<Placeholder />}
-                    signInUrl={`/preview/${example.slug}`}
-                >
-                    {content}
-                </LivePreviewHost>
-            ) : (
-                content
-            )}
+            <ExampleHost
+                example={example}
+                placeholder={<Placeholder />}
+                signInUrl={`/preview/${example.slug}`}
+            >
+                {content}
+            </ExampleHost>
         </div>
     )
 }

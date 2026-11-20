@@ -9,13 +9,6 @@ import { useSidebar } from './sidebar'
 import { Skeleton } from './skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 
-/*
- * The menu parts of the shadcn Sidebar (Base UI). A button or link is marked
- * as current with `isActive` or, as a router's NavLink does, with
- * `aria-current="page"`. Forced colours flatten its background, so there it
- * is outlined.
- */
-
 function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
     return (
         <ul
@@ -30,8 +23,6 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
     )
 }
 
-// React 18 drops `ref` from function component props; a Collapsible or a
-// Tooltip rendering as one of these parts passes it a ref.
 const SidebarMenuItem = React.forwardRef<
     HTMLLIElement,
     React.ComponentPropsWithoutRef<'li'>
@@ -68,6 +59,12 @@ const sidebarMenuButtonVariants = cva(
     }
 )
 
+/**
+ * The menu parts of the shadcn Sidebar (Base UI). A button or link is marked
+ * as current with `isActive` or, as a router's NavLink does, with
+ * `aria-current="page"`. Forced colours flatten its background, so there it
+ * is outlined.
+ */
 const SidebarMenuButton = React.forwardRef<
     HTMLButtonElement,
     useRender.ComponentProps<'button'> & {
@@ -183,7 +180,6 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<'div'> & {
     showIcon?: boolean
 }) {
-    // A width between 50% and 90%, so a list of them looks like labels.
     const [maxWidth] = React.useState(
         () => `${Math.floor(Math.random() * 40) + 50}%`
     )

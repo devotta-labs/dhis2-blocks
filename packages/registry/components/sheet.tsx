@@ -6,18 +6,10 @@ import * as React from 'react'
 import { cn } from './cn'
 import { dhis2PortalRoot } from './portal-root'
 
-/*
- * shadcn Sheet (Base UI): a dialog docked to one edge of the window, on the
- * Dialog's backdrop and in the same portal, so DHIS2 popups opened from inside
- * it paint above it. `side` follows the text direction: left is where a line
- * starts.
- */
-
 function Sheet({ ...props }: SheetPrimitive.Root.Props) {
     return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const SheetTrigger = React.forwardRef<
     HTMLButtonElement,
     SheetPrimitive.Trigger.Props
@@ -57,6 +49,12 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     )
 }
 
+/**
+ * shadcn Sheet (Base UI): a dialog docked to one edge of the window, on the
+ * Dialog's backdrop and in the same portal, so DHIS2 popups opened from inside
+ * it paint above it. `side` follows the text direction: left is where a line
+ * starts.
+ */
 function SheetContent({
     className,
     children,

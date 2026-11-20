@@ -14,19 +14,17 @@ import {
 } from './input-group'
 import { SelectCheckmark } from './select'
 
-/*
+/**
  * shadcn Combobox (Base UI) restyled to match @dhis2/ui's filterable
  * SingleSelect and MultiSelect: a select-style trigger (see
  * `selectTriggerVariants`), with the filter input at the top of the popup.
  */
-
 const Combobox = ComboboxPrimitive.Root
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
     return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const ComboboxTrigger = React.forwardRef<
     HTMLButtonElement,
     ComboboxPrimitive.Trigger.Props
@@ -41,8 +39,7 @@ const ComboboxTrigger = React.forwardRef<
         {...props}
     >
         {children}
-        {/* Muted, as shadcn's, and the colour of the clear button's ×. After a trigger's text it goes to the end; alone
-        it stays centred in its button. */}
+        {}
         <span className="flex shrink-0 text-dhis2-muted-foreground not-first:ms-auto not-first:ps-0.5">
             <IconChevronDown16 />
         </span>
@@ -90,8 +87,6 @@ function ComboboxInput({
                 render={<InputGroupInput disabled={disabled} />}
                 disabled={disabled}
                 {...props}
-                // Only the caller's: inside a Field, the field's label names the trigger, and a search input in the
-                // popup keeps its own aria-label. An input that is the control is named by the label's `for`.
                 aria-labelledby={labelledBy}
             />
             <InputGroupAddon align="inline-end">
@@ -101,10 +96,8 @@ function ComboboxInput({
                         variant="ghost"
                         render={<ComboboxTrigger />}
                         data-slot="input-group-button"
-                        // No pressed square while the list is open, as in shadcn.
                         className="group-has-data-[slot=combobox-clear]/input-group:hidden data-popup-open:bg-transparent data-pressed:bg-transparent"
                         disabled={disabled}
-                        // The input opens the list from the keyboard; the button is for the pointer, not a Tab stop.
                         tabIndex={-1}
                     />
                 )}
@@ -195,9 +188,6 @@ const ComboboxItem = React.forwardRef<
                 </ComboboxPrimitive.ItemIndicator>
             </span>
         ) : (
-            // Kept mounted so the empty box shows on unselected options; the
-            // indicator has no data-checked/data-disabled of its own, so map
-            // them from the item's state and props.
             <ComboboxPrimitive.ItemIndicator
                 keepMounted
                 className={cn(checkboxBoxVariants({ size: 'dense' }), 'me-1.5')}
@@ -279,10 +269,6 @@ function ComboboxSeparator({
     )
 }
 
-/**
- * The box holding the chips and the chips input, framed like the house input
- * and select trigger; `size="sm"` matches the dense select trigger.
- */
 const comboboxChipsVariants = cva(
     'relative flex w-full min-w-0 cursor-text flex-wrap items-center gap-1 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-sm leading-4 text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none has-focus-visible:border-dhis2-ring has-focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-2 forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-solid forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:-outline-offset-2 has-data-popup-open:border-dhis2-ring has-data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-disabled:cursor-not-allowed has-disabled:bg-dhis2-muted has-disabled:text-dhis2-disabled-foreground has-aria-invalid:border-dhis2-destructive-border',
     {
@@ -299,6 +285,10 @@ const comboboxChipsVariants = cva(
     }
 )
 
+/**
+ * The box holding the chips and the chips input, framed like the house input
+ * and select trigger; `size="sm"` matches the dense select trigger.
+ */
 const ComboboxChips = React.forwardRef<
     HTMLDivElement,
     ComboboxPrimitive.Chips.Props & VariantProps<typeof comboboxChipsVariants>

@@ -92,7 +92,6 @@ describe('form controls in the default theme', () => {
         const list = document
             .querySelector('[data-slot=combobox-content]')!
             .getBoundingClientRect()
-        // Within the field's borders, as the list sits under its input.
         expect(list.width).toBeGreaterThanOrEqual(field.width - 2)
     })
 

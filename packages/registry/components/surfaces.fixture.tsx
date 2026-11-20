@@ -116,14 +116,13 @@ export const WarningAlert = () => (
 
 export const Divider = () => <Separator />
 
-export const find = async (selector: string): Promise<Element> => {
+export const find = async (selector: string) => {
     await expect.poll(() => document.querySelector(selector)).not.toBeNull()
     const element = document.querySelector(selector)
     if (element === null) throw new Error(`no ${selector}`)
     return element
 }
 
-export const slot = (name: string): Promise<Element> =>
-    find(`[data-slot="${name}"]`)
+export const slot = (name: string) => find(`[data-slot="${name}"]`)
 
 export const style = (element: Element) => getComputedStyle(element)

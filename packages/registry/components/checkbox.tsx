@@ -24,11 +24,6 @@ const checkboxBoxVariants = cva(
     }
 )
 
-/*
- * The @dhis2/ui checkbox checkmarks, which are heavier than IconCheckmark16.
- * Their viewBoxes are cropped by the 1px ring so the mark sits inside the
- * box's CSS border exactly where it does in the original 18/14px SVG.
- */
 const checkmarks = {
     regular: {
         size: 16,

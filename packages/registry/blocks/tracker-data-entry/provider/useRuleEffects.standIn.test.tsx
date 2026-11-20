@@ -10,6 +10,7 @@ import {
 } from '@/components/spreadsheet'
 import type { CellKey, CellStoreState } from '@/components/spreadsheet'
 import { HIDDEN_FIELD, later, visit, visitForm } from './test/rig'
+import { recording } from '../test/recording'
 import { connectRules } from './connectRules'
 import type { TrackerEffectsState } from '../logic/effects'
 import type { FormTables } from './openForm'
@@ -339,8 +340,22 @@ test('what a rule cleared stays on the cell until it holds a value again', async
     stop()
 })
 
-const atIdle = () =>
-    new Promise<void>((resolve) => requestIdleCallback(() => resolve()))
+const whenEffectsMatch = (
+    effects: StoreApi<TrackerEffectsState>,
+    ready: () => boolean
+) => {
+    if (ready()) {
+        return Promise.resolve()
+    }
+    const done = Promise.withResolvers<void>()
+    const stop = effects.subscribe(() => {
+        if (ready()) {
+            stop()
+            done.resolve()
+        }
+    })
+    return done.promise
+}
 
 test('loading runs rules for about 100 ms at once, then about 16 ms at a time when idle, a row at least', async () => {
     const rows = FIVE_ROWS
@@ -358,10 +373,9 @@ test('loading runs rules for about 100 ms at once, then about 16 ms at a time wh
     expect(
         performance.getEntriesByName('data-entry:rules', 'measure')
     ).toHaveLength(1)
-    await atIdle()
+    await whenEffectsMatch(effects, () => done() >= 3)
     expect(done()).toBe(3)
-    await atIdle()
-    await atIdle()
+    await whenEffectsMatch(effects, () => done() === 5)
     expect(done()).toBe(5)
     stop()
 })
@@ -388,7 +402,7 @@ test('a rule’s change re-runs only rows already evaluated; the others wait for
     expect(store.getState().cells[cellKey('r1', 'c1')]?.value).toBe('7')
     expect(hidden('r2')).toBeDefined()
     expect(hidden('r3')).toBeUndefined()
-    await atIdle()
+    await whenEffectsMatch(effects, () => hidden('r3') !== undefined)
     expect(hidden('r3')).toBeDefined()
     stop()
 })
@@ -483,7 +497,7 @@ test('rows in view take their slices one after another, without waiting for idle
         ).length
 
     expect(done()).toBe(2)
-    await later(400)
+    await whenEffectsMatch(effects, () => done() === 5)
     expect(done()).toBe(5)
     expect(
         performance.getEntriesByName('data-entry:rules-visible', 'measure')
@@ -507,27 +521,24 @@ test('a reconnection runs the rows in view, then the rest; in each, the rows not
         ),
         { rows: FIVE_ROWS }
     )
-    await atIdle()
     stop()
 
-    const ran: string[] = []
+    const ran = recording<string>()
     const again = reconnect(
         standIn((rowId) => {
-            ran.push(rowId)
+            ran.add(rowId)
             busy(60)
             return hiding('c2')
         })
     )
-    expect(ran).toEqual(['r4', 'r1'])
-    await atIdle()
-    await atIdle()
-    await atIdle()
-    expect(ran).toEqual(['r4', 'r1', 'r5', 'r2', 'r3'])
+    expect(ran.values).toEqual(['r4', 'r1'])
+    await ran.reached(FIVE_ROWS.length)
+    expect(ran.values).toEqual(['r4', 'r1', 'r5', 'r2', 'r3'])
     again()
     headers.forEach((header) => header.remove())
 })
 
-test('completing a changed row still waiting to run again after a reconnection runs the new rules first', async () => {
+test('completing a changed row still waiting to run again after a reconnection runs the new rules first', () => {
     const { effects, beforeComplete, stop, reconnect } = connect(
         standIn(() => hiding('c2')),
         {
@@ -536,7 +547,9 @@ test('completing a changed row still waiting to run again after a reconnection r
                 opened.getState().commit(cellKey('r4', 'c3'), 'changed'),
         }
     )
-    await atIdle()
+    expect(
+        effects.getState().cells[cellKey('r4', 'c2')]?.hiddenBy
+    ).toBeDefined()
     stop()
     const again = reconnect(
         standIn((rowId) => {

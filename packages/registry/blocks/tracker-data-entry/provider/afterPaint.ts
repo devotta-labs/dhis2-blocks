@@ -2,25 +2,21 @@ import { rowHeaderDomId } from '@/components/spreadsheet'
 
 const NO_FRAME_MS = 100
 
-/** When the browser has painted. Tests hold it to control when deferred work runs. */
-export const paintClock = {
-    /** Calls `next` in a task after the next paint, or after 100 ms when no frame comes; returns how to cancel it. */
-    wait(next: () => void) {
-        let task: ReturnType<typeof setTimeout> | undefined
-        const frame = requestAnimationFrame(() => {
-            clearTimeout(fallback)
-            task = setTimeout(next)
-        })
-        const fallback = setTimeout(() => {
-            cancelAnimationFrame(frame)
-            next()
-        }, NO_FRAME_MS)
-        return () => {
-            cancelAnimationFrame(frame)
-            clearTimeout(fallback)
-            clearTimeout(task)
-        }
-    },
+const waitForPaint = (next: () => void) => {
+    let task: ReturnType<typeof setTimeout> | undefined
+    const frame = requestAnimationFrame(() => {
+        clearTimeout(fallback)
+        task = setTimeout(next)
+    })
+    const fallback = setTimeout(() => {
+        cancelAnimationFrame(frame)
+        next()
+    }, NO_FRAME_MS)
+    return () => {
+        cancelAnimationFrame(frame)
+        clearTimeout(fallback)
+        clearTimeout(task)
+    }
 }
 
 const waiting = new Set<() => void>()
@@ -44,7 +40,7 @@ const drain = () => {
  */
 export const afterPaint = (work: () => void) => {
     waiting.add(work)
-    cancelWait ??= paintClock.wait(drain)
+    cancelWait ??= waitForPaint(drain)
     return () => {
         waiting.delete(work)
         if (waiting.size === 0) {

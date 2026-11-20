@@ -36,14 +36,13 @@ const abortWrite = (server: string, commit: () => void) => {
         commit()
         window.dispatchEvent(new PageTransitionEvent('pagehide'))
         const write = transactions.mock.results
-            .flatMap((result, index) => {
-                const database = transactions.mock.contexts[index]
-                return result.type === 'return' &&
-                    database.name === outboxName(server, USER) &&
-                    result.value.mode === 'readwrite'
+            .flatMap((result) =>
+                result.type === 'return' &&
+                result.value.db.name === outboxName(server, USER) &&
+                result.value.mode === 'readwrite'
                     ? [result.value]
                     : []
-            })
+            )
             .at(0)
         if (!write) {
             throw new Error('Expected the form to start an IndexedDB write')

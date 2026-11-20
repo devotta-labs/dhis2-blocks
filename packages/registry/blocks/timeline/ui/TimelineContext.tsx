@@ -75,6 +75,5 @@ export const TimelineMetaProvider = ({
 
 export const TimelineContextProvider = TimelineContext.Provider
 
-// Encoded: a host's group key may hold spaces, which split an id reference.
 export const groupHeadingId = (id: string, group: TimelineGroup<unknown>) =>
     `${id}-${group.phase}:${encodeURIComponent(group.key)}`

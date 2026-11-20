@@ -17,10 +17,7 @@ import {
 
 const today = '2026-10-22'
 
-const event = (
-    status: string,
-    extra: Partial<TrackerEvent> = {}
-): TrackerEvent =>
+const event = (status: string, extra: Partial<TrackerEvent> = {}) =>
     TrackerEventSchema.parse({
         event: 'e1',
         status,
@@ -28,11 +25,11 @@ const event = (
         ...extra,
     })
 
-const ugly = (name: string): TrackerEvent[] =>
+const ugly = (name: string) =>
     EventsPageSchema.parse(
         JSON.parse(
             readFileSync(
-                new URL(`./__tests__/fixtures/ugly/${name}`, import.meta.url),
+                new URL(`./test/fixtures/ugly/${name}`, import.meta.url),
                 'utf8'
             )
         )
@@ -248,7 +245,6 @@ describe('orgUnitIdsOf', () => {
         ]
 
         expect(orgUnitIdsOf([{ events, program }])).toEqual(['ou2', 'ou3'])
-        // Without metadata the value types are unknown: only org units.
         expect(orgUnitIdsOf([{ events }])).toEqual(['ou2'])
     })
 })
@@ -297,8 +293,6 @@ describe('enrollment entries', () => {
         expect(entries[0]?.data).toMatchObject({ kind: 'note', enrollment })
     })
 
-    // The server's clock can be a day ahead of the viewer's: what has
-    // happened must not land above "now".
     it('puts notes, changes and closing milestones in the past, stored after today too', () => {
         const [ahead] = TrackedEntitySchema.parse({
             trackedEntity: 'te1',
@@ -338,7 +332,6 @@ describe('enrollment entries', () => {
             ].map((entry) => [entry.id, entry.phase])
         ).toEqual([
             ['milestone:en2:enrolled', undefined],
-            // A future incident date stays future.
             ['milestone:en2:incident', undefined],
             ['milestone:en2:cancelled', 'past'],
             ['note:n3', 'past'],

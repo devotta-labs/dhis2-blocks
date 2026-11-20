@@ -8,7 +8,7 @@ import {
     recordedEvent,
     recordedProgram,
     renderEntries,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import { groupChangelogRows } from '../changelog'
 import { TrackedEntitySchema } from '../schemas'
 import { changeEntries, milestoneEntries, noteEntries } from '../toEntries'

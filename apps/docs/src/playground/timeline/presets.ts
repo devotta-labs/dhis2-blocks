@@ -26,15 +26,13 @@ const preset = (
     group: string,
     name: string,
     changes: Partial<LabSettings> = {}
-): Preset => ({
+) => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },
 })
 
-// Names say what the canvas shows. Calendar, language and time field are options, so no preset only changes one.
 export const PRESETS: readonly Preset[] = [
-    // First, so the lab opens on it: one program, a few visits, nothing else.
     preset('Everyday', 'A few visits', {
         programs: 1,
         events: [3, 0, 0],

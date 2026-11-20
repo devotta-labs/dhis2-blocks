@@ -7,7 +7,7 @@ import {
     recordedProgram,
     renderEntries,
     stageOf,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import { TimelineEventAction } from './TimelineEventAction'
 import { TimelineEventEntry } from './TimelineEventEntry'
 

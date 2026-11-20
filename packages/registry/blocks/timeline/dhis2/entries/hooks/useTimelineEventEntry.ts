@@ -7,7 +7,7 @@ export const TimelineEventContext =
     createContext<TimelineEntry<EventEntryData> | null>(null)
 
 /** The event entry the surrounding `TimelineEventEntry` shows. */
-export const useTimelineEventEntry = (): TimelineEntry<EventEntryData> => {
+export const useTimelineEventEntry = () => {
     const entry = useContext(TimelineEventContext)
     if (entry === null) {
         throw new Error(

@@ -1,11 +1,7 @@
 import { groupChangelogRows } from './changelog'
-import type { ChangeLogRow, TrackerUser } from './schemas'
+import type { ChangeLogRow } from './schemas'
 
-const user = (
-    username: string,
-    firstName?: string,
-    surname?: string
-): TrackerUser => ({
+const user = (username: string, firstName?: string, surname?: string) => ({
     uid: undefined,
     username,
     firstName,
@@ -13,13 +9,13 @@ const user = (
     displayName: undefined,
 })
 
-const row = (
+const row: (
     createdAt: string,
     id: string,
-    overrides: Partial<Omit<ChangeLogRow, 'change'>> & {
+    overrides?: Partial<Omit<ChangeLogRow, 'change'>> & {
         change?: Partial<ChangeLogRow['change']>
-    } = {}
-): ChangeLogRow => ({
+    }
+) => ChangeLogRow = (createdAt, id, overrides = {}) => ({
     createdAt,
     createdBy: user('admin', 'John', 'Traore'),
     type: 'UPDATE',
@@ -80,7 +76,6 @@ describe('groupChangelogRows', () => {
         const groups = groupChangelogRows([
             row(T1, 'a', { createdBy: user('alice', 'Alice') }),
             row(T1, 'b', { createdBy: user('bob') }),
-            // Not adjacent to alice's other row.
             row(T1, 'c', { createdBy: user('alice', 'Alice') }),
         ])
 
@@ -100,7 +95,6 @@ describe('groupChangelogRows', () => {
         const groups = groupChangelogRows([
             row(T1, 'a', { change: { previousValue: '2', currentValue: '3' } }),
             row(T2, 'a', { change: { previousValue: '1', currentValue: '2' } }),
-            // The same row again (another program's changelog): dropped.
             row(T2, 'a', { change: { previousValue: '1', currentValue: '2' } }),
         ])
 

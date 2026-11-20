@@ -56,7 +56,6 @@ const resourceClients = new WeakMap<
     TrackedEntityHeaderResourceClient
 >()
 
-/** A failed DHIS2 request, with the HTTP status kept. */
 class TrackedEntityHeaderRequestError extends Error {
     readonly status?: number
     override readonly cause: unknown
@@ -71,7 +70,6 @@ class TrackedEntityHeaderRequestError extends Error {
     }
 }
 
-/** `.catch` makes every field lenient: a malformed one loses only itself. */
 const lenient = <T extends z.ZodType>(schema: T) =>
     schema.optional().catch(undefined)
 
@@ -98,11 +96,11 @@ const toRequestError = (cause: unknown, resource: string) => {
 }
 
 /** True when the server refused the request (HTTP 403); only the kept status is read, never the body. */
-export const isForbidden = (cause: Error): boolean =>
+export const isForbidden = (cause: Error) =>
     cause instanceof TrackedEntityHeaderRequestError && cause.status === 403
 
 /** True when the server answered HTTP 404; only the kept status is read, never the body. */
-export const isNotFound = (cause: Error): boolean =>
+export const isNotFound = (cause: Error) =>
     cause instanceof TrackedEntityHeaderRequestError && cause.status === 404
 
 /**
@@ -128,9 +126,9 @@ const QueryEnvelopeSchema = z
  * failures (HTTP, network, abort) and schema failures both come back as
  * error results; nothing here throws.
  */
-export const createTrackedEntityHeaderResourceClient = (
+export const createTrackedEntityHeaderResourceClient: (
     engine: DataEngineLike
-): TrackedEntityHeaderResourceClient => ({
+) => TrackedEntityHeaderResourceClient = (engine) => ({
     async query<T>(
         request: ResourceRequest,
         schema: ZodType<T>,
@@ -167,14 +165,13 @@ export const createTrackedEntityHeaderResourceClient = (
     },
 })
 
-/** Each client's place in the query cache, so two engines never share results. */
 const cacheIds = new WeakMap<TrackedEntityHeaderClient, number>()
 let lastCacheId = 0
 
-const newClient = (
+const newClient: (
     engine: DataEngineLike,
     cacheId: number
-): TrackedEntityHeaderClient => {
+) => TrackedEntityHeaderClient = (engine, cacheId) => {
     const client: TrackedEntityHeaderClient = Object.freeze({
         [CLIENT]: true as const,
     })
@@ -188,9 +185,7 @@ const newClient = (
  * app-runtime's). Create it once, outside render: each client caches its own
  * results.
  */
-export const createTrackedEntityHeaderClient = (
-    engine: DataEngineLike
-): TrackedEntityHeaderClient => {
+export const createTrackedEntityHeaderClient = (engine: DataEngineLike) => {
     lastCacheId += 1
     return newClient(engine, lastCacheId)
 }
@@ -201,16 +196,14 @@ export const createTrackedEntityHeaderClient = (
  */
 export const createRuntimeTrackedEntityHeaderClient = (
     engine: DataEngineLike
-): TrackedEntityHeaderClient => newClient(engine, 0)
+) => newClient(engine, 0)
 
 /** Internal: the client's part of every query key. */
-export const cacheIdOf = (client: TrackedEntityHeaderClient): number =>
+export const cacheIdOf = (client: TrackedEntityHeaderClient) =>
     cacheIds.get(client) ?? 0
 
 /** Internal: the request runner a tracked entity header client stands for. */
-export const resourceClientOf = (
-    client: TrackedEntityHeaderClient
-): TrackedEntityHeaderResourceClient => {
+export const resourceClientOf = (client: TrackedEntityHeaderClient) => {
     const resourceClient = resourceClients.get(client)
     if (!resourceClient) {
         throw new Error(

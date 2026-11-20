@@ -24,7 +24,6 @@ export class FinderRequestError extends Error {
     }
 }
 
-/** `.catch` makes every field lenient: a malformed one loses only itself. */
 const lenient = <T extends z.ZodType>(schema: T) =>
     schema.optional().catch(undefined)
 
@@ -42,7 +41,7 @@ const RequestFailureSchema = z.looseObject({
 })
 
 /** Each field is read on its own, so one malformed field loses only itself. */
-export const toRequestError = (cause: unknown): Error => {
+export const toRequestError = (cause: unknown) => {
     if (
         cause instanceof ZodError ||
         cause instanceof FinderRequestError ||

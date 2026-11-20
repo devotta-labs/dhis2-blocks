@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import { buildProgramModel } from './programModel'
 import { PAGE_SIZE, serializeFilter, toSearchParams } from './searchParams'
 import { seal } from './seal'

@@ -5,7 +5,6 @@ import { useHeaderContext, type HeaderContextValue } from '../provider/context'
 import { isProduction } from '../provider/env'
 
 export type AttributeValueState =
-    /** Nothing to show yet: the record is loading, failed or restricted. */
     | { kind: 'hidden' }
     | { kind: 'value'; label: string; text: string }
     | { kind: 'missing'; label: string }
@@ -27,10 +26,10 @@ const describeMisconfigured = (
 }
 
 /** One attribute's state, by the rules every value part shares. Pure: parts add placement and logging. */
-export const resolveAttribute = (
+export const resolveAttribute: (
     uid: string,
     context: HeaderContextValue
-): AttributeValueState => {
+) => AttributeValueState = (uid, context) => {
     const { state, display } = context
     if (state.status !== 'ready') {
         return { kind: 'hidden' }
@@ -79,7 +78,7 @@ export const setupMessage = (message: string) =>
  * One attribute of the provider's tracked entity, ready to show. Registers the uid as
  * placed while mounted, so the details list skips it.
  */
-export const useAttributeValue = (uid: string): AttributeValueState => {
+export const useAttributeValue = (uid: string) => {
     const context = useHeaderContext()
     const { placeAttribute } = context
     useLayoutEffect(() => placeAttribute(uid), [placeAttribute, uid])

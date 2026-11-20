@@ -38,7 +38,7 @@ export interface HeaderContextValue {
 /** Internal: never exported from the block, so it cannot be swapped out. */
 export const HeaderContext = createContext<HeaderContextValue | null>(null)
 
-export const useHeaderContext = (): HeaderContextValue => {
+export const useHeaderContext = () => {
     const context = useContext(HeaderContext)
     if (!context) {
         throw new Error(

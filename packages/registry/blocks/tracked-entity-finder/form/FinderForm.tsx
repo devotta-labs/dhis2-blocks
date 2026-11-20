@@ -24,7 +24,6 @@ interface Registration {
     field: FormField
 }
 
-/** This form's fields, in the order they registered. */
 const useRegistrations = () => {
     const [registrations, setRegistrations] = useState<readonly Registration[]>(
         []
@@ -57,8 +56,7 @@ export function FinderForm({
     const { state, actions } = useFinderContext()
     const { fields, register } = useRegistrations()
     const { model, status } = state
-    // TanStack calls this once the fields' Zod schemas pass; the search rules
-    // still decide whether the values make a search.
+
     const form = useFinderFormApi((values) => {
         const search =
             model && status === 'ready'
@@ -81,10 +79,7 @@ export function FinderForm({
         () => ({ form, register, submitted, verdict }),
         [form, register, submitted, verdict]
     )
-    // Fields register in layout effects, which run before this form's own:
-    // until then the form looks empty and must not be judged unusable.
-    // This covers the form's own mount, not fields mounting later into an
-    // already-mounted empty form.
+
     const [registered, setRegistered] = useState(false)
     useLayoutEffect(() => setRegistered(true), [])
     const metadataError = useMetadataErrorMessage(
@@ -104,7 +99,7 @@ export function FinderForm({
                 className={cn('flex flex-col gap-4', className)}
                 onSubmit={(event) => {
                     onSubmit?.(event)
-                    // A consumer's preventDefault cancels the search too.
+
                     if (event.defaultPrevented) {
                         return
                     }

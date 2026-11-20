@@ -9,8 +9,7 @@ export type FinderHintProps = ComponentPropsWithoutRef<'p'>
 const hintText = (
     { reason, missing, searchingBy }: FinderSearchState,
     dropped: number
-): string | undefined => {
-    // Only worth saying when the ID leaves another filled detail out.
+) => {
     if (searchingBy && dropped > 0) {
         return i18n.t('Searching by {{label}} only', {
             label: searchingBy,

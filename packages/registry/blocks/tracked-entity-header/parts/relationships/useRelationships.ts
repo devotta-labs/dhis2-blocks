@@ -33,8 +33,7 @@ export type RelationshipsState =
           types: Map<string, RelationshipTypeMeta>
       }
 
-/** Unwraps a Result so React Query owns the error state. */
-const unwrap = <T>(result: Result<T, Error>): T => {
+const unwrap = <T>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
@@ -44,9 +43,9 @@ const unwrap = <T>(result: Result<T, Error>): T => {
 const EMPTY: string[] = []
 
 /** The record's relationships, resolved into labelled groups. Parts share its three queries through the cache. The types parts have registered are fetched with the linked ones, so a type with no link can still be named. */
-export const useRelationships = (
+export const useRelationships: (
     labels?: Readonly<Record<string, RelationshipLabel>>
-): RelationshipsState => {
+) => RelationshipsState = (labels) => {
     const { state, resourceClient, clientId, display, relationshipTypes } =
         useHeaderContext()
     const id = state.status === 'ready' ? state.trackedEntity.id : undefined
@@ -66,7 +65,7 @@ export const useRelationships = (
                 : EMPTY,
         [relationships.data]
     )
-    // The same union for every part, so they share one request.
+
     const typeIds = useMemo(
         () =>
             relationships.data
@@ -129,7 +128,7 @@ export const useRelationships = (
     if (id === undefined) {
         return { kind: 'hidden' }
     }
-    // A failed refresh keeps what is already shown, unless the server now refuses: revoked access shows nothing.
+
     const failed = (query: { error: Error | null; data: unknown }) =>
         query.error !== null &&
         (query.data === undefined || isForbidden(query.error))

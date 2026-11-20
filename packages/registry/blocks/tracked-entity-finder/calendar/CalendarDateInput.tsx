@@ -17,8 +17,6 @@ import {
     toMultiCalendarIdentifier,
 } from './calendarDates'
 
-// CalendarInput supports this at runtime (and documents it in PropTypes), but
-// its declaration bundle may omit the prop.
 export type StrictCalendarInputProps = React.ComponentProps<
     typeof CalendarInput
 > & {
@@ -41,11 +39,8 @@ export const CalendarInputProvider = ({
     </CalendarInputContext.Provider>
 )
 
-// Marks typed text that is not a date on the system calendar but would read
-// as a real ISO date (e.g. Ethiopian 2017-01-31), so it can never be searched.
 const NOT_A_DATE = 'not-a-date:'
 
-/** What the field holds for what the user typed: ISO, '' or the text. */
 const toFieldValue = (text: string, info: FinderSystemInfo) => {
     if (text.trim() === '') {
         return ''
@@ -57,7 +52,6 @@ const toFieldValue = (text: string, info: FinderSystemInfo) => {
     return isIsoDate(text) ? `${NOT_A_DATE}${text}` : text
 }
 
-/** What the input shows for what the field holds. */
 const toShownText = (value: string, info: FinderSystemInfo) =>
     value.startsWith(NOT_A_DATE)
         ? value.slice(NOT_A_DATE.length)
@@ -96,10 +90,6 @@ export interface CalendarDateInputProps {
     invalid?: boolean
 }
 
-/**
- * Puts the field's description and validity on CalendarInput's own input, which takes neither as a prop. The field
- * hands them over through `FieldControl`.
- */
 const FieldLink = ({
     inputId,
     describedBy,
@@ -157,8 +147,6 @@ export const CalendarDateInput = memo(function CalendarDateInput({
         </Field>
     )
 
-    // CalendarInput reports typed text only on blur, but Enter submits the
-    // form first: report it before the submit, or the search drops the date.
     const reportOnEnter = (event: React.KeyboardEvent) => {
         if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
             report(event.target.value)
@@ -166,13 +154,12 @@ export const CalendarDateInput = memo(function CalendarDateInput({
     }
 
     return (
-        // A new calendar gets a fresh try at CalendarInput.
         <CalendarErrorBoundary key={info.calendar} fallback={fallback}>
             <div className="contents" onKeyDownCapture={reportOnEnter}>
                 <CalendarInputComponent
                     strictValidation
                     label={label}
-                    // CalendarInput gives the input this id and points its label at it.
+
                     name={id}
                     calendar={toMultiCalendarIdentifier(info.calendar)}
                     locale={i18n.language}

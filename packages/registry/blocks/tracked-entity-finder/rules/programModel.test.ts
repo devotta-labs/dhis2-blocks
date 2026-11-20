@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AttributeMetadata } from '../api/schemas'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import {
     attributeOf,
     buildProgramModel,
@@ -163,7 +163,7 @@ describe('usable attributes match what a field can send', () => {
             kind: 'multiText',
             usable: true,
         })
-        // Older servers compare the whole stored list, so it is not searched.
+
         expect(allergies({ multiTextSearch: false })).toMatchObject({
             kind: 'unsupported',
             usable: false,

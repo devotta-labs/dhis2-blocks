@@ -28,7 +28,6 @@ export const DisclosureToggle = ({
         aria-controls={controls}
         onClick={onToggle}
         className={cn(
-            // The ring sits inside: the toggle reaches the row's clipped edge.
             'group inline-flex cursor-pointer items-center gap-1 self-center -mx-1.5 rounded-md border-0 bg-transparent px-1.5 py-0.5 text-sm text-dhis2-foreground hover:bg-dhis2-accent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-dhis2-ring focus-visible:outline-solid',
             className
         )}
@@ -42,7 +41,7 @@ export const DisclosureToggle = ({
         {label}
         {count !== undefined && (
             <>
-                {/* Spoken as "Related 5"; the gap draws the space. */}{' '}
+                {}{' '}
                 <span
                     data-slot="tracked-entity-toggle-count"
                     className="ms-0.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-dhis2-foreground/8 px-1.5 text-xs leading-none font-medium tabular-nums text-dhis2-foreground"

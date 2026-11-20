@@ -4,12 +4,12 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const blockDir = fileURLToPath(new URL('..', import.meta.url))
-const NOT_SHIPPED = new Set(['__tests__', 'type-tests', 'node_modules'])
+const NOT_SHIPPED = new Set(['test', 'type-tests', 'node_modules'])
 const sealModule = join(blockDir, 'rules', 'seal')
-/** Static, dynamic and side-effect imports, re-exports and requires. */
+
 const SPECIFIER = /(?:\bfrom|\bimport|\brequire)\s*\(?\s*['"`]([^'"`]+)['"`]/g
 
-const importsSeal = (path: string): boolean =>
+const importsSeal = (path: string) =>
     [...readFileSync(path, 'utf8').matchAll(SPECIFIER)].some(([, spec]) => {
         const target = spec.startsWith('.')
             ? resolve(dirname(path), spec)
@@ -20,7 +20,7 @@ const importsSeal = (path: string): boolean =>
         )
     })
 
-const shippedSources = (dir: string): string[] =>
+const shippedSources: (dir: string) => string[] = (dir) =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
         const path = join(dir, entry.name)
         if (entry.isDirectory()) {
@@ -37,7 +37,6 @@ describe('seal', () => {
             .filter(importsSeal)
             .map((path) => relative(blockDir, path).split(sep).join('/'))
 
-        // The scan works: the rule module that seals searches is found.
         expect(importers).toContain('rules/evaluateForm.ts')
         expect(importers.filter((path) => !path.startsWith('rules/'))).toEqual(
             []

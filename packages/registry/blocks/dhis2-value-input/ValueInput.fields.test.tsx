@@ -36,15 +36,19 @@ const spoken = () =>
 test("a rule's error or warning that appears later is said; one the field opens with, and information, are not", async () => {
     const opening = { tone: 'error', text: 'Too high' } as const
     const heard: string[] = []
-    const assertive = liveRegion('assertive')
+    const regions = [liveRegion('assertive'), liveRegion('polite')]
     const observer = new MutationObserver(() =>
-        heard.push(assertive.textContent ?? '')
+        heard.push(...regions.map((region) => region.textContent ?? ''))
     )
-    observer.observe(assertive, { childList: true })
+    for (const region of regions) {
+        observer.observe(region, { childList: true })
+    }
     onTestFinished(() => observer.disconnect())
     const { rerender } = await mount({ messages: [opening] })
     announce('Opening complete', 'assertive')
+    announce('Field ready', 'polite')
     await expect.element(page.getByText('Opening complete')).toBeInTheDocument()
+    await expect.element(page.getByText('Field ready')).toBeInTheDocument()
     expect(heard).not.toContain('Error: Too high')
 
     await rerender({

@@ -16,14 +16,11 @@ import { CalendarCellRecords, CalendarDayContext } from './CalendarCell'
 /** An ISO weekday: 1 is Monday, 7 is Sunday. */
 export type CalendarWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
-// Forced colours would repaint the circle as the page, so it takes system colours there.
 export const TODAY_CLASS =
     'inline-flex size-5 items-center justify-center self-start rounded-full bg-dhis2-primary text-dhis2-primary-foreground forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] forced-colors:[forced-color-adjust:none]'
 
 const WEEKDAYS: readonly CalendarWeekday[] = [1, 2, 3, 4, 5, 6, 7]
 
-// shortcut: arrows move in visual order only for left-to-right text; flip them
-// for right-to-left once an RTL locale uses the calendar.
 const keyOffset = (key: string, rowLength: number) => {
     switch (key) {
         case 'ArrowLeft':
@@ -139,7 +136,6 @@ export const CalendarGrid = ({
     const tableRef = useRef<HTMLTableElement>(null)
     const [focusedDate, setFocusedDate] = useState<string | null>(null)
     const isWeekend = (weekday: CalendarWeekday) => weekend.includes(weekday)
-    // Weeks start on Monday, so a day's column is its weekday.
     const columns = WEEKDAYS.filter(
         (weekday) => weekendColumns !== 'hide' || !isWeekend(weekday)
     )
@@ -150,7 +146,6 @@ export const CalendarGrid = ({
         })
     )
     const days = rows.flat().map(({ day }) => day)
-    // The first day shown and each day where the month changes carry the month name, so neighbouring months don't rely on colour.
     const monthStarts = new Set(
         days
             .filter(
@@ -240,7 +235,6 @@ export const CalendarGrid = ({
                             {row.map(({ day, weekday }) => (
                                 <td
                                     key={day.date}
-                                    // h-px lets the button fill the row's full height.
                                     className="h-px border border-dhis2-border p-0 align-top"
                                     aria-selected={
                                         day.date === selectedDay?.date

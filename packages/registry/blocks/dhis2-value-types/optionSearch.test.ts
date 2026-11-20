@@ -90,7 +90,6 @@ test('the index keeps each code and its name, and is cached per list', () => {
 })
 
 test('a one-letter query over 14,240 options returns one page and counts them all', () => {
-    // A000 to O239. Names use no letter k, so only the 1,000 K codes match "k".
     const names = ['alpha', 'bravo', 'delta', 'gamma', 'sigma', 'omega']
     const many = Array.from({ length: 14_240 }, (_, i) => ({
         code: `${String.fromCharCode(65 + Math.floor(i / 1000))}${String(i % 1000).padStart(3, '0')}`,
@@ -109,13 +108,11 @@ test('a one-letter query over 14,240 options returns one page and counts them al
 test('combining marks stay part of their word', () => {
     const options: Option[] = [
         { code: 'HI', name: 'हिन्दी भाषा' },
-        // Holds the same letters as हिन्दी without its marks, so splitting at marks would match it.
         { code: 'RI', name: 'हर नदी' },
         { code: 'CA', name: 'cafe\u0301 noir' },
     ]
     const index = optionIndex(options)
     expect(searchOptions(index, 'हिन्दी')).toEqual({ codes: ['HI'], total: 1 })
-    // न starts a word only in नदी; inside हिन्दी it still matches, ranked after.
     expect(searchOptions(index, 'न')).toEqual({ codes: ['RI', 'HI'], total: 2 })
     expect(searchOptions(index, 'café')).toEqual({ codes: ['CA'], total: 1 })
 })

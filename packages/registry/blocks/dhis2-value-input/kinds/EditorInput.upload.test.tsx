@@ -11,10 +11,6 @@ const SETTINGS: ValueSettings = {
     dateFormat: 'YYYY-MM-DD',
 }
 
-/**
- * A file field over a server whose uploads never answer. The host keeps its last good value and the problem apart,
- * as the docs' form does; `shown` false takes the field off the page.
- */
 const mount = async () => {
     const reports: Array<Parameters<ValueInputProps['onChange']>> = []
     const aborted: boolean[] = []

@@ -16,11 +16,6 @@ type PickerCalendar = NonNullable<
 >
 type Day = ReturnType<typeof useDatePicker>['calendarWeekDays'][number][number]
 
-/**
- * Where focus goes after a key: a day shown in the grid before the move, the day `offset` places from `from` (or, when
- * `from` is gone, the day at `at` past the grid's edge, counted from the end when negative), or the `nth` day of the
- * month, the last day if the month is shorter.
- */
 type Target =
     | { date: string }
     | { from: string; offset: number; at: number }
@@ -28,7 +23,6 @@ type Target =
 
 type Direction = ReturnType<typeof useResolvedDirection>
 
-// Arrows move in visual order: right to left, the week runs from the right, so Left is the next day.
 const OFFSETS = {
     ltr: new Map([
         ['ArrowLeft', -1],
@@ -44,7 +38,6 @@ const OFFSETS = {
     ]),
 } satisfies Record<Direction, ReadonlyMap<string, number>>
 
-// Forced colours would repaint the fill as the page, so the picked day takes system colours there.
 const PICKED =
     'bg-dhis2-primary text-dhis2-primary-foreground hover:bg-dhis2-primary-strong forced-colors:bg-[Highlight] forced-colors:text-[HighlightText] forced-colors:[forced-color-adjust:none]'
 
@@ -74,7 +67,6 @@ export const DatePicker = ({
             // SAFETY: the hook maps DHIS2's calendar names itself; its types list only the names it maps them to.
             calendar: settings.calendar as PickerCalendar,
             locale: i18n.language,
-            // Narrow labels repeat (two Ts), and keys must not.
             weekDayFormat: 'short' as const,
         }),
         [settings.calendar]
@@ -94,7 +86,7 @@ export const DatePicker = ({
     const days = picker.calendarWeekDays.flat()
     const month = days.filter((shown) => shown.isInCurrentMonth)
 
-    const landing = (to: Target | undefined): Day | undefined => {
+    const landing = (to: Target | undefined) => {
         if (to === undefined) {
             return undefined
         }
@@ -159,7 +151,6 @@ export const DatePicker = ({
 
     const title = `${picker.currMonth.label ?? ''} ${picker.currYear.label}`
     return (
-        // The popup is portalled out of the page's direction, so it carries its own.
         <div dir={direction} className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2">
                 <Button
@@ -175,7 +166,7 @@ export const DatePicker = ({
                         <IconChevronLeft16 />
                     </span>
                 </Button>
-                {/* Names the picker's dialog as well as its grid. */}
+                {}
                 <PopoverTitle id={titleId} className="text-sm">
                     {title}
                 </PopoverTitle>
@@ -242,7 +233,6 @@ export const DatePicker = ({
                                             }
                                             className={cn(
                                                 'flex size-9 cursor-pointer items-center justify-center rounded-dhis2-sm border border-transparent bg-transparent text-sm text-dhis2-foreground hover:bg-dhis2-muted focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring',
-                                                // Forced colours would give every day the same edge.
                                                 shown.isToday &&
                                                     'border-dhis2-primary forced-colors:border-[Highlight]',
                                                 shown.isSelected && PICKED

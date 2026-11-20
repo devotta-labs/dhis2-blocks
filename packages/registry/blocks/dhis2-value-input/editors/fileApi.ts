@@ -14,13 +14,12 @@ export const uploadFile = async (
     engine: DataEngine,
     file: File,
     signal?: AbortSignal
-): Promise<{ id: string; name: string }> =>
+) =>
     uploadSchema.parse(
         await engine.mutate(
             {
                 resource: 'fileResources',
                 type: 'create',
-                // The platform sends this resource as multipart form data, one part per field.
                 data: { file, domain: 'DATA_VALUE' },
             },
             { signal }

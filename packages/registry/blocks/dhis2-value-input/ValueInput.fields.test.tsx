@@ -1,10 +1,10 @@
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import { announce } from '@/components/dhis2/ui/announcer'
+import { liveRegion } from '../../test/liveRegion'
 import type { ValueSettings } from '@/components/dhis2-value-types'
 import { ValueInput } from './ValueInput'
 import type { ValueInputProps } from './ValueInput'
-
-/** How each kind is laid out as a field, a fieldset or a checkbox beside its label, and what it says as rules change. */
 
 const SETTINGS: ValueSettings = {
     calendar: 'gregorian',
@@ -28,7 +28,6 @@ const mount = async (props: Partial<ValueInputProps> = {}) => {
     }
 }
 
-/** What the house announcer's live regions say now. */
 const spoken = () =>
     [...document.querySelectorAll('[aria-live]')]
         .map(({ textContent }) => textContent)
@@ -36,9 +35,21 @@ const spoken = () =>
 
 test("a rule's error or warning that appears later is said; one the field opens with, and information, are not", async () => {
     const opening = { tone: 'error', text: 'Too high' } as const
+    const heard: string[] = []
+    const regions = [liveRegion('assertive'), liveRegion('polite')]
+    const observer = new MutationObserver(() =>
+        heard.push(...regions.map((region) => region.textContent ?? ''))
+    )
+    for (const region of regions) {
+        observer.observe(region, { childList: true })
+    }
+    onTestFinished(() => observer.disconnect())
     const { rerender } = await mount({ messages: [opening] })
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    expect(spoken()).not.toContain('Too high')
+    announce('Opening complete', 'assertive')
+    announce('Field ready', 'polite')
+    await expect.element(page.getByText('Opening complete')).toBeInTheDocument()
+    await expect.element(page.getByText('Field ready')).toBeInTheDocument()
+    expect(heard).not.toContain('Error: Too high')
 
     await rerender({
         messages: [

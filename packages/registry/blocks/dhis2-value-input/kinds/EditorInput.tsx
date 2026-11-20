@@ -32,7 +32,6 @@ export const useEditorCommits = (
         problem?: EditorProblem
     }>({ fieldKey, readOnly, version: 0 })
     const echo = useReported(value)
-    // The host's value as of its latest render: an editor leaving the page reads it after its own last render.
     const held = useRef(value)
     held.current = value
     let current = state
@@ -49,7 +48,6 @@ export const useEditorCommits = (
             ? { fieldKey, readOnly, version: state.version + 1 }
             : { ...state, readOnly }
         if (again) {
-            // What the person committed is history: the host saying it again is a new value too.
             echo.forget()
         }
         setState(current)
@@ -110,20 +108,14 @@ export const EditorInput = ({
 }) => {
     const Editor = formEditorFor(field.valueType)
     const { isDisconnected } = useDhis2ConnectionStatus()
-    // The change reported since focus came in, sent when it leaves.
     const pending = useRef<Parameters<OnChange>>()
-    // A value from the host starts the editor again, without what was typed in it.
     const version = useRef(commits.version)
-    // What the field held before the upload now running, which reported no value in its place.
     const replaced = useRef<{ before: string | null }>()
     if (version.current !== commits.version) {
         version.current = commits.version
         pending.current = undefined
         replaced.current = undefined
     }
-    // An upload the field leaving the page stops is no file: the host gets back what the field held, which also clears
-    // the upload's problem for a host that kept that value. Not when the host has given a value of its own in its
-    // place, as a rule that assigns one and locks the field does.
     const latest = useRef(commits)
     latest.current = commits
     useEffect(
@@ -136,13 +128,11 @@ export const EditorInput = ({
         },
         []
     )
-    // A file uploaded here keeps the name it was chosen under.
     const [learned, setLearned] = useState<{ id: string; name: string }>()
     const local = useLocalFileUploads(
         undefined,
         field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
     )
-    // A value from the host wins over an upload still running for the editor it replaced.
     useEffect(() => local?.stop, [local, commits.version])
     const uploads: FileUploads | undefined = local && {
         ...local,
@@ -160,7 +150,6 @@ export const EditorInput = ({
                 (reason) => {
                     replaced.current = undefined
                     failed(reason)
-                    // No file came of it: the field holds what it held. A file refused before upload changed nothing.
                     if (started) {
                         commits.send(before)
                     }
@@ -193,7 +182,6 @@ export const EditorInput = ({
         <div
             className="flex flex-col gap-2"
             onBlur={(event) => {
-                // A calendar of the editor's is drawn outside it, and is still the editor.
                 if (
                     !event.currentTarget.contains(event.relatedTarget) &&
                     !intoOwnCalendar(event.currentTarget, event.relatedTarget)
@@ -202,8 +190,6 @@ export const EditorInput = ({
                 }
             }}
             onKeyDown={(event) => {
-                // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed. A text area
-                // keeps Enter for new lines.
                 if (
                     event.key === 'Enter' &&
                     !composing(event) &&

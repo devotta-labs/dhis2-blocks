@@ -130,7 +130,8 @@
                 "blocks/*/index.ts",
                 "blocks/timeline/dhis2/index.ts",
                 "**/*.{test,spec}.{ts,tsx}",
-                "**/__tests__/**/*.{ts,tsx}"
+                "**/__tests__/**/*.{ts,tsx}",
+                "**/test/public-surface.ts"
             ],
             "project": [
                 "components/**/*.{ts,tsx,css}",

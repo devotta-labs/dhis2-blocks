@@ -10,6 +10,7 @@ import {
     found,
     gridReady,
     readEvent,
+    scrollUntilDrawn,
     settled,
     test as base,
     valuesOf,
@@ -279,6 +280,7 @@ const editAfterTenPages = async (
 
     await context.setOffline(true)
     const pressure = cell(page, `F${cohortBatch}000`, DIASTOLIC)
+    await scrollUntilDrawn(page, pressure)
     await expect(pressure).toHaveValue('70')
     const timing = await watchKeys(page)
     const before = (await durations(page, 'data-entry:rules-edit')).length

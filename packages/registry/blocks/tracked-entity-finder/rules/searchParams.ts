@@ -27,7 +27,9 @@ export const toSearchParams = (
     search: ValidatedSearch,
     page: number
 ) => ({
-    program: model.program,
+    ...(model.program
+        ? { program: model.program }
+        : { trackedEntityType: model.trackedEntityType }),
     filter: search.filters.map(serializeFilter),
     orgUnitMode: 'ACCESSIBLE',
     page,

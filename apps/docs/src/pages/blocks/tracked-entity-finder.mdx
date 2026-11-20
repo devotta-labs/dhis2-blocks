@@ -24,7 +24,9 @@ the uids at the top of the file.
 ## Usage
 
 Pass the program and what to do with the person the user picks, then place
-the parts you need. `program` and `onSelect` are the only required props.
+the parts you need. `program` and `onSelect` are the only required props. To
+search without a program, pass `trackedEntityType` instead of `program`; see
+[Search without a program](#search-without-a-program).
 
 ```tsx
 import {
@@ -57,7 +59,7 @@ export function FindPatient({
 
 `onSelect` receives the person: `trackedEntity`, `trackedEntityType`,
 `orgUnit`, `programOwner` (the organisation unit that owns the person in
-this program, when known), and `attributes`, a map from attribute uid to
+this program, when known; absent without a program), and `attributes`, a map from attribute uid to
 value. Searches cover every organisation unit the user
 can search.
 
@@ -153,7 +155,8 @@ For your own parts inside `FinderProvider`:
 - `useFinderResults()` — the results status, the people on the page, paging,
   and `select`.
 - `useFinderPerson()` — inside `FinderList`: the current person.
-- `useFinderProgram()` — the program's name and searchable attributes.
+- `useFinderProgram()` — the program's name and searchable attributes; without
+  a program, the tracked entity type's.
 
 ### Custom fields
 
@@ -195,6 +198,29 @@ fields:
 
 <ExampleCard slug="tracked-entity-finder/program-picker" />
 
+## Search without a program
+
+Pass `trackedEntityType` instead of `program` to find a person in any
+program, or in none, as Capture does when no program is selected. The finder
+then reads the tracked entity type's own settings instead of a program's:
+its searchable attributes, its "attributes required to search" and its
+maximum number of results. Fields name the type's attributes by uid. List
+them with:
+
+```
+GET /api/trackedEntityTypes/<type>?fields=name,minAttributesRequiredToSearch,trackedEntityTypeAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
+```
+
+An attribute searchable in a program isn't necessarily searchable on its
+type. In the Sierra Leone demo database, the Person type's Unique ID isn't
+searchable, so this example searches by first and last name. Try `Rose`
+and `Johnson`:
+
+<ExampleCard slug="tracked-entity-finder/without-program" />
+
+People found this way have no `programOwner`. `useFinderProgram()` returns
+the tracked entity type's name and searchable attributes.
+
 ## Metadata errors
 
 A field that doesn't fit the program's metadata, such as an attribute that
@@ -214,7 +240,10 @@ set up correctly" and the full message is logged to the console.
 
 ### FinderProvider
 
-- `program: string` — **required.** The tracker program to search.
+- `program: string` — the tracker program to search. Pass this or
+  `trackedEntityType`, not both.
+- `trackedEntityType: string` — the tracked entity type to search without a
+  program, by the type's own search settings.
 - `onSelect: (person: FinderPerson) => void` — **required.** Called with the
   person the user picks.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses

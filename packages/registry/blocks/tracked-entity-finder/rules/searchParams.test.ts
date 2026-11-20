@@ -65,3 +65,24 @@ describe('toSearchParams', () => {
         expect(params).not.toHaveProperty('orgUnits')
     })
 })
+
+describe('toSearchParams without a program', () => {
+    it('sends the tracked entity type instead of a program', () => {
+        const { program: _program, ...type } = hivProgram
+        const params = toSearchParams(
+            buildProgramModel(type),
+            seal([
+                {
+                    attribute: 'firstName',
+                    conditions: [{ op: 'like', value: 'Amina' }],
+                },
+            ]),
+            1
+        )
+        expect(params).toMatchObject({
+            trackedEntityType: 'personType',
+            filter: ['firstName:like:Amina'],
+        })
+        expect(params).not.toHaveProperty('program')
+    })
+})

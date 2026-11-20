@@ -14,7 +14,8 @@ export interface AttributeMetadata {
 }
 
 export interface ProgramMetadata {
-    program: string
+    /** Absent for a tracked entity type searched without a program. */
+    program?: string
     name: string
     trackedEntityType: string
     minAttributesRequiredToSearch: number
@@ -65,6 +66,14 @@ export const ProgramResponseSchema = z.object({
     programTrackedEntityAttributes: z.array(LinkSchema),
 })
 
+/** Its attributes have no sortOrder; they keep their response order. */
+export const TrackedEntityTypeResponseSchema = z.object({
+    displayName: z.string(),
+    minAttributesRequiredToSearch: z.number().nullish(),
+    maxTeiCountToReturn: z.number().nullish(),
+    trackedEntityTypeAttributes: z.array(LinkSchema).default([]),
+})
+
 type AttributeLink = z.infer<typeof LinkSchema>
 
 const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
@@ -100,19 +109,21 @@ const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
     return meta
 }
 
-export const normaliseProgram = (
-    program: string,
-    response: z.infer<typeof ProgramResponseSchema>
-): ProgramMetadata => ({
-    program,
+const searchRules = (response: {
+    displayName: string
+    minAttributesRequiredToSearch?: number | null
+    maxTeiCountToReturn?: number | null
+}) => ({
     name: response.displayName,
-    trackedEntityType: response.trackedEntityType.id,
     minAttributesRequiredToSearch:
         response.minAttributesRequiredToSearch ??
         DEFAULT_MIN_ATTRIBUTES_REQUIRED_TO_SEARCH,
     maxTeiCountToReturn:
         response.maxTeiCountToReturn ?? DEFAULT_MAX_TEI_COUNT_TO_RETURN,
-    attributes: response.programTrackedEntityAttributes
+})
+
+const toAttributes = (links: AttributeLink[]): AttributeMetadata[] =>
+    links
         .map((link, index) => ({ link, index }))
         .sort(
             (a, b) =>
@@ -120,7 +131,26 @@ export const normaliseProgram = (
                     (b.link.sortOrder ?? Number.MAX_SAFE_INTEGER) ||
                 a.index - b.index
         )
-        .map(({ link }) => toAttributeMetadata(link)),
+        .map(({ link }) => toAttributeMetadata(link))
+
+export const normaliseProgram = (
+    program: string,
+    response: z.infer<typeof ProgramResponseSchema>
+): ProgramMetadata => ({
+    program,
+    ...searchRules(response),
+    trackedEntityType: response.trackedEntityType.id,
+    attributes: toAttributes(response.programTrackedEntityAttributes),
+})
+
+/** A tracked entity type's own search rules, for a search without a program. */
+export const normaliseTrackedEntityType = (
+    trackedEntityType: string,
+    response: z.infer<typeof TrackedEntityTypeResponseSchema>
+): ProgramMetadata => ({
+    ...searchRules(response),
+    trackedEntityType,
+    attributes: toAttributes(response.trackedEntityTypeAttributes),
 })
 
 const AttributeValueSchema = z.object({

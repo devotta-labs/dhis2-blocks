@@ -8,6 +8,11 @@ IDs, the result cap, and which attributes are searchable. A field that does
 not fit the program's metadata is left out of the search and shows a message in
 its place.
 
+To search without a program, pass `trackedEntityType` instead of `program`.
+The finder then applies that tracked entity type's own searchable attributes,
+minimum and result cap, and sends `trackedEntityType` instead of `program`
+with the search.
+
 ```tsx
 <FinderProvider program={programId} onSelect={openPerson}>
     <FinderForm>
@@ -52,7 +57,8 @@ The block reads DHIS2 app-runtime's `useDataEngine` and runs every request in
 a TanStack Query `queryFn`. Tests can use app-runtime's `CustomDataProvider`.
 
 Program metadata and system info stay fresh for 3 hours. Search results stay
-fresh for 5 minutes, keyed by server URL, program, filters and page, including
+fresh for 5 minutes, keyed by server URL, program or tracked entity type,
+filters and page, including
 across repeated submissions and finder remounts within the same QueryClient.
 Different server URLs never share cached metadata or results. The host app must
 discard/reset its QueryClient on logout/login; that lifecycle isolates users,
@@ -62,6 +68,12 @@ To list a program's searchable attributes and their uids:
 
 ```
 GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTrackedEntityAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
+```
+
+And a tracked entity type's, for a search without a program:
+
+```
+GET /api/trackedEntityTypes/<type>?fields=name,minAttributesRequiredToSearch,trackedEntityTypeAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
 ```
 
 The block reads the literal `process.env.NODE_ENV`, which your bundler

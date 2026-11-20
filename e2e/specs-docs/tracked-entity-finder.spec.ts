@@ -117,3 +117,38 @@ test.describe('live Tracked Entity Finder preview', () => {
         ).toEqual([])
     })
 })
+
+test.describe('live Tracked Entity Finder preview without a program', () => {
+    test('searches the Person type by name', async ({ page }) => {
+        await openLivePreview(
+            page,
+            'tracked-entity-finder/without-program',
+            async (preview) => {
+                await expect(preview.getByLabel('First name')).toBeEnabled({
+                    timeout: 30_000,
+                })
+            }
+        )
+
+        await page.getByLabel('First name').fill('Rose')
+        await page.getByLabel('Last name').fill('Johnson')
+
+        const request = await trackedEntitySearch(page, () =>
+            search(page).click()
+        )
+        const url = new URL(request.url())
+
+        expect(url.searchParams.get('trackedEntityType')).toBe('nEenWmSyUEp')
+        expect(url.searchParams.get('program')).toBeNull()
+        expect(url.searchParams.getAll('filter')).toEqual([
+            'w75KJ2mc4zz:like:Rose',
+            'zDhUuAYrxNC:like:Johnson',
+        ])
+
+        const row = page.getByRole('button', { name: /Rose/ })
+        await expect(row).toHaveCount(1, { timeout: 30_000 })
+        await row.click()
+
+        await expect(page.getByText('Selected PkiF1ekNkLL')).toBeVisible()
+    })
+})

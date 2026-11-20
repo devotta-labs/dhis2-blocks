@@ -170,6 +170,23 @@ describe('runSearch', () => {
         })
     })
 
+    it('leaves out the program owner without a program', async () => {
+        const client = clientOf(() => ({
+            trackedEntities: [entity('te1')],
+            pager: { total: 1 },
+        }))
+        const { program: _program, ...type } = hivProgram
+        const outcome = await runSearch(
+            client,
+            buildProgramModel(type),
+            search,
+            1
+        )
+        expect(
+            outcome.kind === 'results' && outcome.people[0]
+        ).not.toHaveProperty('programOwner')
+    })
+
     it('works out hasNext with and without a total', async () => {
         const withTotal = (page: number, total: number) =>
             runSearch(

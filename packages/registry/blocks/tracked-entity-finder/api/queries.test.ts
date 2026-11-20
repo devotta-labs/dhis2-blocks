@@ -6,12 +6,13 @@ import { seal } from '../rules/seal'
 import {
     finderKeys,
     type FinderEngine,
-    programMetadataQueryOptions,
+    metadataQueryOptions,
     searchQueryOptions,
 } from './queries'
 import { systemInfoQueryOptions } from './systemInfo'
 
 const server = 'https://dhis2.test'
+const programScope = { kind: 'program', id: 'prog' } as const
 type DataEngineQuery = Parameters<FinderEngine['query']>[0]
 
 describe('program metadata query', () => {
@@ -24,7 +25,7 @@ describe('program metadata query', () => {
             },
         }))
         const client = { query }
-        const options = programMetadataQueryOptions(client, server, 'prog')
+        const options = metadataQueryOptions(client, server, programScope)
         await new QueryClient().fetchQuery(options)
 
         const sent = query.mock.calls[0]?.[0]
@@ -39,8 +40,65 @@ describe('program metadata query', () => {
             'programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,'
         )
         expect(fields).toContain('blockedSearchOperators')
-        expect(options.queryKey).toEqual(finderKeys.program(server, 'prog'))
+        expect(options.queryKey).toEqual([
+            'tracked-entity-finder',
+            'program',
+            server,
+            'prog',
+        ])
         expect(options.gcTime).toBe(3 * 60 * 60_000)
+    })
+
+    it("requests a tracked entity type's own rules without a program", async () => {
+        const query = vi.fn(async (_query: DataEngineQuery) => ({
+            trackedEntityFinderResource: {
+                displayName: 'Person',
+                minAttributesRequiredToSearch: 3,
+                maxTeiCountToReturn: 50,
+                trackedEntityTypeAttributes: [
+                    {
+                        searchable: true,
+                        displayInList: true,
+                        trackedEntityAttribute: {
+                            id: 'firstName',
+                            displayName: 'First name',
+                            valueType: 'TEXT',
+                        },
+                    },
+                ],
+            },
+        }))
+        const scope = { kind: 'trackedEntityType', id: 'person' } as const
+        const options = metadataQueryOptions({ query }, server, scope)
+        const metadata = await new QueryClient().fetchQuery(options)
+
+        const request = query.mock.calls[0]?.[0]?.trackedEntityFinderResource
+        expect(request).toMatchObject({
+            resource: 'trackedEntityTypes',
+            id: 'person',
+        })
+        const { fields } = z
+            .object({ fields: z.string() })
+            .parse(request?.params)
+        expect(fields).toContain('minAttributesRequiredToSearch')
+        expect(fields).toContain('maxTeiCountToReturn')
+        expect(fields).toContain(
+            'trackedEntityTypeAttributes[searchable,displayInList,'
+        )
+        expect(metadata).toEqual({
+            name: 'Person',
+            trackedEntityType: 'person',
+            minAttributesRequiredToSearch: 3,
+            maxTeiCountToReturn: 50,
+            attributes: [
+                expect.objectContaining({ id: 'firstName', searchable: true }),
+            ],
+        })
+        expect(metadata).not.toHaveProperty('program')
+        expect(options.queryKey).toEqual(finderKeys.metadata(server, scope))
+        expect(options.queryKey).not.toEqual(
+            finderKeys.metadata(server, { kind: 'program', id: 'person' })
+        )
     })
 
     it('reloads program rules after their freshness window expires', async () => {
@@ -53,7 +111,7 @@ describe('program metadata query', () => {
             },
         }))
         const client = { query }
-        const options = programMetadataQueryOptions(client, server, 'prog')
+        const options = metadataQueryOptions(client, server, programScope)
         const queryClient = new QueryClient()
         const now = Date.now()
         const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
@@ -101,29 +159,46 @@ describe('search query', () => {
     ] as const
     const search = seal(filters)
 
-    it('keys searches by server, program, canonical filters and page', () => {
-        const key = finderKeys.search(server, 'p', search, 2)
+    it('keys searches by server, scope, canonical filters and page', () => {
+        const p = { kind: 'program', id: 'p' } as const
+        const key = finderKeys.search(server, p, search, 2)
         expect(key).toEqual([
             'tracked-entity-finder',
             'search',
             server,
+            'program',
             'p',
             ['artNumber:eq:A1', 'firstName:like:Amina'],
             2,
         ])
         expect(
-            finderKeys.search(server, 'p', seal([...filters].reverse()), 2)
+            finderKeys.search(server, p, seal([...filters].reverse()), 2)
         ).toEqual(key)
-        expect(finderKeys.search(server, 'other', search, 2)).not.toEqual(key)
-        expect(finderKeys.search(server, 'p', search, 1)).not.toEqual(key)
         expect(
-            finderKeys.search(server, 'p', seal([filters[0]]), 2)
+            finderKeys.search(
+                server,
+                { kind: 'program', id: 'other' },
+                search,
+                2
+            )
         ).not.toEqual(key)
         expect(
-            finderKeys.search('https://other.dhis2.test', 'p', search, 2)
+            finderKeys.search(
+                server,
+                { kind: 'trackedEntityType', id: 'p' },
+                search,
+                2
+            )
         ).not.toEqual(key)
-        expect(finderKeys.program('https://other.dhis2.test', 'p')).not.toEqual(
-            finderKeys.program(server, 'p')
+        expect(finderKeys.search(server, p, search, 1)).not.toEqual(key)
+        expect(finderKeys.search(server, p, seal([filters[0]]), 2)).not.toEqual(
+            key
+        )
+        expect(
+            finderKeys.search('https://other.dhis2.test', p, search, 2)
+        ).not.toEqual(key)
+        expect(finderKeys.metadata('https://other.dhis2.test', p)).not.toEqual(
+            finderKeys.metadata(server, p)
         )
         expect(finderKeys.systemInfo('https://other.dhis2.test')).not.toEqual(
             finderKeys.systemInfo(server)

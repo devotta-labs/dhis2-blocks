@@ -1,12 +1,15 @@
 import type { useDataEngine } from '@dhis2/app-runtime'
 import { queryOptions } from '@tanstack/react-query'
 import { serializeFilter, toSearchParams } from '../rules/searchParams'
-import type { ProgramModel, ValidatedSearch } from '../rules/types'
+import type { FinderScope, ProgramModel, ValidatedSearch } from '../rules/types'
 import { shouldRetryFinderRequest, toRequestError } from './requestErrors'
 import {
     normaliseProgram,
+    normaliseTrackedEntityType,
     ProgramResponseSchema,
     TrackedEntitiesResponseSchema,
+    TrackedEntityTypeResponseSchema,
+    type ProgramMetadata,
 } from './schemas'
 import {
     isTooManyConflict,
@@ -23,11 +26,11 @@ export const finderKeys = {
     all: ['tracked-entity-finder'] as const,
     systemInfo: (server: string) =>
         [...finderKeys.all, 'system-info', server] as const,
-    program: (server: string, program: string) =>
-        [...finderKeys.all, 'program', server, program] as const,
+    metadata: (server: string, scope: FinderScope) =>
+        [...finderKeys.all, scope.kind, server, scope.id] as const,
     search: (
         server: string,
-        program: string,
+        scope: FinderScope,
         search: ValidatedSearch | undefined,
         page: number
     ) =>
@@ -35,11 +38,18 @@ export const finderKeys = {
             ...finderKeys.all,
             'search',
             server,
-            program,
+            scope.kind,
+            scope.id,
             search?.filters.map(serializeFilter).sort() ?? [],
             page,
         ] as const,
 }
+
+/** The scope a model searches in. */
+export const scopeOf = (model: ProgramModel): FinderScope =>
+    model.program
+        ? { kind: 'program', id: model.program }
+        : { kind: 'trackedEntityType', id: model.trackedEntityType }
 
 export const searchQueryOptions = (
     engine: FinderEngine,
@@ -49,7 +59,7 @@ export const searchQueryOptions = (
     page: number
 ) =>
     queryOptions({
-        queryKey: finderKeys.search(server, model.program, search, page),
+        queryKey: finderKeys.search(server, scopeOf(model), search, page),
         queryFn: async ({ signal }): Promise<SearchOutcome> => {
             try {
                 const response = await engine.query(
@@ -86,31 +96,45 @@ const ATTRIBUTE_FIELDS =
 
 const PROGRAM_FIELDS = `displayName,minAttributesRequiredToSearch,maxTeiCountToReturn,trackedEntityType[id],programTrackedEntityAttributes[searchable,displayInList,sortOrder,preferredSearchOperator,blockedSearchOperators,minCharactersToSearch,${ATTRIBUTE_FIELDS}]`
 
-export const programMetadataQueryOptions = (
+const TRACKED_ENTITY_TYPE_FIELDS = `displayName,minAttributesRequiredToSearch,maxTeiCountToReturn,trackedEntityTypeAttributes[searchable,displayInList,${ATTRIBUTE_FIELDS}]`
+
+/** The search rules of a program, or of a tracked entity type without one. */
+export const metadataQueryOptions = (
     engine: FinderEngine,
     server: string,
-    program: string
+    scope: FinderScope
 ) =>
     queryOptions({
-        queryKey: finderKeys.program(server, program),
-        queryFn: async ({ signal }) => {
+        queryKey: finderKeys.metadata(server, scope),
+        queryFn: async ({ signal }): Promise<ProgramMetadata> => {
+            const program = scope.kind === 'program'
             try {
                 const response = await engine.query(
                     {
                         trackedEntityFinderResource: {
-                            resource: 'programs',
-                            id: program,
-                            params: { fields: PROGRAM_FIELDS },
+                            resource: program
+                                ? 'programs'
+                                : 'trackedEntityTypes',
+                            id: scope.id,
+                            params: {
+                                fields: program
+                                    ? PROGRAM_FIELDS
+                                    : TRACKED_ENTITY_TYPE_FIELDS,
+                            },
                         },
                     },
                     { signal }
                 )
-                return normaliseProgram(
-                    program,
-                    ProgramResponseSchema.parse(
-                        response.trackedEntityFinderResource
-                    )
-                )
+                const resource = response.trackedEntityFinderResource
+                return program
+                    ? normaliseProgram(
+                          scope.id,
+                          ProgramResponseSchema.parse(resource)
+                      )
+                    : normaliseTrackedEntityType(
+                          scope.id,
+                          TrackedEntityTypeResponseSchema.parse(resource)
+                      )
             } catch (cause) {
                 throw toRequestError(cause)
             }

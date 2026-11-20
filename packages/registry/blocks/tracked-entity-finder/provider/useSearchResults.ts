@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { finderKeys, searchQueryOptions } from '../api/queries'
 import type { FinderPerson } from '../api/search'
-import type { ProgramModel } from '../rules/types'
+import type { FinderScope, ProgramModel } from '../rules/types'
 import type {
     FinderResultsStatus,
     FinderResultsView,
@@ -14,7 +14,7 @@ import type {
 } from './context'
 
 export interface SearchResultsOptions {
-    program: string
+    scope: FinderScope
     model?: ProgramModel
     status: FinderStatus
     submission?: FinderSubmission
@@ -28,7 +28,7 @@ const NO_PEOPLE: readonly FinderPerson[] = Object.freeze([])
  * once; parts read the answer from context.
  */
 export const useSearchResults = ({
-    program,
+    scope,
     model,
     status: finderStatus,
     submission,
@@ -47,12 +47,7 @@ export const useSearchResults = ({
                   page
               )
             : ({
-                  queryKey: finderKeys.search(
-                      baseUrl,
-                      program,
-                      undefined,
-                      page
-                  ),
+                  queryKey: finderKeys.search(baseUrl, scope, undefined, page),
                   queryFn: skipToken,
               } as const)
     const query = useQuery({

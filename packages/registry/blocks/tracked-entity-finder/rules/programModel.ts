@@ -197,7 +197,7 @@ export const buildProgramModel = (
     support: SearchSupport = { multiTextSearch: false }
 ): ProgramModel =>
     Object.freeze({
-        program: meta.program,
+        ...(meta.program && { program: meta.program }),
         name: meta.name,
         trackedEntityType: meta.trackedEntityType,
         attributes: Object.freeze(meta.attributes.map(toAttribute(support))),

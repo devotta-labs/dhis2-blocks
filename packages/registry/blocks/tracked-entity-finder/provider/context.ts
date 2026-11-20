@@ -5,6 +5,7 @@ import type { FinderFormApi } from '../form/finderFormApi'
 import type {
     FormField,
     FormVerdict,
+    FinderScope,
     ProgramModel,
     ValidatedSearch,
 } from '../rules/types'
@@ -52,7 +53,7 @@ interface FinderActions {
 }
 
 interface FinderMeta {
-    program: string
+    scope: FinderScope
     info?: FinderSystemInfo
 }
 
@@ -82,7 +83,7 @@ export interface FinderFormContextValue {
     form: FinderFormApi
     /** Set once the user tried to search, so every field error shows. */
     submitted: boolean
-    /** Undefined until program metadata is ready. */
+    /** Undefined until the search rules are ready. */
     verdict?: FormVerdict
 }
 

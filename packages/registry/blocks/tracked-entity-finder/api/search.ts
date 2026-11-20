@@ -12,7 +12,7 @@ export interface FinderPerson {
     trackedEntity: string
     trackedEntityType: string
     orgUnit: string
-    /** The owner orgUnit for the finder's program. */
+    /** The owner orgUnit for the finder's program; absent without a program. */
     programOwner?: string
     attributes: Record<string, string>
 }
@@ -36,7 +36,10 @@ export const isTooManyConflict = (cause: unknown) =>
         text?.toLowerCase().includes(TOO_MANY_MARKER)
     )
 
-const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
+const toPerson = (
+    row: RawTrackedEntity,
+    program: string | undefined
+): FinderPerson => {
     const person: FinderPerson = {
         trackedEntity: row.trackedEntity,
         trackedEntityType: row.trackedEntityType,
@@ -45,9 +48,9 @@ const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
             row.attributes.map(({ attribute, value }) => [attribute, value])
         ),
     }
-    const owner = row.programOwners.find(
-        (candidate) => candidate.program === program
-    )
+    const owner =
+        program &&
+        row.programOwners.find((candidate) => candidate.program === program)
     if (owner) {
         person.programOwner = owner.orgUnit
     }

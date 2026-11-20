@@ -60,6 +60,7 @@ import trackerDataEntryValueTypesSource from './tracker-data-entry/ValueTypesGri
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
+import finderWithoutProgramSource from './tracked-entity-finder/WithoutProgram.tsx?raw'
 
 /**
  * Example registry.
@@ -333,6 +334,14 @@ const examples = [
         Component: lazy(() => import('./tracked-entity-finder/ProgramPicker')),
         source: finderProgramPickerSource,
         minHeight: 520,
+    },
+    {
+        slug: 'tracked-entity-finder/without-program',
+        title: 'Search without a program',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-finder/WithoutProgram')),
+        source: finderWithoutProgramSource,
+        minHeight: 360,
     },
     {
         slug: 'alert/variants',

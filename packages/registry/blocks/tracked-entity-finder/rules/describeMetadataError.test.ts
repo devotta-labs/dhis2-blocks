@@ -28,6 +28,19 @@ describe('describeMetadataError', () => {
         expect(message).toContain('needs 2 details')
     })
 
+    it("names the tracked entity type's minimum without a program", () => {
+        const { program: _program, ...type } = hivProgram
+        const message = describeMetadataError(
+            buildProgramModel({ ...type, name: 'Person' }),
+            { kind: 'form-cannot-search' }
+        )
+        expect(message).toContain('This form can never search in Person.')
+        expect(message).toContain("the tracked entity type's minimum")
+        expect(message).toContain(
+            'This tracked entity type needs 2 details unless an ID is used.'
+        )
+    })
+
     it('says "1 detail" when the minimum is 0 or 1', () => {
         const lenient = buildProgramModel({
             ...hivProgram,

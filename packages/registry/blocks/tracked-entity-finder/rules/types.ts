@@ -40,9 +40,16 @@ export interface FinderAttribute {
     readonly usable: boolean
 }
 
+/** Where the finder searches: one program, or a tracked entity type without one. */
+export type FinderScope =
+    | { readonly kind: 'program'; readonly id: string }
+    | { readonly kind: 'trackedEntityType'; readonly id: string }
+
 /** Read-only all the way down; the built model is frozen too. */
 export interface ProgramModel {
-    readonly program: string
+    /** Absent when the finder searches a tracked entity type without a program. */
+    readonly program?: string
+    /** The program's name, or the tracked entity type's without a program. */
     readonly name: string
     readonly trackedEntityType: string
     /** In metadata order. */

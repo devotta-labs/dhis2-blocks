@@ -9,6 +9,7 @@ import {
     FinderTestProvider,
     renderWithQueries,
 } from './finderTestSupport'
+import { hivProgram } from './fixtures/program'
 import { searchFor, settle } from './resultsTestSupport'
 
 it('loads metadata through app-runtime and TanStack Query', async () => {
@@ -68,4 +69,47 @@ it('keeps cached data when request logging rerenders the runtime provider', asyn
     await searchFor('A1')
     await settle()
     await expect.element(page.getByTestId('requests')).toHaveTextContent('3')
+})
+
+it('searches a tracked entity type without a program', async () => {
+    const server = createFakeServer({
+        trackedEntityType: { ...hivProgram, name: 'Person' },
+    })
+    await renderWithQueries(
+        <FinderTestProvider
+            trackedEntityType="personType"
+            server={server}
+            onSelect={vi.fn()}
+        >
+            <FinderForm>
+                <FinderField attribute="artNumber" />
+                <FinderSubmit />
+            </FinderForm>
+            <FinderResults />
+        </FinderTestProvider>
+    )
+    await searchFor('A1')
+    await settle()
+
+    expect(server.requests).toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({
+                resource: 'trackedEntityTypes',
+                id: 'personType',
+            }),
+        ])
+    )
+    expect(server.requests).not.toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({ resource: 'programs' }),
+        ])
+    )
+    const [search] = server.requests.filter(
+        ({ resource }) => resource === 'tracker/trackedEntities'
+    )
+    expect(search?.params).toMatchObject({
+        trackedEntityType: 'personType',
+        filter: ['artNumber:eq:A1'],
+    })
+    expect(search?.params).not.toHaveProperty('program')
 })

@@ -7,10 +7,15 @@ const raw = { interpolation: { escapeValue: false } } as const
 const whatWentWrong = (model: ProgramModel, error: MetadataError): string => {
     const program = model.name
     if (error.kind === 'form-cannot-search') {
-        return i18n.t(
-            "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum.",
-            { program, ...raw }
-        )
+        return model.program
+            ? i18n.t(
+                  "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the program's minimum.",
+                  { program, ...raw }
+              )
+            : i18n.t(
+                  "This form can never search in {{program}}. It has no usable ID field and too few usable fields to reach the tracked entity type's minimum.",
+                  { program, ...raw }
+              )
     }
     const attribute = error.attribute
     const found = attributeOf(model, attribute)
@@ -82,6 +87,16 @@ const searchableList = (model: ProgramModel): string => {
 
 const minimum = (model: ProgramModel): string => {
     const count = Math.max(model.minAttributes, 1)
+    if (!model.program) {
+        return count === 1
+            ? i18n.t(
+                  'This tracked entity type needs 1 detail unless an ID is used.'
+              )
+            : i18n.t(
+                  'This tracked entity type needs {{count}} details unless an ID is used.',
+                  { count, ...raw }
+              )
+    }
     return count === 1
         ? i18n.t('This program needs 1 detail unless an ID is used.')
         : i18n.t('This program needs {{count}} details unless an ID is used.', {
@@ -92,7 +107,8 @@ const minimum = (model: ProgramModel): string => {
 
 /**
  * A full, agent-friendly message for a metadata error: what is wrong, the
- * program's searchable attributes with uids, and its minimum.
+ * program's (or tracked entity type's) searchable attributes with uids, and
+ * its minimum.
  */
 export const describeMetadataError = (
     model: ProgramModel,

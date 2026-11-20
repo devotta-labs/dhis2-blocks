@@ -24,6 +24,28 @@ type CustomResourceFactory = Exclude<
 >
 type ResourceRequest = Parameters<CustomResourceFactory>[1]
 
+/** A program or tracked entity type attribute link, as the API returns it. */
+const toAttributeLink = (attribute: ProgramMetadata['attributes'][number]) => ({
+    searchable: attribute.searchable,
+    displayInList: attribute.displayInList,
+    trackedEntityAttribute: {
+        id: attribute.id,
+        displayName: attribute.label,
+        valueType: attribute.valueType,
+        unique: attribute.unique,
+        optionSet: attribute.options
+            ? {
+                  options: attribute.options.map(({ code, name }) => ({
+                      code,
+                      displayName: name,
+                  })),
+              }
+            : null,
+        blockedSearchOperators: attribute.blockedSearchOperators,
+        minCharactersToSearch: attribute.minCharactersToSearch,
+    },
+})
+
 /** The raw `GET programs/<uid>` response the fixture was normalised from. */
 const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
     displayName: program.name,
@@ -31,28 +53,16 @@ const toProgramResponse = (program: ProgramMetadata): EngineValue => ({
     maxTeiCountToReturn: program.maxTeiCountToReturn,
     trackedEntityType: { id: program.trackedEntityType },
     programTrackedEntityAttributes: program.attributes.map(
-        (attribute, sortOrder) => ({
-            searchable: attribute.searchable,
-            displayInList: attribute.displayInList,
-            sortOrder,
-            trackedEntityAttribute: {
-                id: attribute.id,
-                displayName: attribute.label,
-                valueType: attribute.valueType,
-                unique: attribute.unique,
-                optionSet: attribute.options
-                    ? {
-                          options: attribute.options.map(({ code, name }) => ({
-                              code,
-                              displayName: name,
-                          })),
-                      }
-                    : null,
-                blockedSearchOperators: attribute.blockedSearchOperators,
-                minCharactersToSearch: attribute.minCharactersToSearch,
-            },
-        })
+        (attribute, sortOrder) => ({ ...toAttributeLink(attribute), sortOrder })
     ),
+})
+
+/** The raw `GET trackedEntityTypes/<uid>` response, in attribute order. */
+const toTrackedEntityTypeResponse = (type: ProgramMetadata): EngineValue => ({
+    displayName: type.name,
+    minAttributesRequiredToSearch: type.minAttributesRequiredToSearch,
+    maxTeiCountToReturn: type.maxTeiCountToReturn,
+    trackedEntityTypeAttributes: type.attributes.map(toAttributeLink),
 })
 
 /** A search the fake engine holds open until the test answers it. */
@@ -74,6 +84,8 @@ export interface FakeServerOptions {
     baseUrl?: string
     onRequest?: () => void
     program?: ProgramMetadata
+    /** Served for `GET trackedEntityTypes/<uid>`; the program's rules by default. */
+    trackedEntityType?: ProgramMetadata
     /** Never answers the program request, so the finder stays loading. */
     programPending?: boolean
     programFails?: boolean
@@ -113,6 +125,10 @@ export const createFakeServer = (
                 if (options.programFails)
                     throw new Error('Program request failed')
                 return toProgramResponse(program)
+            case 'trackedEntityTypes':
+                return toTrackedEntityTypeResponse(
+                    options.trackedEntityType ?? program
+                )
             case 'system/info':
                 if (options.systemInfoPending)
                     return new Promise<EngineValue>(() => {})
@@ -146,6 +162,7 @@ export const createFakeServer = (
         baseUrl: options.baseUrl ?? 'https://dhis2.test',
         data: {
             programs: respond,
+            trackedEntityTypes: respond,
             'system/info': respond,
             'tracker/trackedEntities': respond,
         },

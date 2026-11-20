@@ -33,6 +33,12 @@ its place.
 </FinderProvider>
 ```
 
+Pass `orgUnit={clinic.id}` to search only records owned by that unit in the
+program. DHIS2 enforces the signed-in user's access. The form and results
+reset when the clinic changes, and invalid UIDs disable searching. If a clinic
+is required, wait until one is selected to mount the finder: omitting
+`orgUnit` preserves the default search across all accessible units.
+
 Parts: `FinderProvider`, `FinderForm`, `FinderField`, `FinderRangeField`,
 `FinderHint`, `FinderSubmit`, `FinderResults`, `FinderSearching`,
 `FinderEmpty`, `FinderTooMany`, `FinderError`, `FinderList`, `FinderItem`,
@@ -41,6 +47,11 @@ Parts: `FinderProvider`, `FinderForm`, `FinderField`, `FinderRangeField`,
 Hooks, for custom layouts: `useFinderField`, `useFinderRangeField`,
 `useFinderForm`, `useFinderSearch`, `useFinderResults`, `useFinderPerson`,
 `useFinderProgram`.
+
+For one input mapped to multiple text attributes, use
+`useFinderTextSearch(textByAttribute, 'all' | 'any')`. AND sends one search;
+OR requires a selected clinic and sends up to three searches. See the
+one-field example and server-load warning in the docs.
 
 Each `FinderForm` is a TanStack Form, and each field checks its value with a
 Zod schema built from the attribute's metadata. `useFinderForm` returns the
@@ -52,7 +63,7 @@ The block reads DHIS2 app-runtime's `useDataEngine` and runs every request in
 a TanStack Query `queryFn`. Tests can use app-runtime's `CustomDataProvider`.
 
 Program metadata and system info stay fresh for 3 hours. Search results stay
-fresh for 5 minutes, keyed by server URL, program, filters and page, including
+fresh for 5 minutes, keyed by server URL, program, clinic, filters and page, including
 across repeated submissions and finder remounts within the same QueryClient.
 Different server URLs never share cached metadata or results. The host app must
 discard/reset its QueryClient on logout/login; that lifecycle isolates users,

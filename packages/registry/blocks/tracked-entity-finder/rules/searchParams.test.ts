@@ -64,4 +64,18 @@ describe('toSearchParams', () => {
         })
         expect(params).not.toHaveProperty('orgUnits')
     })
+
+    it('sends the selected org unit without changing the validated filters', () => {
+        const search = seal([
+            {
+                attribute: 'artNumber',
+                conditions: [{ op: 'eq', value: 'A1' }],
+            },
+        ])
+        expect(toSearchParams(model, search, 2, 'ClinicA0001')).toEqual({
+            ...toSearchParams(model, search, 2),
+            orgUnitMode: 'SELECTED',
+            orgUnits: 'ClinicA0001',
+        })
+    })
 })

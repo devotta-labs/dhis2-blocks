@@ -1,6 +1,13 @@
 import { createRoot } from 'react-dom/client'
 import { ContextSelector } from '@/components/context-selector'
 import { SpreadsheetGrid } from '@/components/spreadsheet'
+import {
+    FinderField,
+    FinderForm,
+    FinderProvider,
+    FinderResults,
+    FinderSubmit,
+} from '@/components/tracked-entity-finder'
 import { TrackerDataEntry, eventSource } from '@/components/tracker-data-entry'
 import {
     ObservationCard,
@@ -38,6 +45,17 @@ if (root !== null) {
             <TrackerDataEntry source={events}>
                 <SpreadsheetGrid />
             </TrackerDataEntry>
+            <FinderProvider
+                program="WlE2ePrg001"
+                orgUnit="DiszpKrYNg8"
+                onSelect={() => undefined}
+            >
+                <FinderForm>
+                    <FinderField attribute="WlAtText001" />
+                    <FinderSubmit />
+                </FinderForm>
+                <FinderResults />
+            </FinderProvider>
         </>
     )
 }

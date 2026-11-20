@@ -48,3 +48,4 @@ export {
 } from './results/FinderStates'
 export { FinderValue, type FinderValueProps } from './results/FinderValue'
 export type { FieldKind, FieldValue } from './rules/types'
+export { useFinderTextSearch } from './useFinderTextSearch'

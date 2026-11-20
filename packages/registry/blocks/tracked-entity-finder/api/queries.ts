@@ -29,13 +29,15 @@ export const finderKeys = {
         server: string,
         program: string,
         search: ValidatedSearch | undefined,
-        page: number
+        page: number,
+        orgUnit?: string
     ) =>
         [
             ...finderKeys.all,
             'search',
             server,
             program,
+            orgUnit ?? null,
             search?.filters.map(serializeFilter).sort() ?? [],
             page,
         ] as const,
@@ -46,17 +48,29 @@ export const searchQueryOptions = (
     server: string,
     model: ProgramModel,
     search: ValidatedSearch,
-    page: number
+    page: number,
+    orgUnit?: string
 ) =>
     queryOptions({
-        queryKey: finderKeys.search(server, model.program, search, page),
+        queryKey: finderKeys.search(
+            server,
+            model.program,
+            search,
+            page,
+            orgUnit
+        ),
         queryFn: async ({ signal }): Promise<SearchOutcome> => {
             try {
                 const response = await engine.query(
                     {
                         trackedEntityFinderResource: {
                             resource: 'tracker/trackedEntities',
-                            params: toSearchParams(model, search, page),
+                            params: toSearchParams(
+                                model,
+                                search,
+                                page,
+                                orgUnit
+                            ),
                         },
                     },
                     { signal }

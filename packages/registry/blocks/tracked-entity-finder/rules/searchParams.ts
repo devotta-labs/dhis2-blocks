@@ -25,11 +25,14 @@ export const serializeFilter = ({
 export const toSearchParams = (
     model: ProgramModel,
     search: ValidatedSearch,
-    page: number
+    page: number,
+    orgUnit?: string
 ) => ({
     program: model.program,
     filter: search.filters.map(serializeFilter),
-    orgUnitMode: 'ACCESSIBLE',
+    ...(orgUnit === undefined
+        ? { orgUnitMode: 'ACCESSIBLE' }
+        : { orgUnitMode: 'SELECTED', orgUnits: orgUnit }),
     page,
     pageSize: PAGE_SIZE,
     totalPages: true,

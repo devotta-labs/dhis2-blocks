@@ -5,6 +5,11 @@ description: Find one person in a tracker program, within the program's search r
 
 import { ExampleCard } from '../../components/ExampleCard'
 import { InstallCommand } from '../../components/InstallCommand'
+import {
+    Alert,
+    AlertDescription,
+    AlertTitle,
+} from '@/components/dhis2/ui/alert'
 
 <ExampleCard slug="tracked-entity-finder/find-person" />
 
@@ -60,6 +65,31 @@ export function FindPatient({
 this program, when known), and `attributes`, a map from attribute uid to
 value. Searches cover every organisation unit the user
 can search.
+
+### Limit the search to the selected clinic
+
+Pass the selected clinic's organisation unit UID to `orgUnit`:
+
+```tsx
+<FinderProvider program={program} orgUnit={clinic.id} onSelect={onSelect}>
+    <FinderForm>
+        <FinderField attribute={idAttribute} />
+        <FinderHint />
+        <FinderSubmit />
+    </FinderForm>
+    <FinderResults />
+</FinderProvider>
+```
+
+DHIS2 searches records owned by that unit in the program, not its descendants.
+The server still checks the signed-in user's access and the program's search
+rules still apply. Changing clinics clears the form and results; the user
+submits a new search. An empty or malformed UID disables searching instead
+of falling back to all accessible units.
+
+Omit `orgUnit` only when you intend to search across all units the user can
+access. If a clinic is required, render the finder only after a clinic is
+selected. Your app controls any record already opened through `onSelect`.
 
 ## Finding attribute uids
 
@@ -154,6 +184,9 @@ For your own parts inside `FinderProvider`:
   and `select`.
 - `useFinderPerson()` — inside `FinderList`: the current person.
 - `useFinderProgram()` — the program's name and searchable attributes.
+- `useFinderTextSearch(textByAttribute, match)` — one input searched across
+  several text attributes. See
+  [One-field search with AND or OR](#one-field-search-with-and-or-or).
 
 ### Custom fields
 
@@ -215,6 +248,8 @@ set up correctly" and the full message is logged to the console.
 ### FinderProvider
 
 - `program: string` — **required.** The tracker program to search.
+- `orgUnit?: string` — limit searches to the selected clinic. Omit to search
+  all accessible units.
 - `onSelect: (person: FinderPerson) => void` — **required.** Called with the
   person the user picks.
 - `children?: ReactNode` — the forms, results and any of your own UI that uses
@@ -227,3 +262,81 @@ TanStack Query managing requests and caching. Use app-runtime's
 `FinderField` and `FinderRangeField` take `className` and their listed props.
 `FinderSubmit` takes `Button` props. The other parts accept `className` and
 the props of their HTML element.
+
+## One-field search with AND or OR
+
+Some apps give the user one box to type a name into, not a field per
+attribute. Inside `FinderProvider`, `useFinderTextSearch(textByAttribute,
+match)` searches several searchable, non-unique text attributes from that one
+input. You decide which text goes to which attribute, and `match` decides how
+the attributes combine:
+
+- **AND** (`'all'`) finds people where every attribute matches its text. It
+  sends one Tracker search with every filter.
+- **OR** (`'any'`) finds people where at least one attribute matches its
+  text. It sends one Tracker search per attribute, up to three.
+
+<Alert variant="warning" className="not-prose my-6">
+<AlertTitle>
+
+OR can be extremely heavy on the server. Use it with caution.
+
+</AlertTitle>
+<AlertDescription className="[&_code]:font-mono [&_ul]:m-0 [&_ul]:list-disc [&_ul]:pl-5">
+
+Each attribute in an OR search is a separate Tracker search, and a small page
+of results does not limit the work DHIS2 does to find them.
+
+- Prefer AND, or the normal Finder form for an exact ID.
+- Search only when the user submits, never as they type.
+- Require a meaningful minimum length, such as three characters.
+- Measure common names under realistic load before you enable OR in
+  production.
+
+The hook runs OR only within a selected clinic (`orgUnit`), and for at most
+three attributes.
+
+</AlertDescription>
+</Alert>
+
+This example searches first and last name from one **Name** field, within
+one clinic of the demo database:
+
+- **AND:** search for `Linda Bailey`. The first word goes to first name and
+  the rest to last name, in one Tracker search.
+- **OR:** choose **First or last name matches (OR)** and search for `Bailey`.
+  The same text goes to two Tracker searches, one on first name and one on
+  last name.
+
+<ExampleCard slug="tracked-entity-finder/one-field-search" />
+
+The hook renders nothing. Build the form and the results from what it
+returns:
+
+```tsx
+const search = useFinderTextSearch(
+    { [FIRST_NAME]: first, [LAST_NAME]: last },
+    'all' // or 'any'
+)
+```
+
+- `canSearch` — `false` while a search runs, and when the program's search
+  rules don't allow this search. Add your own minimum length on top, as the
+  example does.
+- `submit()` — runs the search. Results are cached, so repeating a recent
+  search sends no request.
+- `status` — `loading`, `idle`, `searching`, `results`, `empty`, `too-many`
+  or `error`.
+- `people` — the people found, each listed once.
+- `select(person)` — calls the provider's `onSelect`.
+
+Every search goes through DHIS2 access checks and the program's search
+rules:
+
+- In OR each attribute is searched on its own, so OR is unavailable when the
+  program requires more than one attribute to search.
+- OR waits for all of its searches. If one fails, the status is `error` and
+  no partial results show.
+- If a search has more than one page of results, or the people found exceed
+  the program's limit, the status is `too-many`. Ask the user to refine; the
+  hook does not fetch more pages.

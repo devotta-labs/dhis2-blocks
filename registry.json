@@ -2171,6 +2171,11 @@
                     "path": "packages/registry/blocks/tracked-entity-finder/rules/types.ts",
                     "type": "registry:file",
                     "target": "@components/tracked-entity-finder/rules/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracked-entity-finder/useFinderTextSearch.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracked-entity-finder/useFinderTextSearch.ts"
                 }
             ],
             "docs": "Wrap the finder in FinderProvider with a program and an onSelect callback. Inside it compose a FinderForm containing FinderField (exact value) and FinderRangeField (number or date range) inputs, one per program attribute uid, plus an optional FinderHint and a FinderSubmit button. Show matches with FinderResults, which holds the state parts FinderSearching, FinderEmpty, FinderTooMany and FinderError, a FinderList of FinderItem rows with FinderValue cells, and FinderPagination. The program's search rules are enforced inside and cannot be loosened by props. Use the useFinder* hooks for custom layouts. See the tracked entity finder docs page for examples."

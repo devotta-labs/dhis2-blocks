@@ -7,13 +7,20 @@ import { useFinderController } from './useFinderController'
 export interface FinderProviderProps {
     /** The program to search in. Changing it resets forms and results. */
     program: string
+    /** Limit the search to this org unit's program records. Omit to search all accessible units. */
+    orgUnit?: string
     /** Called with the person the user picks. */
     onSelect: (person: FinderPerson) => void
     children?: ReactNode
 }
 
-const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
-    const value = useFinderController({ program, onSelect })
+const FinderScope = ({
+    program,
+    orgUnit,
+    onSelect,
+    children,
+}: FinderProviderProps) => {
+    const value = useFinderController({ program, orgUnit, onSelect })
     const empty = Children.count(children) === 0
 
     useEffect(() => {
@@ -36,6 +43,7 @@ const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
  * renders only its children, so any UI inside it can use the finder hooks.
  */
 export function FinderProvider(props: FinderProviderProps) {
-    // A new program starts from nothing: values, forms and results.
-    return <FinderScope key={props.program} {...props} />
+    const { program, orgUnit } = props
+    // Never carry forms, pages or pending results into a different scope.
+    return <FinderScope key={JSON.stringify({ program, orgUnit })} {...props} />
 }

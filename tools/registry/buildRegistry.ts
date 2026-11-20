@@ -19,16 +19,14 @@ const REGISTRY_PATH = join(REPO_ROOT, 'registry.json')
 
 const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
 const THEME_ITEM = 'dhis2-theme'
-// Source imports what an installed project imports, so the CLI's alias
-// rewrite resolves every specifier directly.
 const COMPONENT_IMPORT = '@/components/dhis2/ui/'
 const COMPONENT_TARGET = '@components/dhis2/ui/'
 const BLOCK_IMPORT = '@/components/'
 const BLOCK_TARGET = '@components/'
 
 const SOURCE_FILE = /\.(?:tsx?|css)$/
-const TEST_FILE = /\.(?:test|fixtures)\.tsx?$/
-const NOT_SHIPPED_DIRECTORIES = new Set(['__tests__'])
+const TEST_FILE = /\.(?:test|fixtures?|test-utils)\.tsx?$/
+const NOT_SHIPPED_DIRECTORIES = new Set(['test', '__tests__'])
 const RESOLVE_SUFFIXES = ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
 
 const blockMetadataSchema = z.strictObject({
@@ -44,29 +42,22 @@ type SourceItem = {
     files: { source: string; target: string }[]
 }
 
-const toPosix = (path: string): string => path.split(sep).join('/')
+const toPosix = (path: string) => path.split(sep).join('/')
 
 type ThemeLayers = {
-    /** `@theme` and `@theme inline` declarations, for the app's `@theme inline`. */
     theme: [string, string][]
-    /** Top-level `:root` declarations: the semantic roles' default values. */
     light: [string, string][]
-    /**
-     * What overrides the defaults: an at-rule's rules (the high-contrast block), or a selector's variables (compact
-     * density).
-     */
     css: Record<string, Record<string, string | Record<string, string>>>
 }
 
-const oneLine = (value: string): string =>
+const oneLine = (value: string) =>
     value
         .replace(/\s+/g, ' ')
         .replace(/\(\s+/g, '(')
         .replace(/\s+\)/g, ')')
         .trim()
 
-/** theme.css's three layers, each name without its leading `--`. */
-const parseTheme = (source: string): ThemeLayers => {
+const parseTheme = (source: string) => {
     const layers: ThemeLayers = { theme: [], light: [], css: {} }
     const root = postcss.parse(source)
     root.walkAtRules('theme', (rule) => {
@@ -74,7 +65,6 @@ const parseTheme = (source: string): ThemeLayers => {
             layers.theme.push([prop.slice(2), oneLine(value)])
         })
     })
-    // Anything the registry item cannot carry fails the build instead of vanishing.
     const unsupported = (what: string): never => {
         throw new Error(`theme.css: ${what} has no place in the theme item`)
     }
@@ -93,7 +83,6 @@ const parseTheme = (source: string): ThemeLayers => {
             })
             return
         }
-        // Another selector's variables, such as compact density's: a rule of the item's `css`.
         if (node.type === 'rule') {
             const declarations: Record<string, string> = {}
             node.walkDecls(({ prop, value }) => {
@@ -132,7 +121,7 @@ const parseTheme = (source: string): ThemeLayers => {
     return layers
 }
 
-const listSourceFiles = (directory: string): string[] =>
+const listSourceFiles: (directory: string) => string[] = (directory) =>
     readdirSync(directory, { withFileTypes: true })
         .flatMap((entry) => {
             const path = join(directory, entry.name)
@@ -147,10 +136,10 @@ const listSourceFiles = (directory: string): string[] =>
         })
         .sort()
 
-const componentItems = (): SourceItem[] =>
+const componentItems = () =>
     listSourceFiles(COMPONENTS_DIR)
         .filter((source) => extname(source) !== '.css')
-        .map((source) => ({
+        .map<SourceItem>((source) => ({
             name: basename(source, extname(source)),
             kind: 'component',
             files: [
@@ -161,12 +150,12 @@ const componentItems = (): SourceItem[] =>
             ],
         }))
 
-const blockItems = (): SourceItem[] =>
+const blockItems = () =>
     readdirSync(BLOCKS_DIR, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
         .map((entry) => entry.name)
         .sort()
-        .map((name) => {
+        .map<SourceItem>((name) => {
             const directory = join(BLOCKS_DIR, name)
             const metadata = blockMetadataSchema.parse(
                 JSON.parse(readFileSync(join(directory, 'block.json'), 'utf8'))
@@ -182,7 +171,7 @@ const blockItems = (): SourceItem[] =>
             }
         })
 
-const resolveRelative = (from: string, specifier: string): string | undefined =>
+const resolveRelative = (from: string, specifier: string) =>
     RESOLVE_SUFFIXES.map((suffix) =>
         join(dirname(from), specifier + suffix)
     ).find((path) => existsSync(path) && SOURCE_FILE.test(path))
@@ -192,9 +181,8 @@ const itemDependencies = (
     owners: Map<string, SourceItem>,
     names: Set<string>,
     versions: Record<string, string>
-): Pick<RegistryItem, 'dependencies' | 'registryDependencies'> => {
+) => {
     const external = new Set<string>()
-    // Every item styles itself with the DHIS2 tokens.
     const internal = new Set<string>([THEME_ITEM])
     for (const { source } of item.files) {
         if (extname(source) === '.css') continue
@@ -211,8 +199,6 @@ const itemDependencies = (
                     )
                 }
                 if (owner === item) continue
-                // Components install side by side, so a sibling path holds;
-                // anywhere else the relative path breaks once installed.
                 if (item.kind !== 'component' || owner.kind !== 'component') {
                     throw new Error(
                         `${file} imports ${specifier} from ${owner.name}; import it as ${COMPONENT_IMPORT}${owner.name} or ${BLOCK_IMPORT}${owner.name}`
@@ -241,7 +227,7 @@ const itemDependencies = (
         }
     }
     if (external.has('@dhis2/ui-icons')) {
-        // ui-icons imports prop-types without declaring it in its package metadata.
+        // WARNING: @dhis2/ui-icons uses prop-types without declaring it.
         external.add('prop-types')
     }
     const dependencies = [...external].sort().map((dependency) => {
@@ -262,10 +248,10 @@ const itemDependencies = (
                 .map((name) => ADDRESS_PREFIX + name)
                 .sort(),
         }),
-    }
+    } satisfies Pick<RegistryItem, 'dependencies' | 'registryDependencies'>
 }
 
-const buildRegistry = (): Registry => {
+const buildRegistry = () => {
     const sources = [...componentItems(), ...blockItems()]
     const names = new Set([THEME_ITEM, ...sources.map((item) => item.name)])
     if (names.size !== sources.length + 1) {
@@ -296,7 +282,7 @@ const buildRegistry = (): Registry => {
                 },
                 css: themeLayers.css,
             },
-            ...sources.map((item): RegistryItem => {
+            ...sources.map<RegistryItem>((item) => {
                 const fileType =
                     item.kind === 'component' ? 'registry:ui' : 'registry:file'
                 return {
@@ -321,17 +307,17 @@ const buildRegistry = (): Registry => {
                 }
             }),
         ],
-    }
+    } satisfies Registry
 }
 
-const format = (json: string): string =>
+const format = (json: string) =>
     execFileSync(
         join(REPO_ROOT, 'node_modules', '.bin', 'oxfmt'),
         ['--stdin-filepath=registry.json'],
         { cwd: REPO_ROOT, input: json, encoding: 'utf8' }
     )
 
-const main = (): void => {
+const main = () => {
     const generated = format(JSON.stringify(buildRegistry(), null, 4))
     if (!process.argv.includes('--check')) {
         writeFileSync(REGISTRY_PATH, generated)

@@ -19,7 +19,6 @@ export interface LabSettings {
 
 export const LAB_USER = 'labUser0001'
 
-// The docs' DHIS2 ids, so Live DHIS2 opens the same examples there.
 const NGELEHUN = 'DiszpKrYNg8'
 const KOLISOKOR = 'm7fBMpmVpSM'
 const INPATIENT = 'eBAyeGv0exc'
@@ -30,7 +29,6 @@ const PERSON_ENROLLMENT = 'PE6abx7Zhn0'
 const IMMUNISATION = 'ImmReg00001'
 const IMM_STAGE = 'ImmVaccin01'
 
-// One date column for a dose: the vaccination event of this vaccine and dose.
 const dose = (vaccine: string, dose: string, label = dose) => ({
     field: {
         stage: IMM_STAGE,
@@ -40,7 +38,6 @@ const dose = (vaccine: string, dose: string, label = dose) => ({
     label,
 })
 
-/** The docs' immunisation register example's paper, the lab's own copy: that module needs a browser to import. */
 const immunisationLayout: RegisterLayout = {
     columns: [
         {
@@ -118,14 +115,12 @@ export interface LabPerson {
 }
 
 interface LabProgramData {
-    /** As `programs/<id>` answers it, with every field any of the block's program queries asks for. */
     program: { id: string }
     events: LabEvent[]
     enrollments: LabEnrollment[]
     people: LabPerson[]
     rules: object[]
     variables: object[]
-    /** The records of the row the import refuses when `refuse` is on; an event of a refused enrolment is refused too. */
     refused: string[]
 }
 
@@ -189,7 +184,6 @@ const program = (
     programStages,
 })
 
-/** A rule variable on a data element of the current event. */
 const variable = (name: string, element: DataElement) => ({
     id: `var${name}`.slice(0, 11),
     name,
@@ -229,7 +223,6 @@ const rule = (
 
 const pad = (value: number, length = 2) => String(value).padStart(length, '0')
 const day = (date: string) => `${date}T00:00:00.000`
-// Inpatient morbidity and mortality, as the docs' DHIS2 has it, with six of its data elements.
 const GENDER = dataElement('oZg33kd9taw', 'Gender', 'TEXT', [
     ['Male', 'Male'],
     ['Female', 'Female'],
@@ -249,8 +242,7 @@ const INPATIENT_STAGE = 'Zj7UnCAulEk'
 const AGES = [34, 7, 61, 105, 28, 45, 2, 73, 19, 52, 38, 66, 11, 81]
 const MODES = ['MODDISCH', 'MODDIED', 'MODTRANS', 'MODABSC']
 
-/** Fourteen admissions two days apart, newest first: a page of ten and one more page. */
-const inpatientEvents = (): LabEvent[] =>
+const inpatientEvents = () =>
     AGES.map((age, index) => {
         const female = index % 2 === 0
         const values: Array<[DataElement, string | undefined]> = [
@@ -259,7 +251,6 @@ const inpatientEvents = (): LabEvent[] =>
             [AGE, String(age)],
             [WEIGHT, String(age < 12 ? 8 + age * 3 : 50 + (age % 30))],
             [ADMITTED, `2026-10-${pad(28 - 2 * index)}`],
-            // One active admission is missing a required value.
             [DISCHARGE, index === 1 ? undefined : MODES[index % MODES.length]],
         ]
         return {
@@ -275,7 +266,7 @@ const inpatientEvents = (): LabEvent[] =>
         }
     })
 
-const inpatient = (): LabProgramData => ({
+const inpatient = () => ({
     program: program(
         INPATIENT,
         'Inpatient morbidity and mortality',
@@ -309,7 +300,6 @@ const inpatient = (): LabProgramData => ({
     refused: ['LabInpEv001'],
 })
 
-// The WHO RMNCH Tracker's first and later antenatal visits, with three data elements each.
 const HIV = dataElement('Itl05OEupgQ', 'HIV test result', 'TEXT', [
     ['POSITIVE', 'Positive'],
     ['NEGATIVE', 'Negative'],
@@ -335,7 +325,7 @@ const visit = (
     date: string,
     status: string,
     values: Array<[DataElement, string]>
-): LabEvent => ({
+) => ({
     event,
     program: RMNCH,
     programStage,
@@ -349,7 +339,7 @@ const visit = (
     })),
 })
 
-const person = (): LabProgramData => ({
+const person = () => ({
     program: program(RMNCH, 'WHO RMNCH Tracker', 'WITH_REGISTRATION', [
         stage(
             FIRST_VISIT,
@@ -365,7 +355,6 @@ const person = (): LabProgramData => ({
         ),
     ]),
     events: [
-        // Completed in a stage that blocks entry: read-only until reopened.
         visit('Evahwp3zrQ4', FIRST_VISIT, '2026-03-12', 'COMPLETED', [
             [HIV, 'NEGATIVE'],
             [GESTATION, '12'],
@@ -415,11 +404,9 @@ const person = (): LabProgramData => ({
         }),
     ],
     variables: [variable('diastolic', DIASTOLIC)],
-    // The first visit is read-only, so the first row anyone can change.
     refused: ['yDPqyTvcRpA'],
 })
 
-// The child immunisation register the docs' DHIS2 is seeded with: one repeatable vaccination stage.
 const VACCINE = dataElement('ImmVaccine1', 'Vaccine', 'TEXT', [
     ['BCG', 'BCG'],
     ['OPV', 'OPV'],
@@ -464,7 +451,6 @@ const attribute = (
     },
 })
 
-/** A child enrolled at Ngelehun in October, with the doses given so far. */
 const child = (
     number: number,
     names: [first: string, last: string],
@@ -496,7 +482,7 @@ const child = (
             occurredAt: day(enrolled),
             status: 'ACTIVE',
         },
-        events: doses.map(([vaccine, dose, date], index): LabEvent => ({
+        events: doses.map(([vaccine, dose, date], index) => ({
             event: `ImmEvt${pad(number, 3)}${pad(index + 1)}`,
             program: IMMUNISATION,
             programStage: IMM_STAGE,
@@ -564,12 +550,11 @@ const immunisationProgram = {
     ],
 }
 
-const immunisation = (): LabProgramData => ({
+const immunisation = () => ({
     program: immunisationProgram,
     events: CHILDREN.flatMap(({ events }) => events),
     enrollments: CHILDREN.map(({ enrollment }) => enrollment),
     people: CHILDREN.map(({ person }) => person),
-    // The register's program has no rules: its grid never loads the rule engine.
     rules: [],
     variables: [],
     refused: [

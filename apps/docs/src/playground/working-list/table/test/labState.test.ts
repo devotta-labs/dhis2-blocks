@@ -19,21 +19,21 @@ const REQUEST: RequestLogEntry = {
 
 const withLogs: LabAction[] = [
     { type: 'logRequests', update: () => [REQUEST] },
-    { type: 'noteCallback', entry: 'onRecordClick' },
+    { type: 'noteCallback', entry: 'onRowClick' },
 ]
 const logged = withLogs.reduce(labReducer, initialLabState())
 
-describe('the working list calendar lab state', () => {
-    it('opens on the first preset in lab data, desktop width', () => {
+describe('the working list table lab state', () => {
+    it('opens on the first preset in lab data, full width', () => {
         const state = initialLabState()
         expect(state.mode).toBe('lab')
         expect(state.preset).toBe(PRESETS[0]?.name)
         expect(state.config).toEqual(PRESETS[0]?.config)
-        expect(state.width).toBe('desktop')
+        expect(state.width).toBe('full')
     })
 
     it('opens on the linked preset, or the first for a name it does not know', () => {
-        expect(initialLabState('Visits done').config.data.spread).toBe('past')
+        expect(initialLabState('No records').config.data.records).toBe(0)
         expect(initialLabState('Nothing like this').preset).toBe(
             PRESETS[0]?.name
         )
@@ -42,9 +42,9 @@ describe('the working list calendar lab state', () => {
     it('restarts on a preset, with its config and no old logs', () => {
         const state = labReducer(logged, {
             type: 'pickPreset',
-            preset: presetNamed('Upcoming appointments'),
+            preset: presetNamed('Follow-up visits'),
         })
-        expect(state.preset).toBe('Upcoming appointments')
+        expect(state.preset).toBe('Follow-up visits')
         expect(state.config.data.mode).toBe('event')
         expect(state.run).toBe(1)
         expect(state.requests).toEqual([])
@@ -52,24 +52,12 @@ describe('the working list calendar lab state', () => {
     })
 
     it('applies a view in place, and leaves the preset', () => {
-        const view = { ...logged.config.view, layout: 'both' as const }
+        const view = { ...logged.config.view, pageSize: 50 as const }
         const state = labReducer(logged, { type: 'changeView', view })
         expect(state.preset).toBeUndefined()
         expect(state.config.view).toEqual(view)
         expect(state.run).toBe(0)
         expect(state.requests).toEqual([REQUEST])
-    })
-
-    it('restarts on a new server, and leaves the preset', () => {
-        const server = {
-            ...logged.config.server,
-            calendar: 'ethiopian' as const,
-        }
-        const state = labReducer(logged, { type: 'changeServer', server })
-        expect(state.preset).toBeUndefined()
-        expect(state.config.server.calendar).toBe('ethiopian')
-        expect(state.run).toBe(1)
-        expect(state.requests).toEqual([])
     })
 
     it('restarts on a new network, and leaves the preset', () => {
@@ -79,7 +67,7 @@ describe('the working list calendar lab state', () => {
         expect(state.config.network).toEqual(network)
         expect(state.run).toBe(1)
         expect(state.requests).toEqual([])
-        expect(state.callbacks).toEqual(['onRecordClick'])
+        expect(state.callbacks).toEqual(['onRowClick'])
     })
 
     it('keeps the config when switching to live DHIS2, and restarts', () => {
@@ -104,10 +92,14 @@ describe('the working list calendar lab state', () => {
     })
 
     it('keeps the newest 80 callbacks, newest first', () => {
-        const notes = Array.from({ length: 90 }, (_, index): LabAction => ({
-            type: 'noteCallback',
-            entry: `call ${index}`,
-        }))
+        const notes = Array.from(
+            { length: 90 },
+            (_, index) =>
+                ({
+                    type: 'noteCallback',
+                    entry: `call ${index}`,
+                }) satisfies LabAction
+        )
         const state = notes.reduce(labReducer, initialLabState())
         expect(state.callbacks).toHaveLength(80)
         expect(state.callbacks[0]).toBe('call 89')

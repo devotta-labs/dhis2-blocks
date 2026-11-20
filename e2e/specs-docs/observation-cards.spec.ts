@@ -1,13 +1,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { expect, test } from './docs.fixture'
 
-/**
- * Live Observation Cards preview coverage, against person `Y8aEiTpHSSQ` in the
- * WHO RMNCH Tracker in the Sierra Leone demo database through the docs app's
- * `/dhis2` proxy. The block's states and edge cases are covered by its browser
- * tests with fixtures.
- */
 const SLUG = 'observation-cards/person-vitals'
 
 const haemoglobinCard = (page: Page) =>

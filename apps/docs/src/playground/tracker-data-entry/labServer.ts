@@ -17,7 +17,6 @@ export interface LabRequest {
     data?: unknown
 }
 
-/** The params the lab answers by; the block's fields and modes don't change what it answers. */
 const paramsSchema = z.object({
     program: z.string().optional(),
     orgUnit: z.string().optional(),
@@ -36,7 +35,6 @@ type Params = z.infer<typeof paramsSchema>
 
 const sentValue = z.string().nullable()
 
-/** The flat import the block sends, checked for what the lab reads of it; the rest is kept as sent. */
 const payloadSchema = z.object({
     trackedEntities: z
         .array(
@@ -89,13 +87,11 @@ export const RECORDS = ['tracker']
 
 const REFUSAL = 'The lab’s DHIS2 refuses every change to this row.'
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
     })
 
-/** A comma-separated id list param, or undefined when the request has none. */
 const ids = (value?: string) => value?.split(',')
 
 const page = <T>(items: T[], { page, pageSize }: Params) => {
@@ -106,7 +102,6 @@ const page = <T>(items: T[], { page, pageSize }: Params) => {
     }
 }
 
-/** Held values with the sent ones merged in, as DHIS2 merges an update; a null or empty value deletes one. */
 const merged = <T extends { value: string | null }>(
     held: T[],
     sent: T[],
@@ -184,11 +179,6 @@ const readPeople = (data: LabData, params: Params) => {
     }
 }
 
-/**
- * Saves the import into the run's data, own fields replaced and values merged, but for the refused row, which it
- * reports as DHIS2 reports an object it will not save with `atomicMode=OBJECT`: HTTP 200, status OK, and an error
- * report naming it.
- */
 const save = (
     data: LabData,
     refused: ReadonlySet<string>,

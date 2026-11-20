@@ -42,7 +42,7 @@ const HttpErrorSchema = z.object({
     details: z.object({ httpStatusCode: z.number() }),
 })
 
-const statusOf = (run: () => object): number | undefined => {
+const statusOf = (run: () => object) => {
     try {
         run()
     } catch (error) {

@@ -1,16 +1,13 @@
 import { Check, SegmentedRow, Section, SelectRow } from '../controls'
 import type { LabSettings } from './labData'
 
-type Flags = 'none' | 'inactive' | 'duplicate' | 'both'
-type Access = 'allowed' | 'restricted' | 'missing'
-
-const flagsOf = ({ inactive, potentialDuplicate }: LabSettings): Flags => {
+const flagsOf = ({ inactive, potentialDuplicate }: LabSettings) => {
     if (inactive && potentialDuplicate) return 'both'
     if (inactive) return 'inactive'
     return potentialDuplicate ? 'duplicate' : 'none'
 }
 
-const accessOf = ({ restricted, missing }: LabSettings): Access => {
+const accessOf = ({ restricted, missing }: LabSettings) => {
     if (restricted) return 'restricted'
     return missing ? 'missing' : 'allowed'
 }

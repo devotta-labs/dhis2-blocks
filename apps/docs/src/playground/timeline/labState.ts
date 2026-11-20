@@ -31,20 +31,20 @@ export type LabAction =
       }
     | { type: 'clearRequests' }
 
-// A person in the WHO RMNCH Tracker in the Sierra Leone demo database, as in the docs' case history example.
 const LIVE: Live = { trackedEntity: 'Y8aEiTpHSSQ', programs: '' }
 
-/** Settings that only change props, so the history keeps its data. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>(['locale'])
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -57,7 +57,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -78,7 +81,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             )
             return inPlace ? next : restarted(next)
         }
-        // The history refetches for new ids by itself.
         case 'changeLive':
             return { ...state, live: { ...state.live, ...action.changes } }
         case 'restart':

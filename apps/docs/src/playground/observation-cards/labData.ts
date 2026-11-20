@@ -10,20 +10,17 @@ export const NOT_IN_PROGRAM = ['labMissing1', 'labMissing2', 'labMissing3']
 const VISIT_STAGE = 'labVisitStg'
 const REVIEW_STAGE = 'labReviewSt'
 
-// Legend colours as a DHIS2 admin might set them, each dark or light enough for black or white text to pass AA.
-const RED = '#c62828' // colour-literal: sample DHIS2 legend colour, which is data
-const ORANGE = '#ef6c00' // colour-literal: sample DHIS2 legend colour, which is data
-const YELLOW = '#fbc02d' // colour-literal: sample DHIS2 legend colour, which is data
-const GREEN = '#2e7d32' // colour-literal: sample DHIS2 legend colour, which is data
+const RED = '#c62828' // SAFETY: colour-literal: DHIS2 legend data with AA contrast against black or white.
+const ORANGE = '#ef6c00' // SAFETY: colour-literal: DHIS2 legend data with AA contrast against black or white.
+const YELLOW = '#fbc02d' // SAFETY: colour-literal: DHIS2 legend data with AA contrast against black or white.
+const GREEN = '#2e7d32' // SAFETY: colour-literal: DHIS2 legend data with AA contrast against black or white.
 
 interface Domain {
     min: number
     max: number
     decimals: number
-    /** Band starts, ascending, then the last band's end; no legend set without them. */
     bands?: number[]
     names?: string[]
-    /** Each band's colour, by what it means rather than its position. */
     colours?: string[]
 }
 
@@ -31,14 +28,11 @@ interface ElementSpec {
     name: string
     valueType: string
     unit?: string
-    /** The unit spelled out, for the long label. */
     longUnit?: string
     domain?: Domain
-    /** Coded 1–4 with an option set, like RMNCH's numeric option codes. */
     options?: boolean
 }
 
-/** The data elements a card can show, each with the readings the lab makes up for it. */
 const ELEMENTS = {
     haemoglobin: {
         name: 'Haemoglobin',
@@ -106,7 +100,10 @@ const ELEMENTS = {
 
 export type LabElement = keyof typeof ELEMENTS
 
-const elementSpec = (element: LabElement): ElementSpec => ELEMENTS[element]
+const elementSpec = (element: LabElement) => {
+    const spec: ElementSpec = ELEMENTS[element]
+    return spec
+}
 
 /** What the lab's DHIS2 holds for one card's data element. */
 export interface LabCard {
@@ -169,7 +166,6 @@ export const cardLabel = (card: LabCard) => {
     }
 }
 
-/** mulberry32: a small seeded PRNG, so a preset always looks the same. */
 const seeded = (seed: number) => {
     let state = seed
     return () => {
@@ -194,7 +190,6 @@ const uid = (prefix: string, index: number) =>
 const round = (value: number, decimals: number) =>
     Number(value.toFixed(decimals))
 
-/** Readings' numeric values, oldest first. */
 const numericValues = (
     count: number,
     spread: LabCard['spread'],
@@ -209,7 +204,6 @@ const numericValues = (
             case 'flat':
                 return round(mid, domain.decimals)
             case 'climbing': {
-                // Climbs through every band to land exactly on the top band's start, which belongs to that band.
                 const top = domain.bands?.at(-2) ?? domain.max
                 return round(
                     domain.min + (top - domain.min) * t,
@@ -227,19 +221,13 @@ const numericValues = (
     })
 }
 
-/** One card's values as the tracker API sends them, oldest first; undefined sends none. */
-const cardValues = (
-    card: LabCard,
-    dates: string[],
-    random: () => number
-): Array<string | undefined> => {
+const cardValues = (card: LabCard, dates: string[], random: () => number) => {
     const spec: ElementSpec = ELEMENTS[card.element]
     if (card.neverRecorded) return dates.map(() => undefined)
     if (spec.options) {
         let code = 1
         return dates.map((_, index) => {
             code = Math.min(4, Math.max(1, code + Math.round(random() * 2 - 1)))
-            // Ends on Moderate, so the latest shows a style colour.
             return index === dates.length - 1 ? '3' : String(code)
         })
     }
@@ -257,7 +245,6 @@ const cardValues = (
             case 'BOOLEAN':
                 return booleanValue(card.spread, index, dates.length, random)
             case 'TRUE_ONLY':
-                // An unticked TRUE_ONLY box sends no value at all.
                 return last && card.trueOnlyUntick ? undefined : 'true'
             case 'DATE':
                 return addDays(date, -20 - Math.floor(random() * 20))
@@ -279,7 +266,6 @@ const booleanValue = (
         case 'flat':
             return 'false'
         case 'climbing':
-            // Took up the habit halfway, so the latest is Yes.
             return index >= count / 2 ? 'true' : 'false'
         case 'jumpy':
             return random() < 0.5 ? 'true' : 'false'
@@ -288,7 +274,6 @@ const booleanValue = (
     }
 }
 
-/** Days between visits, oldest first. */
 const gaps = (settings: LabSettings, count: number, random: () => number) =>
     Array.from({ length: count }, () =>
         settings.irregularVisits
@@ -383,7 +368,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
         dates.unshift(addDays(today, offset))
         offset -= steps[index] ?? 14
     }
-    // Each card draws from its own sequence, so changing one card leaves the others' readings alone.
     const values = settings.cards.map((card, index) =>
         cardValues(card, dates, seeded(20261102 + 7919 * (index + 1)))
     )
@@ -402,7 +386,7 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
         fields: Pick<LabEvent, 'programStage' | 'status' | 'dataValues'> & {
             date: string
         }
-    ): LabEvent => ({
+    ) => ({
         event: uid('labEvent', index),
         trackedEntity: LAB_PERSON,
         enrollment: enrollmentOf(Math.min(index, visits - 1)),
@@ -418,7 +402,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     const events = dates.map((date, index) =>
         event(index, {
             date,
-            // Every fourth visit is a specialist review.
             programStage: index % 4 === 3 ? REVIEW_STAGE : VISIT_STAGE,
             status: index === visits - 1 ? 'ACTIVE' : 'COMPLETED',
             dataValues: CARD_ELEMENTS.flatMap((dataElement, card) => {
@@ -428,7 +411,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
         })
     )
     if (settings.scheduledSkipped) {
-        // Values that would stand out if a SCHEDULE or SKIPPED event were counted.
         const outliers = settings.cards.map((card, index) => ({
             dataElement: CARD_ELEMENTS[index] ?? '',
             value: elementSpec(card.element).domain ? '999' : 'MUST NOT SHOW',
@@ -462,7 +444,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
     return {
         program: programJson(settings),
         enrollments,
-        // DHIS2 never sends events from a stage the user cannot read.
         events: events.filter(
             (each) =>
                 !(

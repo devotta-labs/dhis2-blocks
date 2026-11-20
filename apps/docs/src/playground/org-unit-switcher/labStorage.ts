@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { USER_ID } from './labData'
 
-/** The key the block stores the lab user's remembered clinics under. */
 const KEY = `dhis2-blocks:org-unit-switcher:${USER_ID}`
 
 /** Writes the lab user's raw stored value, or removes it. */
@@ -9,9 +8,7 @@ export const writeStored = (raw?: string) => {
     try {
         if (raw === undefined) localStorage.removeItem(KEY)
         else localStorage.setItem(KEY, raw)
-    } catch {
-        // A browser can block storage; the lab then shows it as unavailable.
-    }
+    } catch {}
 }
 
 export const UNAVAILABLE = Symbol('unavailable')

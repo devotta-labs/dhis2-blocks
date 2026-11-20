@@ -23,7 +23,6 @@ interface Props {
     >
 }
 
-/** The cards on a grid of the chosen width. */
 const Cards = ({ cards, settings }: Pick<Props, 'cards' | 'settings'>) => (
     <div
         className="grid gap-4"

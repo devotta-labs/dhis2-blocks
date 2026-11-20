@@ -7,7 +7,7 @@ const blocks = fileURLToPath(
 )
 const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8')
 
-const hasComponents = (dir: string): boolean =>
+const hasComponents: (dir: string) => boolean = (dir) =>
     readdirSync(dir, { withFileTypes: true }).some((entry) =>
         entry.isDirectory()
             ? entry.name !== '__tests__' &&

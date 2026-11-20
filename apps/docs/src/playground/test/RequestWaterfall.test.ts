@@ -2,18 +2,15 @@ import { describe, expect, it } from 'vitest'
 import type { RequestLogEntry } from '../network'
 import { placeBars } from '../RequestWaterfall'
 
-const request = (
-    id: number,
-    started: number,
-    ms?: number
-): RequestLogEntry => ({
-    id,
-    at: '',
-    request: { resource: `request${id}` },
-    started,
-    ms,
-    outcome: ms === undefined ? 'pending' : 'ok',
-})
+const request = (id: number, started: number, ms?: number) =>
+    ({
+        id,
+        at: '',
+        request: { resource: `request${id}` },
+        started,
+        ms,
+        outcome: ms === undefined ? 'pending' : 'ok',
+    }) satisfies RequestLogEntry
 
 describe('placeBars', () => {
     it('spans the first start to the last settle', () => {

@@ -43,7 +43,6 @@ export const TimelineCanvas = ({
         step,
     })
     return (
-        // The block draws on a white page; the lab's canvas follows the docs' theme.
         <div
             dir={locale === 'ar' ? 'rtl' : 'ltr'}
             lang={locale}

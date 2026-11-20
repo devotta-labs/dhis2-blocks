@@ -10,19 +10,11 @@ import {
     type FinderPerson,
 } from '@/components/tracked-entity-finder'
 
-/*
- * WHO RMNCH Tracker in the Sierra Leone demo database. Replace with your
- * program's uids. List them with:
- * GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTrackedEntityAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
- */
 const PROGRAM = 'WSGAb5XwJ3Y'
-/** A unique, searchable attribute: the person's ID. */
 const ID_ATTRIBUTE = 'lZGmxYbs97q'
-/** Searchable attributes for people without their ID to hand. */
 const FIRST_NAME = 'w75KJ2mc4zz'
 const DATE_OF_BIRTH = 'gHGyrwKPzej'
 
-/** The first form: one exact ID. */
 function SearchById({ onNoId }: { onNoId: () => void }) {
     return (
         <FinderForm>
@@ -38,7 +30,6 @@ function SearchById({ onNoId }: { onNoId: () => void }) {
     )
 }
 
-/** The fallback form: first name and date of birth. */
 function SearchByDetails({ onSearchById }: { onSearchById: () => void }) {
     return (
         <FinderForm>
@@ -59,6 +50,10 @@ function SearchByDetails({ onSearchById }: { onSearchById: () => void }) {
  * Find a person by ID, with a "No ID?" fallback to first name and date of
  * birth. Two explicit forms, one shown at a time; swapping keeps the results
  * until the next Search.
+ *
+ * WHO RMNCH Tracker in the Sierra Leone demo database. Replace with your
+ * program's uids. List them with:
+ * GET /api/programs/<program>?fields=name,minAttributesRequiredToSearch,programTrackedEntityAttributes[searchable,displayInList,trackedEntityAttribute[id,displayName,valueType,unique]]
  */
 export default function FindPerson() {
     const [hasId, setHasId] = useState(true)
@@ -75,8 +70,7 @@ export default function FindPerson() {
 
                 <FinderResults />
 
-                {/* Replace with what your app does next, such as opening the
-                    person's record. */}
+                {}
                 <p
                     className="text-sm text-dhis2-muted-foreground"
                     aria-live="polite"

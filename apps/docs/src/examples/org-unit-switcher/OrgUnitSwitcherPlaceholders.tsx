@@ -17,10 +17,10 @@ export const OrgUnitSwitcherSidebarPlaceholder = () => (
         <span className="sr-only" role="status">
             Loading the organisation unit switcher…
         </span>
-        <div className="bg-dhis2-sidebar px-3 py-4 md:w-60">
+        <div className="bg-dhis2-background-subtle px-3 py-4 md:w-60">
             <div className="flex min-h-9 items-center gap-2 p-1">
-                <Skeleton className="size-7 shrink-0 bg-dhis2-sidebar-accent" />
-                <Skeleton className="h-4 flex-1 bg-dhis2-sidebar-accent" />
+                <Skeleton className="size-7 shrink-0" />
+                <Skeleton className="h-4 flex-1" />
             </div>
         </div>
         <div className="flex-1 p-6">

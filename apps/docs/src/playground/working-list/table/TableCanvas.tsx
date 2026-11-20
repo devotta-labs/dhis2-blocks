@@ -25,7 +25,6 @@ export const TableCanvas = ({
     note,
 }: Props) => (
     <WorkingList
-        // The page size is a default, so a new choice remounts the list.
         key={view.pageSize}
         programId={programId}
         orgUnitId={orgUnitId}

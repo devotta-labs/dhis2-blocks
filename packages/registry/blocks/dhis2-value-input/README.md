@@ -19,10 +19,12 @@ search are exported for blocks that build their own editing surface, as `spreads
 in the docs for the props, the kinds and examples.
 
 Pop-up and form editors share a few host callbacks. `report(value, problem?)` runs on every edit. The host commits
-when focus leaves, or keeps the problem's text as the draft if it cannot be saved. `save(value)` returns
-`invalid` for a refused save, `unchanged` for the stored value, or `queued` when accepted. In both callbacks,
-`null` clears the value. An optional `announce` callback replaces the shared screen-reader announcer.
+when focus leaves, or keeps the problem's text as the draft if it cannot be saved. Without a `problem`, reporting
+`null` means the field is empty; with a `problem`, it means the draft is invalid, not that the value should be cleared.
+`save(null)` requests a clear. `save(value)` returns `invalid` for a refused save, `unchanged` for the stored value,
+or `queued` when accepted. An optional `announce` callback replaces the shared screen-reader announcer.
 
-File and image editors show the stored id when no `fileName` is provided. A `fileUrl` enables preview and download.
+File and image editors use the stored id as the file label when no `fileName` is provided. With a `fileUrl`,
+the file editor offers a download. The image editor shows a preview and offers the download if the preview fails.
 Set `offline` when the server is unreachable to block uploads. Supply `uploads` to share upload state with the host,
 or let each editor own and cancel its uploads when it unmounts.

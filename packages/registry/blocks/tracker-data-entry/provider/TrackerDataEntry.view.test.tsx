@@ -1,4 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
+import { setBrowserOffline } from '../../../test/network-status.test-utils'
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import type { Field } from '@/components/dhis2-value-types'
@@ -11,14 +12,13 @@ import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {
     cleanUp,
     HIDDEN_FIELD,
-    holdPaint,
     KEY,
     later,
     memorySource,
     mount,
     visit,
     visitForm,
-} from './__tests__/rig'
+} from './test/rig'
 
 afterEach(cleanUp)
 
@@ -28,8 +28,7 @@ const EVENT_DATE: TrackerColumn = {
     field: { valueType: 'DATE' },
 }
 
-/** The visits with an event date first; visit 1 happened on 2026-10-20, visit 2 has no date yet. */
-const datedVisits = (): LoadedForm => {
+const datedVisits: () => LoadedForm = () => {
     const form = visitForm({
         values: [[cellKey('r1', 'occurredAt'), '2026-10-20']],
     })
@@ -65,7 +64,6 @@ test('a row is named by its event date in the system’s format, and a new row o
     const headers = page.getByRole('rowheader')
     await expect.element(headers.nth(0)).toHaveTextContent('20-10-2026')
     await expect.element(headers.nth(1)).toHaveTextContent('Visit 2')
-    // Its cells are named by it.
     await expect
         .element(page.getByRole('textbox', { name: 'Children 20-10-2026' }))
         .toBeInTheDocument()
@@ -76,7 +74,6 @@ test('a row is named by its event date in the system’s format, and a new row o
     control(cellKey(added, 'occurredAt')).focus()
     await userEvent.keyboard('21-10-2026{Enter}')
     await expect.element(headers.nth(2)).toHaveTextContent('21-10-2026')
-    // The summary names the rows the same way; a message that names its field is not given the field again.
     await expect
         .element(
             page.getByRole('link', { name: '21-10-2026: Children is required' })
@@ -87,7 +84,6 @@ test('a row is named by its event date in the system’s format, and a new row o
             page.getByRole('link', { name: 'Visit 2: Children is required' })
         )
         .toBeInTheDocument()
-    // The form's tables, for a host to lay out its own controls by.
     expect(view().tables).toBe(context().tables)
 })
 
@@ -131,7 +127,6 @@ test('a form the server refuses to load says the server’s own reason', async (
     const { view } = await mount(
         {
             ...source,
-            // What the platform throws for a 400 with DHIS2's error body.
             load: async () => {
                 throw new FetchError({
                     type: 'unknown',
@@ -191,7 +186,6 @@ test('row headers mark completed and scheduled events', async () => {
             page.getByRole('rowheader', { name: '2026-10-23', exact: true })
         )
         .toBeVisible()
-    // The marker is the row's, not part of every cell's name.
     await expect
         .element(
             page.getByRole('textbox', {
@@ -206,7 +200,6 @@ const CHC = 'DiszpKrYNg8'
 const MCHP = 'FwKJ7gYEv8U'
 const PLACE: Field = { valueType: 'ORGANISATION_UNIT' }
 const FILE: Field = { valueType: 'FILE_RESOURCE' }
-// A file DHIS2 holds for the event, with the name the form loaded for it.
 const STORED = 'Yqp5K9rz3I2'
 const STORED_NAME = 'doc.pdf'
 const NAMES = new Map([[STORED, STORED_NAME]])
@@ -243,14 +236,12 @@ test('a cell shows the org unit name, not its id', async () => {
         }).source
     )
     expect(control(named)).toHaveValue('Ngelehun CHC')
-    // An org unit the form has no name for shows its id.
     expect(control(unnamed)).toHaveValue(MCHP)
 })
 
 const SCAN = cellKey('r1', 'c4')
 
-/** The visits with a file column first; visit 1's scan is a file DHIS2 holds for the event. */
-const scanForm = (): LoadedForm => {
+const scanForm: () => LoadedForm = () => {
     const form = visitForm({ values: [[SCAN, STORED]] })
     const [table] = form.tables
     const column: TrackerColumn = { id: 'c4', label: 'Scan', field: FILE }
@@ -290,8 +281,7 @@ test('a file cell shows the name the form loaded, and asks for none itself', asy
 
 test('offline, the file editor says files cannot be uploaded; an event’s file downloads from the event', async () => {
     const { server, view } = await mount(memorySource(scanForm()).source)
-    vi.spyOn(Navigator.prototype, 'onLine', 'get').mockReturnValue(false)
-    window.dispatchEvent(new Event('offline'))
+    await setBrowserOffline(true)
     await expect.poll(() => view().sync).toBe('offline')
     control(SCAN).focus()
     await userEvent.keyboard('{F2}')
@@ -313,10 +303,11 @@ test('offline, the file editor says files cannot be uploaded; an event’s file 
 test('complete refuses a record whose error was committed in the same task, before the summary was painted', async () => {
     const memory = memorySource(visitForm({ values: [['r1.c1', '1']] }))
     const { context, view } = await mount(memory.source)
-    const paint = holdPaint()
+    const beforeCommit = view().summary
     expect(context().store.getState().commit(cellKey('r1', 'c1'), 'abc')).toBe(
         'invalid'
     )
+    expect(view().summary).toBe(beforeCommit)
     expect(await view().complete('r1')).toEqual([
         {
             sourceKey: KEY,
@@ -326,5 +317,4 @@ test('complete refuses a record whose error was committed in the same task, befo
         },
     ])
     expect(memory.statuses).toEqual([])
-    paint.run()
 })

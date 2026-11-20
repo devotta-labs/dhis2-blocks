@@ -8,16 +8,15 @@ import inpatientProgram from '../sources/test/fixtures/inpatient-program.json'
 import meAdmin from '../sources/test/fixtures/me-admin.json'
 import { eventSource } from '../sources/eventSource'
 import type { LoadedForm } from '../sources/types'
-import { cleanUp, memorySource, mount, USER, visitForm } from './__tests__/rig'
-import { rulesFor } from './__tests__/rmnchRig'
+import { cleanUp, memorySource, mount, USER, visitForm } from './test/rig'
+import { rulesFor } from './test/rmnchRig'
 
 afterEach(cleanUp)
 beforeEach(() => performance.clearMeasures('data-entry:rules'))
 
-/** What the server sends: plain JSON, no `undefined` members. */
 const json = <T,>(body: T) => z.json().parse(JSON.parse(JSON.stringify(body)))
 
-const formWith = (hasRules: boolean): LoadedForm => ({
+const formWith: (hasRules: boolean) => LoadedForm = (hasRules) => ({
     ...visitForm(),
     rules: {
         programId: RMNCH.programId,
@@ -28,13 +27,11 @@ const formWith = (hasRules: boolean): LoadedForm => ({
     },
 })
 
-// The spy sees every import of the engine's chunk; the second test shows it does see one.
 test('a program without rules never loads the engine', async () => {
     const load = vi.spyOn(ruleEngineChunk, 'load')
     await mount(memorySource(formWith(false)).source, {
         data: { ...rulesFor(), programRules: { programRules: [] } },
     })
-    // The rules are ready once their metadata has said there are none.
     await expect
         .poll(() => performance.getEntriesByName('data-entry:rules', 'measure'))
         .toHaveLength(1)
@@ -43,17 +40,20 @@ test('a program without rules never loads the engine', async () => {
 
 test('a program with rules loads the engine as soon as the form says so, before its rules arrive', async () => {
     const load = vi.spyOn(ruleEngineChunk, 'load')
+    const requestingRules = Promise.withResolvers<void>()
     await mount(memorySource(formWith(true)).source, {
-        // The rules never arrive, so only the form's word can have asked for the engine.
         data: {
             ...rulesFor(),
-            programRules: () => new Promise<never>(() => {}),
+            programRules: () => {
+                requestingRules.resolve()
+                return new Promise<never>(() => {})
+            },
         },
     })
-    await expect.poll(() => load.mock.calls.length).toBe(1)
+    await requestingRules.promise
+    expect(load).toHaveBeenCalledTimes(1)
 })
 
-/** The inpatient events through the real source, with `programRules` answered as given. */
 const mountInpatient = (programRules: () => Promise<never>) =>
     mount(
         eventSource({

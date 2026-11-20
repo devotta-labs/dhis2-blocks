@@ -1,4 +1,5 @@
 /// <reference types="@vitest/browser-playwright" />
+import { setBrowserOffline } from '../../../test/network-status.test-utils'
 import { page, userEvent } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
 import { control, paste } from '@/components/spreadsheet/grid/test/gridRig'
@@ -19,7 +20,7 @@ import {
     USER,
     visit,
     visitForm,
-} from './__tests__/rig'
+} from './test/rig'
 import { liveRegion } from '../../../test/liveRegion'
 
 afterEach(cleanUp)
@@ -45,7 +46,6 @@ test('a typed value is saved on this device, then saved', async () => {
     control(CHILDREN).focus()
     await userEvent.keyboard('5{Enter}')
     await expect.poll(() => notesOf(CHILDREN)).toContain('Saved on this device')
-    // On the device, with what the save needs to know of its row.
     await expect
         .poll(() => records(server, KEY))
         .toMatchObject([
@@ -76,7 +76,6 @@ test('unsent changes come back after the provider remounts', async () => {
     memory.hold()
     const first = await mount(memory.source)
     await userEvent.click(page.getByRole('button', { name: 'Add event' }))
-    // The new row's first open cell has focus.
     await userEvent.keyboard('3{Enter}')
     const added = first.context().tables[0].rows.at(-1)?.id ?? ''
     await expect
@@ -103,7 +102,6 @@ test('unsent changes come back after the provider remounts', async () => {
     ])
     expect(notesOf(cellKey(added, 'c1'))).toContain('Saved on this device')
     expect(control(cellKey(added, 'c1'))).toHaveValue('3')
-    // The restored row is closed where new rows are.
     expect(() => control(cellKey(added, 'c3'))).toThrow()
 })
 
@@ -119,7 +117,6 @@ test('the form loads once per mount: an app-wide invalidation never loads it aga
     expect(control(CHILDREN)).toHaveValue('5')
     await first.screen.unmount()
 
-    // A remount loads the form, and asks who is signed in, again.
     const second = await mount(memory.source, {
         server: first.server,
         client: first.client,
@@ -196,7 +193,6 @@ test('complete checks only the row it completes', async () => {
     const { view } = await mount(memory.source)
     control(cellKey('r10', 'c1')).focus()
     await userEvent.keyboard('abc{Enter}')
-    // `r10.` starts with `r1`: its error is not `r1`'s.
     expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
     expect(await view().complete('r10')).toEqual([
         {
@@ -216,7 +212,8 @@ test('completing a row sends its unsent values first', async () => {
     control(CHILDREN).focus()
     await userEvent.keyboard('2{Enter}')
     const completing = view().complete('r1')
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     await later(100)
     expect(memory.statuses).toEqual([])
     memory.release()
@@ -244,13 +241,11 @@ test('a status saved in this session changes what the row allows', async () => {
         control(cellKey(row, 'c1')).hasAttribute('readonly')
     expect([locked('r1'), locked('r2')]).toEqual([false, true])
 
-    // Completed here, in a stage that blocks entry: read-only, and the user may reopen it.
     expect(await view().complete('r1')).toMatchObject([{ result: 'saved' }])
     await expect.poll(() => locked('r1')).toBe(true)
     expect(notesOf(CHILDREN)).toContain(BLOCKED)
     expect(await view().reopen('r1')).toMatchObject([{ result: 'saved' }])
     await expect.poll(() => locked('r1')).toBe(false)
-    // Completed when loaded: editable again once reopened.
     expect(await view().reopen('r2')).toMatchObject([{ result: 'saved' }])
     await expect.poll(() => locked('r2')).toBe(false)
     expect(memory.statuses).toEqual([
@@ -276,8 +271,8 @@ test('completing asks again who is signed in once the row’s changes are sent',
     control(CHILDREN).focus()
     await userEvent.keyboard('2{Enter}')
     const completing = view().complete('r1')
-    await expect.poll(() => memory.sent).toHaveLength(1)
-    // Someone else signs in while the row's changes are on their way.
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     user = 'userB'
     memory.release()
     expect(await completing).toMatchObject([
@@ -346,18 +341,17 @@ test('completing is refused at once offline, and going offline ends the wait for
             reason: 'You are offline',
         },
     ]
-    const online = vi.spyOn(Navigator.prototype, 'onLine', 'get')
-    online.mockReturnValue(false)
+    await setBrowserOffline(true)
     expect(await view().complete('r1')).toEqual(offline)
 
-    online.mockReturnValue(true)
+    await setBrowserOffline(false)
     control(CHILDREN).focus()
     await userEvent.keyboard('2{Enter}')
-    await expect.poll(() => memory.sent).toHaveLength(1)
+    await memory.saveCount(1)
+    expect(memory.sent).toHaveLength(1)
     const completing = view().complete('r1')
     await later(200)
-    online.mockReturnValue(false)
-    window.dispatchEvent(new Event('offline'))
+    await setBrowserOffline(true)
     expect(
         await Promise.race([
             completing,
@@ -426,7 +420,6 @@ test('a status waits while any tab holds the sync lock, so no save read before i
         })
     )
     const { server, view } = await mount(memory.source)
-    // Another tab's loop, sending.
     const holder = Promise.withResolvers<void>()
     await new Promise<void>((granted) => {
         void navigator.locks.request(
@@ -496,8 +489,7 @@ const SYMPTOMS: TrackerColumn = {
     },
 }
 
-/** The form with a multi-select column first, where its editor fits the narrow test page. */
-const withSymptoms = (form: LoadedForm): LoadedForm => {
+const withSymptoms: (form: LoadedForm) => LoadedForm = (form) => {
     const [table] = form.tables
     return {
         ...form,
@@ -536,7 +528,6 @@ test('a multi-select keeps a hidden option it holds when another is unchecked', 
     }))
     control(key).focus()
     await userEvent.keyboard('{Enter}')
-    // The hidden option stays listed, checked; unchecking the other leaves it alone.
     await expect
         .element(page.getByRole('checkbox', { name: 'Charlie' }))
         .toBeChecked()
@@ -575,12 +566,10 @@ test('two forms on one page keep their own ids and share the live regions', asyn
         }
     )
     await expect.poll(() => document.querySelectorAll('table').length).toBe(2)
-    // Both forms show the cell, each under an id of its own.
     const cells = document.querySelectorAll(`[id$="-cell-${CHILDREN}"]`)
     expect(new Set([...cells].map(({ id }) => id)).size).toBe(2)
     const ids = [...document.querySelectorAll('[id]')].map(({ id }) => id)
     expect(ids.filter((id, at) => ids.indexOf(id) !== at)).toEqual([])
-    // A refused value is an error, said in the one assertive region the page shares.
     const region = liveRegion('assertive')
     control(CHILDREN).focus()
     await userEvent.keyboard('abc{Enter}')

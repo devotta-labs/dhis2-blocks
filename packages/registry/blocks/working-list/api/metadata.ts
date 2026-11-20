@@ -165,25 +165,21 @@ export const fieldsForConfiguration = (
 const metadataLabel = (label: string | null | undefined) =>
     label?.trim() ? label : undefined
 
-const withMetadataLabel = (
+const withMetadataLabel: (
     field: WorkingListField,
     label: string | null | undefined
-): WorkingListField => {
+) => WorkingListField = (field, label) => {
     const resolved = metadataLabel(label)
     return resolved
         ? { ...field, displayName: resolved, displayNameIsMetadata: true }
         : field
 }
 
-export const buildProgramFieldCatalog = ({
-    program,
-    capabilities,
-    hasSelectedOrgUnit,
-}: {
+export const buildProgramFieldCatalog: (options: {
     program: TrackerProgram
     capabilities: WorkingListCapabilities
     hasSelectedOrgUnit: boolean
-}): ProgramFieldCatalog => {
+}) => ProgramFieldCatalog = ({ program, capabilities, hasSelectedOrgUnit }) => {
     const parsedProgram = TrackerProgramSchema.parse(program)
     const fields = new Map<string, WorkingListField>()
     systemColumnFields.forEach((field) => fields.set(field.id, field))

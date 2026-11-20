@@ -9,19 +9,19 @@ import {
 import type { NormalizedSavedWorkingList } from './savedListContracts'
 import { normalizeSavedWorkingListResource } from './savedListNormalization'
 
-export const fetchSavedWorkingLists = async ({
-    client,
-    programId,
-    metadata,
-    parsingContext,
-    signal,
-}: {
+export const fetchSavedWorkingLists: (options: {
     client: WorkingListClient
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
     signal?: AbortSignal
-}): Promise<NormalizedSavedWorkingList[]> => {
+}) => Promise<NormalizedSavedWorkingList[]> = async ({
+    client,
+    programId,
+    metadata,
+    parsingContext,
+    signal,
+}) => {
     const commonParams = {
         filter: `program.id:eq:${programId}`,
         paging: false,

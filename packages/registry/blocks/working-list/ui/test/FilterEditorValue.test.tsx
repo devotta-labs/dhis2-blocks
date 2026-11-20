@@ -13,7 +13,9 @@ const unusedClient: WorkingListClient = {
     mutate: () => Promise.reject(new Error('Unexpected mutation')),
 }
 
-const field = (overrides: Partial<WorkingListField>): WorkingListField => ({
+const field: (overrides: Partial<WorkingListField>) => WorkingListField = (
+    overrides
+) => ({
     id: 'firstName',
     displayName: 'First name',
     source: 'trackedEntityAttribute',

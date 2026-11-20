@@ -27,7 +27,7 @@ const renderMenu = async ({
     createPending?: boolean
 }) => {
     const onDownload = vi.fn()
-    const onSaveAs = vi.fn(async () => undefined)
+    const onSaveAs = vi.fn<(name: string) => Promise<string | undefined>>()
     const onUpdate = vi.fn()
     const screen = await render(
         <WorkingListTextProvider translate={(message) => message}>

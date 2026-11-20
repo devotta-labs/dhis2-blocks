@@ -1,6 +1,6 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
-import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
+import { RMNCH } from '@/components/program-rules/test/rmnch'
 import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'

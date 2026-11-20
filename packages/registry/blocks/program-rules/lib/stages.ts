@@ -1,10 +1,10 @@
 import type { ProgramRulesMetadata } from './types'
 
 /** The metadata with only the rules that apply to a stage: program-wide ones and the stage's own. */
-export const metadataForStage = (
+export const metadataForStage: (
     metadata: ProgramRulesMetadata,
     programStageId: string
-): ProgramRulesMetadata => ({
+) => ProgramRulesMetadata = (metadata, programStageId) => ({
     ...metadata,
     rules: metadata.rules.filter(
         (rule) =>
@@ -14,9 +14,9 @@ export const metadataForStage = (
 })
 
 /** The metadata with only the program-wide rules: those an enrolment runs. */
-export const metadataForEnrollment = (
+export const metadataForEnrollment: (
     metadata: ProgramRulesMetadata
-): ProgramRulesMetadata => ({
+) => ProgramRulesMetadata = (metadata) => ({
     ...metadata,
     rules: metadata.rules.filter((rule) => rule.programStageId === undefined),
 })

@@ -1,49 +1,53 @@
 import { renderHook } from 'vitest-browser-react'
-import {
-    preloadRuleEngine,
-    ruleEngineChunk,
-    useRuleEngine,
-} from './loadRuleEngine'
+import { setBrowserOffline } from '../../../test/network-status.test-utils'
+import { createRuleEngineLoader, ruleEngineChunk } from './loadRuleEngine'
 
-afterEach(() => vi.restoreAllMocks())
+const failedModuleImport = () => {
+    const url = URL.createObjectURL(
+        new Blob(['export {}'], { type: 'text/javascript' })
+    )
+    URL.revokeObjectURL(url)
+    return import(/* @vite-ignore */ url)
+}
 
-// In its own file: once the engine has loaded, every later use on the page has it at once.
 test('a failed preload is forgotten, so the next attempt tries again', async () => {
-    const load = vi
-        .spyOn(ruleEngineChunk, 'load')
-        .mockRejectedValue(new TypeError('Failed to fetch the chunk'))
-    preloadRuleEngine()
-    await expect.poll(() => load.mock.calls.length).toBe(1)
-    // Asking again until the failure has settled: a failure that was kept would never import again.
-    await expect
-        .poll(() => {
-            preloadRuleEngine()
-            return load.mock.calls.length
-        })
-        .toBeGreaterThan(1)
+    let attempts = 0
+    const { load, preload } = createRuleEngineLoader(() => {
+        attempts += 1
+        return failedModuleImport()
+    })
+
+    preload()
+    await expect(load()).rejects.toBeInstanceOf(TypeError)
+    expect(attempts).toBe(1)
+    preload()
+    await expect(load()).rejects.toBeInstanceOf(TypeError)
+    expect(attempts).toBe(2)
 })
 
 test('a failed engine import is tried again by the next mount, and when the connection comes back', async () => {
-    const fetchChunk = ruleEngineChunk.load
-    const load = vi
-        .spyOn(ruleEngineChunk, 'load')
-        .mockRejectedValue(new TypeError('Failed to fetch the chunk'))
-    const first = await renderHook(() => useRuleEngine(true))
+    let attempts = 0
+    const { useEngine } = createRuleEngineLoader(() => {
+        attempts += 1
+        return navigator.onLine ? ruleEngineChunk.load() : failedModuleImport()
+    })
+    await setBrowserOffline(true)
+    const first = await renderHook(() => useEngine(true))
     await expect
-        .poll(() => first.result.current.error?.message)
-        .toBe('Failed to fetch the chunk')
+        .poll(() => first.result.current.error)
+        .toBeInstanceOf(TypeError)
     await first.unmount()
 
-    const second = await renderHook(() => useRuleEngine(true))
-    await expect.poll(() => load.mock.calls.length).toBe(2)
+    const second = await renderHook(() => useEngine(true))
     await expect
-        .poll(() => second.result.current.error?.message)
-        .toBe('Failed to fetch the chunk')
+        .poll(() => second.result.current.error)
+        .toBeInstanceOf(TypeError)
+    expect(attempts).toBe(2)
 
-    load.mockImplementation(fetchChunk)
-    window.dispatchEvent(new Event('online'))
+    await setBrowserOffline(false)
     await expect
         .poll(() => second.result.current.engine, { timeout: 10_000 })
         .toBeDefined()
+    expect(attempts).toBe(3)
     expect(second.result.current.error).toBeUndefined()
 })

@@ -25,32 +25,22 @@ export interface ExpressionReference {
     fn?: string
 }
 
-// The engine's own collectors (ExpressionJs) are not exported from the
-// package entry, so this small scanner stands in for them. A test checks it
-// against the engine's parser on real and generated metadata. Every reader of
-// expressions (the dependency graph, condition displays) goes through it, so
-// there is one grammar to keep in step with the engine.
 const VARIABLE_FUNCTIONS =
     'hasValue|count|countIfValue|countIfZeroPos|countIfCondition|maxValue|minValue|lastEventDate'
 const REFERENCE = new RegExp(
     [
-        // 1: function, 3: quoted name, 4: #{name} or A{name} argument
         `d2:(${VARIABLE_FUNCTIONS})\\(\\s*(?:(['"])(.+?)\\2|[#A]\\{([^{}]+)\\})`,
-        // 6: org unit group
         `d2:inOrgUnitGroup\\(\\s*(['"])(.+?)\\5`,
-        // 7: variable
         `[#A]\\{([^{}]+)\\}`,
-        // 8: program variable
         `V\\{([^{}]+)\\}`,
-        // 9: constant
         `C\\{([^{}]+)\\}`,
     ].join('|'),
     'g'
 )
 
-const reference = (
+const reference: (
     match: RegExpExecArray
-): Omit<ExpressionReference, 'start' | 'end'> | undefined => {
+) => Omit<ExpressionReference, 'start' | 'end'> | undefined = (match) => {
     const [, fn, , quoted, braced, , group, variable, program, constant] = match
     const name = (
         quoted ??
@@ -78,9 +68,9 @@ const reference = (
 }
 
 /** Every reference in the expression, in order of appearance, with its position. */
-export const expressionReferences = (
+export const expressionReferences: (
     expression: string
-): ExpressionReference[] =>
+) => ExpressionReference[] = (expression) =>
     [...expression.matchAll(REFERENCE)].flatMap((match) => {
         const found = reference(match)
         return found === undefined
@@ -105,7 +95,9 @@ const namesOf = (
     ),
 ]
 
-export const scanExpression = (expression: string): ExpressionReferences => {
+export const scanExpression: (expression: string) => ExpressionReferences = (
+    expression
+) => {
     const references = expressionReferences(expression)
     return {
         variables: namesOf(references, 'variable'),

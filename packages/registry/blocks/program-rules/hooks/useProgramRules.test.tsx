@@ -1,6 +1,6 @@
 import { renderHook } from 'vitest-browser-react'
-import { RMNCH, rmnchInput, rmnchResponses } from '../__tests__/rmnch'
-import { serve } from '../__tests__/serve'
+import { RMNCH, rmnchInput, rmnchResponses } from '../test/rmnch'
+import { serve } from '../test/serve'
 import { programRulesQueryKeys } from './queryKeys'
 import { useProgramRuleContext } from './useProgramRuleContext'
 import { useProgramRuleEvaluator } from './useProgramRuleEvaluator'
@@ -16,7 +16,7 @@ const currentEvent = (values: Record<string, string | null> = {}) =>
 const options = (
     input: ProgramRulesInput,
     overrides: Partial<UseProgramRulesOptions> = {}
-): UseProgramRulesOptions => ({
+) => ({
     programId: RMNCH.programId,
     programStageId: RMNCH.stageId,
     enrollmentId: RMNCH.enrollmentId,
@@ -164,7 +164,7 @@ describe('useProgramRules', () => {
     it('stays ready when a background refetch fails', async () => {
         const { requests, wrapper, failing, queryClient } =
             serve(rmnchResponses)
-        const { result } = await renderHook(
+        const { result, rerender } = await renderHook(
             () => useProgramRules(options({ event: currentEvent() })),
             { wrapper }
         )
@@ -174,8 +174,14 @@ describe('useProgramRules', () => {
         await queryClient.invalidateQueries({
             queryKey: programRulesQueryKeys.all,
         })
-        await expect.poll(() => requests.length).toBeGreaterThan(before)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(requests.slice(before)).toContain('programRules')
+        expect(
+            queryClient
+                .getQueryCache()
+                .findAll({ queryKey: programRulesQueryKeys.all })
+                .some((query) => query.state.status === 'error')
+        ).toBe(true)
+        await rerender()
         expect(result.current.status).toBe('ready')
         expect(result.current.error).toBeUndefined()
         expect(result.current.effects).toBeDefined()
@@ -204,7 +210,6 @@ describe('useProgramRules', () => {
         )
         await settle(() => result.current.status)
         expect(result.current.status).toBe('ready')
-        // A persisted cache would restore the module as {} and never reload it.
         expect(
             queryClient
                 .getQueryCache()
@@ -223,7 +228,6 @@ describe('useProgramRules', () => {
                 ),
             { wrapper }
         )
-        await new Promise((resolve) => setTimeout(resolve, 200))
         expect(result.current.status).toBe('loading')
         expect(requests).toEqual([])
     })

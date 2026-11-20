@@ -306,6 +306,8 @@ row at a time over the same array pays for the index once; pass a new array when
   UTC, half-typed dates count as missing, empty values are left out, and the current event is dropped from
   `otherEvents`. `DATAELEMENT_NEWEST_EVENT_PROGRAM` takes the newest event by date, so editing an older event
   doesn't change it when a newer event has a value. That is DHIS2 behaviour.
+- **Enrollment requests.** Keep the program parameter on enrollment list requests. DHIS2 2.43 requires it.
+  Batch responses are cached as entries so a persisted TanStack Query cache can restore them from JSON.
 - **Attribution.** `readsFields` follows variables and ASSIGN chains in evaluation order (priority ascending,
   rules without priority last): an ASSIGN feeds only rules evaluated after it, as in the engine.
 - **Not covered.** No pruned re-evaluation (full evaluation of RMNCH takes about 5 ms at 4× CPU throttle).

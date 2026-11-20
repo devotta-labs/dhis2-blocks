@@ -22,12 +22,7 @@ import {
     type DisplayOptions,
 } from '../format/display'
 
-/**
- * One key per English plural form: d2-app-scripts cannot extract `count`
- * plurals, so the form is picked here. `count` still reaches i18next for a
- * translation that defines its own plural forms.
- */
-const staleNote = (days: number): string =>
+const staleNote: (days: number) => string = (days) =>
     days === 1
         ? i18n.t('Out of date: last recorded over {{count}} day ago', {
               count: days,
@@ -38,10 +33,6 @@ const staleNote = (days: number): string =>
               interpolation: NO_ESCAPE,
           })
 
-/**
- * A tooltip that opens at once on click or tap, as well as on hover after the
- * usual delay, so the full text is one click away and reachable on touch.
- */
 const useClickableTooltip = () => {
     const [open, setOpen] = useState(false)
     return {
@@ -88,7 +79,7 @@ export function RecordedNote({
                     />
                 }
             >
-                {/* A dotted underline says there is more on hover or focus. */}
+                {}
                 <span
                     aria-hidden="true"
                     className="underline decoration-current/40 decoration-dotted underline-offset-2"
@@ -175,7 +166,6 @@ export function RecordedFooter({
     if (latest === undefined && !partial) {
         return null
     }
-    // Read per render so tests can stub the clock.
     const now = new Date()
     const stale = latest !== undefined && isStale(latest, staleAfterDays, now)
     return (
@@ -205,7 +195,6 @@ export function RecordedFooter({
  */
 export function ObservationRecorded(props: ObservationRecordedProps) {
     const { registerRecorded } = useObservationCard()
-    // Before paint, so the card's own band never flashes in beside this one.
     useLayoutEffect(() => registerRecorded(), [registerRecorded])
     return <RecordedFooter {...props} />
 }

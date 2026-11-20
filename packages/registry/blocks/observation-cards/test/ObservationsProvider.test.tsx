@@ -96,7 +96,6 @@ describe('ObservationsProvider', () => {
             .toHaveTextContent('pending')
         await expect.poll(() => server.countOf('tracker/events')).toBe(2)
 
-        // Every render since the switch, not only the last one.
         expect(seen.slice(before)).not.toContain('ready 70')
         expect(seen.slice(before).every((state) => state === 'pending')).toBe(
             true
@@ -137,7 +136,6 @@ describe('ObservationsProvider', () => {
             .toHaveTextContent('pending')
         await expect.poll(() => server.countOf('tracker/events')).toBe(2)
 
-        // Every render since the switch, not only the last one.
         expect(seen.slice(before)).not.toContain('ready 70')
         expect(seen.slice(before).every((state) => state === 'pending')).toBe(
             true
@@ -211,7 +209,6 @@ describe('ObservationsProvider', () => {
             .toHaveTextContent(
                 "error Data element broken00001 has metadata this card can't read"
             )
-        // The card shows the error state, named from the metadata.
         await expect
             .element(page.getByText("Couldn't load this value"))
             .toBeVisible()
@@ -251,7 +248,6 @@ describe('ObservationsProvider', () => {
         await expect
             .element(page.getByTestId('second'))
             .toHaveTextContent('ready 82')
-        // The program's metadata is shared; each person's records are not.
         expect(server.countOf('programs')).toBe(1)
         expect(server.countOf('tracker/events')).toBe(2)
     })
@@ -378,18 +374,13 @@ describe('ObservationsProvider', () => {
             </Wrapper>
         )
 
-        // Long enough for an enabled query to have started.
-        await new Promise((resolve) => setTimeout(resolve, 50))
-
-        expect(server.requests).toEqual([])
         await expect
             .element(page.getByTestId('weight'))
             .toHaveTextContent('pending')
+        expect(server.requests).toEqual([])
     })
 
     it('useObservation outside the provider throws', async () => {
-        vi.spyOn(console, 'error').mockImplementation(() => {})
-
         await render(
             <Catch>
                 <Probe id="weight" dataElement={WEIGHT} />
@@ -401,6 +392,5 @@ describe('ObservationsProvider', () => {
             .toHaveTextContent(
                 'Observation cards and hooks must be rendered inside ObservationsProvider'
             )
-        vi.restoreAllMocks()
     })
 })

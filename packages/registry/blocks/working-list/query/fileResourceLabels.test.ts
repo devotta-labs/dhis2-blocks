@@ -1,6 +1,5 @@
-import type { ResourceRequest, WorkingListClient } from '../api/client'
-import type { ZodType } from 'zod'
 import type { FieldCatalog, WorkingListField } from '../domain/model'
+import { openWorkingListServer } from '../test/workingListServer'
 import type { TrackedEntityWorkingListPage } from './fetchers'
 import {
     collectFileResourceIds,
@@ -32,9 +31,9 @@ const fields: FieldCatalog = new Map([
     [imageField.id, imageField],
 ])
 
-const trackedEntityRecord = (
+const trackedEntityRecord: (
     values: NormalizedTrackedEntity['values']
-): NormalizedTrackedEntity => ({
+) => NormalizedTrackedEntity = (values) => ({
     trackedEntity: {
         trackedEntity: 'Entity00001',
         attributes: [],
@@ -44,9 +43,9 @@ const trackedEntityRecord = (
     issues: [],
 })
 
-const page = (
+const page: (
     records: NormalizedTrackedEntity[]
-): TrackedEntityWorkingListPage => ({
+) => TrackedEntityWorkingListPage = (records) => ({
     mode: 'trackedEntity',
     records,
     page: 1,
@@ -82,45 +81,37 @@ describe('file resource name resolution', () => {
     })
 
     it('resolves names per resource and tolerates missing file resources', async () => {
-        const warn = vi
-            .spyOn(console, 'warn')
-            .mockImplementation(() => undefined)
-        const query = vi.fn(
-            async <T>(request: ResourceRequest, schema: ZodType<T>) => {
-                if (request.id === 'Missing0001') {
-                    throw new Error('404 Not Found')
-                }
-                return schema.parse({
-                    id: request.id,
-                    displayName: `${request.id}.pdf`,
+        const requests: URL[] = []
+        const { client } = await openWorkingListServer((url, { method }) => {
+            if (method !== 'GET') {
+                return undefined
+            }
+            if (url.pathname.endsWith('/fileResources/Missing0001')) {
+                requests.push(url)
+                return Response.json({ message: 'Not found' }, { status: 404 })
+            }
+            if (url.pathname.endsWith('/fileResources/FileRes0001')) {
+                requests.push(url)
+                return Response.json({
+                    id: 'FileRes0001',
+                    displayName: 'FileRes0001.pdf',
                 })
             }
-        )
-        const client: WorkingListClient = {
-            // SAFETY: The generic schema argument validates every value returned by this fake.
-            query: query as WorkingListClient['query'],
-            async mutate() {
-                throw new Error(
-                    'Mutation is not implemented by this query-only fake'
-                )
-            },
-        }
-
+        })
+        const warn = vi.spyOn(console, 'warn')
         try {
             const names = await fetchFileResourceNames({
                 client,
                 ids: ['FileRes0001', 'Missing0001', 'FileRes0001'],
             })
-            expect(query).toHaveBeenCalledTimes(2)
-            expect(query).toHaveBeenCalledWith(
-                {
-                    resource: 'fileResources',
-                    id: 'FileRes0001',
-                    params: { fields: 'id,displayName' },
-                },
-                expect.anything(),
-                undefined
-            )
+            expect(requests).toHaveLength(2)
+            expect(
+                requests.some(
+                    ({ pathname, searchParams }) =>
+                        pathname.endsWith('/fileResources/FileRes0001') &&
+                        searchParams.get('fields') === 'id,displayName'
+                )
+            ).toBe(true)
             const resolve = createFileResourceNameResolver(names)
             expect(resolve('FileRes0001')).toBe('FileRes0001.pdf')
             expect(resolve('Missing0001')).toBeUndefined()

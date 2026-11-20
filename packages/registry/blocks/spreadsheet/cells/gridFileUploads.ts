@@ -4,10 +4,8 @@ import type { FileUploads } from '@/components/dhis2-value-input'
 import type { CellKey } from '../model/types'
 import type { DataEngine, SpreadsheetContext } from '../provider/context'
 
-// The upload running in each cell, whichever editor started it: a newer change to the cell stops it.
 const running = new Map<string, AbortController>()
 
-// A file's name and the rule's reason are said as they are, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
 type UploadContext = Pick<
@@ -20,16 +18,18 @@ type UploadContext = Pick<
  * and then saves its file's id to the cell itself and says how that went. The cell's files learn each uploaded file's
  * name.
  */
-export const gridFileUploads = (
+export const gridFileUploads: (
     cellKey: CellKey,
-    { store, effects, fileNames, announce, engine }: UploadContext
-): FileUploads => {
+    options2: UploadContext
+) => FileUploads = (
+    cellKey,
+    { store, effects, fileNames, announce, engine }
+) => {
     const uploads = createFileUploads(engine, running, cellKey, (id, name) =>
         fileNames.setState(({ names }) => ({
             names: new Map(names).set(id, name),
         }))
     )
-    // The editor listens while it is open.
     let open = 0
     return {
         ...uploads,
@@ -46,7 +46,6 @@ export const gridFileUploads = (
                 file,
                 image,
                 (id) => {
-                    // An open editor saves it; the cell is saved to by key, wherever focus is now.
                     if (open > 0) {
                         done(id)
                         return

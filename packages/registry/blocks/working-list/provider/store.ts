@@ -11,7 +11,7 @@ export interface WorkingListProviderStoreState {
 
 export type WorkingListProviderStore = StoreApi<WorkingListProviderStoreState>
 
-export const createWorkingListProviderStore = (
+export const createWorkingListProviderStore: (
     initialMeta: WorkingListMeta
-): WorkingListProviderStore =>
+) => WorkingListProviderStore = (initialMeta) =>
     createStore<WorkingListProviderStoreState>(() => ({ meta: initialMeta }))

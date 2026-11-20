@@ -172,7 +172,6 @@ describe('filter select fields', () => {
             'xyz',
             expect.anything()
         )
-        // Remote filtering leaves the caller's options untouched.
         await expect
             .element(page.getByRole('option', { name: 'Positive' }))
             .toBeVisible()

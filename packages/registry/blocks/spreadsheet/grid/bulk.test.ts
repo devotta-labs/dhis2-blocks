@@ -38,7 +38,7 @@ const NO_ANNOTATIONS: AnnotationsState = {
 }
 
 const rows: GridRow[] = ['r1', 'r2', 'r3'].map((id) => ({ id, label: id }))
-const column = (id: string): GridColumn => ({ id, label: id })
+const column: (id: string) => GridColumn = (id) => ({ id, label: id })
 const keyOf = (row: GridRow, col: GridColumn) => cellKey(row.id, col.id)
 
 const setup = ({
@@ -270,9 +270,7 @@ describe('planBulk', () => {
         expect(cell('r2.o').value).toBe('B')
     })
 
-    // Review focus 1.
     test('a register row copy writes to each target row’s own slot events', () => {
-        // Each row holds its own event in each slot (stage) column.
         const slots = [column('anc'), column('pnc')]
         const slotKey = (row: GridRow, col: GridColumn) =>
             cellKey(`${row.id}-${col.id}`, 'n')
@@ -304,7 +302,6 @@ describe('planBulk', () => {
         ])
     })
 
-    // Review focus 2.
     test('a copied date saves the same day on a Nepali calendar', () => {
         const NEPALI = { calendar: 'nepali', dateFormat: 'DD-MM-YYYY' } as const
         const { plan, store, cell } = setup({
@@ -326,7 +323,6 @@ describe('planBulk', () => {
         expect(cell('r2.d').error).toBeUndefined()
     })
 
-    // Review focus 3.
     test('a row copy skips file, image and username cells as edited in their own form', () => {
         const { table, plan, store } = setup({
             values: [
@@ -350,7 +346,6 @@ describe('planBulk', () => {
         expect(skipped).toEqual(new Map([[OWN_FORM, 3]]))
     })
 
-    // Review focus 4.
     test('a cell holding a refused draft keeps it through a fill-empty action', () => {
         const { table, plan, store, cell } = setup()
         store.getState().commit('r2.n', 'abc')

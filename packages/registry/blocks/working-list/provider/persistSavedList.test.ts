@@ -1,20 +1,33 @@
 import { resolveWorkingListCapabilities } from '../api/capabilities'
-import { createWorkingListClient, type DataEngineMutation } from '../api/client'
+import { ZodError } from 'zod'
 import type { ProgramFieldCatalog } from '../api/metadata'
-import type { NormalizedSavedWorkingList } from '../api/savedLists'
+import {
+    fetchSavedWorkingLists,
+    type NormalizedSavedWorkingList,
+} from '../api/savedLists'
+import type {
+    ProgramStageWorkingList,
+    TrackedEntityInstanceFilter,
+} from '../api/schemas'
 import type { WorkingListConfiguration } from '../domain/model'
 import { systemColumnFields } from '../registry/systemFilters'
+import {
+    openWorkingListServer,
+    readRequestJson,
+} from '../test/workingListServer'
+import { internalConfigurationFingerprint } from './configuration'
 import { WorkingListInvalidResponseError } from './errors'
 import { persistSavedList } from './persistSavedList'
 
 const capabilities = resolveWorkingListCapabilities({ apiVersion: 43 })
+const stageId = 'ProgStage01'
 const metadata: ProgramFieldCatalog = {
     fields: new Map(systemColumnFields.map((field) => [field.id, field])),
     fieldsByProgramStage: new Map(),
     capabilities,
     defaultTrackedEntityColumns: ['createdAt'],
     defaultEventColumnsByStage: new Map(),
-    readableProgramStageIds: new Set(),
+    readableProgramStageIds: new Set([stageId]),
 }
 const configuration: WorkingListConfiguration = {
     mode: 'trackedEntity',
@@ -48,21 +61,96 @@ const list: NormalizedSavedWorkingList = {
     },
 }
 
-const setup = () => {
-    const mutate = vi.fn(async (_mutation: DataEngineMutation) => ({
-        status: 'OK',
-    }))
-    const query = vi.fn(async () => ({ workingListResource: raw }))
-    const confirmed: NormalizedSavedWorkingList = {
-        ...list,
-        compatibility: 'compatible',
-        configuration,
-    }
-    const refreshSavedLists = vi.fn(
-        async (): Promise<NormalizedSavedWorkingList[]> => [confirmed]
+const confirmed = {
+    ...raw,
+    entityQueryCriteria: {
+        ...raw.entityQueryCriteria,
+        order: 'createdAt:desc',
+    },
+}
+const repaired: WorkingListConfiguration = {
+    ...configuration,
+    mode: 'event',
+    programStageId: stageId,
+}
+const eventRaw = {
+    ...raw,
+    programStage: { id: stageId },
+    programStageQueryCriteria: { order: 'createdAt:asc' },
+}
+const eventList: NormalizedSavedWorkingList = {
+    ...list,
+    resource: 'programStageWorkingLists',
+    compatibility: 'incompatible',
+    raw: eventRaw,
+    issues: [],
+}
+const confirmedEvent = {
+    ...eventRaw,
+    programStageQueryCriteria: {
+        order: 'createdAt:desc',
+        displayColumnOrder: repaired.columns,
+    },
+}
+
+const setup = async ({
+    trackedEntityLists = [confirmed],
+    eventLists = [],
+    programId = configuration.programId,
+    writeResponse = Response.json({ status: 'OK' }),
+    readResponse,
+    respondToWrite,
+}: {
+    trackedEntityLists?: TrackedEntityInstanceFilter[]
+    eventLists?: ProgramStageWorkingList[]
+    programId?: string
+    writeResponse?: Response
+    readResponse?: Response
+    respondToWrite?: () => Promise<void>
+} = {}) => {
+    const writes: Array<{ resource: string; id: string; body: unknown }> = []
+    const reads: string[] = []
+    const eventRead = Promise.withResolvers<void>()
+    const { client } = await openWorkingListServer(
+        async ({ pathname, searchParams }, request) => {
+            const [, , , resource, id] = pathname.split('/')
+            if (
+                resource !== 'trackedEntityInstanceFilters' &&
+                resource !== 'programStageWorkingLists'
+            )
+                return
+            if (request.method === 'PUT' && id === list.id) {
+                writes.push({
+                    resource,
+                    id,
+                    body: await readRequestJson(request),
+                })
+                await respondToWrite?.()
+                return writeResponse
+            }
+            if (request.method === 'GET' && !id) {
+                expect(searchParams.get('filter')).toBe(
+                    `program.id:eq:${programId}`
+                )
+                reads.push(resource)
+                if (resource === 'trackedEntityInstanceFilters') {
+                    if (readResponse) {
+                        await eventRead.promise
+                        return readResponse
+                    }
+                    return Response.json({
+                        trackedEntityInstanceFilters: trackedEntityLists,
+                    })
+                }
+                eventRead.resolve()
+                return Response.json({ programStageWorkingLists: eventLists })
+            }
+        }
     )
+    const refreshSavedLists = () =>
+        fetchSavedWorkingLists({ client, programId, metadata })
     const options = {
-        client: createWorkingListClient({ mutate, query }),
+        client,
         list,
         configuration,
         metadata,
@@ -70,110 +158,117 @@ const setup = () => {
         refreshSavedLists,
         operation: 'updateSelectedView' as const,
     }
-
-    return { mutate, query, confirmed, refreshSavedLists, options }
+    return { options, writes, reads }
 }
 
 describe('persistSavedList', () => {
     it('replaces once, preserving writable metadata, and returns the canonical list only after refresh', async () => {
-        const { options, mutate, query, confirmed, refreshSavedLists } = setup()
-        mutate.mockImplementationOnce(async () => {
-            await Promise.resolve()
-            expect(refreshSavedLists).not.toHaveBeenCalled()
-            return { status: 'OK' }
-        })
-        refreshSavedLists.mockImplementationOnce(async () => {
-            expect(mutate).toHaveBeenCalledTimes(1)
-            return [{ ...confirmed, id: 'OtherList01' }, confirmed]
+        const writeReceived = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+        const { options, writes, reads } = await setup({
+            trackedEntityLists: [
+                { ...confirmed, id: 'OtherList01' },
+                confirmed,
+            ],
+            respondToWrite: async () => {
+                writeReceived.resolve()
+                await release.promise
+            },
         })
 
-        expect(await persistSavedList(options)).toBe(confirmed)
-        expect(refreshSavedLists).toHaveBeenCalledTimes(1)
-        expect(query).not.toHaveBeenCalled()
-        expect(mutate).toHaveBeenCalledExactlyOnceWith({
-            resource: list.resource,
-            id: list.id,
-            type: 'replace',
-            data: expect.objectContaining({
-                name: list.name,
-                sortOrder: raw.sortOrder,
-                publicAccess: raw.publicAccess,
-                userAccesses: raw.userAccesses,
-                entityQueryCriteria: expect.objectContaining({
-                    order: 'createdAt:desc',
-                    displayColumnOrder: configuration.columns,
-                    futureCriteria: true,
+        const result = persistSavedList(options)
+        try {
+            await Promise.race([
+                writeReceived.promise,
+                result.then(() => {
+                    throw new Error('Persistence completed before the write')
                 }),
-            }),
+            ])
+            expect(reads).toEqual([])
+        } finally {
+            release.resolve()
+        }
+
+        await expect(result).resolves.toMatchObject({
+            id: confirmed.id,
+            raw: confirmed,
+            configuration,
         })
+        expect([...reads].sort()).toEqual([
+            'programStageWorkingLists',
+            'trackedEntityInstanceFilters',
+        ])
+        expect(writes).toEqual([
+            {
+                resource: list.resource,
+                id: list.id,
+                body: expect.objectContaining({
+                    name: list.name,
+                    sortOrder: raw.sortOrder,
+                    publicAccess: raw.publicAccess,
+                    userAccesses: raw.userAccesses,
+                    entityQueryCriteria: expect.objectContaining({
+                        order: 'createdAt:desc',
+                        displayColumnOrder: configuration.columns,
+                        futureCriteria: true,
+                    }),
+                }),
+            },
+        ])
     })
 
     it('persists an incompatible list as a repair to the event resource', async () => {
-        const { options, confirmed, mutate, refreshSavedLists } = setup()
-        const repaired: WorkingListConfiguration = {
-            ...configuration,
-            mode: 'event',
-            programStageId: 'ProgStage01',
-        }
-        const eventRaw = {
-            ...raw,
-            programStage: { id: repaired.programStageId },
-            programStageQueryCriteria: { order: 'createdAt:asc' },
-        }
-        const eventList: NormalizedSavedWorkingList = {
-            ...list,
-            resource: 'programStageWorkingLists',
-            compatibility: 'incompatible',
-            raw: eventRaw,
-            issues: [],
-        }
-        const canonical: NormalizedSavedWorkingList = {
-            ...confirmed,
-            resource: eventList.resource,
-            compatibility: 'compatible',
-            configuration: repaired,
-        }
-        refreshSavedLists.mockResolvedValueOnce([canonical])
+        const { options, writes } = await setup({
+            trackedEntityLists: [],
+            eventLists: [confirmedEvent],
+        })
 
-        expect(
-            await persistSavedList({
+        await expect(
+            persistSavedList({
                 ...options,
                 list: eventList,
                 configuration: repaired,
                 operation: 'repairSelectedSavedList',
             })
-        ).toBe(canonical)
-        expect(mutate).toHaveBeenCalledExactlyOnceWith(
-            expect.objectContaining({
+        ).resolves.toMatchObject({
+            id: confirmedEvent.id,
+            resource: eventList.resource,
+            compatibility: 'compatible',
+            configuration: repaired,
+        })
+        expect(writes).toEqual([
+            {
                 resource: eventList.resource,
                 id: list.id,
-                type: 'replace',
-                data: expect.objectContaining({
+                body: expect.objectContaining({
                     programStage: eventRaw.programStage,
                     programStageQueryCriteria: expect.objectContaining({
                         order: 'createdAt:desc',
                     }),
                 }),
-            })
-        )
+            },
+        ])
     })
 
     it('accepts equivalent configuration regardless of object key ordering', async () => {
-        const { options, confirmed, refreshSavedLists } = setup()
-        const canonical: NormalizedSavedWorkingList = {
-            ...confirmed,
-            compatibility: 'compatible',
-            configuration: {
-                filters: [],
-                sort: { direction: 'desc', fieldId: 'createdAt' },
-                columns: ['createdAt'],
-                programId: configuration.programId,
-                mode: 'trackedEntity',
-            },
+        const reordered: WorkingListConfiguration = {
+            filters: [],
+            sort: { direction: 'desc', fieldId: 'createdAt' },
+            columns: ['createdAt'],
+            programId: configuration.programId,
+            mode: 'trackedEntity',
         }
-        refreshSavedLists.mockResolvedValueOnce([canonical])
+        expect(internalConfigurationFingerprint(reordered)).toBe(
+            internalConfigurationFingerprint(configuration)
+        )
 
-        expect(await persistSavedList(options)).toBe(canonical)
+        const { options } = await setup()
+        await expect(
+            persistSavedList({ ...options, configuration: reordered })
+        ).resolves.toMatchObject({
+            id: confirmed.id,
+            configuration,
+        })
     })
 
     it.each([
@@ -182,10 +277,9 @@ describe('persistSavedList', () => {
     ] as const)(
         'preserves the %s error when canonical refresh omits the saved list',
         async (operation, verb, submitted) => {
-            const { options, confirmed, refreshSavedLists } = setup()
-            refreshSavedLists.mockResolvedValueOnce([
-                { ...confirmed, id: 'OtherList01' },
-            ])
+            const { options } = await setup({
+                trackedEntityLists: [{ ...confirmed, id: 'OtherList01' }],
+            })
 
             await expect(
                 persistSavedList({ ...options, operation })
@@ -198,30 +292,53 @@ describe('persistSavedList', () => {
     )
 
     it('rejects a canonical list that is still incompatible', async () => {
-        const { options, refreshSavedLists } = setup()
-        refreshSavedLists.mockResolvedValueOnce([
-            { ...list, compatibility: 'incompatible', raw, issues: [] },
-        ])
+        const { options } = await setup({
+            trackedEntityLists: [
+                {
+                    ...confirmed,
+                    entityQueryCriteria: {
+                        ...confirmed.entityQueryCriteria,
+                        displayColumnOrder: ['RemovedCol1'],
+                    },
+                },
+            ],
+        })
 
         await expect(persistSavedList(options)).rejects.toBeInstanceOf(
             WorkingListInvalidResponseError
         )
     })
 
-    it.each<WorkingListConfiguration>([
-        { ...configuration, columns: ['createdAt', 'updatedAt'] },
-        { ...configuration, sort: { fieldId: 'createdAt', direction: 'asc' } },
-        { ...configuration, programId: 'OtherProg01' },
-        { ...configuration, mode: 'event', programStageId: 'ProgStage01' },
-    ])('rejects a different canonical configuration: %j', async (different) => {
-        const { options, confirmed, refreshSavedLists } = setup()
-        refreshSavedLists.mockResolvedValueOnce([
+    it.each([
+        [
+            'columns',
             {
-                ...confirmed,
-                compatibility: 'compatible',
-                configuration: different,
+                trackedEntityLists: [
+                    {
+                        ...confirmed,
+                        entityQueryCriteria: {
+                            ...confirmed.entityQueryCriteria,
+                            displayColumnOrder: ['createdAt', 'programOwner'],
+                        },
+                    },
+                ],
             },
-        ])
+        ],
+        ['sort', { trackedEntityLists: [raw] }],
+        [
+            'program',
+            {
+                programId: 'OtherProg01',
+                trackedEntityLists: [
+                    { ...confirmed, program: { id: 'OtherProg01' } },
+                ],
+            },
+        ],
+        ['mode', { trackedEntityLists: [], eventLists: [confirmedEvent] }],
+    ] as const satisfies ReadonlyArray<
+        readonly [string, Parameters<typeof setup>[0]]
+    >)('rejects a different canonical %s', async (_difference, responses) => {
+        const { options } = await setup(responses)
 
         await expect(persistSavedList(options)).rejects.toBeInstanceOf(
             WorkingListInvalidResponseError
@@ -229,46 +346,58 @@ describe('persistSavedList', () => {
     })
 
     it('does not write or refresh when replacement would change resource type', async () => {
-        const { options, mutate, refreshSavedLists } = setup()
+        const { options, writes, reads } = await setup()
 
         await expect(
             persistSavedList({
                 ...options,
-                configuration: {
-                    ...configuration,
-                    mode: 'event',
-                    programStageId: 'ProgStage01',
-                },
+                configuration: repaired,
             })
         ).rejects.toThrow('Cannot replace trackedEntityInstanceFilters')
-        expect(mutate).not.toHaveBeenCalled()
-        expect(refreshSavedLists).not.toHaveBeenCalled()
+        expect(writes).toEqual([])
+        expect(reads).toEqual([])
     })
 
     it('leaves mutation failures for the caller to normalize without refreshing', async () => {
-        const { options, mutate, refreshSavedLists } = setup()
-        const failure = new Error('Write failed')
-        mutate.mockRejectedValueOnce(failure)
+        const { options, writes, reads } = await setup({
+            writeResponse: Response.json(
+                { message: 'Write failed' },
+                { status: 503 }
+            ),
+        })
 
-        await expect(persistSavedList(options)).rejects.toBe(failure)
-        expect(refreshSavedLists).not.toHaveBeenCalled()
+        await expect(persistSavedList(options)).rejects.toMatchObject({
+            details: { message: 'Write failed' },
+        })
+        expect(writes).toHaveLength(1)
+        expect(reads).toEqual([])
     })
 
     it('does not refresh after a malformed mutation response', async () => {
-        const { options, mutate, refreshSavedLists } = setup()
-        mutate.mockResolvedValueOnce({ status: 'ERROR' })
+        const { options, writes, reads } = await setup({
+            writeResponse: Response.json({ status: 'ERROR' }),
+        })
 
-        await expect(persistSavedList(options)).rejects.toThrow()
-        expect(refreshSavedLists).not.toHaveBeenCalled()
+        await expect(persistSavedList(options)).rejects.toBeInstanceOf(ZodError)
+        expect(writes).toHaveLength(1)
+        expect(reads).toEqual([])
     })
 
     it('leaves canonical-refresh failures for the caller to normalize without rewriting', async () => {
-        const { options, mutate, refreshSavedLists } = setup()
-        const failure = new Error('Refresh failed')
-        refreshSavedLists.mockRejectedValueOnce(failure)
+        const { options, writes, reads } = await setup({
+            readResponse: Response.json(
+                { message: 'Refresh failed' },
+                { status: 503 }
+            ),
+        })
 
-        await expect(persistSavedList(options)).rejects.toBe(failure)
-        expect(mutate).toHaveBeenCalledTimes(1)
-        expect(refreshSavedLists).toHaveBeenCalledTimes(1)
+        await expect(persistSavedList(options)).rejects.toMatchObject({
+            details: { message: 'Refresh failed' },
+        })
+        expect(writes).toHaveLength(1)
+        expect([...reads].sort()).toEqual([
+            'programStageWorkingLists',
+            'trackedEntityInstanceFilters',
+        ])
     })
 })

@@ -133,7 +133,9 @@ const FiltersControl = () => {
         'event'
     )
 
-    const compactFilter = (filter: ResolvedAppliedFilter): AppliedFilter => ({
+    const compactFilter: (filter: ResolvedAppliedFilter) => AppliedFilter = (
+        filter
+    ) => ({
         fieldId: filter.field.id,
         operator: filter.operator,
         value: filter.value,

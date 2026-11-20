@@ -10,11 +10,10 @@ import type { GridTable } from '../model/types'
 import { Spreadsheet } from '../provider/Spreadsheet'
 import { createCellStore } from '../store/store'
 import { SpreadsheetGrid } from './SpreadsheetGrid'
-import { control } from './__tests__/gridRig'
+import { control } from './test/gridRig'
 
 const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
-/** Rows are data elements, columns category option combos: the aggregate shape. */
 const FIELDS = new Map<string, Field>([
     ['measles', { valueType: 'INTEGER_ZERO_OR_POSITIVE' }],
     ['comment', { valueType: 'TEXT' }],
@@ -104,7 +103,6 @@ test('validation messages land on cells and rows', async () => {
             ['measles', [{ tone: 'error' as const, text: 'Rule failed' }]],
         ]),
     })
-    // A cell's messages are its description, which the screen reader reads.
     await expect
         .element(control(cellKey('measles', 'over1')))
         .toHaveAccessibleDescription('Over 1 exceeds under 1')
@@ -120,7 +118,6 @@ test('a grid with no rules', async () => {
     const { enqueue, cells } = await mountAggregate({
         cells: { [required]: { required: true, messages: [] } },
     })
-    // Required comes from the annotations, which never change here.
     await expect.element(control(required)).toBeRequired()
     await expect
         .element(control(cellKey('comment', 'under1')))

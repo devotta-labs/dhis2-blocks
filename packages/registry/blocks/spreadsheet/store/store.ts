@@ -1,6 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 import { createStore } from 'zustand/vanilla'
-import type { StoreApi } from 'zustand/vanilla'
 import {
     checkStored,
     futureBirth,
@@ -105,10 +104,8 @@ export const addsHiddenOption = (
     return codesOf(value).some((code) => !kept.has(code) && hidden.has(code))
 }
 
-/** How many of a person's commits undo can step back through. */
 const UNDO_LIMIT = 100
 
-/** Whether the rules hide the cell or make it read-only: a person cannot write it. */
 const closedTo = (
     annotations: ReadonlyStore<AnnotationsState>,
     key: CellKey
@@ -135,9 +132,8 @@ export const createCellStore = ({
     enqueue,
     annotations,
     locked,
-}: CellStoreOptions): StoreApi<CellStoreState> => {
+}: CellStoreOptions) => {
     const fieldOf = (key: CellKey) => fields.get(fieldIdOf(key))
-    /** What is wrong with a saved value, if anything; nothing is checked for a cell with no field. */
     const warningOf = (key: CellKey, value: string | undefined) => {
         const field = fieldOf(key)
         return field === undefined || value === undefined
@@ -157,27 +153,21 @@ export const createCellStore = ({
     }
 
     return createStore<CellStoreState>()((set, get) => {
-        // One entry per person's commit: the cells it changed and what each held before.
         const undoStack: Array<
             ReadonlyArray<{ key: CellKey; previous: string | undefined }>
         > = []
 
-        /**
-         * Runs `run` on the cells, copying them only once something is written, publishes the result in one
-         * update, then enqueues what `run` queued, in order.
-         */
         const edit = <T>(
             run: (cells: {
                 read(key: CellKey): CellState | undefined
                 write(key: CellKey, cell: CellState): void
-                /** Sets the value as a queued change against what DHIS2 last confirmed. */
                 queue(
                     key: CellKey,
                     value: string | undefined,
                     source: Source
                 ): void
             }) => T
-        ): T => {
+        ) => {
             let cells = get().cells
             let copied = false
             const queued: Array<[CellKey, string | null, string | null]> = []
@@ -226,14 +216,12 @@ export const createCellStore = ({
                     key: CellKey
                     previous: string | undefined
                 }> = []
-                // Undo goes back to a cell's value before the batch, however often the batch changed it.
                 const seen = new Set<CellKey>()
-                const results = entries.map(({ key, text }): CommitResult => {
+                const results = entries.map(({ key, text }) => {
                     const field = fieldOf(key)
                     if (field === undefined) {
                         throw new Error(`No field for the cell ${key}`)
                     }
-                    // A person's write to a cell the rules close, hidden included, keeps no draft: it could not be cleared.
                     if (
                         locked?.(key) ||
                         (source === 'person' && closedTo(annotations, key))
@@ -242,8 +230,6 @@ export const createCellStore = ({
                     }
                     const cell = read(key) ?? EMPTY_CELL
                     const parsed = parseTyped(field, text, settings)
-                    // A value the cell holds is not checked again. An age is checked against the device's date; a
-                    // rule's own values are not checked against what rules hide.
                     let error: string | undefined
                     if (!parsed.ok) {
                         error = parsed.problem.message
@@ -270,12 +256,10 @@ export const createCellStore = ({
                         return 'invalid'
                     }
                     if (parsed.value === cell.value) {
-                        // A person asking again for a value that failed to save sends it again.
                         if (source === 'person' && cell.sync === 'failed') {
                             queue(key, cell.value, cell.source)
                             return 'queued'
                         }
-                        // A draft and its error are set together.
                         if (cell.draft !== undefined) {
                             write(key, {
                                 ...cell,
@@ -292,7 +276,6 @@ export const createCellStore = ({
                     queue(key, parsed.value, source)
                     return 'queued'
                 })
-                // Undo is for a person's own changes, not a rule's.
                 if (source === 'person' && changed.length > 0) {
                     undoStack.push(changed)
                     if (undoStack.length > UNDO_LIMIT) {
@@ -333,11 +316,9 @@ export const createCellStore = ({
                 }
                 return edit(({ read, queue }) => {
                     const undone: CellKey[] = []
-                    // Each key is in a commit once, so the walk is forward.
                     for (const { key, previous } of last) {
                         const held = read(key)?.value
                         const field = fieldOf(key)
-                        // Undo passes the gate a person's write does: it writes back no option the rules hide.
                         if (
                             !locked?.(key) &&
                             !closedTo(annotations, key) &&
@@ -368,7 +349,6 @@ export const createCellStore = ({
                         }
                         const sentValue = value ?? undefined
                         const latest = cell.value === sentValue
-                        // An outcome for an older value only moves the base, and only when it was saved.
                         if (!latest && sync !== 'saved') {
                             continue
                         }
@@ -385,7 +365,6 @@ export const createCellStore = ({
                 edit(({ read, write }) => {
                     for (const change of changes) {
                         const value = change.value ?? undefined
-                        // Text typed here and not yet accepted stays over the value restored under it.
                         const was = read(change.key)
                         write(change.key, {
                             base: change.base ?? undefined,

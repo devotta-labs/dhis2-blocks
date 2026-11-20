@@ -8,8 +8,6 @@ import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { Cell } from '../Cell'
 import { CELL, HEADER, inputOf, rig } from './harness'
 
-// The grid and a form must not drift: the same typing is the same value, or the same problem, in both.
-
 const SETTINGS: ValueSettings = {
     calendar: parseDhis2Calendar('ethiopian'),
     dateFormat: parseDateFormat('dd-MM-yyyy'),
@@ -94,7 +92,7 @@ const ROWS: ReadonlyArray<Row> = [
     [MASKED, '12-a', { problem: 'Enter a value in the required format' }],
 ]
 
-const fieldOf = (type: Row[0]): Field => {
+const fieldOf = (type: Row[0]) => {
     if (type === OPTION_SET || type === HIDDEN_OPTION) {
         return DISEASE
     }
@@ -106,7 +104,6 @@ const fieldOf = (type: Row[0]): Field => {
 const roleOf = (field: Field) =>
     field.options === undefined ? 'textbox' : 'combobox'
 
-/** The same text typed, then Tab, into a grid cell and into a form's control: what each stores or says. */
 const typeInBoth = async (type: Row[0], typed: string) => {
     const field = fieldOf(type)
     const hiddenOptions = type === HIDDEN_OPTION ? HIDDEN : undefined
@@ -165,7 +162,6 @@ test.each(ROWS)(
 )
 
 const CHC = 'DiszpKrYNg8'
-/** A server whose org units start "Ngelehun". */
 const ORG_UNITS = {
     organisationUnits: async () => ({
         pager: { total: 2 },

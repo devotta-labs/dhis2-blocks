@@ -53,7 +53,9 @@ const fields: FieldCatalog = new Map(
     ])
 )
 
-const record = (attributes: TrackedEntity['attributes']): TrackedEntity => ({
+const record: (attributes: TrackedEntity['attributes']) => TrackedEntity = (
+    attributes
+) => ({
     trackedEntity: 'Entity00001',
     attributes,
     programOwners: [{ orgUnit: 'OrgUnit0001', program: 'Program0001' }],
@@ -328,7 +330,6 @@ describe('metadata-aware row normalization', () => {
         expect(
             status((enrollment) => enrollment.status === 'COMPLETED')
         ).toEqual({ valid: true, value: '2026-11-02T00:00:00.000' })
-        // Without a match the active enrollment describes the row.
         expect(status(() => false)).toEqual({
             valid: true,
             value: '2026-01-05T00:00:00.000',
@@ -385,7 +386,9 @@ describe('metadata-aware event normalization', () => {
             field,
         ])
     )
-    const event = (dataValues: TrackerEvent['dataValues']): TrackerEvent => ({
+    const event: (dataValues: TrackerEvent['dataValues']) => TrackerEvent = (
+        dataValues
+    ) => ({
         event: 'EventAaaaa1',
         program: 'Program0001',
         programStage: 'StageAaaaa1',

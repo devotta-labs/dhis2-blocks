@@ -1,8 +1,10 @@
 /** A cell's key: its two parts joined by a dot, `<first>.<second>`; the first part contains no dot. */
 export type CellKey = `${string}.${string}`
 
-export const cellKey = (first: string, second: string): CellKey =>
-    `${first}.${second}`
+export const cellKey: (first: string, second: string) => CellKey = (
+    first,
+    second
+) => `${first}.${second}`
 
 export interface GridRow {
     id: string
@@ -73,14 +75,16 @@ export interface CellPlace {
     column: number
 }
 
-/** Where every open cell of the tables is, by the key `keyOf` gives it. */
-export const indexCells = <R extends GridRow, C extends GridColumn>(
+/**
+ * Where every open cell of the tables is, by the key `keyOf` gives it.
+ * Keys must be unique within each table, including closed cells.
+ */
+export const indexCells: <R extends GridRow, C extends GridColumn>(
     tables: ReadonlyArray<GridTable<R, C>>,
     keyOf: (row: R, column: C) => CellKey
-): ReadonlyMap<CellKey, CellPlace> => {
+) => ReadonlyMap<CellKey, CellPlace> = (tables, keyOf) => {
     const index = new Map<CellKey, CellPlace>()
     tables.forEach(({ id, rows, columns, closed }, table) => {
-        // Closed cells count too: a key two cells of a table share is a layout error, wherever it shows.
         const seen = new Set<CellKey>()
         rows.forEach((gridRow, row) => {
             columns.forEach((gridColumn, column) => {

@@ -27,11 +27,11 @@ const rawValue = (row: WorkingListDisplayRow, fieldId: string) => {
  * scheduled visits before today marked overdue, otherwise the enrollment
  * status. Dates are compared in the DHIS2 server time zone, not the browser's.
  */
-export const getWorkingListRecordStatus = (
+export const getWorkingListRecordStatus: (
     row: WorkingListDisplayRow,
     cellText: (fieldId: string) => string,
     timeZone: string
-): WorkingListRecordStatus | undefined => {
+) => WorkingListRecordStatus | undefined = (row, cellText, timeZone) => {
     const event = EventStatusSchema.safeParse(rawValue(row, 'eventStatus'))
     if (event.success) {
         const scheduled = z

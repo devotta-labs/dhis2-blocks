@@ -1,69 +1,113 @@
-import type { WorkingListPage } from '../query/fetchers'
+import { resolveWorkingListCapabilities } from '../api/capabilities'
+import type { WorkingListPagination } from '../domain/model'
+import { fetchWorkingListPage } from '../query/fetchers'
+import { openWorkingListServer } from '../test/workingListServer'
 import { fetchDateRangePages } from './useWorkingListDateRange'
 
+const programId = 'Program0001'
 const page = (
-    { page, pageSize }: { page: number; pageSize: number },
+    pageNumber: number,
+    pageSize: number,
     count: number,
     hasNextPage: boolean
-): WorkingListPage => ({
-    mode: 'trackedEntity',
-    records: Array.from({ length: count }, () => ({
-        // SAFETY: Paging only counts records, so their content is irrelevant.
-        trackedEntity: {} as never,
-        values: {},
-        issues: [],
-    })),
-    page,
-    pageSize,
-    hasNextPage,
-})
+) => {
+    const pager = { page: pageNumber, pageSize }
+    return Response.json({
+        trackedEntities: Array.from({ length: count }, (_, index) => ({
+            trackedEntity: `T${String((pageNumber - 1) * pageSize + index).padStart(10, '0')}`,
+            attributes: [],
+            programOwners: [],
+        })),
+        pager: hasNextPage
+            ? { ...pager, nextPage: `?page=${pageNumber + 1}` }
+            : pager,
+    })
+}
+
+const setup = async (
+    respond: (
+        pageNumber: number,
+        pageSize: number
+    ) => Response | Promise<Response>
+) => {
+    const requests: WorkingListPagination[] = []
+    const { client } = await openWorkingListServer(
+        ({ pathname, searchParams }, { method }) => {
+            if (
+                method === 'GET' &&
+                pathname.endsWith('/tracker/trackedEntities')
+            ) {
+                const pageNumber = Number(searchParams.get('page'))
+                const pageSize = Number(searchParams.get('pageSize'))
+                requests.push({ page: pageNumber, pageSize })
+                return respond(pageNumber, pageSize)
+            }
+        }
+    )
+    const fetchPage = (pagination: WorkingListPagination) =>
+        fetchWorkingListPage({
+            client,
+            context: { programId, orgUnitId: 'OrgUnit0001' },
+            configuration: {
+                mode: 'trackedEntity',
+                programId,
+                columns: ['createdAt'],
+                sort: { fieldId: 'createdAt', direction: 'desc' },
+                filters: [],
+            },
+            pagination,
+            capabilities: resolveWorkingListCapabilities({ apiVersion: 43 }),
+            fields: new Map(),
+        })
+    return { fetchPage, requests }
+}
 
 describe('date range paging', () => {
     it('stops after a first page that is not full', async () => {
-        const fetchPage = vi.fn(async (pagination) =>
-            page(pagination, 12, false)
+        const { fetchPage, requests } = await setup((number, size) =>
+            page(number, size, 12, false)
         )
 
         const result = await fetchDateRangePages(fetchPage, 1000)
 
-        expect(fetchPage).toHaveBeenCalledTimes(1)
-        expect(fetchPage).toHaveBeenCalledWith({ page: 1, pageSize: 200 })
+        expect(requests).toEqual([{ page: 1, pageSize: 200 }])
         expect(result.truncated).toBe(false)
     })
 
     it('loads the rest of the limit together once the first page is full', async () => {
-        const pending: Array<() => void> = []
-        const fetchPage = vi.fn(
-            (pagination: { page: number; pageSize: number }) =>
-                pagination.page === 1
-                    ? Promise.resolve(page(pagination, 200, true))
-                    : new Promise<WorkingListPage>((resolve) =>
-                          pending.push(() =>
-                              resolve(
-                                  page(pagination, 200, pagination.page < 3)
-                              )
-                          )
-                      )
-        )
+        const requestedSecond = Promise.withResolvers<void>()
+        const requestedThird = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+        const { fetchPage, requests } = await setup(async (number, size) => {
+            if (number === 2) requestedSecond.resolve()
+            if (number === 3) requestedThird.resolve()
+            if (number > 1) await release.promise
+            return page(number, size, 200, number < 3)
+        })
 
         const result = fetchDateRangePages(fetchPage, 450)
-        await vi.waitFor(() => expect(pending).toHaveLength(2))
-        pending.forEach((resolve) => resolve())
+        try {
+            await Promise.race([
+                Promise.all([requestedSecond.promise, requestedThird.promise]),
+                result.then(() => {
+                    throw new Error(
+                        'Pagination ended before both pages were requested'
+                    )
+                }),
+            ])
+        } finally {
+            release.resolve()
+        }
 
-        expect(fetchPage.mock.calls.map(([{ page }]) => page)).toEqual([
-            1, 2, 3,
-        ])
-        // 600 records came back for a limit of 450.
+        const requestedPages = requests.map((request) => request.page)
+        expect(requestedPages[0]).toBe(1)
+        expect(requestedPages.slice(1).sort()).toEqual([2, 3])
         expect((await result).truncated).toBe(true)
     })
 
     it('is complete when the last page has no next page', async () => {
-        const fetchPage = vi.fn(async (pagination) =>
-            page(
-                pagination,
-                pagination.page === 1 ? 200 : 40,
-                pagination.page === 1
-            )
+        const { fetchPage } = await setup((number, size) =>
+            page(number, size, number === 1 ? 200 : 40, number === 1)
         )
 
         const result = await fetchDateRangePages(fetchPage, 400)

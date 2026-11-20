@@ -1,7 +1,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { cleanup, render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { CELL, HEADER, rig } from './__tests__/harness'
+import { CELL, HEADER, rig } from './test/harness'
 import { Cell } from './Cell'
 
 const mount = async (field: Field, options: Parameters<typeof rig>[1]) => {

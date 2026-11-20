@@ -42,9 +42,9 @@ import type {
     SavedListSharing,
 } from './savedListContracts'
 
-export const getSharing = (
+export const getSharing: (
     resource: TrackedEntityInstanceFilter | ProgramStageWorkingList
-): SavedListSharing => ({
+) => SavedListSharing = (resource) => ({
     access: resource.access,
     externalAccess: resource.externalAccess,
     publicAccess: resource.publicAccess,
@@ -57,11 +57,15 @@ const findField = (fields: FieldCatalog, idOrApiName: string) =>
     fields.get(idOrApiName) ??
     [...fields.values()].find((field) => field.apiName === idOrApiName)
 
-export const getMissingIssue = (
+export const getMissingIssue: (
     referenceId: string,
     path: string,
-    kind: StaleReferenceIssue['kind'] = 'missingFilterField'
-): StaleReferenceIssue => ({
+    kind?: StaleReferenceIssue['kind']
+) => StaleReferenceIssue = (
+    referenceId,
+    path,
+    kind = 'missingFilterField'
+) => ({
     kind,
     referenceId,
     path,
@@ -71,7 +75,7 @@ export const getMissingIssue = (
 const getSavedFilterOperator = (
     filter: SavedValueFilter,
     value: FilterValue
-): FilterOperator => {
+) => {
     if (value.kind === 'empty') {
         return value.isEmpty ? 'empty' : 'notEmpty'
     }
@@ -97,11 +101,11 @@ const getSavedFilterOperator = (
     return 'equals'
 }
 
-const normalizeValueFilter = (
+const normalizeValueFilter: (
     filter: SavedValueFilter,
     field: WorkingListField,
     parsingContext?: FilterParsingContext
-): AppliedFilter => {
+) => AppliedFilter = (filter, field, parsingContext) => {
     const value = getValueTypeDefinition(field.valueType).parseSaved(
         filter,
         parsingContext
@@ -113,12 +117,12 @@ const normalizeValueFilter = (
     }
 }
 
-const normalizeDateValue = (
+const normalizeDateValue: (
     value:
         | EntityQueryCriteria['enrollmentCreatedDate']
         | ProgramStageQueryCriteria['eventOccurredAt'],
     parsingContext?: FilterParsingContext
-): FilterValue => {
+) => FilterValue = (value, parsingContext) => {
     if (!value) {
         throw new Error('Cannot normalize an absent date filter')
     }
@@ -259,10 +263,10 @@ const normalizeColumns = (
         return field.id
     })
 
-const normalizeSort = (
+const normalizeSort: (
     order: string | null | undefined,
     fields: FieldCatalog
-): WorkingListSort => {
+) => WorkingListSort = (order, fields) => {
     if (!order) {
         return { ...DEFAULT_WORKING_LIST_SORT }
     }
@@ -281,17 +285,17 @@ const normalizeSort = (
     return { fieldId: field.id, direction }
 }
 
-const normalizeTrackedEntityResource = ({
-    resource,
-    programId,
-    metadata,
-    parsingContext,
-}: {
+const normalizeTrackedEntityResource: (options: {
     resource: TrackedEntityInstanceFilter
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
-}): WorkingListConfiguration => {
+}) => WorkingListConfiguration = ({
+    resource,
+    programId,
+    metadata,
+    parsingContext,
+}) => {
     const criteria = resource.entityQueryCriteria ?? {}
     const filters = normalizeCommonCriteria(
         criteria,
@@ -335,17 +339,17 @@ const normalizeTrackedEntityResource = ({
     }
 }
 
-const normalizeEventResource = ({
-    resource,
-    programId,
-    metadata,
-    parsingContext,
-}: {
+const normalizeEventResource: (options: {
     resource: ProgramStageWorkingList
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
-}): WorkingListConfiguration => {
+}) => WorkingListConfiguration = ({
+    resource,
+    programId,
+    metadata,
+    parsingContext,
+}) => {
     const programStageId = resource.programStage.id
     if (!metadata.readableProgramStageIds.has(programStageId)) {
         throw new StaleWorkingListError([
@@ -473,19 +477,19 @@ const normalizeEventResource = ({
     }
 }
 
-export const normalizeSavedWorkingListResource = ({
-    resource,
-    type,
-    programId,
-    metadata,
-    parsingContext,
-}: {
+export const normalizeSavedWorkingListResource: (options: {
     resource: TrackedEntityInstanceFilter | ProgramStageWorkingList
     type: SavedListResource
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
-}): NormalizedSavedWorkingList => {
+}) => NormalizedSavedWorkingList = ({
+    resource,
+    type,
+    programId,
+    metadata,
+    parsingContext,
+}) => {
     const parsed =
         type === 'trackedEntityInstanceFilters'
             ? {

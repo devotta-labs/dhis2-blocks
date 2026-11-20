@@ -137,11 +137,9 @@ const enrollmentMatcher = (
         isWithin(enrollment.occurredAt, occurred)
 }
 
-export const fetchWorkingListPage = async ({
-    client,
-    signal,
-    ...input
-}: FetchWorkingListPageInput): Promise<WorkingListPage> => {
+export const fetchWorkingListPage: (
+    options: FetchWorkingListPageInput
+) => Promise<WorkingListPage> = async ({ client, signal, ...input }) => {
     const request = serializeWorkingListRequest(input)
     const { configuration } = input
     if (configuration.mode === 'trackedEntity') {

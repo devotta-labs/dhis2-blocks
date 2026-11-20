@@ -9,7 +9,6 @@ export const useAddRow = (
     addRow: SpreadsheetContext['addRow'],
     keyOf: SpreadsheetContext['keyOf']
 ) => {
-    // The table a row was added to and its rows before.
     const adding = useRef<{ tableId: string; rows: ReadonlySet<string> }>()
     const addTo = useRef<(tableId: string) => void>()
     addTo.current = (tableId) => {

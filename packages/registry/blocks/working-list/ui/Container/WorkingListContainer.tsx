@@ -19,8 +19,6 @@ export const WorkingListContainer = ({
     const translate = useWorkingListText()
     const lifecycle = useWorkingListMeta((meta) => meta.lifecycle)
     const online = useWorkingListMeta((meta) => meta.online)
-    // While initializing, the composed parts stay visible and render their
-    // own skeletons in place, so loading never swaps the layout out.
     const pending = lifecycle.status === 'pending'
     const failed = lifecycle.status === 'error'
 

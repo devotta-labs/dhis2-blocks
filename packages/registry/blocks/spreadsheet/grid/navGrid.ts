@@ -1,6 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 import type { StoreApi } from 'zustand/vanilla'
-import type { Field } from '@/components/dhis2-value-types'
 import { replacementFor } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellOverrides } from '../cells/cellProps'
@@ -13,7 +12,7 @@ import type { CellStoreState } from '../store/store'
 import type { NavGrid } from './navigation'
 
 /** The cell's field; a cell the form holds no field for is the source's error, as a commit to it is. */
-export const fieldAt = (state: CellStoreState, key: CellKey): Field => {
+export const fieldAt = (state: CellStoreState, key: CellKey) => {
     const field = state.fieldOf(key)
     if (field === undefined) {
         throw new Error(`No field for the cell ${key}`)
@@ -48,7 +47,7 @@ export const reasonOf =
         effects: ReadonlyStore<AnnotationsState>,
         overrides: CellOverrides | undefined
     ) =>
-    (key: CellKey): string | undefined => {
+    (key: CellKey) => {
         const closedReason = closed.get(key)
         if (closedReason !== undefined) {
             return closedReason
@@ -63,13 +62,13 @@ export const reasonOf =
     }
 
 /** What `nextCell` and `pasteTargets` walk; each lookup is a map read, as they ask once per cell stepped over. */
-export const navGrid = (
+export const navGrid: (
     tables: ReadonlyArray<GridTable>,
     store: StoreApi<CellStoreState>,
     effects: ReadonlyStore<AnnotationsState>,
     overrides: CellOverrides | undefined,
     keyOf: SpreadsheetContext['keyOf']
-): NavGrid => ({
+) => NavGrid = (tables, store, effects, overrides, keyOf) => ({
     tables: tables.map(({ rows, columns, closed }) => {
         const keyAt = (row: number, column: number) =>
             keyOf(rows[row], columns[column])
@@ -85,11 +84,11 @@ export const navGrid = (
 })
 
 /** Where each cell control is, by its DOM id; closed cells have no control. */
-export const positionsOf = (
+export const positionsOf: (
     idScope: string,
     tables: ReadonlyArray<GridTable>,
     keyOf: SpreadsheetContext['keyOf']
-): ReadonlyMap<string, CellPlace> =>
+) => ReadonlyMap<string, CellPlace> = (idScope, tables, keyOf) =>
     new Map(
         Array.from(indexCells(tables, keyOf), ([key, place]) => [
             cellDomId(idScope, key),

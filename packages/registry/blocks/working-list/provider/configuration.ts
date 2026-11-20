@@ -66,9 +66,9 @@ export const canCommitMutationBaseline = ({
     publicConfigurationFingerprint(currentConfiguration) ===
         publicConfigurationFingerprint(submittedConfiguration)
 
-export const toPublicConfiguration = (
+export const toPublicConfiguration: (
     configuration: InternalConfiguration
-): WorkingListConfiguration => {
+) => WorkingListConfiguration = (configuration) => {
     const base = {
         filters: configuration.filters.map(({ field, operator, value }) => ({
             fieldId: field.id,
@@ -87,12 +87,17 @@ export const toPublicConfiguration = (
         : { mode: 'trackedEntity', ...base }
 }
 
-const resolveFilter = (
+const resolveFilter: (
     filter: AppliedFilter,
     metadata: ProgramFieldCatalog,
     serializationContext?: FilterSerializationContext,
-    fields: FieldCatalog = metadata.fields
-): Result<InternalFilter, ConfigurationCommandError> => {
+    fields?: FieldCatalog
+) => Result<InternalFilter, ConfigurationCommandError> = (
+    filter,
+    metadata,
+    serializationContext,
+    fields = metadata.fields
+) => {
     const field = fields.get(filter.fieldId)
     if (!field) {
         return Result.err(
@@ -122,17 +127,17 @@ const resolveFilter = (
     }
 }
 
-export const resolvePublicConfiguration = ({
-    configuration,
-    programId,
-    metadata,
-    serializationContext,
-}: {
+export const resolvePublicConfiguration: (options: {
     configuration: WorkingListConfiguration
     programId: string
     metadata: ProgramFieldCatalog
     serializationContext?: FilterSerializationContext
-}): Result<InternalConfiguration, ConfigurationCommandError> => {
+}) => Result<InternalConfiguration, ConfigurationCommandError> = ({
+    configuration,
+    programId,
+    metadata,
+    serializationContext,
+}) => {
     const fields = fieldsForConfiguration(metadata, configuration)
     const filters: InternalFilter[] = []
     for (const filter of configuration.filters) {

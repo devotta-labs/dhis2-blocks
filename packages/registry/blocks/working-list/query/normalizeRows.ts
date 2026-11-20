@@ -66,7 +66,6 @@ export interface NormalizedEvent {
     issues: ReadonlyArray<WorkingListRowIssue>
 }
 
-/** System columns keep today's fail-fast contract: a bad value throws. */
 const parseSystemValue = (
     value: WorkingListRawValue,
     field?: WorkingListField
@@ -77,22 +76,22 @@ const parseSystemValue = (
           )
         : ParsedTrackerScalarSchema.parse(value)
 
-const missingRequiredCell = (
+const missingRequiredCell: (
     translate: RowIssueTranslate
-): WorkingListCellValue => ({
+) => WorkingListCellValue = (translate) => ({
     valid: false,
     raw: undefined,
     message: translate('A required value is missing'),
 })
 
-const dataValueCell = (
+const dataValueCell: (
     raw: WorkingListRawValue,
     context: {
         field?: WorkingListField
         required: boolean
         translate: RowIssueTranslate
     }
-): WorkingListCellValue => {
+) => WorkingListCellValue = (raw, context) => {
     const { field, required, translate } = context
     if (raw === undefined || raw === '') {
         return required
@@ -149,12 +148,11 @@ type FileUrlRecordContext =
     | { type: 'trackedEntity'; trackedEntityId: string; programId?: string }
     | { type: 'event'; eventId: string }
 
-/** Tracker-scoped download URLs, mirroring Capture's buildUrlByElementType. */
-const trackerFileUrls = (input: {
+const trackerFileUrls: (input: {
     record: FileUrlRecordContext
     fieldId: string
     valueType: 'FILE_RESOURCE' | 'IMAGE'
-}): Pick<WorkingListFileValue, 'url' | 'previewUrl'> => {
+}) => Pick<WorkingListFileValue, 'url' | 'previewUrl'> = (input) => {
     const { record, fieldId, valueType } = input
     const kind = valueType === 'IMAGE' ? 'image' : 'file'
     if (record.type === 'trackedEntity') {
@@ -175,12 +173,11 @@ const trackerFileUrls = (input: {
         : { url: base }
 }
 
-/** Replaces a valid FILE_RESOURCE/IMAGE UID with its Capture-style object. */
-const withFileValue = (
+const withFileValue: (
     cell: WorkingListCellValue,
     field: WorkingListField | undefined,
     record: FileUrlRecordContext
-): WorkingListCellValue => {
+) => WorkingListCellValue = (cell, field, record) => {
     const fileId = cell.valid ? z.string().min(1).safeParse(cell.value) : null
     if (
         !field ||
@@ -202,10 +199,10 @@ const withFileValue = (
     }
 }
 
-const collectIssues = (
+const collectIssues: (
     values: Record<string, WorkingListCellValue>,
     fields: FieldCatalog
-): WorkingListRowIssue[] =>
+) => WorkingListRowIssue[] = (values, fields) =>
     Object.entries(values).flatMap(([fieldId, cell]) =>
         cell.valid
             ? []
@@ -225,13 +222,16 @@ export type TrackedEntityEnrollment = NonNullable<
 
 export interface NormalizeTrackedEntityOptions {
     programId?: string
-    /** Whether an enrollment satisfies the request's enrollment filters. */
+    /**
+     * Whether an enrollment satisfies the request's enrollment filters.
+     * The row uses the matching enrollment if available, favoring active and
+     * then latest enrollments. If none match, it uses the same order across
+     * the program's enrollments.
+     */
     matchesEnrollment?: (enrollment: TrackedEntityEnrollment) => boolean
     translate?: RowIssueTranslate
 }
 
-// A program can enroll a tracked entity more than once. The row describes the
-// enrollment the request matched, the active one first, then the latest.
 const rowEnrollment = (
     enrollments: readonly TrackedEntityEnrollment[],
     { programId, matchesEnrollment }: NormalizeTrackedEntityOptions
@@ -253,11 +253,11 @@ const rowEnrollment = (
  * Validate and type every metadata-known tracked-entity value at the query
  * boundary. System columns fail fast; data values collect per-cell issues.
  */
-export const normalizeTrackedEntityValues = (
+export const normalizeTrackedEntityValues: (
     trackedEntity: TrackedEntity,
     fields: FieldCatalog,
-    options: NormalizeTrackedEntityOptions = {}
-): NormalizedTrackedEntity => {
+    options?: NormalizeTrackedEntityOptions
+) => NormalizedTrackedEntity = (trackedEntity, fields, options = {}) => {
     const translate = options.translate ?? defaultTranslate
     const values: Record<string, WorkingListCellValue> = {}
     const recordContext: FileUrlRecordContext = {
@@ -354,11 +354,11 @@ export interface NormalizeEventOptions {
  * Validate and type every metadata-known event value at the query boundary.
  * System columns fail fast; data values collect per-cell issues.
  */
-export const normalizeEventValues = (
+export const normalizeEventValues: (
     event: TrackerEvent,
     fields: FieldCatalog,
-    options: NormalizeEventOptions = {}
-): NormalizedEvent => {
+    options?: NormalizeEventOptions
+) => NormalizedEvent = (event, fields, options = {}) => {
     const translate = options.translate ?? defaultTranslate
     const stageId = event.programStage ?? options.programStageId
     const values: Record<string, WorkingListCellValue> = {}

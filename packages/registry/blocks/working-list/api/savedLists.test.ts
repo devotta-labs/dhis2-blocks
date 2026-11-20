@@ -7,7 +7,10 @@ import {
     systemColumnFields,
 } from '../registry/systemFilters'
 import { resolveWorkingListCapabilities } from './capabilities'
-import type { WorkingListClient } from './client'
+import {
+    openWorkingListServer,
+    readRequestJson,
+} from '../test/workingListServer'
 import type { ProgramFieldCatalog } from './metadata'
 import {
     buildSavedListPayload,
@@ -250,10 +253,8 @@ describe('saved-list payloads', () => {
     })
 
     it('rejects replacing an id through the wrong metadata endpoint', async () => {
-        const client: WorkingListClient = {
-            query: vi.fn(),
-            mutate: vi.fn(),
-        }
+        const { client } = await openWorkingListServer(() => undefined)
+        const attemptedWrite = vi.spyOn(client, 'mutate')
 
         await expect(
             replaceSavedWorkingList({
@@ -266,22 +267,35 @@ describe('saved-list payloads', () => {
                 capabilities: metadata.capabilities,
             })
         ).rejects.toThrow('Cannot replace')
-        expect(client.mutate).not.toHaveBeenCalled()
+        expect(attemptedWrite).not.toHaveBeenCalled()
     })
 
     it('loads the current resource before replace and preserves extensions', async () => {
-        const client: WorkingListClient = {
-            query: vi.fn().mockResolvedValue(
-                TrackedEntityInstanceFilterSchema.parse({
+        const requests: Array<string | undefined> = []
+        const writes: Array<Awaited<ReturnType<typeof readRequestJson>>> = []
+        const { client } = await openWorkingListServer(async (url, request) => {
+            if (
+                !url.pathname.endsWith(
+                    `/trackedEntityInstanceFilters/${savedResource.id}`
+                )
+            ) {
+                return undefined
+            }
+            requests.push(request.method)
+            if (request.method === 'GET') {
+                return Response.json({
                     ...savedResource,
                     entityQueryCriteria: {
                         ...savedResource.entityQueryCriteria,
                         futureCriterion: 'keep-me',
                     },
                 })
-            ),
-            mutate: vi.fn().mockResolvedValue({ status: 'OK' }),
-        }
+            }
+            if (request.method === 'PUT') {
+                writes.push(await readRequestJson(request))
+                return Response.json({ status: 'OK' })
+            }
+        })
 
         await replaceSavedWorkingList({
             client,
@@ -293,25 +307,15 @@ describe('saved-list payloads', () => {
             capabilities: metadata.capabilities,
         })
 
-        expect(client.query).toHaveBeenCalledWith(
+        expect(requests).toEqual(['GET', 'PUT'])
+        expect(writes).toEqual([
             expect.objectContaining({
-                resource: 'trackedEntityInstanceFilters',
-                id: savedResource.id,
-            }),
-            TrackedEntityInstanceFilterSchema
-        )
-        expect(client.mutate).toHaveBeenCalledWith(
-            expect.objectContaining({
-                type: 'replace',
-                data: expect.objectContaining({
-                    sortOrder: 7,
-                    entityQueryCriteria: expect.objectContaining({
-                        futureCriterion: 'keep-me',
-                    }),
+                sortOrder: 7,
+                entityQueryCriteria: expect.objectContaining({
+                    futureCriterion: 'keep-me',
                 }),
             }),
-            MutationResponseSchema
-        )
+        ])
     })
 })
 

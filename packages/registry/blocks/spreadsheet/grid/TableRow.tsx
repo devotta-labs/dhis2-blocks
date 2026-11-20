@@ -11,9 +11,7 @@ import { fieldAt } from './navGrid'
 import { BORDER_CLASS, RowHeader } from './RowHeader'
 import type { NotesTarget } from './RowNotes'
 
-// A fixed height, a minimum in a table, lets the cell's control fill the row however tall the row header makes it.
 const CELL_CLASS = cn(BORDER_CLASS, 'h-9 min-w-28 p-0')
-// The last column's line is the actions column's own.
 export const LAST_CLASS = 'border-e-0'
 
 interface TableRowProps {

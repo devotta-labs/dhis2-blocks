@@ -1,10 +1,7 @@
 import { compareEntries, sortKey } from './sort'
 import type { TimelineEntry } from './types'
 
-const entry = (
-    at: string,
-    extra: Partial<TimelineEntry> = {}
-): TimelineEntry => ({
+const entry = (at: string, extra: Partial<TimelineEntry> = {}) => ({
     id: at,
     at,
     data: null,
@@ -59,7 +56,6 @@ describe('compareEntries', () => {
             entry(at, { id: 'c' }),
         ]
         const expected = ['b', 'c', 'd', 'y', 'z']
-        // No sequence counts as 0; the tie-break does not flip with the order.
         expect(ids([...sorted].sort(compareEntries('asc')))).toEqual(expected)
         expect(ids([...sorted].sort(compareEntries('desc')))).toEqual(expected)
     })

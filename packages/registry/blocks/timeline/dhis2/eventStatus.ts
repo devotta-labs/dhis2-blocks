@@ -16,7 +16,7 @@ export type DerivedEventStatus =
 export const deriveEventStatus = (
     event: Pick<TrackerEvent, 'status' | 'scheduledAt'>,
     today: string
-): DerivedEventStatus => {
+) => {
     switch (event.status) {
         case 'COMPLETED':
             return 'completed'
@@ -32,7 +32,6 @@ export const deriveEventStatus = (
             return due !== undefined && due < today ? 'overdue' : 'scheduled'
         }
         default:
-            // ACTIVE, VISITED, and any status a newer server adds.
             return 'active'
     }
 }

@@ -5,13 +5,13 @@ import {
     buttonIn,
     elementIn,
     renderEntries,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import { TrackedEntitySchema } from '../schemas'
 import { noteEntries } from '../toEntries'
 import type { NoteEntryData } from '../types'
 import { TimelineNoteEntry } from './TimelineNoteEntry'
 
-const noteEntry = (value: string): TimelineEntry<NoteEntryData> => {
+const noteEntry: (value: string) => TimelineEntry<NoteEntryData> = (value) => {
     const [enrollment] = TrackedEntitySchema.parse({
         trackedEntity: 'TlE2eTei001',
         enrollments: [

@@ -6,7 +6,10 @@ import { TimelineTime } from '../../ui/TimelineParts'
 import { useSpansPrograms } from '../hooks/useSpansPrograms'
 import type { MilestoneEntryData, MilestoneKind, ProgramInfo } from '../types'
 
-const label = (kind: MilestoneKind, program?: ProgramInfo): string => {
+const label: (kind: MilestoneKind, program?: ProgramInfo) => string = (
+    kind,
+    program
+) => {
     switch (kind) {
         case 'enrolled':
             return program?.enrollmentDateLabel ?? i18n.t('Enrolled')

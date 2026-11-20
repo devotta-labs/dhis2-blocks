@@ -29,10 +29,7 @@ export const ChangeLogsSchema = z.object({ changeLogs: z.array(z.json()) })
 type ChangeLogs = z.infer<typeof ChangeLogsSchema>
 
 /** The first element matching `selector`, which the test expects to exist. */
-export const elementIn = (
-    container: HTMLElement,
-    selector: string
-): HTMLElement => {
+export const elementIn = (container: HTMLElement, selector: string) => {
     const found = container.querySelector(selector)
     if (!(found instanceof HTMLElement)) {
         throw new Error(`no element matches ${selector}`)
@@ -40,7 +37,7 @@ export const elementIn = (
     return found
 }
 
-export const buttonIn = (container: HTMLElement): HTMLButtonElement => {
+export const buttonIn = (container: HTMLElement) => {
     const found = container.querySelector('button')
     if (found === null) {
         throw new Error('no button')
@@ -48,14 +45,13 @@ export const buttonIn = (container: HTMLElement): HTMLButtonElement => {
     return found
 }
 
-/** The recorded events by id. */
 const recordedEvents: Record<string, TrackerEvent> = Object.fromEntries(
     [...EventsPageSchema.parse(page1), ...EventsPageSchema.parse(page2)].map(
         (event) => [event.event, event]
     )
 )
 
-export const recordedEvent = (id: string): TrackerEvent => {
+export const recordedEvent = (id: string) => {
     const found = recordedEvents[id]
     if (found === undefined) {
         throw new Error(`no recorded event ${id}`)
@@ -83,7 +79,6 @@ export interface ProgramMetadata {
     }>
 }
 
-/** The recorded program as the hooks resolve it, after `edit` changes a copy. */
 /** A stage of the recorded program's metadata, to edit before resolving it. */
 export const stageOf = (metadata: ProgramMetadata, id: string) => {
     const stage = metadata.programStages.find(
@@ -95,9 +90,7 @@ export const stageOf = (metadata: ProgramMetadata, id: string) => {
     return stage
 }
 
-export const recordedProgram = (
-    edit?: (metadata: ProgramMetadata) => void
-): ProgramInfo => {
+export const recordedProgram = (edit?: (metadata: ProgramMetadata) => void) => {
     const metadata: ProgramMetadata = JSON.parse(
         JSON.stringify(programMetadata)
     )

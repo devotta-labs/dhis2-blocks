@@ -33,13 +33,15 @@ export interface EventEntriesOptions {
  * requires `program`), one metadata request per program, then one request
  * for the org unit names; entries appear once all have answered.
  */
-export const useEventEntries = ({
+export const useEventEntries: (
+    options: EventEntriesOptions
+) => HistoryResult<EventEntryData> = ({
     trackedEntity,
     programs,
     timeField,
     cap = 500,
     now,
-}: EventEntriesOptions): HistoryResult<EventEntryData> => {
+}) => {
     const client = useTimelineClient()
     const ids = useProgramIds({ trackedEntity, programs })
     const info = useProgramInfo(ids.ids)
@@ -65,8 +67,6 @@ export const useEventEntries = ({
     const eventsSettled = events.statuses.every(
         (status) => status !== 'pending'
     )
-    // A program shows once its events and its metadata have both answered,
-    // so its events never show ids that names are about to replace.
     const groups = useMemo(
         () =>
             (ids.ids ?? []).flatMap((program, index) => {
@@ -80,8 +80,6 @@ export const useEventEntries = ({
     const subject = [trackedEntity, programs?.join(), timeField, cap].join('|')
     const firstAnswers = ids.ids !== undefined && eventsSettled && !info.pending
     const answeredOnce = useSettledOnce(firstAnswers, subject)
-    // Names are asked for once, after the first answers; later sets (a new
-    // program, a new org unit) keep the known names on show while they load.
     const orgUnitIds = useMemo(
         () =>
             answeredOnce
@@ -122,12 +120,11 @@ export const useEventEntries = ({
                       : []),
               ])
     const shown = useSettledOnce(firstStatus !== 'pending', subject)
-    // Once shown, later loading never empties the history again.
     const status: TimelineStatus =
         firstStatus === 'pending' && shown ? 'success' : firstStatus
     const notices: TimelineNotice[] = [
         ...ids.notices,
-        ...events.statuses.flatMap((eventsStatus, index): TimelineNotice[] => {
+        ...events.statuses.flatMap<TimelineNotice>((eventsStatus, index) => {
             const program = ids.ids?.[index] ?? ''
             const label = programLabel(info.programs, program)
             if (eventsStatus === 'error') {

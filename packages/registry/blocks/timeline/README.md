@@ -250,6 +250,9 @@ Merging several sources that each page on the server is not built in. The histor
 
 **Changes.** Attribute changes and each event's "Show changes" read the tracker changelog endpoints, with no version gate. Where an endpoint answers 404, a notice says changes "aren't available on this DHIS2 version" instead of showing an empty history. The server only records changes when it is set up to: on 2.43 the program and the tracked entity type need `enableChangeLog: true`, and on 2.41 the tracked entity type needs `allowAuditLog: true`. Without that setting, changes are simply absent. The block can't tell that apart from "nothing changed", so check the setting if your users rely on it.
 
+The changelog request shapes for DHIS2 2.41, 2.42 and 2.43 are recorded in
+[the timeline fixtures](dhis2/test/fixtures/README.md).
+
 **A record with no enrollments** shows no attribute changes. The changelog is asked for per program, and labels come from program metadata, so with no program there is nothing to ask for. Pass `programs` to choose which programs' changes appear.
 
 **Notes live in two places, on purpose.** Enrollment notes are entries in the feed. Event notes stay with their event (`TimelineEventNotes`), because they belong to the visit.

@@ -15,7 +15,6 @@ import {
     programJson,
     SURNAME,
     type ProgramSpec,
-    type StageSpec,
     type User,
 } from './programs'
 
@@ -51,7 +50,6 @@ export interface LabSettings {
     network: LabNetwork
 }
 
-/** mulberry32: a small seeded PRNG, so a preset always looks the same. */
 const seeded = (seed: number) => {
     let state = seed
     return () => {
@@ -73,7 +71,6 @@ const isoToday = () => new Date().toLocaleDateString('sv')
 const uid = (prefix: string, index: number) =>
     `${prefix}${String(index).padStart(11 - prefix.length, '0')}`
 
-/** A stored date-time, as the tracker API writes it. */
 const at = (day: string, time = '00:00') => `${day}T${time}:00.000`
 
 const clock = (random: () => number, from = 8, to = 16) => {
@@ -160,23 +157,17 @@ export interface LabChangeLogRow {
           }
 }
 
-const noteBy = (
-    id: string,
-    value: string,
-    storedAt: string,
-    user = NURSE
-): LabNote => ({
+const noteBy = (id: string, value: string, storedAt: string, user = NURSE) => ({
     note: id,
     value,
     storedAt,
     storedBy: user.username,
     createdBy: { ...user, displayName: `${user.firstName} ${user.surname}` },
 })
-/** The stage of a visit: the program's first or closing stage where it has one, else its repeatable one. */
 const stageOf = (
     spec: ProgramSpec,
     { first, closing }: { first: boolean; closing: boolean }
-): StageSpec => {
+) => {
     if (first && spec.first) return spec.first
     if (closing && spec.closing) return spec.closing
     return spec.repeat
@@ -190,22 +181,19 @@ const stored = (day: string) => `${day} 00:00:00.000`
 interface ProgramData {
     enrollments: LabEnrollment[]
     events: LabEvent[]
-    /** Each edited or recorded event's changelog, newest first. */
     eventChanges: Map<string, LabChangeLogRow[]>
 }
 
-/** One program's enrollments and events, oldest first, ending `lastDaysAgo` days before today. */
 const programData = (
     spec: ProgramSpec,
     position: number,
     settings: LabSettings,
     today: string
-): ProgramData => {
+) => {
     const random = seeded(20261104 + 7919 * (position + 1))
     const count = Math.max(0, Math.round(settings.events[position] ?? 0))
     const gap = gapFor(count)
     const lastDaysAgo = 3 + position * 5
-    // A long antenatal history is two pregnancies: the first enrollment closed with a delivery, a year and more before the second.
     const split = position === 0 && count >= 4 ? Math.floor(count / 2) : 0
     const days: string[] = []
     for (let index = 0; index < count; index++) {
@@ -271,12 +259,10 @@ const programData = (
                     : [{ dataElement: element.id, value }]
             })
             const recorded = at(day, clock(random, 9, 12))
-            // Every fifth visit was corrected a few days later.
             const edited = index % 5 === 1 && dataValues.length > 0
             const updated = edited
                 ? at(addDays(day, 2), clock(random, 13, 17))
                 : recorded
-            // The newest visit in the open enrollment is still being filled in.
             const active = !completed && last
             const id = eventId()
             const scheduledDay = addDays(day, -1 - Math.floor(random() * 3))
@@ -311,8 +297,8 @@ const programData = (
                         : [],
             }
             const rows: LabChangeLogRow[] = [
-                ...dataValues.map(
-                    ({ dataElement, value }): LabChangeLogRow => ({
+                ...dataValues.map<LabChangeLogRow>(
+                    ({ dataElement, value }) => ({
                         createdAt: recorded,
                         createdBy: NURSE,
                         type: 'CREATE',
@@ -346,7 +332,6 @@ const programData = (
             ]
             const [first] = dataValues
             if (edited && first) {
-                // The value was first typed with a slip, then corrected.
                 const typo = `${first.value}0`
                 const create = rows[0]
                 if (create && 'dataValue' in create.change) {
@@ -370,10 +355,9 @@ const programData = (
         })
     })
 
-    // Upcoming, overdue and skipped visits belong to the open enrollment, with nothing recorded yet.
     const open = enrollments.at(-1)
     if (open) {
-        const planned = (status: string, day: string): LabEvent => {
+        const planned = (status: string, day: string) => {
             const created = at(addDays(today, -20), '10:05')
             return {
                 event: eventId(),
@@ -417,19 +401,17 @@ const programData = (
             )
         }
     }
-    return { enrollments, events, eventChanges }
+    return { enrollments, events, eventChanges } satisfies ProgramData
 }
 
-/** How many saves the "many" changelog adds: past the block's 500 rows, so it pages and says older changes aren't shown. */
 const MANY_CHANGES = 540
 
-/** The attribute changelog of one program's answer, newest first. The type's attributes repeat in every program, as DHIS2 does. */
 const attributeChanges = (
     settings: LabSettings,
     spec: ProgramSpec,
     registered: string,
     today: string
-): LabChangeLogRow[] => {
+) => {
     if (settings.changelog === 'none' || settings.changelog === 'unsupported')
         return []
     const row = (
@@ -439,7 +421,7 @@ const attributeChanges = (
         attribute: string,
         previousValue?: string,
         currentValue?: string
-    ): LabChangeLogRow => ({
+    ) => ({
         createdAt,
         createdBy,
         type,
@@ -458,7 +440,6 @@ const attributeChanges = (
         row(registeredAt, CLERK, 'CREATE', SURNAME, undefined, 'Conteh'),
         row(registeredAt, CLERK, 'CREATE', BIRTH_DATE, undefined, '1994-04-12'),
         row(registeredAt, CLERK, 'CREATE', PHONE, undefined, '+232 76 123 456'),
-        // One save that changes two fields.
         row(renamedAt, NURSE, 'UPDATE', FIRST_NAME, 'Amina', 'Aminata'),
         row(
             renamedAt,
@@ -553,7 +534,6 @@ export const generateLabData = (settings: LabSettings, today = isoToday()) => {
             orgUnit: NGELEHUN,
             enrollments,
         },
-        /** Every program's metadata, enrolled or not, so `programs` can name one the person left. */
         programs: new Map(PROGRAMS.map((spec) => [spec.id, programJson(spec)])),
         events: parts.flatMap((part) => part.events),
         eventChanges: new Map(parts.flatMap((part) => [...part.eventChanges])),

@@ -1,11 +1,8 @@
 import { Result } from 'better-result'
 import { readFileSync } from 'node:fs'
 import { z } from 'zod'
-import {
-    createTimelineClient,
-    type DataEngineLike,
-    type DataEngineValue,
-} from './client'
+import { serveDhis2 } from '../../observation-cards/test/dhis2Server.test-utils'
+import { createTimelineClient, type DataEngineValue } from './client'
 import {
     fetchAttributeChangeLog,
     fetchEventChangeLog,
@@ -16,29 +13,28 @@ import {
 } from './queries'
 import { timelineKeys } from './timelineKeys'
 
-/** A recorded changelog page, rows kept as raw JSON so a test can alter them. */
 const RecordedChangeLogsSchema = z.object({
     changeLogs: z.array(z.record(z.string(), z.json())),
 })
 
-const fixture = (name: string): DataEngineValue =>
+const fixture = (name: string) =>
     JSON.parse(
         readFileSync(
-            new URL(`./__tests__/fixtures/v42/${name}`, import.meta.url),
+            new URL(`./test/fixtures/v42/${name}`, import.meta.url),
             'utf8'
         )
     )
 
-const engineReturning = (...bodies: DataEngineValue[]) => {
-    const query = vi.fn<DataEngineLike['query']>()
-    for (const body of bodies) {
-        query.mockResolvedValueOnce({ timelineResource: body })
-    }
-    return { client: createTimelineClient({ query }), query }
+const engineReturning = async (...bodies: DataEngineValue[]) => {
+    const { engine, query } = await serveDhis2((_url, index) => {
+        const body = bodies[index]
+        return body === undefined ? undefined : { body }
+    })
+    return { client: createTimelineClient(engine), query }
 }
 
 const requestOf = (
-    query: ReturnType<typeof engineReturning>['query'],
+    query: Awaited<ReturnType<typeof engineReturning>>['query'],
     call = 0
 ) => Object.values(query.mock.calls[call]?.[0] ?? {})[0]
 
@@ -57,7 +53,9 @@ describe('fetchEvents', () => {
     } as const
 
     it('asks for one program, every status, newest first, cap + 1 rows', async () => {
-        const { client, query } = engineReturning(fixture('events-page-1.json'))
+        const { client, query } = await engineReturning(
+            fixture('events-page-1.json')
+        )
 
         await fetchEvents(client, options)
 
@@ -76,7 +74,7 @@ describe('fetchEvents', () => {
     })
 
     it('keeps cap rows and says when more exist', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning({
             events: [
                 event('a', 'SCHEDULE'),
                 event('b', 'COMPLETED'),
@@ -93,7 +91,9 @@ describe('fetchEvents', () => {
     })
 
     it('is not capped when the answer fits', async () => {
-        const { client } = engineReturning({ events: [event('a', 'ACTIVE')] })
+        const { client } = await engineReturning({
+            events: [event('a', 'ACTIVE')],
+        })
 
         const result = await fetchEvents(client, options)
 
@@ -101,7 +101,7 @@ describe('fetchEvents', () => {
     })
 
     it('passes the abort signal to the engine', async () => {
-        const { client, query } = engineReturning({ events: [] })
+        const { client, query } = await engineReturning({ events: [] })
         const controller = new AbortController()
 
         await fetchEvents(client, options, controller.signal)
@@ -112,7 +112,7 @@ describe('fetchEvents', () => {
 
 describe('fetchTrackedEntity', () => {
     it('asks for one tracked entity with every enrollment and its notes, no program', async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             fixture('tracked-entity.json')
         )
 
@@ -138,7 +138,7 @@ describe('fetchTrackedEntity', () => {
 describe('changelogs', () => {
     type RawRow = z.infer<typeof RecordedChangeLogsSchema>['changeLogs'][number]
 
-    const rowsOf = (count: number): RawRow[] => {
+    const rowsOf: (count: number) => RawRow[] = (count) => {
         const { changeLogs } = RecordedChangeLogsSchema.parse(
             fixture('tracked-entity-changelog.json')
         )
@@ -149,7 +149,7 @@ describe('changelogs', () => {
     }
 
     it("asks for one program's attribute changelog newest first, 100 at a time", async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             fixture('tracked-entity-changelog.json')
         )
 
@@ -177,7 +177,7 @@ describe('changelogs', () => {
     it('reads pages until a short one, counting unknown rows toward a full page', async () => {
         const full = rowsOf(100)
         full[0] = { ...full[0], change: { somethingNew: { id: 'x' } } }
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             { changeLogs: full },
             { changeLogs: rowsOf(3) }
         )
@@ -194,7 +194,7 @@ describe('changelogs', () => {
     })
 
     it('asks once more when exactly maxRows came on full pages, and is not truncated', async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             { changeLogs: rowsOf(100) },
             { changeLogs: rowsOf(100) },
             { changeLogs: [] }
@@ -212,7 +212,7 @@ describe('changelogs', () => {
     })
 
     it('stops at maxRows and says the rest were left out', async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             { changeLogs: rowsOf(100) },
             { changeLogs: rowsOf(100) }
         )
@@ -234,7 +234,7 @@ describe('changelogs', () => {
 
 describe('fetchProgramTimelineMetadata', () => {
     it('asks for stages, report flags, due-date visibility and attributes', async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             fixture('program-metadata.json')
         )
 
@@ -261,7 +261,7 @@ describe('fetchProgramTimelineMetadata', () => {
 
 describe('fetchOrgUnitNames', () => {
     it('asks for org unit names in one request for all ids', async () => {
-        const { client, query } = engineReturning(
+        const { client, query } = await engineReturning(
             fixture('org-unit-names.json')
         )
 
@@ -285,7 +285,7 @@ describe('fetchOrgUnitNames', () => {
     })
 
     it('makes no request for no ids', async () => {
-        const { client, query } = engineReturning()
+        const { client, query } = await engineReturning()
 
         const result = await fetchOrgUnitNames(client, { ids: [] })
 
@@ -296,22 +296,17 @@ describe('fetchOrgUnitNames', () => {
 
 describe('errors', () => {
     it('returns an error result, not a throw, on HTTP failure and on a schema mismatch', async () => {
-        const failing = createTimelineClient({
-            query: vi
-                .fn<DataEngineLike['query']>()
-                .mockRejectedValue(
-                    Object.assign(new Error('Not found'), { status: 404 })
-                ),
-        })
+        const { engine } = await serveDhis2(() => ({ status: 404 }))
+        const failing = createTimelineClient(engine)
         const httpResult = await fetchEventChangeLog(failing, {
             event: 'e1',
             maxRows: 500,
         })
         expect(
             Result.isError(httpResult) && httpResult.error.message
-        ).toContain('Not found')
+        ).toContain('Not Found')
 
-        const { client } = engineReturning({ unexpected: true })
+        const { client } = await engineReturning({ unexpected: true })
         const schemaResult = await fetchTrackedEntity(client, {
             trackedEntity: 'te1',
         })

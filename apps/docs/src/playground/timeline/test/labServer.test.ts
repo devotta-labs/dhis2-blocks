@@ -31,7 +31,6 @@ const serverFor = (settings = DEFAULT_SETTINGS) => {
 
 const [ANC, HYPERTENSION] = LAB_PROGRAMS.map(({ id }) => id)
 
-/** The block's own events request: one program, `cap + 1` rows, newest first. */
 const eventsOf = (
     respond: ReturnType<typeof answer>,
     program = ANC,
@@ -72,7 +71,6 @@ describe('the timeline lab server', () => {
         expect(
             new Set(entity.enrollments.map(({ program }) => program))
         ).toEqual(new Set([ANC, HYPERTENSION]))
-        // The long antenatal history is two pregnancies, the first one closed.
         expect(
             entity.enrollments
                 .filter(({ program }) => program === ANC)
@@ -110,7 +108,6 @@ describe('the timeline lab server', () => {
         const { respond } = serverFor()
         const events = eventsOf(respond)
         expect(events.every(({ program }) => program === ANC)).toBe(true)
-        // Scheduled and skipped visits have no occurredAt, so they come first.
         const firstDated = events.findIndex(
             ({ occurredAt }) => occurredAt !== undefined
         )

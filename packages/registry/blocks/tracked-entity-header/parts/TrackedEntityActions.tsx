@@ -29,6 +29,6 @@ export function TrackedEntityActions({
     if (slot === undefined) {
         return actions
     }
-    // Inside a frame, nothing until its place exists, so they never flash in line.
+
     return slot.element ? createPortal(actions, slot.element) : null
 }

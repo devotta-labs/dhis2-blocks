@@ -18,19 +18,16 @@ export interface FinderFieldPartProps {
  * Registers a field part and resolves what it renders: its metadata error,
  * a pending stand-in, or the input props.
  */
-export const useFieldPart = (
-    {
-        attribute,
-        label,
-        description,
-        placeholder,
-        className,
-    }: FinderFieldPartProps,
+export const useFieldPart: (
+    options: FinderFieldPartProps,
     match: FormField['match']
-):
+) =>
     | { state: 'metadata-error'; message: string }
     | { state: 'pending'; label: string }
-    | { state: 'ready'; input: FieldInputProps } => {
+    | { state: 'ready'; input: FieldInputProps } = (
+    { attribute, label, description, placeholder, className },
+    match
+) => {
     const { state } = useFinderContext()
     const { found, field, error, metadataError } = useComposedField(
         attribute,
@@ -39,7 +36,7 @@ export const useFieldPart = (
     if (metadataError) {
         return { state: 'metadata-error', message: metadataError }
     }
-    // Inputs wait for the server calendar too, not only the program.
+
     if (!found || state.status !== 'ready') {
         return { state: 'pending', label: label ?? found?.label ?? '' }
     }

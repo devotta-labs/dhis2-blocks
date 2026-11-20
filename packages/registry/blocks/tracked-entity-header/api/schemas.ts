@@ -46,7 +46,7 @@ const AttributeSchema = z.looseObject({
     id: z.string().min(1),
     displayFormName: z.string().min(1),
     valueType: z.string().min(1),
-    // Never dropped when malformed: the part would show raw option codes.
+
     optionSet: z
         .object({
             options: z.array(
@@ -62,7 +62,6 @@ const AttributeRefSchema = z.looseObject({
     displayFormName: text,
 })
 
-/** One entry of `programTrackedEntityAttributes` or `trackedEntityTypeAttributes`. */
 const ListedAttributeSchema = z.looseObject({
     trackedEntityAttribute: AttributeRefSchema,
     displayInList: z.boolean().catch(false),
@@ -75,7 +74,7 @@ const toMetadata = (
     typeName: string,
     listed: unknown[],
     extra: Partial<AttributeMetadata>
-): AttributeMetadata => {
+) => {
     const attributes = new Map<string, AttributeMeta>()
     const invalid: AttributeMetadata['invalid'] = new Map()
     const inList: { id: string; sortOrder: number }[] = []
@@ -85,7 +84,7 @@ const toMetadata = (
             return
         }
         const { trackedEntityAttribute: raw, displayInList }: Listed = ref.data
-        // A type's list has no sortOrder: its own order stands.
+
         const sortOrder = ref.data.sortOrder ?? index
         const parsed = AttributeSchema.safeParse(raw)
         if (parsed.success) {
@@ -134,7 +133,7 @@ export const ProgramAttributesResponseSchema = z
             .catch(undefined),
         programTrackedEntityAttributes: z.array(z.unknown()),
     })
-    .transform((program): AttributeMetadata =>
+    .transform<AttributeMetadata>((program) =>
         toMetadata(
             program.trackedEntityType?.displayName ?? '',
             program.programTrackedEntityAttributes,
@@ -158,7 +157,7 @@ export const TypeAttributesResponseSchema = z
         displayName: z.string(),
         trackedEntityTypeAttributes: z.array(z.unknown()),
     })
-    .transform((type): AttributeMetadata =>
+    .transform<AttributeMetadata>((type) =>
         toMetadata(type.displayName, type.trackedEntityTypeAttributes, {})
     )
 

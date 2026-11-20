@@ -50,7 +50,7 @@ export const searchQueryOptions = (
 ) =>
     queryOptions({
         queryKey: finderKeys.search(server, model.program, search, page),
-        queryFn: async ({ signal }): Promise<SearchOutcome> => {
+        queryFn: async ({ signal }) => {
             try {
                 const response = await engine.query(
                     {
@@ -71,7 +71,7 @@ export const searchQueryOptions = (
             } catch (cause) {
                 const error = toRequestError(cause)
                 if (isTooManyConflict(error) && !signal.aborted) {
-                    return { kind: 'too-many' }
+                    return { kind: 'too-many' } satisfies SearchOutcome
                 }
                 throw error
             }

@@ -17,7 +17,6 @@ const gregorianDayFirst: FinderSystemInfo = {
     dateFormat: 'DD-MM-YYYY',
 }
 
-/** Holds the value like a field would and records every change. */
 const Harness = ({
     info,
     initial = '',
@@ -41,7 +40,7 @@ const Harness = ({
     )
 }
 
-const ThrowingCalendarInput = (): React.ReactElement => {
+const ThrowingCalendarInput = () => {
     throw new Error('CalendarInput failed to render')
 }
 
@@ -55,7 +54,7 @@ const dateField = () => page.getByLabelText('Date of birth')
 
 const typeDate = async (text: string) => {
     await userEvent.fill(dateField(), text)
-    // CalendarInput reports a typed date when the input loses focus.
+
     await userEvent.tab()
 }
 
@@ -119,7 +118,6 @@ describe('CalendarDateInput', () => {
             />
         )
 
-        // CalendarInput reports an emptied input as a null date.
         await typeDate('')
 
         await expect.poll(() => onChange.mock.lastCall?.[0]).toBe('')
@@ -167,7 +165,7 @@ describe('CalendarDateInput', () => {
         it('never reports an invalid local date as a valid ISO date', async () => {
             const onChange = vi.fn()
             await renderFallback(onChange)
-            // Not a day on the Ethiopian calendar, but a real ISO date.
+
             await userEvent.fill(dateField(), '2017-01-31')
             const next: string = onChange.mock.lastCall?.[0]
             expect(next).not.toMatch(/^\d{4}-\d{2}-\d{2}$/)

@@ -53,7 +53,6 @@ export interface OrgUnitClient {
 
 const resourceClients = new WeakMap<OrgUnitClient, OrgUnitResourceClient>()
 
-/** A failed DHIS2 request, with the HTTP status kept. */
 class OrgUnitRequestError extends Error {
     readonly status?: number
     override readonly cause: unknown
@@ -68,7 +67,6 @@ class OrgUnitRequestError extends Error {
     }
 }
 
-/** `.catch` makes every field lenient: a malformed one loses only itself. */
 const lenient = <T extends z.ZodType>(schema: T) =>
     schema.optional().catch(undefined)
 
@@ -115,9 +113,9 @@ const QueryEnvelopeSchema = z
  * failures (HTTP, network, abort) and schema failures both come back as
  * error results; nothing here throws.
  */
-export const createOrgUnitResourceClient = (
+export const createOrgUnitResourceClient: (
     engine: DataEngineLike
-): OrgUnitResourceClient => ({
+) => OrgUnitResourceClient = (engine) => ({
     async query<T>(
         request: ResourceRequest,
         schema: ZodType<T>,
@@ -154,11 +152,13 @@ export const createOrgUnitResourceClient = (
     },
 })
 
-/** Each client's place in the query cache, so two engines never share results. */
 const cacheIds = new WeakMap<OrgUnitClient, number>()
 let lastCacheId = 0
 
-const newClient = (engine: DataEngineLike, cacheId: number): OrgUnitClient => {
+const newClient: (engine: DataEngineLike, cacheId: number) => OrgUnitClient = (
+    engine,
+    cacheId
+) => {
     const client: OrgUnitClient = Object.freeze({
         [CLIENT]: true as const,
     })
@@ -172,7 +172,7 @@ const newClient = (engine: DataEngineLike, cacheId: number): OrgUnitClient => {
  * app-runtime's). Create it once, outside render: each client caches its own
  * results.
  */
-export const createOrgUnitClient = (engine: DataEngineLike): OrgUnitClient => {
+export const createOrgUnitClient = (engine: DataEngineLike) => {
     lastCacheId += 1
     return newClient(engine, lastCacheId)
 }
@@ -181,18 +181,14 @@ export const createOrgUnitClient = (engine: DataEngineLike): OrgUnitClient => {
  * Internal: app-runtime's client. An app has one data engine, so its results
  * share cache id 0 however often the client is rebuilt.
  */
-export const createRuntimeOrgUnitClient = (
-    engine: DataEngineLike
-): OrgUnitClient => newClient(engine, 0)
+export const createRuntimeOrgUnitClient = (engine: DataEngineLike) =>
+    newClient(engine, 0)
 
 /** Internal: the client's part of every query key. */
-export const cacheIdOf = (client: OrgUnitClient): number =>
-    cacheIds.get(client) ?? 0
+export const cacheIdOf = (client: OrgUnitClient) => cacheIds.get(client) ?? 0
 
 /** Internal: the request runner an organisation unit client stands for. */
-export const resourceClientOf = (
-    client: OrgUnitClient
-): OrgUnitResourceClient => {
+export const resourceClientOf = (client: OrgUnitClient) => {
     const resourceClient = resourceClients.get(client)
     if (!resourceClient) {
         throw new Error(

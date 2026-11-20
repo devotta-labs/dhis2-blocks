@@ -1,4 +1,4 @@
-import { fixture } from '../__tests__/fixtures'
+import { fixture } from '../test/header.fixture'
 import {
     ProgramAttributesResponseSchema,
     TrackedEntityResponseSchema,

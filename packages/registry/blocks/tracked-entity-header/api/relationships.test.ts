@@ -1,5 +1,5 @@
 import { Result } from 'better-result'
-import { fixture } from '../__tests__/fixtures'
+import { fixture } from '../test/header.fixture'
 import {
     createTrackedEntityHeaderResourceClient,
     type DataEngineLike,
@@ -22,7 +22,7 @@ const engineReturning = (response: DataEngineValue) => {
     }
 }
 
-const ok = <T>(result: Result<T, Error>): T => {
+const ok = <T>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }

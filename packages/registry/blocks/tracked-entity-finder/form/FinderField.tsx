@@ -45,7 +45,6 @@ export function FinderField(props: FinderFieldProps) {
         case 'dateTime':
             return <DateInput {...input} />
         case 'unsupported':
-            // The rules report an unsupported type as a metadata error first.
             return null
     }
 }

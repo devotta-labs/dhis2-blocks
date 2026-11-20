@@ -1,5 +1,5 @@
 import { Result } from 'better-result'
-import { fixture } from '../__tests__/fixtures'
+import { fixture } from '../test/header.fixture'
 import {
     createTrackedEntityHeaderResourceClient,
     type DataEngineLike,
@@ -21,7 +21,7 @@ const engineReturning = (response: DataEngineValue) => {
     }
 }
 
-const ok = <T>(result: Result<T, Error>): T => {
+const ok = <T>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
@@ -162,7 +162,6 @@ describe('fetchTrackedEntity', () => {
     })
 
     it('a person not enrolled in the program (404) is asked for again without it, with no enrollment or owner', async () => {
-        // The person without the program still lists every enrollment and owner it has.
         const query = vi
             .fn<DataEngineLike['query']>()
             .mockRejectedValueOnce(

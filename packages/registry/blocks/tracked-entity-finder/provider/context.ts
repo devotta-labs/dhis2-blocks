@@ -65,7 +65,7 @@ export interface FinderContextValue {
 /** Internal: never exported from the block, so it cannot be swapped out. */
 export const FinderContext = createContext<FinderContextValue | null>(null)
 
-export const useFinderContext = (): FinderContextValue => {
+export const useFinderContext = () => {
     const context = useContext(FinderContext)
     if (!context) {
         throw new Error(
@@ -90,7 +90,7 @@ export const FinderFormContext = createContext<FinderFormContextValue | null>(
     null
 )
 
-export const useFinderFormContext = (): FinderFormContextValue => {
+export const useFinderFormContext = () => {
     const context = useContext(FinderFormContext)
     if (!context) {
         throw new Error(

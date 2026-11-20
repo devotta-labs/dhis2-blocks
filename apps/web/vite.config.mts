@@ -4,7 +4,6 @@ import { defineConfig } from 'vite'
 
 const viteConfig = defineConfig(({ mode }) => {
     return {
-        // In dev environments, don't clear the terminal after files update
         clearScreen: mode !== 'development',
         plugins: [tailwindcss()],
         resolve: {
@@ -20,7 +19,6 @@ const viteConfig = defineConfig(({ mode }) => {
                 ),
             },
         },
-        // ...other config options here
     }
 })
 

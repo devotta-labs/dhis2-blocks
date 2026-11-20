@@ -6,7 +6,7 @@ import {
 export type { TrackedEntityHeaderState }
 
 /** The tracked entity and metadata the provider loaded, or why there are none yet. */
-export const useTrackedEntityHeader = (): TrackedEntityHeaderState => {
+export const useTrackedEntityHeader = () => {
     const { state } = useHeaderContext()
     return state
 }

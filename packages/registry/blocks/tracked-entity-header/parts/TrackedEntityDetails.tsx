@@ -24,11 +24,11 @@ export function TrackedEntityDetails({
     className,
 }: TrackedEntityDetailsProps) {
     const context = useHeaderContext()
-    // In a banner the toggle and panel join the banner's own rows.
+
     const inFrame = useContext(InFrameContext)
     const [open, setOpen] = useState(false)
     const listId = useId()
-    // Parts place their attributes in layout effects; the list waits for that pass.
+
     const [settled, setSettled] = useState(false)
     useLayoutEffect(() => setSettled(true), [])
     const { state, placed } = context
@@ -57,7 +57,7 @@ export function TrackedEntityDetails({
     return (
         <div
             data-slot="tracked-entity-details"
-            // In a banner the wrapper has no box, so the host's classes go to the toggle.
+
             className={inFrame ? 'contents' : className}
         >
             <DisclosureToggle
@@ -77,10 +77,7 @@ export function TrackedEntityDetails({
                 {custom ? (
                     children
                 ) : (
-                    <dl
-                        // Labels take what they need up to 40%; a longer one wraps rather than squeezing the values.
-                        className="m-0 grid grid-cols-[fit-content(40%)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm [&>*]:break-words"
-                    >
+                    <dl className="m-0 grid grid-cols-[fit-content(40%)_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm [&>*]:break-words">
                         {left.map((uid) => (
                             <AttributeFact
                                 key={uid}

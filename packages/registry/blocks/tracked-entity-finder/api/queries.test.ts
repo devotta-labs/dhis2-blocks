@@ -1,6 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import { buildProgramModel } from '../rules/programModel'
 import { seal } from '../rules/seal'
 import {

@@ -23,9 +23,8 @@ export interface ProgramMetadata {
     attributes: AttributeMetadata[]
 }
 
-/** DHIS2's default when a program does not configure a minimum. */
 const DEFAULT_MIN_ATTRIBUTES_REQUIRED_TO_SEARCH = 1
-/** 0 means the server applies no limit. */
+
 const DEFAULT_MAX_TEI_COUNT_TO_RETURN = 0
 
 const AttributeSchema = z.object({
@@ -67,7 +66,7 @@ export const ProgramResponseSchema = z.object({
 
 type AttributeLink = z.infer<typeof LinkSchema>
 
-const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
+const toAttributeMetadata = (link: AttributeLink) => {
     const attribute = link.trackedEntityAttribute
     const meta: AttributeMetadata = {
         id: attribute.id,
@@ -100,10 +99,10 @@ const toAttributeMetadata = (link: AttributeLink): AttributeMetadata => {
     return meta
 }
 
-export const normaliseProgram = (
+export const normaliseProgram: (
     program: string,
     response: z.infer<typeof ProgramResponseSchema>
-): ProgramMetadata => ({
+) => ProgramMetadata = (program, response) => ({
     program,
     name: response.displayName,
     trackedEntityType: response.trackedEntityType.id,
@@ -166,9 +165,10 @@ export type TrackedEntitiesResponse = z.infer<
     typeof TrackedEntitiesResponseSchema
 >
 
-export const normaliseTrackedEntities = (
-    response: TrackedEntitiesResponse
-): { rows: RawTrackedEntity[]; total?: number } => {
+export const normaliseTrackedEntities: (response: TrackedEntitiesResponse) => {
+    rows: RawTrackedEntity[]
+    total?: number
+} = (response) => {
     const rows = response.trackedEntities ?? response.instances ?? []
     const total = response.pager?.total ?? response.total
     return total === undefined ? { rows } : { rows, total }

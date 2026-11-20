@@ -14,15 +14,17 @@ import type {
 
 type Match = FormField['match']
 
-/** What one field contributes: nothing, an error, or the conditions to send. */
 type Reading =
     | { readonly state: 'empty' }
     | { readonly state: 'error'; readonly code: FieldErrorCode }
     | { readonly state: 'filled'; readonly conditions: SearchCondition[] }
 
 const EMPTY: Reading = { state: 'empty' }
-const failed = (code: FieldErrorCode): Reading => ({ state: 'error', code })
-const fill = (conditions: SearchCondition[]): Reading => ({
+const failed: (code: FieldErrorCode) => Reading = (code) => ({
+    state: 'error',
+    code,
+})
+const fill: (conditions: SearchCondition[]) => Reading = (conditions) => ({
     state: 'filled',
     conditions,
 })
@@ -30,7 +32,7 @@ const fill = (conditions: SearchCondition[]): Reading => ({
 const metadataErrorOf = (
     model: ProgramModel,
     { attribute: id, match }: FormField
-): MetadataError['kind'] | undefined => {
+) => {
     const attribute = attributeOf(model, id)
     if (!attribute) {
         return 'unknown-attribute'
@@ -53,11 +55,7 @@ const metadataErrorOf = (
     return undefined
 }
 
-/**
- * Attribute ids composed both as an exact field and as a range in one form.
- * They would share one value of two shapes, so neither is searched.
- */
-const rangeConflicts = (fields: readonly FormField[]): Set<string> => {
+const rangeConflicts = (fields: readonly FormField[]) => {
     const exact = new Set<string>()
     const range = new Set<string>()
     for (const { attribute, match } of fields) {
@@ -70,22 +68,21 @@ const readField = (
     attribute: FinderAttribute,
     match: Match,
     value: FieldValue | undefined
-): Reading => {
+) => {
     const result = fieldSchema(attribute, match).safeParse(value)
     if (!result.success) {
-        // Anything but a field error is a value of the wrong shape: empty.
         const code = errorCodeOf(result.error)
         return code ? failed(code) : EMPTY
     }
     return result.data ? fill([...result.data]) : EMPTY
 }
 
-const verdict = (
+const verdict: (
     fields: Omit<FormVerdict, 'metadataErrors' | 'errors'> & {
         metadataErrors: MetadataError[]
         errors: Record<string, FieldErrorCode>
     }
-): FormVerdict =>
+) => FormVerdict = (fields) =>
     Object.freeze({
         ...fields,
         metadataErrors: Object.freeze(
@@ -94,17 +91,11 @@ const verdict = (
         errors: Object.freeze(fields.errors),
     })
 
-/** A composed field the program allows, with its attribute. */
 interface UsableField {
     attribute: FinderAttribute
     match: Match
 }
 
-/**
- * Splits one form's composed fields into the ones the program allows and the
- * metadata errors of the rest. Composed ids are re-checked against the
- * metadata here, so a field the program does not allow never reaches a search.
- */
 const sortFields = (model: ProgramModel, fields: readonly FormField[]) => {
     const conflicts = rangeConflicts(fields)
     const metadataErrors: MetadataError[] = []
@@ -139,11 +130,11 @@ const sortFields = (model: ProgramModel, fields: readonly FormField[]) => {
  * Judges one form's composed fields and values against the program's search
  * rules: each value through its field schema, then the form as a whole.
  */
-export const evaluateForm = (
+export const evaluateForm: (
     model: ProgramModel,
     fields: readonly FormField[],
     values: Readonly<Record<string, FieldValue | undefined>>
-): FormVerdict => {
+) => FormVerdict = (model, fields, values) => {
     const { usable, metadataErrors } = sortFields(model, fields)
 
     const needed = Math.max(model.minAttributes, 1)

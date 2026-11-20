@@ -2,7 +2,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { cellKey } from '../model/types'
 import type { CellKey } from '../model/types'
-import { makeTable, mount } from './__tests__/gridRig'
+import { makeTable, mount } from './test/gridRig'
 
 const keys = [0, 1, 2].map((i) => cellKey(`t1r${i}`, 'c0'))
 

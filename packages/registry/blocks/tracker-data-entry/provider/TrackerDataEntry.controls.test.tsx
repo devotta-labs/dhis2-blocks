@@ -5,7 +5,7 @@ import type {
     CellKey,
     CommitResult,
 } from '@/components/spreadsheet'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey, SpreadsheetGrid, useCell } from '@/components/spreadsheet'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 import {

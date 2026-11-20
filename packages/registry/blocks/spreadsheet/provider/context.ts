@@ -88,7 +88,6 @@ export const NO_NAMES: SpreadsheetContext['orgUnitNames'] = createStore(() => ({
 /** `announce`, for code outside the grid that says outcomes too; the shared `announce` by default. */
 export type Announcer = Pick<SpreadsheetContext, 'announce'>
 
-/** What a cell with no entry reads as; one stable object. */
 const EMPTY_EFFECTS: Readonly<CellAnnotations> = Object.freeze({
     required: false,
     messages: [],
@@ -109,7 +108,7 @@ export const SpreadsheetReactContext = createContext<
     SpreadsheetContext | undefined
 >(undefined)
 
-export const useSpreadsheetContext = (): SpreadsheetContext => {
+export const useSpreadsheetContext = () => {
     const context = useContext(SpreadsheetReactContext)
     if (context === undefined) {
         throw new Error('Cells must be used inside Spreadsheet.')
@@ -118,16 +117,14 @@ export const useSpreadsheetContext = (): SpreadsheetContext => {
 }
 
 /** A cell's view from its state and effects, as its row hands them over. */
-export const useViewOf = (
+export const useViewOf: (
     key: CellKey,
     cell: CellState,
     effects: CellAnnotations
-): CellView => {
+) => CellView = (key, cell, effects) => {
     const { store } = useSpreadsheetContext()
-    // The store's gate reads the cell's lock and hiding when it commits, so a rule that closed the cell while its text
-    // was typed wins.
     const commit = useCallback(
-        (text: string): CommitResult => store.getState().commit(key, text),
+        (text: string) => store.getState().commit(key, text),
         [store, key]
     )
     return useMemo(
@@ -137,7 +134,7 @@ export const useViewOf = (
 }
 
 /** One cell's state, effects and `commit`; it re-renders only when this cell changes in either store. */
-export const useCellView = (key: CellKey): CellView => {
+export const useCellView: (key: CellKey) => CellView = (key) => {
     const { store, effects } = useSpreadsheetContext()
     const cell = useStore(store, (state) => state.cells[key] ?? EMPTY_CELL)
     const cellEffects = useStore(

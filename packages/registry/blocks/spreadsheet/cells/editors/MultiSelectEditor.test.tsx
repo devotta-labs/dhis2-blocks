@@ -2,7 +2,7 @@
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import { CELL, HEADER, inputOf, rig } from '../__tests__/harness'
+import { CELL, HEADER, inputOf, rig } from '../test/harness'
 import { Cell } from '../Cell'
 
 const FRUIT: Field = {
@@ -52,13 +52,11 @@ test('search narrows the options; checking saves codes in option-set order joine
     await expect.element(search).toHaveFocus()
     expect(dialog.getByRole('checkbox').all()).toHaveLength(4)
 
-    // C first, then A: the saved value follows the option set, not the order of the clicks.
     await userEvent.click(checkbox('Cherry'))
     await expect.element(checkbox('Cherry')).toBeChecked()
     await userEvent.fill(search, 'app')
     expect(dialog.getByRole('checkbox').all()).toHaveLength(1)
     await userEvent.click(checkbox('Apple'))
-    // A pick is not a save, and a choice made before the search stays.
     expect(enqueued).toEqual([])
     await userEvent.fill(search, '')
     await expect.element(checkbox('Apple')).toBeChecked()
@@ -108,7 +106,6 @@ test('options a rule hid are not offered, and a stored hidden option can still b
     await expect.element(checkbox('Cherry')).toBeChecked()
     await userEvent.click(checkbox('Cherry'))
     await expect.element(checkbox('Cherry')).not.toBeChecked()
-    // Still listed, so the person can see what they unchecked.
     await expect.element(checkbox('Cherry')).toBeVisible()
     await userEvent.click(save())
     expect(stored()?.value).toBe('A')
@@ -122,7 +119,6 @@ test('"Clear all" saves no value; the selection is announced as "Selected option
     expect(announced).toContain('Selected options: Apple, Cherry, Date')
     await userEvent.click(checkbox('Apple'))
     expect(announced).toContain('Selected options: Cherry, Date')
-    // With nothing left selected, nothing is announced.
     await userEvent.click(checkbox('Cherry'))
     await userEvent.click(checkbox('Date'))
     expect(announced).not.toContain('Selected options: ')
@@ -141,7 +137,6 @@ test('at most 50 options are listed, with the count line; a search that finds no
     const count = 'Showing 50 of 60 matches'
     await expect.element(dialog.getByText(count)).toBeVisible()
     expect(announced).toContain(count)
-    // Listed in the option set's order, not ranked: "Option 15" holds a 5 but no word starts with it.
     await userEvent.fill(search, 'option 5')
     expect(dialog.getByRole('checkbox').all()).toHaveLength(15)
     await expect

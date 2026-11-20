@@ -1,4 +1,4 @@
-import uploaded from '../__tests__/fixtures/file-upload.json'
+import uploaded from '../test/fixtures/file-upload.json'
 import type { DataEngine } from '../../provider/context'
 import { uploadFile } from '@/components/dhis2-value-input/editors/fileApi'
 
@@ -6,7 +6,6 @@ type Query = Parameters<DataEngine['query']>[0]
 type Mutation = Parameters<DataEngine['mutate']>[0]
 type MutateOptions = Parameters<DataEngine['mutate']>[1]
 
-/** DHIS2 answering every read and upload with `answer`, keeping what was asked. */
 const fakeEngine = (answer: { status?: string; file?: { name: string } }) => {
     const queries: Query[] = []
     const mutations: Array<[Mutation, MutateOptions]> = []

@@ -31,7 +31,6 @@ export interface ColumnTarget {
     column: GridColumn
 }
 
-// The popover's cell writes to a scratch store, so no rule says anything about it.
 const NO_ANNOTATIONS = createStore<AnnotationsState>()(() => ({
     cells: {},
     rowMessages: new Map(),
@@ -56,7 +55,6 @@ const previewOf = ({ entries, filled, skipped }: BulkPlan) =>
         filled === 0 ? '' : ` ${filledOf(filled)}`
     }${skippedClause(skipped)}`
 
-/** The column's header ids for its cells' names, and the leaf header's own. */
 const headersOf = (idScope: string, table: GridTable, column: GridColumn) => {
     const labelledBy = columnHeaderIds(idScope, table)[
         table.columns.indexOf(column)
@@ -64,7 +62,6 @@ const headersOf = (idScope: string, table: GridTable, column: GridColumn) => {
     return { labelledBy, leaf: labelledBy.split(' ').at(-1) ?? '' }
 }
 
-/** The column's control on a one-cell scratch store, the overwrite choice, the preview, Apply and Cancel. */
 const ColumnValue = ({
     table,
     column,
@@ -81,7 +78,6 @@ const ColumnValue = ({
     const context = useSpreadsheetContext()
     const { store, keyOf, idScope, settings, announce } = context
     const key = cellKey('bulk', column.id)
-    // The column's one field, from an open cell; `takesColumnActions` makes sure it has one.
     const [{ field, scratch }] = useState(() => {
         const state = store.getState()
         const source = openKeyOf(table, column, keyOf)
@@ -99,7 +95,6 @@ const ColumnValue = ({
             }),
         }
     })
-    // The composer's overrides, engine and names still apply; the grid's one live region stays the only one.
     const scoped = useMemo(
         () => ({
             ...context,
@@ -109,10 +104,8 @@ const ColumnValue = ({
         }),
         [context, scratch, scope]
     )
-    // Text typed but not yet saved, which Apply saves first.
     const [typing, setTyping] = useState(false)
     const box = useRef<HTMLDivElement>(null)
-    // A refused value is said aloud, once per text, as the grid says one in its cells.
     useEffect(
         () =>
             scratch.subscribe((state, before) => {
@@ -180,10 +173,8 @@ const ColumnValue = ({
                     aria-describedby={
                         planned === undefined ? undefined : previewId
                     }
-                    // Focus stays in the control on the press: saving there would show the preview and move Apply away.
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
-                        // Leaving the control saves its typed text.
                         const active = document.activeElement
                         const control =
                             active instanceof HTMLElement &&
@@ -227,7 +218,6 @@ export const ColumnPopover = ({
     const { anchor, table, column } = target
     const scope = `${idScope}-bulk`
     const { leaf } = headersOf(idScope, table, column)
-    // Whether focus goes back to what opened the menu: after Escape, Cancel or Apply, not after a press or focus elsewhere.
     const restore = useRef(false)
     const closeHere = () => {
         restore.current = true
@@ -237,7 +227,6 @@ export const ColumnPopover = ({
         <Popover
             open={open}
             onOpenChange={(next, { reason, event }) => {
-                // Escape while typing puts the cell's value back; the popover stays.
                 if (
                     !next &&
                     !(

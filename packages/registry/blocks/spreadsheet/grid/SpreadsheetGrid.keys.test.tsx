@@ -1,6 +1,6 @@
 /// <reference types="@vitest/browser-playwright" />
 import { userEvent } from 'vitest/browser'
-import { withEditor } from '../cells/__tests__/harness'
+import { withEditor } from '../cells/test/harness'
 import { cellDomId } from '../cells/cellProps'
 import type { CellComponent } from '../cells/cellProps'
 import { cellKey } from '../model/types'
@@ -13,10 +13,9 @@ import {
     makeTable,
     mount,
     paste,
-} from './__tests__/gridRig'
+} from './test/gridRig'
 import { headerDomId, rowHeaderDomId } from './headers'
 
-/** A notes field edited in the grid by a textarea of its own. */
 const Notes: CellComponent = ({ id, cellKey: key, labelledBy, aria }) => {
     const { value, commit } = useCellView(key)
     return (
@@ -42,7 +41,6 @@ test('a replacement control keeps its own paste and undo; a block pasted across 
     )
     const notes = control(cellKey('t1r0', 'c1'))
     notes.focus()
-    // A multi-line paste and Ctrl+Z are the textarea's own: the grid leaves both to the browser.
     expect(paste(notes, 'Seen at home\nFollow up in a week')).toBe(false)
     const undo = new KeyboardEvent('keydown', {
         key: 'z',
@@ -52,7 +50,6 @@ test('a replacement control keeps its own paste and undo; a block pasted across 
     })
     notes.dispatchEvent(undo)
     expect(undo.defaultPrevented).toBe(false)
-    // A block pasted from the cell before it lands in it, as in any cell that takes a value.
     const age = control(cellKey('t1r0', 'c0'))
     age.focus()
     expect(paste(age, '7\tSeen at home')).toBe(true)
@@ -80,10 +77,8 @@ test('a pasted block fills pop-up cells that read text and skips file cells', as
     expect(paste(age, '7\tSeen at home\tscan.png\t2')).toBe(true)
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
     expect(value(cellKey('t1r0', 'c1'))).toBe('Seen at home')
-    // The file cell is skipped, and the block does not shift past it.
     expect(value(cellKey('t1r0', 'c2'))).toBeUndefined()
     expect(value(cellKey('t1r0', 'c3'))).toBe('2')
-    // A pop-up cell in Ready takes a paste of its own, as a typed cell does.
     const notes = control(cellKey('t1r0', 'c1'))
     notes.focus()
     expect(paste(notes, 'Follow up')).toBe(true)
@@ -104,12 +99,10 @@ test('a note pasted into a long-text cell stays in it; tab-separated text still 
     const note = 'Seen at home\nFollow up in a week\nCall back'
     expect(paste(notes, `${note}\n`)).toBe(true)
     expect(value(cellKey('t1r0', 'c0'))).toBe(note)
-    // The rows below are other events: nothing reaches them.
     for (const row of ['t1r1', 't1r2']) {
         expect(value(cellKey(row, 'c0'))).toBeUndefined()
     }
     expect(announced).toEqual(['Cells pasted: 1'])
-    // Quotes around its lines do not make it a spreadsheet's block either.
     const quoted = '"Patient refused treatment"\nWill return "next week"'
     expect(paste(notes, quoted)).toBe(true)
     expect(value(cellKey('t1r0', 'c0'))).toBe(quoted)
@@ -146,10 +139,8 @@ test('a pasted block skips username cells, whose names are checked when typed', 
     const age = control(cellKey('t1r0', 'c0'))
     age.focus()
     expect(paste(age, '7\tSeen at home\tadmin\t2')).toBe(true)
-    // The username cell is skipped, and the block does not shift past it.
     expect(value(cellKey('t1r0', 'c2'))).toBeUndefined()
     expect(value(cellKey('t1r0', 'c3'))).toBe('2')
-    // Pasted into the cell itself, nothing lands.
     const seenBy = control(cellKey('t1r0', 'c2'))
     seenBy.focus()
     paste(seenBy, 'admin')

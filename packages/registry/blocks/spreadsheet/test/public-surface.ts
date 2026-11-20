@@ -55,7 +55,6 @@ export type SupportedSpreadsheetTypes = [
     Tone,
 ]
 
-// A store of the cells, what logic says about them, and the tables that show them.
 const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 const annotations = createStore<AnnotationsState>()(() => ({
     cells: {},
@@ -80,8 +79,7 @@ const visits: GridTable<Visit> = {
     headerRows: [[{ id: 'age', label: 'Age', span: 1 }]],
     closed: new Map(),
 }
-// A row's own fields reach its label and its keys: the slots take the tables' rows.
-export const sheet = (): ReactNode =>
+export const sheet: () => ReactNode = () =>
     Spreadsheet({
         cells: store,
         annotations,
@@ -93,16 +91,14 @@ export const sheet = (): ReactNode =>
         children: SpreadsheetGrid({}),
     })
 
-// What a row's cells hold, and a way to say what became of them.
-export const useRowValues = (keys: CellKey[]): Array<string | undefined> => {
+export const useRowValues = (keys: CellKey[]) => {
     const { states } = useRowCells(keys)
     return states.map(({ value }) => value)
 }
-export const useSay = (): ((text: string) => void) => useAnnounce()
+export const useSay: () => (text: string) => void = () => useAnnounce()
 
-// The defaults per kind, ready to wrap.
 export const optionControl: CellComponent = cells.option
-export const ownLayout = (): ReactNode =>
+export const ownLayout = () =>
     Cell({
         cellKey: 'event1.qrur9Dvnyt5',
         field: { valueType: 'INTEGER_POSITIVE' },
@@ -110,17 +106,18 @@ export const ownLayout = (): ReactNode =>
         move: () => {},
     })
 
-// One cell's state and effects; untouched cells read as idle with no effects.
-export const useAge = (): [string | undefined, boolean, string | undefined] => {
+export const useAge: () => [
+    string | undefined,
+    boolean,
+    string | undefined,
+] = () => {
     const view: CellView = useCell('event1.qrur9Dvnyt5')
     return [view.value, view.effects.required, view.effects.readOnly]
 }
 // @ts-expect-error A cell key is a row and a column joined by a dot.
 export const useNoColumn = () => useCell('event1')
 
-// A replacement control puts the cell's notes on the element that has its id.
-export const describedBy = ({ aria }: ControlProps): string | undefined =>
-    aria['aria-describedby']
+export const describedBy = ({ aria }: ControlProps) => aria['aria-describedby']
 // @ts-expect-error Cell hands every control the cell's ARIA attributes.
 export const noAria: ControlProps = {
     id: 'cell',
@@ -130,7 +127,6 @@ export const noAria: ControlProps = {
     move: () => {},
 }
 
-// A replacement control saves what was typed through its cell's view, and learns what became of it.
 export const Typed: CellComponent = ({ id, cellKey, readOnly }) => {
     const { commit, draft, error } = useCell(cellKey)
     const result: CommitResult = commit('42')
@@ -139,8 +135,7 @@ export const Typed: CellComponent = ({ id, cellKey, readOnly }) => {
     return readOnly ?? `${id} ${result} ${draft} ${error}`
 }
 
-// A row named by one of its cells' values once it has one, else by its label.
-export const useRowName = (row: GridRow): string => {
+export const useRowName = (row: GridRow) => {
     const { value } = useCell(`${row.id}.name`)
     return value ?? row.label
 }

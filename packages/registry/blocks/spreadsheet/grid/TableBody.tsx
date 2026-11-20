@@ -8,9 +8,7 @@ import type { NavKey } from './navigation'
 import type { NotesTarget } from './RowNotes'
 import { TableRow } from './TableRow'
 
-// A row's least height: its cells' `h-9`.
 const ROW_HEIGHT = 36
-// Rows drawn beyond each edge of the view, so a short scroll shows rows at once.
 const OVERSCAN = 5
 
 interface TableBodyProps {
@@ -28,7 +26,6 @@ interface TableBodyProps {
     reveal?: number
 }
 
-/** Space for rows not drawn, out of the accessibility tree. */
 const Gap = ({ height, span }: { height: number; span: number }) => (
     <tr aria-hidden="true">
         <td colSpan={span} className="p-0" style={{ height }} />
@@ -53,7 +50,6 @@ export const TableBody = ({
 }: TableBodyProps) => {
     const { rows } = table
     const count = rows.length
-    // By id, so rows added above it never move it.
     const [current, setCurrent] = useState<string>()
     const at = useMemo(
         () => rows.findIndex(({ id }) => id === current),
@@ -79,7 +75,6 @@ export const TableBody = ({
     const virtualizer = useVirtualizer({
         count,
         getScrollElement: () => region.current,
-        // The region is at most 70% of the screen tall: rows are drawn on the first render, before it is measured.
         initialRect: { width: 0, height: window.innerHeight * 0.7 },
         estimateSize: () => ROW_HEIGHT,
         overscan: OVERSCAN,

@@ -282,7 +282,6 @@ test('a person committing the same value on a failed cell queues it again', () =
         ['r1.c1', '6', '5'],
         ['r1.c1', '6', '5'],
     ])
-    // No second undo entry: one undo goes back to the loaded value.
     store.getState().undo()
     expect(cell('r1.c1').value).toBe('5')
     expect(store.getState().undo()).toEqual([])
@@ -324,7 +323,6 @@ test('restore puts unsent changes back as saved on this device', () => {
     })
     expect(cell('r2.c1')).toMatchObject({ base: '3', sync: 'queued' })
     expect(cell('r2.c1').value).toBeUndefined()
-    // The outbox already holds them.
     expect(enqueued).toEqual([])
 })
 
@@ -395,7 +393,6 @@ test('one undo reverts a whole commitMany', () => {
         ['r2.c1', '9', '9'],
         ['r1.c2', null, null],
     ])
-    // The earlier single commit is the next undo.
     store.getState().undo()
     expect(cell('r1.c1').value).toBeUndefined()
 })
@@ -485,7 +482,6 @@ test('commits to a field the form holds but no table shows', () => {
     expect(() => store.getState().commit('r1.unknown', '7')).toThrow(
         'No field for the cell r1.unknown'
     )
-    // A field no table shows still checks what is typed and what is loaded.
     expect(store.getState().commit('r2.f1', 'heavy')).toBe('invalid')
     store
         .getState()

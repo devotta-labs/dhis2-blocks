@@ -19,7 +19,6 @@ const orgUnit = (id: string, displayName: string) => ({
     ancestors: [{ displayName: 'Sierra Leone' }, { displayName: 'Bo' }],
 })
 
-/** What the app runtime knows of the connection, as an app's service worker would say it: the server is unreachable. */
 const DISCONNECTED = {
     pwaEnabled: true,
     latestIsConnected: false,
@@ -29,10 +28,6 @@ const DISCONNECTED = {
     removeSection: async () => false,
 }
 
-/**
- * An org unit field in a form that keeps the value it is told, with a field after it, over a server whose org units start "Ngelehun" and
- * whose one user is "admin"; offline, the runtime says the server cannot be reached.
- */
 const mount = async (
     props: Partial<ValueInputProps> = {},
     { offline = false } = {}
@@ -110,7 +105,6 @@ const mount = async (
         onChange,
         queries,
         box: page.getByRole('combobox', { name: LABEL }),
-        /** Sets a value as a rule would. */
         assign: (value: string) => screen.rerender(<Host assigned={value} />),
     }
 }

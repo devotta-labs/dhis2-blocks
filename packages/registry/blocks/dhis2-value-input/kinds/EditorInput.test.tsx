@@ -1,11 +1,10 @@
-import { CustomDataProvider } from '@dhis2/app-runtime'
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { birthFromAge, todayIso } from '@/components/dhis2-value-types'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { formEditors } from '../editors/popupEditors'
+import { uploadServer } from '../test/uploads.test-utils'
 import { ValueInput } from '../ValueInput'
 import type { ValueInputProps } from '../ValueInput'
 
@@ -15,48 +14,10 @@ const SETTINGS: ValueSettings = {
 }
 const LABEL = 'Notes'
 
-/** A server that keeps each upload waiting until the test lets it answer or fail, and the signal it was sent with. */
-const server = () => {
-    const uploads: Array<{
-        signal?: AbortSignal
-        release(): void
-        fail(): void
-    }> = []
-    const Server = ({ children }: { children: ReactNode }) => (
-        <CustomDataProvider
-            data={{
-                fileResources: (_type, _request, execute) =>
-                    new Promise((resolve, reject) => {
-                        const id = `File${uploads.length + 1}`
-                        uploads.push({
-                            signal: execute?.signal,
-                            fail: () => reject(new Error('Disk full')),
-                            release: () =>
-                                resolve({
-                                    status: 'OK',
-                                    response: {
-                                        fileResource: { id, name: `${id}.txt` },
-                                    },
-                                }),
-                        })
-                    }),
-            }}
-        >
-            {children}
-        </CustomDataProvider>
-    )
-    return { uploads, Server }
-}
-
-/**
- * A field in a form that keeps the value it is told, with a button after it to leave the field for. `submits` has, for
- * each time the form submitted, how many changes were reported by then. `assign` sets a value as a rule would, and
- * `update` gives the field other props, such as another field, settings or a lock.
- */
 const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     const onChange = vi.fn()
     const submits: number[] = []
-    const { uploads, Server } = server()
+    const { upload, Server } = uploadServer()
     const Host = ({
         shown,
         assigned,
@@ -90,7 +51,6 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
                             {...props}
                             {...over}
                             storedFile={storedFile}
-                            // A value given with `over` comes in the same render as the rest of it.
                             value={over && 'value' in over ? over.value : value}
                             onChange={(next, problem) => {
                                 onChange(next, problem)
@@ -107,7 +67,7 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     const screen = await render(<Host shown />)
     return {
         onChange,
-        uploads,
+        upload,
         submits,
         leave: () => page.getByRole('button', { name: 'After' }).click(),
         unmount: () => screen.rerender(<Host shown={false} />),
@@ -131,15 +91,9 @@ const choose = (name: string) => {
     )
 }
 
-const later = (ms: number) =>
-    new Promise((resolve) => {
-        setTimeout(resolve, ms)
-    })
-
 test('long text is reported once, when the field is left; Enter adds a line', async () => {
     const { onChange, leave } = await mount({ valueType: 'LONG_TEXT' })
     const text = page.getByRole('textbox', { name: LABEL })
-    // In a form the field waits to be focused, and has no buttons of its own.
     await expect.element(text).not.toHaveFocus()
     expect(page.getByRole('button', { name: 'Save' }).elements()).toEqual([])
     expect(page.getByRole('button', { name: 'Cancel' }).elements()).toEqual([])
@@ -159,7 +113,6 @@ test('an age typed in years is reported as the date of birth when the field is l
     expect(page.getByRole('button', { name: 'Cancel' }).elements()).toEqual([])
 
     await userEvent.fill(page.getByRole('textbox', { name: 'Years' }), '30')
-    // Moving between the age's own fields is not leaving it.
     await userEvent.click(page.getByRole('textbox', { name: 'Months' }))
     expect(onChange).not.toHaveBeenCalled()
 
@@ -189,7 +142,6 @@ test('a coordinate out of range is reported as a problem when the field is left,
         .element(page.getByRole('alert'))
         .toHaveTextContent(problem.message)
 
-    // Fixed, the problem goes, and the value is reported on leaving.
     await userEvent.fill(latitude, '8')
     await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
     await leave()
@@ -212,27 +164,26 @@ test('a multi-select is reported when the field is left, in option-set order', a
     expect(onChange.mock.calls).toEqual([['FEVER,COUGH', undefined]])
 })
 test('a chosen file is reported as still uploading at once, then as its id', async () => {
-    const { onChange, uploads } = await mount({ valueType: 'FILE_RESOURCE' })
+    const { onChange, upload } = await mount({ valueType: 'FILE_RESOURCE' })
     const scan = new File(['x'], 'scan.txt', { type: 'text/plain' })
     const picker = document.querySelector('input[type="file"]')
     if (picker === null) {
         throw new Error('The field has no file input')
     }
     await userEvent.upload(picker, scan)
-    await expect.poll(() => uploads).toHaveLength(1)
+    const request = await upload(1)
     expect(onChange.mock.calls).toEqual([
         [null, { message: 'Still uploading', text: 'scan.txt' }],
     ])
 
-    uploads[0].release()
-    await expect.poll(() => onChange.mock.calls).toHaveLength(2)
+    await request.release()
+    expect(onChange).toHaveBeenCalledTimes(2)
     expect(onChange.mock.calls[1]).toEqual(['File1', undefined])
-    // The field keeps the name of the file it chose.
     await expect.element(page.getByText('scan.txt')).toBeVisible()
 })
 
 test('a field that leaves the page mid-upload stops the upload and reports what it held', async () => {
-    const { onChange, uploads, unmount } = await mount({
+    const { onChange, upload, unmount } = await mount({
         valueType: 'FILE_RESOURCE',
     })
     const picker = document.querySelector('input[type="file"]')
@@ -243,15 +194,13 @@ test('a field that leaves the page mid-upload stops the upload and reports what 
         picker,
         new File(['x'], 'scan.txt', { type: 'text/plain' })
     )
-    await expect.poll(() => uploads).toHaveLength(1)
+    const request = await upload(1)
     expect(onChange).toHaveBeenCalledTimes(1)
 
     await unmount()
-    expect(uploads[0].signal?.aborted).toBe(true)
-    // No file came of it: the host gets back what the field held, without the upload's problem.
+    expect(request.signal?.aborted).toBe(true)
     expect(onChange.mock.calls[1]).toEqual([null, undefined])
-    uploads[0].release()
-    await later(50)
+    await request.release()
     expect(onChange).toHaveBeenCalledTimes(2)
 })
 
@@ -342,29 +291,28 @@ test('a rule that assigns again what was typed before its own value shows it', a
 })
 
 test('a value a rule assigns during an upload stops the upload, which then reports nothing', async () => {
-    const { onChange, uploads, assign } = await mount({
+    const { onChange, upload, assign } = await mount({
         valueType: 'FILE_RESOURCE',
     })
     await choose('scan.txt')
-    await expect.poll(() => uploads).toHaveLength(1)
+    const request = await upload(1)
     expect(onChange).toHaveBeenCalledTimes(1)
 
     await assign('Assigned')
-    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
-    uploads[0].release()
-    await later(50)
+    expect(request.signal?.aborted).toBe(true)
+    await request.release()
     expect(onChange).toHaveBeenCalledTimes(1)
 })
 
 test('an upload that fails reports the file the field held before, and says why', async () => {
-    const { onChange, uploads } = await mount(
+    const { onChange, upload } = await mount(
         { valueType: 'FILE_RESOURCE' },
         { value: 'Old', valueName: 'old.pdf' }
     )
     await choose('scan.txt')
-    await expect.poll(() => uploads).toHaveLength(1)
-    uploads[0].fail()
-    await expect.poll(() => onChange.mock.calls).toHaveLength(2)
+    const request = await upload(1)
+    await request.fail()
+    expect(onChange).toHaveBeenCalledTimes(2)
     expect(onChange.mock.calls).toEqual([
         [null, { message: 'Still uploading', text: 'scan.txt' }],
         ['Old', undefined],
@@ -375,7 +323,6 @@ test('an upload that fails reports the file the field held before, and says why'
     await expect.element(page.getByText('old.pdf')).toBeVisible()
 })
 
-// A 1x1 GIF the browser draws, as raw bytes: an image decoder ignores the `?dimension=MEDIUM` added after its end.
 const STORED_IMAGE = `data:image/gif,${[
     0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00,
     0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04, 0x01, 0x00,
@@ -386,7 +333,7 @@ const STORED_IMAGE = `data:image/gif,${[
     .join('')}`
 
 test('an image the host links stops showing once removed, and an upload in its place shows no link to it', async () => {
-    const { uploads } = await mount(
+    const { upload } = await mount(
         { valueType: 'IMAGE' },
         {
             value: 'Old',
@@ -399,7 +346,6 @@ test('an image the host links stops showing once removed, and an upload in its p
         .toBeVisible()
 
     await userEvent.click(page.getByRole('button', { name: 'Remove' }))
-    // Not by role: an image with no name left is no `img` to a screen reader, and still shows.
     await expect.poll(() => document.querySelector('img')).toBeNull()
 
     const picker = document.querySelector('input[type="file"]')
@@ -410,8 +356,8 @@ test('an image the host links stops showing once removed, and an upload in its p
         picker,
         new File(['x'], 'scan.png', { type: 'image/png' })
     )
-    await expect.poll(() => uploads).toHaveLength(1)
-    uploads[0].release()
+    const request = await upload(1)
+    await request.release()
     await expect.element(page.getByText('scan.png')).toBeVisible()
     expect(document.querySelector('img')).toBeNull()
     await expect
@@ -420,7 +366,7 @@ test('an image the host links stops showing once removed, and an upload in its p
 })
 
 test('an image uploaded here shows once the host links the file it saved', async () => {
-    const { uploads, link } = await mount(
+    const { upload, link } = await mount(
         { valueType: 'IMAGE' },
         {
             value: 'Old',
@@ -436,12 +382,11 @@ test('an image uploaded here shows once the host links the file it saved', async
         picker,
         new File(['x'], 'scan.png', { type: 'image/png' })
     )
-    await expect.poll(() => uploads).toHaveLength(1)
-    uploads[0].release()
+    const request = await upload(1)
+    await request.release()
     await expect.element(page.getByText('scan.png')).toBeVisible()
     expect(document.querySelector('img')).toBeNull()
 
-    // The host saved the upload and links it at the same address, as DHIS2 serves an event's file.
     await link({ value: 'File1', url: STORED_IMAGE })
     await expect
         .element(page.getByRole('img', { name: 'scan.png' }))
@@ -505,7 +450,6 @@ test('after a coordinate problem, the host saying back the report keeps it; anot
             { message: 'Enter a latitude between -90 and 90', text: '95, 10' },
         ],
     ])
-    // The host stored the cleared value the problem reported.
     await expect.element(latitude).toHaveValue('95')
     await expect
         .element(page.getByText('Enter a latitude between -90 and 90'))
@@ -521,33 +465,31 @@ test('after a coordinate problem, the host saying back the report keeps it; anot
 })
 
 test('a rule that assigns a file and locks the field mid-upload keeps its file: the upload reports nothing', async () => {
-    const { onChange, uploads, update } = await mount(
+    const { onChange, upload, update } = await mount(
         { valueType: 'FILE_RESOURCE' },
         { value: 'oldFileId1' }
     )
     await choose('scan.txt')
-    await expect.poll(() => uploads).toHaveLength(1)
+    const request = await upload(1)
     expect(onChange).toHaveBeenCalledTimes(1)
 
     await update({ value: 'ruleFileId', readOnly: 'Assigned by a rule' })
-    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
-    uploads[0].release()
-    await later(50)
+    expect(request.signal?.aborted).toBe(true)
+    await request.release()
     expect(onChange).toHaveBeenCalledTimes(1)
 })
 
 test('a file field that becomes another field mid-upload stops the upload, which then reports nothing', async () => {
-    const { onChange, uploads, update } = await mount({
+    const { onChange, upload, update } = await mount({
         valueType: 'FILE_RESOURCE',
     })
     await choose('scan.txt')
-    await expect.poll(() => uploads).toHaveLength(1)
+    const request = await upload(1)
     expect(onChange).toHaveBeenCalledTimes(1)
 
     await update({ field: { valueType: 'AGE' } })
-    await expect.poll(() => uploads[0].signal?.aborted).toBe(true)
-    uploads[0].release()
-    await later(50)
+    expect(request.signal?.aborted).toBe(true)
+    await request.release()
     expect(onChange).toHaveBeenCalledTimes(1)
 })
 

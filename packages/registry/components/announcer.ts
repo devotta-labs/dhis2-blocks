@@ -1,9 +1,7 @@
 /** Polite waits for the person to pause; assertive interrupts, for errors. */
 export type Politeness = 'polite' | 'assertive'
 
-// Long enough for screen readers to notice the region emptied, so the same text said twice is heard twice.
 const CLEARED_FOR_MS = 100
-// Between one text and the next, so a text said right after another is heard after it rather than over it.
 const APART_MS = 150
 
 interface Region {
@@ -14,10 +12,9 @@ interface Region {
 
 const regions = new Map<Politeness, Region>()
 
-const createRegion = (politeness: Politeness): Region => {
+const createRegion = (politeness: Politeness) => {
     const element = document.createElement('div')
     element.setAttribute('role', politeness === 'polite' ? 'status' : 'alert')
-    // Explicit, not implied by the role: a Base UI modal hides everything outside it except `[aria-live]` elements.
     element.setAttribute('aria-live', politeness)
     element.setAttribute('aria-atomic', 'true')
     element.className = 'sr-only'
@@ -25,9 +22,8 @@ const createRegion = (politeness: Politeness): Region => {
     return { element, waiting: undefined, saying: false }
 }
 
-const regionFor = (politeness: Politeness): Region => {
+const regionFor = (politeness: Politeness) => {
     if (regions.size === 0) {
-        // Both at once, so screen readers have registered each before it first speaks.
         regions.set('polite', createRegion('polite'))
         regions.set('assertive', createRegion('assertive'))
     }

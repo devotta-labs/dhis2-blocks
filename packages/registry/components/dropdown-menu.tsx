@@ -5,12 +5,6 @@ import { IconCheckmark16, IconChevronRight16 } from '@dhis2/ui-icons'
 import * as React from 'react'
 import { cn } from './cn'
 
-/*
- * shadcn Dropdown Menu (Base UI) restyled to match @dhis2/ui FlyoutMenu,
- * MenuItem, MenuSectionHeader and MenuDivider in their `dense` form, which
- * is what the working list uses everywhere.
- */
-
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
     return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
@@ -19,7 +13,11 @@ function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
     return <MenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
+/**
+ * shadcn Dropdown Menu (Base UI) restyled to match @dhis2/ui FlyoutMenu,
+ * MenuItem, MenuSectionHeader and MenuDivider in their `dense` form, which
+ * is what the working list uses everywhere.
+ */
 const DropdownMenuTrigger = React.forwardRef<
     HTMLButtonElement,
     MenuPrimitive.Trigger.Props

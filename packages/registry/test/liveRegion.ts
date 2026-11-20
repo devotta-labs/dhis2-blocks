@@ -2,7 +2,7 @@ import { announce } from '../components/announcer'
 import type { Politeness } from '../components/announcer'
 
 /** The shared live region, created first if nothing on the page has announced yet. */
-export const liveRegion = (politeness: Politeness = 'polite'): HTMLElement => {
+export const liveRegion = (politeness: Politeness = 'polite') => {
     const selector = `[aria-live="${politeness}"]`
     if (document.querySelector(selector) === null) {
         announce('', politeness)

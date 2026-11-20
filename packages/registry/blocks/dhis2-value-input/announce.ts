@@ -5,12 +5,10 @@ import type { Politeness } from '@/components/dhis2/ui/announcer'
 
 export const formatCount = (count: number) => {
     try {
-        // DHIS2 writes locales as `en_US`; Intl expects `en-US`.
         return new Intl.NumberFormat(i18n.language.replace('_', '-')).format(
             count
         )
     } catch {
-        // A locale Intl still cannot read.
         return String(count)
     }
 }

@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig, type Plugin } from 'vitest/config'
 import { downloadCommands } from './test/download-commands.test-utils'
 
-// Ordered: the more specific `@/components/dhis2/ui` must win over `@/components`.
 const resolve = {
     alias: [
         {
@@ -25,27 +24,19 @@ const sharedProjectOptions = {
     passWithNoTests: false,
 } as const
 
-/**
- * `*.production.test.tsx` files run in their own browser project, where the
- * literal `process.env.NODE_ENV` in registry source reads "production", as an
- * app's production build replaces it. Only registry source: a `define` would
- * also switch React to its production build, which has no `act`.
- */
+// WARNING: A global NODE_ENV define would also select React's production build, which has no act.
 const PRODUCTION_TESTS = '{components,blocks}/**/*.production.test.tsx'
 
-/**
- * `*.contrast.test.tsx` files run with the OS asking for more contrast, and
- * `*.forced.test.tsx` files with forced colours (Windows contrast themes).
- */
 const CONTRAST_TESTS = '{components,blocks}/**/*.contrast.test.tsx'
 const FORCED_TESTS = '{components,blocks}/**/*.forced.test.tsx'
 const MOTION_TESTS = '{components,blocks}/**/*.motion.test.tsx'
+const THEME_TEST = 'components/theme.test.ts'
 
 type BrowserContextOptions = NonNullable<
     NonNullable<Parameters<typeof playwright>[0]>['contextOptions']
 >
 
-const productionNodeEnv = (): Plugin => ({
+const productionNodeEnv: () => Plugin = () => ({
     name: 'registry-production-node-env',
     transform(code, id) {
         if (
@@ -102,7 +93,6 @@ const browserProject = {
     },
 }
 
-// A function, so each browser project gets its own provider.
 const browserTestOptions = (contextOptions: BrowserContextOptions = {}) => ({
     ...sharedProjectOptions,
     setupFiles: ['./test/setup.ts'],
@@ -124,8 +114,22 @@ export default defineConfig({
                     ...sharedProjectOptions,
                     name: 'node',
                     environment: 'node',
+                    pool: 'forks',
+                    execArgv: [
+                        '--experimental-webstorage',
+                        '--localstorage-file=:memory:',
+                    ],
                     include: ['{components,blocks}/**/*.test.ts'],
-                    setupFiles: ['./test/node.ts'],
+                    exclude: [...configDefaults.exclude, THEME_TEST],
+                },
+            },
+            {
+                resolve,
+                test: {
+                    ...sharedProjectOptions,
+                    name: 'node-dom',
+                    environment: 'jsdom',
+                    include: [THEME_TEST],
                 },
             },
             {

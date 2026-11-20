@@ -43,7 +43,6 @@ describe('the date picker in forced colours', () => {
         if (today === null || other === null) {
             throw new Error('Expected today and another day')
         }
-        // Focus marks a day of its own: today is compared without it.
         await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
         await expect
             .element(page.getByRole('button', { name: 'Next month' }))

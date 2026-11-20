@@ -25,7 +25,6 @@ describe('calendar', () => {
     it.each([
         ['2026-10-14', 'ethiopian', '2019-02-04'],
         ['2026-10-18', 'nepali', '2083-07-01'],
-        // The calendar library cannot convert Coptic, so the ISO day shows.
         ['2026-10-14', 'coptic', '2026-10-14'],
     ] as const)(
         'formats %s in the %s calendar as %s',

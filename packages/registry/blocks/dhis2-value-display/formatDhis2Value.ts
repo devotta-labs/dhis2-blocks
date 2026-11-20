@@ -4,8 +4,6 @@ import type { FormatOptions, ValueMeta } from './types'
 
 export type { ValueMeta }
 
-// Bundlers replace `process.env.NODE_ENV` statically. Declared here so a consumer
-// without @types/node still type-checks this installed file.
 declare const process: { env: { NODE_ENV?: string } }
 
 const warned = new Set<string>()
@@ -20,30 +18,26 @@ const warnOnce = (valueType: string) => {
     )
 }
 
-/** `Intl.NumberFormat` with its ES2023 overload that takes a numeric string. */
 interface ExactNumberFormat {
     format(value: number | string): string
 }
 
-const formatNumber = (value: string, locale?: string): string => {
+const formatNumber = (value: string, locale?: string) => {
     if (value.trim() === '' || Number.isNaN(Number(value))) {
         return value
     }
     try {
-        // SAFETY: browsers format a numeric string exactly (ES2023), where
-        // Number(value) rounds past 15-17 digits; an app's TypeScript lib may
-        // predate that overload. `value` was checked to be numeric above.
+        // SAFETY: Intl formats decimal strings exactly (ES2023), even if the TypeScript lib only declares a number overload.
         const format = new Intl.NumberFormat(locale, {
             maximumFractionDigits: 20,
         }) as ExactNumberFormat
         return format.format(value)
     } catch {
-        // An unusable locale, such as DHIS2's `en_US`.
         return value
     }
 }
 
-const formatCoordinate = (value: string): string => {
+const formatCoordinate = (value: string) => {
     try {
         const parsed: unknown = JSON.parse(value)
         if (
@@ -52,12 +46,9 @@ const formatCoordinate = (value: string): string => {
             Number.isFinite(parsed[0]) &&
             Number.isFinite(parsed[1])
         ) {
-            // Stored as [lng,lat], read as "lat, lng".
             return `${parsed[1]}, ${parsed[0]}`
         }
-    } catch {
-        // fall through to the raw value
-    }
+    } catch {}
     return value
 }
 
@@ -71,7 +62,7 @@ const formatDateTime = (value: string, { calendar, locale }: FormatOptions) => {
     return time === undefined ? date : `${date} ${time}`
 }
 
-const optionName = (code: string, meta: ValueMeta): string =>
+const optionName = (code: string, meta: ValueMeta) =>
     meta.optionSet?.options.find((option) => option.code === code)
         ?.displayName ?? code
 
@@ -80,11 +71,11 @@ const optionName = (code: string, meta: ValueMeta): string =>
  * value type. Dates keep the day they were stored on. Nothing here throws; a
  * value it cannot read is returned as stored.
  */
-export const formatDhis2Value = (
+export const formatDhis2Value: (
     value: string | null | undefined,
     meta: ValueMeta,
     options: FormatOptions
-): string => {
+) => string = (value, meta, options) => {
     if (value === null || value === undefined || value === '') {
         return ''
     }
@@ -109,7 +100,6 @@ export const formatDhis2Value = (
         case 'TIME':
         case 'USERNAME':
             return value
-        // The stored value is a file resource id, which means nothing to a reader.
         case 'FILE_RESOURCE':
             return i18n.t('File')
         case 'IMAGE':

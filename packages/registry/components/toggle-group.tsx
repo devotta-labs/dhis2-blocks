@@ -7,10 +7,6 @@ import * as React from 'react'
 import { cn } from './cn'
 import { toggleVariants } from './toggle'
 
-/**
- * shadcn Toggle Group (Base UI). Items take the group's variant and size
- * unless they set their own. Items are spaced apart rather than joined.
- */
 const ToggleGroupContext = React.createContext<
     VariantProps<typeof toggleVariants>
 >({
@@ -18,6 +14,10 @@ const ToggleGroupContext = React.createContext<
     size: 'default',
 })
 
+/**
+ * shadcn Toggle Group (Base UI). Items take the group’s variant and size
+ * unless they set their own. Items are spaced apart.
+ */
 function ToggleGroup<Value extends string>({
     className,
     variant,
@@ -43,7 +43,6 @@ function ToggleGroup<Value extends string>({
     )
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const ToggleGroupItem = React.forwardRef<
     HTMLButtonElement,
     TogglePrimitive.Props & VariantProps<typeof toggleVariants>

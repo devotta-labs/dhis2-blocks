@@ -11,7 +11,7 @@ import {
     PlainCard,
     slot,
     style,
-} from './surfaces.fixtures'
+} from './surfaces.fixture'
 
 describe('surfaces in forced colours', () => {
     it.each([

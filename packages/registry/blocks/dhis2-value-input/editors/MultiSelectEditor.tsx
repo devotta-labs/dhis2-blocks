@@ -26,13 +26,8 @@ import { EditorButtons } from './EditorButtons'
 
 const NO_OPTIONS: ReadonlyArray<Option> = []
 
-// Option names are said as the option set gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-/**
- * The choice and the search over the options. Options a rule hid are not offered, unless the stored value holds one,
- * which can still be unchecked. Each change of choice is reported and said.
- */
 const useMultiSelect = ({
     field,
     value,
@@ -58,7 +53,6 @@ const useMultiSelect = ({
                   ),
         [options, hiddenOptions, stored]
     )
-    // Each position in the option set, for listing matches in its order.
     const { index, at } = useMemo(
         () => ({
             index: optionIndex(offered),
@@ -75,7 +69,6 @@ const useMultiSelect = ({
     }, [index, at, query])
     const count = matchCount(found.codes.length, found.total)
 
-    // A code the option set lacks is not kept.
     const valueOf = (codes: ReadonlySet<string>) => {
         const chosen = options.filter(({ code }) => codes.has(code))
         return {
@@ -90,7 +83,6 @@ const useMultiSelect = ({
         setSelected(next)
         const { value: text, names } = valueOf(next)
         report(text)
-        // With nothing selected the unchecked box says it all.
         if (names !== '') {
             announce(
                 i18n.t('Selected options: {{options}}', {
@@ -106,13 +98,11 @@ const useMultiSelect = ({
         index,
         found,
         count,
-        /** What a search says: the count, or that nothing matched. */
         news: found.codes.length === 0 ? i18n.t('No matches') : count,
         query,
         setQuery,
         selected,
         setSelected,
-        /** The offered options selected, in the option set's order. */
         chosen: offered.filter(({ code }) => selected.has(code)),
         value: () => valueOf(selected).value,
         choose,
@@ -130,7 +120,6 @@ const useMultiSelect = ({
 
 type MultiSelectState = ReturnType<typeof useMultiSelect>
 
-/** A checkbox for each option found. Each box takes the field's invalid state. */
 const OptionBoxes = ({
     editor: { found, index, selected, toggle },
     invalid,
@@ -140,7 +129,6 @@ const OptionBoxes = ({
     editor: MultiSelectState
     invalid?: boolean
     className: string
-    /** Makes the boxes a group with this name; without it a fieldset around them is the group. */
     labelledBy?: string
 }) => (
     <Field
@@ -241,7 +229,6 @@ export const MultiSelectFormEditor = (props: FormEditorProps) => {
         />
     ) : (
         <Combobox
-            // Ranked and limited by `searchOptions`, not filtered again.
             items={found.codes}
             filter={null}
             multiple
@@ -249,7 +236,6 @@ export const MultiSelectFormEditor = (props: FormEditorProps) => {
             value={chosen.map(({ code }) => code)}
             onValueChange={(codes: string[], { reason }) => {
                 if (reason === 'clear-press') {
-                    // Saved at once, not when the field is left; the field stays, showing no chips.
                     editor.setSelected(new Set())
                     save(null)
                 } else {
@@ -264,11 +250,7 @@ export const MultiSelectFormEditor = (props: FormEditorProps) => {
             }}
             itemToStringLabel={(code: string) => index.names.get(code) ?? code}
         >
-            <ComboboxChips
-                ref={anchor}
-                // Room at the end for the clear button, as in a single input.
-                className="relative pe-8"
-            >
+            <ComboboxChips ref={anchor} className="relative pe-8">
                 {chosen.map(({ code, name }) => (
                     <ComboboxChip
                         key={code}

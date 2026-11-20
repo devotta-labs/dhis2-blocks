@@ -8,7 +8,6 @@ test('ageFromBirth counts whole years, months and days', () => {
         months: 7,
         days: 28,
     })
-    // A birthday that has not come yet this year.
     expect(ageFromBirth('2020-12-25', TODAY)).toEqual({
         years: 5,
         months: 10,
@@ -22,7 +21,6 @@ test('ageFromBirth counts whole years, months and days', () => {
 })
 
 test('a birth day a shorter month lacks counts to that month’s last day', () => {
-    // 31 January plus one month is the last day of February.
     expect(ageFromBirth('2020-01-31', '2020-03-01')).toEqual({
         years: 0,
         months: 1,
@@ -51,7 +49,6 @@ test('birthFromAge goes back from today', () => {
 })
 
 test('an age no date of birth is on today has none', () => {
-    // Born 28 February, one is one month and three days old on 31 March; born 1 March, 30 days.
     for (const days of [0, 1, 2]) {
         expect(
             birthFromAge({ years: 0, months: 1, days }, '2026-03-31')
@@ -60,7 +57,6 @@ test('an age no date of birth is on today has none', () => {
     expect(birthFromAge({ years: 0, months: 1, days: 3 }, '2026-03-31')).toBe(
         '2026-02-28'
     )
-    // No one is born on 29 February 2023.
     expect(
         birthFromAge({ years: 1, months: 0, days: 0 }, '2024-02-29')
     ).toBeUndefined()
@@ -70,7 +66,6 @@ test('an age no date of birth is on today has none', () => {
     expect(birthFromAge({ years: 1, months: 0, days: 0 }, '2025-02-28')).toBe(
         '2024-02-28'
     )
-    // Born 28, 29, 30 or 31 January, one is one month old on 28 February.
     expect(birthFromAge({ years: 0, months: 1, days: 0 }, '2026-02-28')).toBe(
         '2026-01-28'
     )

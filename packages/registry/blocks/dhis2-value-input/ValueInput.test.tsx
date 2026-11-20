@@ -6,7 +6,6 @@ import { formEditors } from './editors/popupEditors'
 import { ValueInput } from './ValueInput'
 import type { ValueInputProps } from './ValueInput'
 
-/** Each text an alert says: when it appears, or its text changes. */
 const watchAlerts = () => {
     const said: string[] = []
     const seen = new WeakMap<Element, string>()
@@ -55,9 +54,6 @@ const mount = async (props: Partial<ValueInputProps> = {}) => {
     }
 }
 
-/**
- * A host that keeps the value and problem it is given, as a form would, and builds its field anew on every render.
- */
 const Host = ({
     initial,
     onChange,
@@ -96,7 +92,6 @@ test('a number is reported when the field is left, not while it is typed', async
 })
 
 const itself = (input: Element) => input
-// The row the date's input and picker button share.
 const row = (input: Element) => input.parentElement
 
 test.each([
@@ -266,7 +261,6 @@ test('a host that keeps the last good value and later gives what a problem repor
         text: 'abc',
     })
 
-    // Empty is what the problem reported: the host saying it back.
     await screen.rerender(field('a', undefined))
     await expect.element(input).toHaveValue('abc')
     await expect.element(page.getByText('Enter a number')).toBeVisible()
@@ -304,30 +298,37 @@ test('after a problem, a host passing null, as the problem reported it, keeps th
 })
 
 test('a host that stores the cleared value a problem reports, after an await, keeps the typed text and the problem', async () => {
+    const reported = Promise.withResolvers<void>()
+    const save = Promise.withResolvers<void>()
     const AsyncHost = () => {
         const [value, setValue] = useState<string | undefined>('12')
         return (
-            <ValueInput
-                field={NUMBER}
-                settings={SETTINGS}
-                label={LABEL}
-                value={value}
-                onChange={async (next) => {
-                    await new Promise((resolve) => {
-                        setTimeout(resolve, 50)
-                    })
-                    setValue(next ?? undefined)
-                }}
-            />
+            <>
+                <ValueInput
+                    field={NUMBER}
+                    settings={SETTINGS}
+                    label={LABEL}
+                    value={value}
+                    onChange={async (next) => {
+                        reported.resolve()
+                        await save.promise
+                        setValue(next ?? undefined)
+                    }}
+                />
+                <output>{value === undefined ? 'Cleared' : 'Stored'}</output>
+            </>
         )
     }
     await render(<AsyncHost />)
     const input = page.getByRole('textbox', { name: LABEL })
     await userEvent.click(input)
     await userEvent.keyboard('{Backspace}{Backspace}abc{Tab}')
-    await new Promise((resolve) => {
-        setTimeout(resolve, 100)
-    })
+    await reported.promise
+    await expect
+        .element(page.getByText('Stored', { exact: true }))
+        .toBeVisible()
+    save.resolve()
+    await expect.element(page.getByText('Cleared')).toBeVisible()
     await expect.element(input).toHaveValue('abc')
     await expect.element(page.getByText('Enter a number')).toBeVisible()
 })
@@ -402,7 +403,6 @@ test('a field a rule locks while it is typed in drops the typed text', async () 
 test('a required field says so to everyone', async () => {
     const { input } = await mount({ required: true })
     await expect.element(input).toHaveAttribute('aria-required', 'true')
-    // The marker is seen, not read: the field says it is required instead.
     await expect
         .element(page.getByRole('textbox', { name: LABEL, exact: true }))
         .toBeInTheDocument()
@@ -419,7 +419,6 @@ test('messages show under the field and describe it', async () => {
             { tone: 'error', text: 'Must be below 45' },
         ],
     })
-    // The tone is written out, not only coloured.
     await expect
         .element(page.getByText('Warning: Unusually high'))
         .toBeVisible()
@@ -436,7 +435,8 @@ test('messages show under the field and describe it', async () => {
 
 test('a value type no control edits is shown read-only, with the reason', async () => {
     const value = '{"type":"Point","coordinates":[1,2]}'
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn')
+    onTestFinished(() => warn.mockRestore())
     const { input } = await mount({ field: { valueType: 'GEOJSON' }, value })
     await expect.element(input).toHaveValue(value)
     expect(warn).toHaveBeenCalledExactlyOnceWith(
@@ -505,7 +505,6 @@ test('while typing after a problem, the problem stands until fixed and is not re
     await userEvent.keyboard('1,5{Tab}')
     await expect.poll(() => said).toEqual(['Use a full stop for decimals'])
 
-    // Now a different problem, which is only said once committed.
     await userEvent.click(input)
     await userEvent.keyboard('x')
     await expect

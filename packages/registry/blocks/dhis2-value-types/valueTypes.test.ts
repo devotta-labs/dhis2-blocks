@@ -28,10 +28,8 @@ test.each([
 })
 
 test.each([
-    // Bracketed is the stored [lng,lat] order; without brackets a coordinate is read latitude first.
     ['[8.2, -11.4]', '[8.2,-11.4]'],
     ['-11.4, 8.2', '[8.2,-11.4]'],
-    // Numbers are read as number cells read them.
     ['.5, 5.', '[5,0.5]'],
     ['[007, -0]', '[7,0]'],
     ['90, 180', '[180,90]'],
@@ -44,7 +42,6 @@ test.each([
 })
 
 test.each([
-    // Never swapped to fit: a latitude past 90 is refused, not read as a longitude.
     '91, 10',
     '[10, 91]',
     '10, 181',
@@ -91,7 +88,6 @@ test('an age is typed as a date of birth in the system calendar and date format,
         ok: true,
         value: '2020-02-29',
     })
-    // The format of the system, as for any date.
     expect(parseTyped(age, '2020-02-29', dayFirst)).toMatchObject({
         ok: false,
         problem: { message: 'Enter a valid date' },
@@ -313,7 +309,6 @@ test.each([
     ['INTEGER_ZERO_OR_POSITIVE', 'numeric'],
     ['PERCENTAGE', 'decimal'],
     ['UNIT_INTERVAL', 'decimal'],
-    // Phone keypads for numeric and decimal input have no minus key.
     ['INTEGER', undefined],
     ['INTEGER_NEGATIVE', undefined],
     ['NUMBER', undefined],

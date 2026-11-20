@@ -1,7 +1,7 @@
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { OpenSelect, style } from './surfaces.fixtures'
+import { OpenSelect, style } from './surfaces.fixture'
 
 describe('select in forced colours', () => {
     it('outlines the highlighted option', async () => {

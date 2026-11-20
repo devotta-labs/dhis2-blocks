@@ -3,9 +3,8 @@ import i18n from '@dhis2/d2-i18n'
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 
-// Fewer characters match too much to be worth asking the server.
+/** Minimum query length for a server search. */
 export const MIN_LENGTH = 2
-// A word typed in one go is searched once, when typing stops.
 const DEBOUNCE_MS = 250
 
 /** A result of a search: the value it saves, and how the list shows it. */
@@ -48,7 +47,6 @@ const orgUnitSchema = z.object({
     }),
 })
 
-/** The org units within the user's search scope matching the query, each with its path as names, in one request. */
 const searchOrgUnits: Search = async (engine, query, signal) => {
     const { orgUnits } = orgUnitSchema.parse(
         await engine.query(
@@ -58,7 +56,6 @@ const searchOrgUnits: Search = async (engine, query, signal) => {
                     params: {
                         query,
                         withinUserSearchHierarchy: true,
-                        // Ancestors come from the top of the hierarchy down.
                         fields: 'id,displayName,ancestors[displayName]',
                     },
                 },
@@ -86,7 +83,6 @@ const userSchema = z.object({
     }),
 })
 
-/** The users matching the query by name or username; the lookup sends the first few, without a total. */
 const searchUsers: Search = async (engine, query, signal) => {
     const { users } = userSchema.parse(
         await engine.query(
@@ -105,7 +101,9 @@ const searchUsers: Search = async (engine, query, signal) => {
 }
 
 /** The search of a `search` kind's value type: org units in the user's search scope, or DHIS2's user lookup. */
-export const searchFor = (valueType: string): ServerSearch | undefined => {
+export const searchFor: (valueType: string) => ServerSearch | undefined = (
+    valueType
+) => {
     if (valueType === 'ORGANISATION_UNIT') {
         return {
             search: searchOrgUnits,
@@ -128,11 +126,8 @@ export interface Found extends SearchAnswer {
  * The server's answer for `query`, from two characters on and once typing stops; a newer query aborts the search
  * before it. Undefined until the answer for this very query arrives, so nothing picks from an older one.
  */
-export const useServerSearch = (
-    search: Search | undefined,
-    query: string
-): Found | undefined => {
-    // The runtime hands out a new engine each render; a search in flight must not restart for it.
+export const useServerSearch = (search: Search | undefined, query: string) => {
+    // WARNING: The runtime returns a new engine on each render. Depending on its identity would restart in-flight searches.
     const dataEngine = useDataEngine()
     const engine = useRef(dataEngine)
     engine.current = dataEngine

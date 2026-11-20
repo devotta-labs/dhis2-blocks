@@ -71,10 +71,8 @@ export interface ValueInputProps {
 /** Why a value type no control edits is read-only, as the data entry grid says it too. */
 export const editedElsewhere = () => i18n.t('Edit this field in its own form')
 
-// Messages are shown as the rules and the host give them, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
-// The tone in words as well as colour.
 const TONES = {
     error: {
         border: 'border-dhis2-destructive-indicator',
@@ -94,7 +92,6 @@ const TONES = {
 } satisfies Record<Tone, { border: string; say: (message: string) => string }>
 
 interface PartProps {
-    /** A pop-up editor's: plain, see `ValueInput`. */
     plain: boolean
     id?: string
     className?: string
@@ -121,7 +118,6 @@ const Problem = ({ plain, ...props }: PartProps) =>
         <FieldError {...props} />
     )
 
-// A control as wide as the value it holds; the field is as wide as the host makes it.
 const WIDTHS = new Map<CellKind, string>([
     ['number', 'max-w-48'],
     ['time', 'max-w-32'],
@@ -129,14 +125,13 @@ const WIDTHS = new Map<CellKind, string>([
     ['dateTime', 'max-w-64'],
 ])
 
-const metaOf = ({ valueType, options }: Field): ValueMeta => ({
+const metaOf: (field: Field) => ValueMeta = ({ valueType, options }) => ({
     valueType,
     optionSet: options && {
         options: options.map(({ code, name }) => ({ code, displayName: name })),
     },
 })
 
-/** A read-only stored file's "Download", after an image's preview, which leaves when the image does not load. */
 const StoredFile = ({
     url,
     image,
@@ -163,7 +158,7 @@ const StoredFile = ({
 }
 
 /** A form control for any DHIS2 value type: labelled, described, and reporting a value only when it is committed. */
-export const ValueInput = ({
+export const ValueInput: (props: ValueInputProps) => ReactNode = ({
     field,
     settings,
     label,
@@ -177,10 +172,8 @@ export const ValueInput = ({
     valueName,
     storedFile,
     id: givenId,
-}: ValueInputProps): ReactNode => {
-    // One "no value" for every kind, as `onChange` reports it back (`null`) or a host keeps it (`undefined`).
+}) => {
     const value = givenValue ?? undefined
-    // The stored file's link, while the field holds that file: not once it is removed or replaced here.
     const fileUrl = storedFile?.value === value ? storedFile?.url : undefined
     const generatedId = useId()
     const id = givenId ?? generatedId
@@ -189,18 +182,15 @@ export const ValueInput = ({
     const dated = kind === 'date' || kind === 'dateTime'
     const choice =
         kind === 'boolean' || kind === 'trueOnly' || kind === 'option'
-    // A pop-up type with no editor registered is shown read-only, as in the data entry grid.
     const popup =
         kind === 'popup' && formEditorFor(field.valueType) !== undefined
     const edited = typed || dated || choice || popup || kind === 'search'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
-    // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
     const options = field.options
     const offeredList = useMemo(
         () => options && offeredOptions(options, hiddenOptions, value),
         [options, hiddenOptions, value]
     )
-    // The same list for the same options, so the draft's key is built once: a host may build `field` on every render.
     const offered =
         offeredList === options ? field : { ...field, options: offeredList }
     const draft = useDraft({
@@ -210,9 +200,6 @@ export const ValueInput = ({
         onChange,
         readOnly: reason !== undefined,
     })
-    // A pop-up editor names and describes its own controls, so its field's parts are plain: in a Field, Base UI would
-    // link them a second time. An editor of one control (a text area, a combobox of chips) is a field with a label; one
-    // of several (an age, a coordinate, a list of boxes, a file) is a fieldset with a legend.
     const editor = reason === undefined && popup
     const oneControl =
         field.valueType === 'LONG_TEXT' ||
@@ -242,10 +229,6 @@ export const ValueInput = ({
     const invalid =
         problem !== undefined || messages.some(({ tone }) => tone === 'error')
     const labelId = `${id}-label`
-    // A rule's error or warning that appears once the field is on the page is said, an error at once (as the house
-    // announcer asks); those it opens with are read with the field. Information is not said: a rule may update it on
-    // every commit.
-    // Written out, so the effect runs when what is said changes, not for each array a host builds.
     const sayable = JSON.stringify(
         messages
             .filter(({ tone }) => tone !== 'info')
@@ -284,9 +267,7 @@ export const ValueInput = ({
 
     const file =
         field.valueType === 'FILE_RESOURCE' || field.valueType === 'IMAGE'
-    // Ids whose names the host may know.
     const named = kind === 'search' || file
-    // One piece of text, so the mark follows the last word however the label wraps.
     const title = (
         <span>
             {label}
@@ -299,7 +280,6 @@ export const ValueInput = ({
                 </span>
             ) : null}
             {editor && required ? (
-                // An editor's controls cannot say it, so its name does.
                 <span className="sr-only"> {i18n.t('required')}</span>
             ) : null}
         </span>
@@ -426,7 +406,6 @@ export const ValueInput = ({
                 <FieldDescription>{reason}</FieldDescription>
             )}
             {problem === undefined ? null : (
-                // An alert, said when it appears or changes: not again while more is typed.
                 <Problem plain={editor} id={`${id}-problem`}>
                     {problem.message}
                 </Problem>
@@ -444,7 +423,6 @@ export const ValueInput = ({
             ))}
         </>
     )
-    // Not a control: focus given to its id goes on to its first control.
     const focusable = {
         id,
         tabIndex: -1,
@@ -478,7 +456,6 @@ export const ValueInput = ({
         )
     }
     if (kind === 'trueOnly') {
-        // The house checkbox: the box, then its label and what describes it.
         return (
             <FieldRoot invalid={invalid} orientation="horizontal">
                 {control}

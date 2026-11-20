@@ -1,6 +1,5 @@
 import type { RefObject } from 'react'
 
-/** Each calendar on the page, with the input it fills. */
 const calendars = new WeakMap<Element, HTMLInputElement>()
 
 /** A ref for a calendar's box, tying it to the input it fills. */

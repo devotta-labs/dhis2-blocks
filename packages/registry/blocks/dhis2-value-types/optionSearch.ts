@@ -11,8 +11,6 @@ export interface OptionIndex {
     lowerText: string[]
 }
 
-// Punctuation is not part of what people type to match, so it becomes a space in the index and the query.
-// Combining marks stay: they belong to the letter before them (Devanagari, Lao, Khmer, a decomposed "é").
 const lower = (text: string) =>
     text
         .normalize('NFC')
@@ -22,7 +20,7 @@ const lower = (text: string) =>
 const indexes = new WeakMap<ReadonlyArray<Option>, OptionIndex>()
 
 /** Built once per option list and cached for every cell that shares it. */
-export const optionIndex = (options: ReadonlyArray<Option>): OptionIndex => {
+export const optionIndex = (options: ReadonlyArray<Option>) => {
     let index = indexes.get(options)
     if (!index) {
         index = {
@@ -71,7 +69,6 @@ export const searchOptions = (
         } else if (starts.every((start) => text.includes(start))) {
             group = 2
         }
-        // Only the first `limit` of a group can be drawn; the rest only count.
         if (groups[group].length < limit) {
             groups[group].push(i)
         }

@@ -7,7 +7,6 @@ import { EditorButtons } from './EditorButtons'
 import { useLocalFileUploads } from './fileUploads'
 import type { FormEditorProps, PopupEditorProps } from './popupEditors'
 
-// The house button looks disabled only when `:disabled`; these buttons stay focusable and say it with `aria-disabled`.
 const LOOKS_DISABLED =
     'aria-disabled:cursor-not-allowed aria-disabled:border-dhis2-border-strong aria-disabled:bg-dhis2-muted aria-disabled:text-dhis2-disabled-foreground aria-disabled:shadow-none aria-disabled:hover:bg-dhis2-muted aria-disabled:active:bg-dhis2-muted'
 
@@ -28,7 +27,6 @@ export const DownloadLink = ({ url }: { url: string }) => (
 export const previewUrl = (url: string) =>
     `${url}${url.includes('?') ? '&' : '?'}dimension=MEDIUM`
 
-/** The uploads, what they say, and a change made here, which wins over an upload still running. */
 const useFile = ({
     field,
     offline = false,
@@ -54,7 +52,6 @@ const useFile = ({
         picker,
         problem,
         busy: running !== undefined,
-        // A refusal shows at once, over an earlier upload still running.
         status: problem ?? running ?? (offline ? disconnected : undefined),
         change: (next: string | null) => {
             uploads.stop()
@@ -67,7 +64,6 @@ const useFile = ({
             setProblem(undefined)
             uploads.start(file, image, save, (reason) => {
                 setProblem(reason)
-                // Said even when the editor has closed: the person has moved on and sees no editor.
                 announce(reason, 'assertive')
             })
         },
@@ -76,7 +72,6 @@ const useFile = ({
 
 type FileState = ReturnType<typeof useFile>
 
-/** The stored file (an image's preview, or the file's name and "Download"), what the upload says, and the picker. */
 const FileShown = ({
     editor: { image, picker, problem, status, choose },
     value,
@@ -85,7 +80,6 @@ const FileShown = ({
 }: Pick<PopupEditorProps, 'value' | 'fileName' | 'fileUrl'> & {
     editor: FileState
 }) => {
-    // An image that does not load leaves its name, as in the cell.
     const [unloadable, setUnloadable] = useState<string>()
     const storedFile =
         value === undefined ? null : (
@@ -124,7 +118,6 @@ const FileShown = ({
                 accept={image ? 'image/*' : undefined}
                 onChange={({ target }) => {
                     const file = target.files?.[0]
-                    // Emptied, so choosing the same file again, after a failure, chooses it.
                     target.value = ''
                     if (file !== undefined) {
                         choose(file)
@@ -135,7 +128,6 @@ const FileShown = ({
     )
 }
 
-/** "Choose a file" or "Choose an image", and "Remove" for a stored file. */
 const FileChoices = ({
     editor: { image, offline, busy, picker, change },
     value,
@@ -144,7 +136,7 @@ const FileChoices = ({
     value: string | undefined
 }) => (
     <>
-        {/* Focusable while disabled, so focus stays in the editor and the reason beside it is found. */}
+        {}
         <Button
             type="button"
             size="sm"
@@ -182,14 +174,12 @@ const FileChoices = ({
 export const FileEditor = (props: PopupEditorProps) => {
     const { value, cancel } = props
     const editor = useFile(props)
-    /** Cancel: this editor's upload stops and the value stays. */
     const quit = () => {
         if (editor.busy) {
             editor.uploads.stop()
         }
         cancel()
     }
-    // Escape is Cancel wherever focus is in the editor: a button disabled during an upload keeps keys from the dialog.
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {

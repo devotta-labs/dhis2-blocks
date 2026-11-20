@@ -148,7 +148,7 @@ export const Calendar = ({
     calendar = 'gregorian',
     ...props
 }: CalendarProps) => {
-    // multi-calendar-dates 3.2.1 throws for Coptic dates.
+    // WARNING: multi-calendar-dates 3.2.1 throws for Coptic dates.
     if (calendar === 'coptic') {
         return (
             <p className="m-0 p-4 text-sm text-dhis2-muted-foreground">

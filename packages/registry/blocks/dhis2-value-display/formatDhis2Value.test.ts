@@ -31,7 +31,7 @@ describe('formatDhis2Value', () => {
         ['FILE_RESOURCE', 'aB3dE5gH7jK', 'File'],
         ['IMAGE', 'aB3dE5gH7jK', 'Image'],
     ])('formats %s', (valueType, value, expected) => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         expect(formatDhis2Value(value, { valueType }, opts)).toBe(expected)
         expect(warn).not.toHaveBeenCalled()
         warn.mockRestore()
@@ -92,7 +92,7 @@ describe('formatDhis2Value', () => {
         ).toBe('ou2')
     })
     it('shows a username as stored, without a warning', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         expect(formatDhis2Value('admin', { valueType: 'USERNAME' }, opts)).toBe(
             'admin'
         )
@@ -100,7 +100,7 @@ describe('formatDhis2Value', () => {
         warn.mockRestore()
     })
     it('returns the raw string for an unknown value type', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         expect(
             formatDhis2Value('{"a":1}', { valueType: 'GEOJSON' }, opts)
         ).toBe('{"a":1}')

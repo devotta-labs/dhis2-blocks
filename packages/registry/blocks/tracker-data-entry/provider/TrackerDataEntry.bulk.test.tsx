@@ -12,7 +12,7 @@ import {
     engineFor,
     FIRST_NAME,
     immunisationRegister,
-} from '../register/__tests__/registerRig'
+} from '../register/test/registerRig'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import { cleanUp, memorySource, mount, visitForm } from './__tests__/rig'
 

@@ -2,16 +2,14 @@ import { cellKey } from '@/components/spreadsheet'
 import type { DataEngine } from '@/components/spreadsheet'
 import type { DataRecord } from '../../model/types'
 import type { OutboxRecord } from '../../outbox/outbox'
-import meAdmin from '../../sources/__tests__/fixtures/me-admin.json'
-import systemInfo from '../../sources/__tests__/fixtures/system-info.json'
-import { trackerEngine } from '../../sources/__tests__/trackerRig'
+import meAdmin from '../../sources/test/fixtures/me-admin.json'
+import systemInfo from '../../sources/test/fixtures/system-info.json'
+import { trackerEngine } from '../../sources/test/trackerRig'
 import type { RegisterLayout } from '../layout'
 import { registerSource } from '../registerSource'
 import type { RegisterSourceOptions } from '../registerSource'
 import enrollments from './fixtures/immunisation-enrollments.json'
 import immunisation from './fixtures/immunisation-program.json'
-
-/** The child immunisation register on the seeded program, as the source tests load it. */
 
 type Request = Parameters<DataEngine['query']>[0]
 
@@ -26,7 +24,6 @@ export const VACCINE = 'ImmVaccine1'
 export const DOSE = 'ImmDose0001'
 export const ENROLLED_AT = 'enrolledAt'
 
-/** A dose's slot, as the layout names it: its values sorted by data element id. */
 const doseSlot = (vaccine: string, dose: string) =>
     `${VACCINATION}?${DOSE}=${dose}&${VACCINE}=${vaccine}`
 export const BCG = doseSlot('BCG', '0')
@@ -136,11 +133,11 @@ export const enrolledAs = (
 ) => ({ ...enrollments, enrollments: enrollments.enrollments.map(change) })
 
 let clock = 0
-export const edit = (
+export const edit: (
     record: DataRecord,
     field: string,
     value: string
-): OutboxRecord => ({
+) => OutboxRecord = (record, field, value) => ({
     sourceKey: `register:${PROGRAM}`,
     key: cellKey(record.id, field),
     value,

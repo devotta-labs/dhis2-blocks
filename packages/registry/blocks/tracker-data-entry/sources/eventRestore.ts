@@ -57,8 +57,6 @@ export const restoreEventRows = async (
     if (rows.size === 0) {
         return { rows: [], records: [] }
     }
-    // One saved since, from another grid or beyond the page loaded, is DHIS2's: its changes are ordinary ones.
-    // Unasked, the rows show as new; a save reads what DHIS2 holds first either way.
     const saved = await withinLimit(timeout, (signal) =>
         readEvents(engine, programId, [...rows.keys()], signal)
     ).catch(() => new Map<string, EventFields>())

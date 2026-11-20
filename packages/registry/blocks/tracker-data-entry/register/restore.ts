@@ -40,7 +40,6 @@ export const unsentRecords = (
         slotNames: ReadonlySet<string>
     }
 ) => {
-    // Each new record as its latest change made it, in the order made.
     const made = new Map<string, DataRecord>()
     const typed = new Map<CellKey, string>()
     for (const { key, value, record } of [...outbox].sort(
@@ -57,7 +56,7 @@ export const unsentRecords = (
     }
 
     const people = new Map<string, UnsentPerson>()
-    const personOf = (personId: string): UnsentPerson => {
+    const personOf: (personId: string) => UnsentPerson = (personId) => {
         const known = people.get(personId) ?? { personId, events: new Map() }
         people.set(personId, known)
         return known
@@ -151,11 +150,15 @@ export interface HeldEnrollment {
     events: SlotEvent[]
 }
 
-const heldOf = ({
+const heldOf: ({
     enrollment,
     status,
     events,
-}: z.infer<typeof heldEnrollmentSchema>): HeldEnrollment => ({
+}: z.infer<typeof heldEnrollmentSchema>) => HeldEnrollment = ({
+    enrollment,
+    status,
+    events,
+}) => ({
     enrollment,
     status,
     events: events.map((event) => ({
@@ -172,7 +175,6 @@ const heldOf = ({
     })),
 })
 
-// Ids per request, so each stays well within URL limits.
 const CHUNK = 100
 
 /** How long a reload waits for DHIS2's answer about unsent changes before they wait unsent: the form opens after it. */
@@ -262,7 +264,6 @@ export const heldSlotRefusal = (
     slots: ReadonlyArray<SlotDef>,
     rowReason: string | undefined
 ) => {
-    // DHIS2 holds the event: its changes are ordinary updates, wherever DHIS2 ranks it now.
     if (held.events.some(({ id }) => id === event.id)) {
         return undefined
     }
@@ -275,7 +276,6 @@ export const heldSlotRefusal = (
         : slotTaken()
 }
 
-// The platform's `FetchError` for no network, or for a request aborted (no answer in time).
 const unreachableSchema = z.object({ type: z.enum(['network', 'aborted']) })
 
 /**

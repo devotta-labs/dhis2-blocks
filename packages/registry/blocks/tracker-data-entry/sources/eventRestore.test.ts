@@ -1,4 +1,4 @@
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
 import {
     A,
     AGE,
@@ -18,7 +18,7 @@ import {
     inpatientSource,
     openGrid,
     person,
-} from './__tests__/saveRig'
+} from './test/saveRig'
 import { restoreEventRows } from './eventRestore'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { eventSource } from './eventSource'
@@ -45,7 +45,6 @@ test('restores new rows from the outbox', async () => {
         status: 'ACTIVE',
         isNew: true,
     }
-    // A was loaded, so a new-row change to it restores no row.
     expect(await grid.restoreRows(records)).toEqual({
         rows: [
             { id: NEW, label: '2026-10-26' },
@@ -73,7 +72,6 @@ test('restores no row for a new event saved since', async () => {
 })
 
 test('restores only the new rows this form adds, and none DHIS2 already holds', async () => {
-    // Saved from another grid, or beyond the page this one loaded.
     const savedElsewhere = 'Sv3dE4fG5hI'
     const grid = await openGrid(inpatientSource(), INPATIENT_LOAD, [
         ...inpatientEvents.events,

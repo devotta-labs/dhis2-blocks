@@ -23,10 +23,9 @@ export const importReportSchema = z.object({
 
 export type ImportReport = z.infer<typeof importReportSchema>
 
-/** The record kind of a report's `trackerType`. */
-const kindOf = (
+const kindOf: (
     trackerType: string | undefined
-): DataRecord['kind'] | undefined => {
+) => DataRecord['kind'] | undefined = (trackerType) => {
     switch (trackerType) {
         case 'TRACKED_ENTITY':
             return 'trackedEntity'
@@ -39,7 +38,6 @@ const kindOf = (
     }
 }
 
-// The DHIS2 code for an object not created because the person or enrolment it belongs to was not.
 const PARENT_REFUSED = 'E5000'
 
 export type Outcome = Pick<SaveOutcome, 'sourceKey' | 'key'>
@@ -53,12 +51,12 @@ export type Outcome = Pick<SaveOutcome, 'sourceKey' | 'key'>
  * at all) waits for that person or enrolment. When the import was refused as a whole (status ERROR) nothing was
  * saved, so the other records get no outcome.
  */
-export const outcomesFromReport = (
+export const outcomesFromReport: (
     records: ReadonlyArray<Outcome>,
     report: ImportReport,
     created: ReadonlySet<string>,
-    objects: SentObjects = new Map()
-): SaveOutcome[] => {
+    objects?: SentObjects
+) => SaveOutcome[] = (records, report, created, objects = new Map()) => {
     const refusals = new Map<
         string,
         Array<{
@@ -82,7 +80,6 @@ export const outcomesFromReport = (
         const id = recordIdOf(key)
         fieldsOf.set(id, [...(fieldsOf.get(id) ?? []), fieldIdOfKey(key)])
     }
-    // DHIS2 names an attribute in backticks (E1064) or in its arguments (E1018's `identifier=<uid>`).
     const names = (
         refusal: { message: string; args: ReadonlyArray<string> },
         field: string
@@ -98,7 +95,6 @@ export const outcomesFromReport = (
                 refusal.kind === kind
         )
     }
-    /** The person, else the enrolment, a created object belongs to that DHIS2 refused. */
     const refusedParent = (id: string) => {
         let refused: DataRecord['kind'] | undefined
         for (
@@ -112,7 +108,7 @@ export const outcomesFromReport = (
         }
         return refused
     }
-    return records.flatMap(({ sourceKey, key }): SaveOutcome[] => {
+    return records.flatMap<SaveOutcome>(({ sourceKey, key }) => {
         const id = recordIdOf(key)
         const own = refusalsOf(id)
         const parent =
@@ -130,7 +126,6 @@ export const outcomesFromReport = (
                 },
             ]
         }
-        // A person's refusal that names some of its changed attributes is theirs; its other cells wait for the person.
         const namesAttribute =
             objects.get(id)?.kind === 'trackedEntity' &&
             (fieldsOf.get(id) ?? []).some((field) =>

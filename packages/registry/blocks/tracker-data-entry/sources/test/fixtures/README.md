@@ -4,7 +4,7 @@ Captured on 2026-10-26 from the docs DHIS2 (Sierra Leone demo, version 2.42.6, r
 `pnpm docs:up`. Run from the repository root:
 
 ```bash
-D=packages/registry/blocks/tracker-data-entry/sources/__tests__/fixtures; B=http://127.0.0.1:58080/api
+D=packages/registry/blocks/tracker-data-entry/sources/test/fixtures; B=http://127.0.0.1:58080/api
 P='id,displayName,programType,expiryPeriodType,expiryDays,completeEventsExpiryDays,categoryCombo[id,isDefault],programStages[id,displayName,repeatable,validationStrategy,blockEntryForm,access[data[write]],programStageDataElements[compulsory,dataElement[id,displayFormName,valueType,fieldMask,optionSet[options[code,displayName]]]],programStageSections[id,dataElements[id]]]'
 E='event,enrollment,program,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,attributeOptionCombo,dataValues[dataElement,value]'
 curl -s -u admin:district "$B/me?fields=id,authorities" > $D/me-admin.json

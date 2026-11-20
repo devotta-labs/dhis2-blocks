@@ -37,11 +37,11 @@ const NONE: ReadonlySet<string> = new Set()
  * What a record's rules act on: every field of its forms, shown in a column or not. An event has its stage; an
  * enrolment its program and its person's tracked entity type, whose rules run together.
  */
-export const stageFields = (
+export const stageFields: (
     form: Pick<LoadedForm, 'fields' | 'fieldsByForm' | 'required' | 'sections'>,
     formIds: ReadonlyArray<string>,
     optionGroups: RowFields['optionGroups']
-): RowFields => {
+) => RowFields = (form, formIds, optionGroups) => {
     const union = (sets: ReadonlyMap<string, ReadonlySet<string>>) =>
         formIds.length === 1
             ? (sets.get(formIds[0]) ?? NONE)
@@ -64,15 +64,12 @@ export const stageFields = (
                 .map(({ id }) => id)
         ),
         optionGroups,
-        // Sections are a stage's.
         sections: form.sections.get(formIds[0]) ?? new Map(),
     }
 }
 
-// Rule names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-/** The value an ASSIGN saves; `null` clears, and DHIS2 refuses a value outside the field's options, so it clears too. */
 const assignable = (field: string, value: string | null, row: RowFields) => {
     if (value === null || value === '') {
         return null
@@ -95,7 +92,6 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
     const isRequired = (field: string) =>
         row.required.has(field) || effects.mandatoryFields.has(field)
 
-    // Hidden fields first, so a field's own HIDEFIELD names it rather than its section's.
     const hiddenBy = new Map<string, Attribution>()
     const hide = (field: string, [by]: Attribution[]) => {
         if (
@@ -117,7 +113,6 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
         }
     }
 
-    /** Values to commit with source `'rule'`; `null` clears. An ASSIGN wins over hiding. */
     const assignments = new Map<string, string | null>(
         cleared.map((field) => [field, null])
     )
@@ -137,7 +132,6 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
             ...(effects.hiddenOptions.get(field) ?? []),
             ...codesOf(groups?.hidden ?? []),
         ])
-        // Once a group is shown, only the shown groups' options are offered.
         if (groups !== undefined && groups.shown.size > 0) {
             const shown = new Set(codesOf(groups.shown))
             for (const code of row.options.get(field) ?? []) {
@@ -150,8 +144,8 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
     }
 
     const messagesOf = (field: string) =>
-        (effects.messages.get(field) ?? []).map(
-            ({ kind, text }): TrackerMessage =>
+        (effects.messages.get(field) ?? []).map<TrackerMessage>(
+            ({ kind, text }) =>
                 kind === 'errorOnComplete' || kind === 'warningOnComplete'
                     ? {
                           tone:
@@ -195,25 +189,23 @@ export const rowRuleOutcome = (effects: RuleEffects, row: RowFields) => {
     return { cells, assignments, rowMessages: messagesOf('form'), notes }
 }
 
-/** A person's enrolment as the rules read it: its live dates and the person's attributes that have a value. */
-const ruleEnrollmentOf = (
+const ruleEnrollmentOf: (
     enrollment: EnrollmentRecord,
     person: PersonRecord,
     cells: CellStoreState['cells'],
     fieldsByForm: LoadedForm['fieldsByForm']
-): RuleEnrollmentInput => {
+) => RuleEnrollmentInput = (enrollment, person, cells, fieldsByForm) => {
     const valueOf = (recordId: string, field: string) =>
         cells[cellKey(recordId, field)]?.value
     return {
         id: enrollment.id,
-        // An empty enrolment date is today's, as the engine has it for a person being registered.
         enrolledAt: valueOf(enrollment.id, ENROLLED_AT) ?? '',
         occurredAt: valueOf(enrollment.id, EVENT_DATE_COLUMN) || undefined,
         orgUnitId: enrollment.orgUnitId,
         status: enrollment.status,
         attributes: Object.fromEntries(
             [...(fieldsByForm.get(person.trackedEntityTypeId) ?? NONE)].flatMap(
-                (field): Array<[string, string]> => {
+                (field) => {
                     const value = valueOf(person.id, field)
                     return value ? [[field, value]] : []
                 }
@@ -222,7 +214,6 @@ const ruleEnrollmentOf = (
     }
 }
 
-/** The enrolment record and its person, when the form holds both. */
 const enrollmentAndPerson = (
     records: ReadonlyMap<string, DataRecord>,
     enrollmentId: string
@@ -257,11 +248,11 @@ export const isEmptySlot = (
  * cleared included, replaces the value; a draft alone does not, as the payload sends `createdWith` then. A slot's new
  * event nobody typed in is left out: it never changes which event is newest or previous.
  */
-export const ruleRowsOf = (
+export const ruleRowsOf: (
     records: ReadonlyMap<string, DataRecord>,
     fieldsByForm: LoadedForm['fieldsByForm'],
     cells: CellStoreState['cells']
-): EventsRuleRow[] => {
+) => EventsRuleRow[] = (records, fieldsByForm, cells) => {
     const enrollments = new Map<string, RuleEnrollmentInput | undefined>()
     const enrollmentOf = (id: string) => {
         if (!enrollments.has(id)) {
@@ -291,12 +282,11 @@ export const ruleRowsOf = (
         const fields = fieldsByForm.get(formOf(record)) ?? NONE
         const occurredAt = valueOf(EVENT_DATE_COLUMN) || undefined
         const typed = Object.fromEntries(
-            [...fields].flatMap((field): Array<[string, string]> => {
+            [...fields].flatMap((field) => {
                 const value = valueOf(field)
                 return value ? [[field, value]] : []
             })
         )
-        // A where-slot's new event carries its where values, as the payload sends them, unless a cell holds a change.
         const changed = (field: string) => {
             const cell = cells[cellKey(record.id, field)]
             return (
@@ -358,7 +348,6 @@ export const ruleRowsCache = (fieldsByForm: LoadedForm['fieldsByForm']) => {
     }
 }
 
-/** Every event of the enrolment. */
 const eventsOf = (
     records: ReadonlyMap<string, DataRecord>,
     enrollmentId: string
@@ -375,16 +364,15 @@ const eventsOf = (
  * own id), and the enrolment when the form holds it; an enrolment's, itself and its events; a person's, each enrolment
  * of theirs with its events.
  */
-export const personRows = (
+export const personRows: (
     records: ReadonlyMap<string, DataRecord>,
     record: DataRecord
-): string[] => {
+) => string[] = (records, record) => {
     switch (record.kind) {
         case 'event': {
             if (record.enrollmentId === undefined) {
                 return [record.id]
             }
-            // A register's enrolment rules read its events.
             const enrollment = records.get(record.enrollmentId)
             return enrollment?.kind === 'enrollment'
                 ? personRows(records, enrollment)
@@ -403,10 +391,10 @@ export const personRows = (
 }
 
 /** The records a record's rule effects land on: its own, and an enrolment's person, whose attributes its rules act on. */
-export const partsOf = (
+export const partsOf: (
     records: ReadonlyMap<string, DataRecord>,
     record: DataRecord
-): DataRecord[] => {
+) => DataRecord[] = (records, record) => {
     const person =
         record.kind === 'enrollment'
             ? enrollmentAndPerson(records, record.id)?.person

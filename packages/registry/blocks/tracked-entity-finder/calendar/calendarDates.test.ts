@@ -16,8 +16,6 @@ const ethiopian: FinderSystemInfo = {
 }
 
 describe('calendar dates', () => {
-    // Reference pairs from working-list's calendar tests, plus v1's Ethiopian
-    // new-year pairs (Meskerem 1, 2017 and Pagume 1, 2016).
     it.each([
         ['gregorian', 'YYYY-MM-DD', '2024-05-23', '2024-05-23'],
         ['iso8601', 'YYYY-MM-DD', '2024-05-23', '2024-05-23'],

@@ -22,10 +22,9 @@ export interface OrgUnitSwitcherTexts {
     changed: (name: string) => string
 }
 
-/** Unit names reach text, not HTML, so i18n must not escape them. */
 const AS_WRITTEN = { escapeValue: false }
 
-export const defaultTexts = (): OrgUnitSwitcherTexts => ({
+export const defaultTexts: () => OrgUnitSwitcherTexts = () => ({
     label: i18n.t('Organisation unit'),
     searchPlaceholder: i18n.t('Search organisation units'),
     choose: i18n.t('Choose an organisation unit'),

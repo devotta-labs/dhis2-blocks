@@ -20,7 +20,7 @@ export const DateInput = ({
     error,
 }: FieldInputProps) => {
     const { meta } = useFinderContext()
-    // Stable, so the memoised calendar skips renders for other fields.
+
     const onChange = useCallback(
         (date: string) => setValue({ kind: 'date', date }),
         [setValue]
@@ -32,7 +32,7 @@ export const DateInput = ({
         <Field
             invalid={error !== undefined}
             className={cn('gap-1', className)}
-            // Blur bubbles in React, so leaving the calendar's input counts.
+
             onBlur={onBlur}
         >
             <CalendarDateInput

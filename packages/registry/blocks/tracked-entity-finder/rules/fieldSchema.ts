@@ -12,7 +12,6 @@ type Match = FormField['match']
 /** What a field sends: its conditions, or nothing when it is left empty. */
 export type FieldConditions = readonly SearchCondition[] | undefined
 
-/** Every error a field schema can raise; each is its Zod issue's `message`. */
 const FIELD_ERROR_CODES = [
     'too-short',
     'invalid-number',
@@ -27,22 +26,19 @@ const INTEGER = /^[+-]?\d+$/
 const DAY_START = 'T00:00:00.000'
 const DAY_END = 'T23:59:59.999'
 
-/** Trimmed text, or undefined when there is none. */
 const trimmed = z.string().transform((text) => text.trim() || undefined)
 
-/** As `trimmed`, for a side that may be unset. */
 const optionalTrimmed = z
     .string()
     .optional()
     .transform((text) => text?.trim() || undefined)
 
-/** A number as typed, sent unchanged; integer value types refuse decimals. */
 const numberText = (attribute: FinderAttribute) =>
     trimmed.pipe(
         z
             .string()
             .regex(NUMBER, { error: 'invalid-number' satisfies FieldErrorCode })
-            // Read from the text: `Number` rounds "1.0" and long decimals to integers.
+
             .refine(
                 (text) =>
                     !attribute.valueType.startsWith('INTEGER') ||
@@ -52,7 +48,6 @@ const numberText = (attribute: FinderAttribute) =>
             .optional()
     )
 
-/** An ISO `yyyy-mm-dd` day that exists. */
 const dateText = optionalTrimmed.pipe(
     z.iso.date({ error: 'invalid-date' satisfies FieldErrorCode }).optional()
 )
@@ -63,11 +58,10 @@ const notReversed = <T>(
     order: (side: T) => number | string
 ) => low === undefined || high === undefined || order(low) <= order(high)
 
-/** Either side alone fills; both send `ge` and `le`. */
-const rangeConditions = (
+const rangeConditions: (
     low: string | undefined,
     high: string | undefined
-): FieldConditions => {
+) => FieldConditions = (low, high) => {
     const conditions: SearchCondition[] = []
     if (low !== undefined) {
         conditions.push({ op: 'ge', value: low })
@@ -78,13 +72,12 @@ const rangeConditions = (
     return conditions.length ? conditions : undefined
 }
 
-const eq = (value: string): FieldConditions => [{ op: 'eq', value }]
+const eq: (value: string) => FieldConditions = (value) => [{ op: 'eq', value }]
 
-/** The `FieldValue` kind a field of this attribute and match holds. */
-const kindFor = (
+const kindFor: (
     attribute: FinderAttribute,
     match: Match
-): FieldValue['kind'] | undefined => {
+) => FieldValue['kind'] | undefined = (attribute, match) => {
     switch (attribute.kind) {
         case 'text':
         case 'option':
@@ -102,11 +95,10 @@ const kindFor = (
     }
 }
 
-/** The schema for one kind of `FieldValue`. */
-const valueSchema = (
+const valueSchema: (
     attribute: FinderAttribute,
     kind: FieldValue['kind']
-): z.ZodType<FieldConditions, FieldValue> => {
+) => z.ZodType<FieldConditions, FieldValue> = (attribute, kind) => {
     const dayBound = (day: string, side: 'from' | 'to') =>
         attribute.kind === 'dateTime'
             ? day + (side === 'from' ? DAY_START : DAY_END)
@@ -125,7 +117,7 @@ const valueSchema = (
                         })
                         .optional()
                 )
-                .transform((text): FieldConditions =>
+                .transform<FieldConditions>((text) =>
                     text !== undefined && op ? [{ op, value: text }] : undefined
                 )
         }
@@ -147,12 +139,11 @@ const valueSchema = (
                     kind: z.literal('multiText'),
                     codes: z.array(z.string()).readonly(),
                 })
-                .transform(({ codes }): FieldConditions => {
+                .transform<FieldConditions>(({ codes }) => {
                     const known = attribute.options
                         ?.map((option) => option.code)
                         .filter((code) => codes.includes(code))
-                    // One `eq` per code: DHIS2 ANDs them, so the person must
-                    // have every code picked.
+
                     return known?.length
                         ? known.map((value) => ({ op: 'eq', value }))
                         : undefined
@@ -195,7 +186,7 @@ const valueSchema = (
                     if (date === undefined) {
                         return undefined
                     }
-                    // A DATETIME is searched across the whole day.
+
                     return attribute.kind === 'dateTime' && !attribute.unique
                         ? rangeConditions(
                               dayBound(date, 'from'),
@@ -227,10 +218,13 @@ const valueSchema = (
  * when empty, or a `FieldErrorCode` as the message of its first Zod issue. A value
  * of another kind than the field holds is read as empty.
  */
-export const fieldSchema = (
+export const fieldSchema: (
     attribute: FinderAttribute,
     match: Match
-): z.ZodType<FieldConditions, FieldValue | undefined> => {
+) => z.ZodType<FieldConditions, FieldValue | undefined> = (
+    attribute,
+    match
+) => {
     const kind = kindFor(attribute, match)
     const holds = kind ? valueSchema(attribute, kind) : z.undefined()
     return z
@@ -240,7 +234,7 @@ export const fieldSchema = (
 }
 
 /** The `FieldErrorCode` a failed field parse reports. */
-export const errorCodeOf = (error: z.ZodError): FieldErrorCode | undefined => {
+export const errorCodeOf = (error: z.ZodError) => {
     const message = error.issues[0]?.message
     return FIELD_ERROR_CODES.find((code) => code === message)
 }

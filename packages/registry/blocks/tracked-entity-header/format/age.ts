@@ -39,11 +39,11 @@ export const todayIso = (now = new Date()) =>
  * a month older on a shorter month's last day, and 29 February a year older on 28 February. Upgrade when
  * upstream settles both.
  */
-export const ageOf = (
+export const ageOf: (
     birthIso: string,
     todayIsoDay: string,
     calendar: Dhis2Calendar
-): Age | undefined => {
+) => Age | undefined = (birthIso, todayIsoDay, calendar) => {
     const birthParts = ISO_DAY.exec(birthIso)
     const todayParts = ISO_DAY.exec(todayIsoDay)
     if (!birthParts || !todayParts) {
@@ -71,12 +71,12 @@ export const ageOf = (
         compare(addToCalendarDate(birth, duration, id), today) <= 0
     const yearsApart =
         (today.eraYear ?? today.year) - (birth.eraYear ?? birth.year)
-    // One fewer if this year's birthday has not come yet.
+
     const years = reached({ years: yearsApart }) ? yearsApart : yearsApart - 1
     if (years >= 2) {
         return { unit: 'years', count: years }
     }
-    // Months per year differ by calendar (13 in Ethiopian) and the library does not say how many, so count them.
+
     let months = 0
     while (reached({ months: months + 1 })) {
         months += 1
@@ -86,9 +86,9 @@ export const ageOf = (
         : { unit: 'days', count: days }
 }
 
-export const formatAge = ({ unit, count }: Age): string => {
+export const formatAge = ({ unit, count }: Age) => {
     switch (unit) {
-        case 'years': // always two or more
+        case 'years':
             return i18n.t('{{count}} years', { count })
         case 'months':
             return count === 1

@@ -35,7 +35,7 @@ export function TrackedEntityName({
         const undo = key.split(',').filter(Boolean).map(placeAttribute)
         return () => undo.forEach((fn) => fn())
     }, [key, placeAttribute])
-    // Before paint, so the region is never first announced by another name.
+
     useLayoutEffect(() => {
         if (!ready || !setRegionLabel) {
             return undefined
@@ -56,7 +56,7 @@ export function TrackedEntityName({
         .filter(Boolean)
         .join(' ')
     let text = name || i18n.t('Name not recorded')
-    // No half identity: one unreadable name attribute makes the whole name unavailable.
+
     if (parts.some((part) => part.kind === 'unavailable')) {
         text = i18n.t('Name unavailable')
     }

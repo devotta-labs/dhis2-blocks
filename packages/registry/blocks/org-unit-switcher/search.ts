@@ -8,7 +8,7 @@ import { isWithinAssigned } from './api/scope'
 import { useOrgUnitContext } from './provider/context'
 
 const SEARCH_DELAY_MS = 250
-// More than this many facilities is too many to scan without a filter.
+
 const MAX_UNFILTERED = 8
 const noop = () => {}
 
@@ -33,7 +33,7 @@ export interface OrgUnitSearch {
 }
 
 /** The selector's search: held in the selector, so typing re-renders only the menu. */
-export function useOrgUnitSearch(): OrgUnitSearch {
+export const useOrgUnitSearch: () => OrgUnitSearch = () => {
     const { state, source } = useOrgUnitContext()
     const { assigned } = state
     const { client, cacheId, userId } = source
@@ -50,7 +50,6 @@ export function useOrgUnitSearch(): OrgUnitSearch {
         return () => clearTimeout(timeout)
     }, [trimmed])
 
-    // A blank query pages through the whole hierarchy, so the menu can be browsed without typing.
     const server = useInfiniteQuery({
         queryKey: orgUnitQueryKeys.search(cacheId, userId ?? '', debounced),
         queryFn: async ({ pageParam, signal }) =>
@@ -58,7 +57,7 @@ export function useOrgUnitSearch(): OrgUnitSearch {
         initialPageParam: 1,
         getNextPageParam: (last, pages) =>
             last.hasMore ? pages.length + 1 : undefined,
-        // Nothing is asked for until the menu is opened or the user types.
+
         enabled:
             searchesServer &&
             userId !== undefined &&
@@ -103,11 +102,11 @@ export function useOrgUnitSearch(): OrgUnitSearch {
             retry,
         }
     }
-    // By id, so a unit that moved between pages while they loaded shows once.
+
     const loaded = new Map(
         server.data.pages
             .flatMap((page) => page.orgUnits)
-            // A server that ignores the scope filter must not list units a pick would drop.
+
             .filter((c) => isWithinAssigned(c.path, assigned))
             .map((c) => [c.id, c])
     )
@@ -118,7 +117,7 @@ export function useOrgUnitSearch(): OrgUnitSearch {
         hasMore: server.hasNextPage,
         loadingMore: server.isFetchingNextPage,
         moreFailed: server.isFetchNextPageError,
-        // A second press while the page loads joins it rather than starting over.
+
         loadMore: () => void server.fetchNextPage({ cancelRefetch: false }),
         retry,
     }

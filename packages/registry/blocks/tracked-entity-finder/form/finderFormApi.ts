@@ -19,10 +19,6 @@ export const useFinderFormApi = (onSubmit: (values: FinderValues) => void) =>
 /** The TanStack form of the `FinderForm` around it. */
 export type FinderFormApi = ReturnType<typeof useFinderFormApi>
 
-/**
- * The field's Zod schema as a TanStack validator: the error is the text to
- * show the user. TanStack runs it on change and again on submit.
- */
 const useValidator = (
     attribute: FinderAttribute | undefined,
     match: FormField['match']

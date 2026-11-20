@@ -1,9 +1,6 @@
+import { openDhis2TestServer } from '../../../test/dhis2-server.test-utils'
 import { Result } from 'better-result'
-import {
-    createOrgUnitResourceClient,
-    type DataEngineLike,
-    type DataEngineValue,
-} from './client'
+import { createOrgUnitResourceClient, type DataEngineValue } from './client'
 import {
     fetchOrgUnitsById,
     fetchMe,
@@ -11,15 +8,20 @@ import {
     searchOrgUnits,
 } from './queries'
 
-const engineReturning = (body: DataEngineValue) => {
-    const query = vi
-        .fn<DataEngineLike['query']>()
-        .mockResolvedValue({ orgUnitResource: body })
-    return { client: createOrgUnitResourceClient({ query }), query }
+const engineReturning = async (resource: string, body: DataEngineValue) => {
+    const requests: URL[] = []
+    const { engine } = await openDhis2TestServer((url) => {
+        requests.push(url)
+        if (url.pathname === `/api/42/${resource}`) {
+            return Response.json(body)
+        }
+        return undefined
+    })
+    return {
+        client: createOrgUnitResourceClient(engine),
+        params: () => Object.fromEntries(requests[0].searchParams),
+    }
 }
-
-const requestOf = (query: ReturnType<typeof engineReturning>['query']) =>
-    Object.values(query.mock.calls[0]?.[0] ?? {})[0]
 
 const unit = (id: string, displayName: string) => ({
     id,
@@ -29,7 +31,7 @@ const unit = (id: string, displayName: string) => ({
 
 describe('fetchMe', () => {
     it('asks for the user and their units, sorted by name', async () => {
-        const { client, query } = engineReturning({
+        const { client, params } = await engineReturning('me', {
             id: 'u1',
             organisationUnits: [
                 { ...unit('b', 'Beta'), children: false },
@@ -39,11 +41,8 @@ describe('fetchMe', () => {
 
         const result = await fetchMe(client)
 
-        expect(requestOf(query)).toEqual({
-            resource: 'me',
-            params: {
-                fields: 'id,organisationUnits[id,displayName,displayShortName,path,children::isNotEmpty]',
-            },
+        expect(params()).toEqual({
+            fields: 'id,organisationUnits[id,displayName,displayShortName,path,children::isNotEmpty]',
         })
         expect(result.unwrap()).toEqual({
             userId: 'u1',
@@ -55,11 +54,11 @@ describe('fetchMe', () => {
     })
 
     it('returns an engine rejection as an error result', async () => {
-        const query = vi
-            .fn<DataEngineLike['query']>()
-            .mockRejectedValue(new Error('offline'))
+        const { engine } = await openDhis2TestServer((url) =>
+            url.pathname === '/api/42/me' ? Response.error() : undefined
+        )
 
-        const result = await fetchMe(createOrgUnitResourceClient({ query }))
+        const result = await fetchMe(createOrgUnitResourceClient(engine))
 
         expect(Result.isError(result)).toBe(true)
     })
@@ -67,23 +66,20 @@ describe('fetchMe', () => {
 
 describe('searchOrgUnits', () => {
     it('searches within the user hierarchy, one page by name', async () => {
-        const { client, query } = engineReturning({
+        const { client, params } = await engineReturning('organisationUnits', {
             pager: { page: 2, pageSize: 20, total: 21 },
             organisationUnits: [unit('a', 'Ngelehun')],
         })
 
         const result = await searchOrgUnits(client, 'ngel', 2)
 
-        expect(requestOf(query)).toEqual({
-            resource: 'organisationUnits',
-            params: {
-                query: 'ngel',
-                withinUserHierarchy: true,
-                fields: 'id,displayName,displayShortName,path',
-                order: 'displayName:asc',
-                pageSize: SEARCH_PAGE_SIZE,
-                page: 2,
-            },
+        expect(params()).toEqual({
+            query: 'ngel',
+            withinUserHierarchy: 'true',
+            fields: 'id,displayName,displayShortName,path',
+            order: 'displayName:asc',
+            pageSize: String(SEARCH_PAGE_SIZE),
+            page: '2',
         })
         expect(result.unwrap()).toEqual({
             orgUnits: [unit('a', 'Ngelehun')],
@@ -92,34 +88,31 @@ describe('searchOrgUnits', () => {
     })
 
     it('sends no query for a blank one, and says a page follows', async () => {
-        const { client, query } = engineReturning({
+        const { client, params } = await engineReturning('organisationUnits', {
             pager: { page: 1, pageSize: 20, total: 21 },
             organisationUnits: [unit('a', 'A')],
         })
 
         const result = await searchOrgUnits(client, '', 1)
 
-        expect(requestOf(query)?.params).not.toHaveProperty('query')
+        expect(params()).not.toHaveProperty('query')
         expect(result.unwrap().hasMore).toBe(true)
     })
 })
 
 describe('fetchOrgUnitsById', () => {
     it('asks for the ids in one unpaged request', async () => {
-        const { client, query } = engineReturning({
+        const { client, params } = await engineReturning('organisationUnits', {
             organisationUnits: [unit('a', 'A'), unit('b', 'B')],
         })
 
         const result = await fetchOrgUnitsById(client, ['b', 'a'])
 
-        expect(requestOf(query)).toEqual({
-            resource: 'organisationUnits',
-            params: {
-                filter: 'id:in:[b,a]',
-                withinUserHierarchy: true,
-                fields: 'id,displayName,displayShortName,path',
-                paging: false,
-            },
+        expect(params()).toEqual({
+            filter: 'id:in:[b,a]',
+            withinUserHierarchy: 'true',
+            fields: 'id,displayName,displayShortName,path',
+            paging: 'false',
         })
         expect(result.unwrap()).toHaveLength(2)
     })

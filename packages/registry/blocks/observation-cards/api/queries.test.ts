@@ -38,7 +38,7 @@ describe('fetchEvents', () => {
     const subject = { trackedEntityId: 'te1', programId: 'p1' }
 
     it('requests pages until a short page', async () => {
-        const { engine, query } = await engineReturning([
+        const { engine, requests } = await engineReturning([
             { events: eventsOf(200) },
             { events: eventsOf(200, 200) },
             { events: eventsOf(13, 400) },
@@ -50,18 +50,19 @@ describe('fetchEvents', () => {
         )
 
         expect(Result.isOk(result) && result.value).toHaveLength(413)
-        expect(query).toHaveBeenCalledTimes(3)
-        expect([0, 1, 2].map((i) => requestOf(query, i)?.params?.page)).toEqual(
-            [1, 2, 3]
-        )
-        expect(requestOf(query, 0)).toMatchObject({
-            resource: 'tracker/events',
-            params: {
+        expect(requests.map((url) => url.searchParams.get('page'))).toEqual([
+            '1',
+            '2',
+            '3',
+        ])
+        for (const url of requests) {
+            expect(url.pathname).toBe('/api/tracker/events')
+            expect(Object.fromEntries(url.searchParams)).toMatchObject({
                 trackedEntity: 'te1',
                 program: 'p1',
-                pageSize: EVENTS_PAGE_SIZE,
-            },
-        })
+                pageSize: String(EVENTS_PAGE_SIZE),
+            })
+        }
     })
 
     it('stops after one call when the first page is short', async () => {
@@ -116,16 +117,18 @@ describe('fetchEvents', () => {
     })
 
     it('asks for the tracked entity and a stable order', async () => {
-        const { engine, query } = await engineReturning([{ events: [] }])
+        const { engine, requests } = await engineReturning([{ events: [] }])
 
         await fetchEvents(createObservationsResourceClient(engine), subject)
 
-        expect(requestOf(query, 0)).toMatchObject({
-            params: {
+        expect(
+            requests.map((url) => Object.fromEntries(url.searchParams))
+        ).toEqual([
+            expect.objectContaining({
                 fields: 'event,trackedEntity,programStage,status,occurredAt,createdAt,dataValues[dataElement,value]',
                 order: 'occurredAt:asc,createdAt:asc',
-            },
-        })
+            }),
+        ])
     })
 
     it('drops events that belong to another tracked entity', async () => {
@@ -222,7 +225,7 @@ describe('fetchEnrollment', () => {
     const subject = { trackedEntityId: 'te1', programId: 'p1' }
 
     it('asks for one enrollment of the person in the program', async () => {
-        const { engine, query } = await engineReturning([
+        const { engine, requests } = await engineReturning([
             { enrollments: [{ enrollment: 'en1' }] },
         ])
 
@@ -231,15 +234,19 @@ describe('fetchEnrollment', () => {
             subject
         )
 
-        expect(requestOf(query, 0)).toEqual({
-            resource: 'tracker/enrollments',
-            params: {
+        expect(requests.map((url) => url.pathname)).toEqual([
+            '/api/tracker/enrollments',
+        ])
+        expect(
+            requests.map((url) => Object.fromEntries(url.searchParams))
+        ).toEqual([
+            expect.objectContaining({
                 trackedEntity: 'te1',
                 program: 'p1',
                 fields: 'enrollment',
-                pageSize: 1,
-            },
-        })
+                pageSize: '1',
+            }),
+        ])
         expect(Result.isOk(result) && result.value).toBe('en1')
     })
 

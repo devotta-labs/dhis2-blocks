@@ -27,9 +27,7 @@ const EVENT = 'labLinkEvnt'
 const PERSON_TYPE = 'labPersonTyp'
 const RAW_NAME = 'Mother-Child_a-to-b_(Person-Person)'
 
-export const relationshipPartsFor = (
-    scenario: RelationshipScenario
-): RelationshipParts | undefined => {
+export const relationshipPartsFor = (scenario: RelationshipScenario) => {
     switch (scenario) {
         case 'mother':
             return {
@@ -38,7 +36,7 @@ export const relationshipPartsFor = (
                     end: 'from',
                     label: { from: 'Baby', to: 'Mother' },
                 },
-            }
+            } satisfies RelationshipParts
         case 'rawRelabelled':
             return {
                 labels: { [MOTHER_CHILD]: { from: 'Baby', to: 'Mother' } },
@@ -57,7 +55,6 @@ const constraint = (typeName: string) => ({
     trackerDataView: { attributes: VIEW },
 })
 
-/** One end of a relationship, as DHIS2 sends it. */
 interface End {
     trackedEntity?: {
         trackedEntity: string
@@ -146,7 +143,6 @@ export const generateRelationshipData = (
             return {
                 relationships: [
                     link(1, FOCUS, me, {
-                        // No attributes: the viewer may not read this record.
                         trackedEntity: {
                             trackedEntity: 'labHidden001',
                             trackedEntityType: PERSON_TYPE,

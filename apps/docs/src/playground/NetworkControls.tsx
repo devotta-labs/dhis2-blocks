@@ -13,11 +13,7 @@ const CHOICES: ReadonlyArray<readonly [NetworkChoice, string]> = [
 const NORMAL_DELAY = 50
 const SLOW_DELAY = 2000
 
-/** The network for a choice: every request slow, or the block's records failing or never coming. */
-const networkFor = (
-    choice: NetworkChoice,
-    records: readonly string[]
-): LabNetwork => {
+const networkFor = (choice: NetworkChoice, records: readonly string[]) => {
     if (choice === 'normal' || choice === 'slow') {
         return {
             delay: choice === 'slow' ? SLOW_DELAY : NORMAL_DELAY,
@@ -32,7 +28,7 @@ const networkFor = (
     }
 }
 
-const choiceOf = (network: LabNetwork): NetworkChoice => {
+const choiceOf = (network: LabNetwork) => {
     const behaviours = Object.values(network.endpoints).map(
         (endpoint) => endpoint?.behaviour
     )

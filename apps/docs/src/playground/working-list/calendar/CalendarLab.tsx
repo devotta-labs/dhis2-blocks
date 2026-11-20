@@ -54,7 +54,6 @@ export const CalendarLab = () => {
     const linked = mode === 'lab' ? state.preset : undefined
     useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    // Stable, so neither the lab server nor the list is rebuilt for each entry.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []

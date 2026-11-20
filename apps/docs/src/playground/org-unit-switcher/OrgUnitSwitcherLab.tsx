@@ -45,7 +45,6 @@ export const OrgUnitSwitcherLab = () => {
     const linked = mode === 'lab' ? state.preset : undefined
     useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    // Before the block's first read, which waits for the user request; cleared again when the lab closes.
     useLayoutEffect(() => {
         writeStored(seeding.seed)
         return () => writeStored()
@@ -56,7 +55,6 @@ export const OrgUnitSwitcherLab = () => {
             dispatch({ type: 'changeSettings', changes }),
         []
     )
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []
@@ -82,7 +80,6 @@ export const OrgUnitSwitcherLab = () => {
         texts: LAB_TEXTS[settings.texts],
         value:
             state.followed ??
-            // A live instance has no lab clinic to start on, so the host holds none until the first pick.
             (mode === 'live' && settings.value === 'follows'
                 ? undefined
                 : valueFor(settings, data)),

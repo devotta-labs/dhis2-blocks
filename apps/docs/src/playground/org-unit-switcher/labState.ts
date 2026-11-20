@@ -26,7 +26,6 @@ export type LabAction =
     | { type: 'switchMode'; mode: LabState['mode'] }
     | { type: 'pickPreset'; preset: Preset }
     | { type: 'changeSettings'; changes: Partial<LabSettings> }
-    /** The lab's own buttons changed storage, so the block reads it again. */
     | { type: 'editStorage' }
     | { type: 'restart' }
     | {
@@ -35,11 +34,9 @@ export type LabAction =
       }
     | { type: 'clearRequests' }
     | { type: 'logCallback'; entry: string }
-    /** The block called onValueChange with this clinic id. */
     | { type: 'adoptValue'; id: string }
     | { type: 'clearCallbacks' }
 
-/** Settings that only change the block's props, so it keeps its state. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'collapsed',
     'texts',
@@ -47,7 +44,6 @@ const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'rtl',
 ])
 
-/** Turning a failure off keeps the block where it stands, so its Retry can recover. */
 const endsFailure = (changes: Partial<LabSettings>, key: string) => {
     if (key === 'failSearch') return changes.failSearch === false
     if (key === 'failValidity') return changes.failValidity === false
@@ -59,7 +55,7 @@ const endsFailure = (changes: Partial<LabSettings>, key: string) => {
     return false
 }
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
@@ -67,7 +63,9 @@ const restarted = (state: LabState): LabState => ({
 })
 
 /** The linked preset (`?preset=`), or Three clinics. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? DEFAULT_PRESET
     return {
@@ -82,7 +80,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode': {
             const { value } = state.settings
@@ -90,7 +91,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 ...state,
                 mode: action.mode,
                 settings:
-                    // A value that names a lab clinic, which a live instance does not have.
                     action.mode === 'live' && value === 'valid'
                         ? { ...state.settings, value: 'uncontrolled' }
                         : state.settings,
@@ -109,10 +109,8 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             const inPlace = Object.keys(action.changes).every(
                 (key) => IN_PLACE.has(key) || endsFailure(action.changes, key)
             )
-            // The host's value starts over when the kind of value changes.
             const followed =
                 'value' in action.changes ? undefined : state.followed
-            // A prop change leaves the example on show, so the sidebar's own toggle keeps its link.
             return inPlace
                 ? { ...state, settings, followed }
                 : restarted({ ...state, preset: undefined, settings })

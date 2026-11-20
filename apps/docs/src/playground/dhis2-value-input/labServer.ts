@@ -35,7 +35,6 @@ export const answer =
                     organisationUnits: found,
                 }
             }
-            // The lookup sends the first few matches, without a pager.
             case 'userLookup':
                 return {
                     users: USERS.filter(({ username, displayName }) =>

@@ -281,10 +281,7 @@ const events = ({ server }: ServerConfig, world: World, params: Params) => {
 export const createLabServer = (config: ServerConfig, world: World) => {
     const savedViews = createSavedViews(config)
 
-    return async (
-        request: LabRequest,
-        type: RequestType = 'read'
-    ): Promise<object> => {
+    return async (request: LabRequest, type: RequestType = 'read') => {
         const params = request.params ?? {}
         switch (request.resource) {
             case 'system/info':

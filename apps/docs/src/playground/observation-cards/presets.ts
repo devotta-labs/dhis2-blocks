@@ -11,7 +11,6 @@ const CARD: LabCard = {
     notInProgram: false,
 }
 
-/** Haemoglobin, weight and smoking, as on an antenatal card. */
 const CARDS: LabCard[] = [
     CARD,
     { ...CARD, element: 'weight' },
@@ -34,8 +33,7 @@ export const DEFAULT_SETTINGS: LabSettings = {
     network: { delay: 50, endpoints: {} },
 }
 
-/** The three cards, each changed from its default. */
-const cards = (...changes: Array<Partial<LabCard>>): LabCard[] =>
+const cards = (...changes: Array<Partial<LabCard>>) =>
     CARDS.map((card, index) => ({ ...card, ...changes[index] }))
 
 export interface Preset {
@@ -48,7 +46,7 @@ const preset = (
     group: string,
     name: string,
     changes: Partial<LabSettings> = {}
-): Preset => ({
+) => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },

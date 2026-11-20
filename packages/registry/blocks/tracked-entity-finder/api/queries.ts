@@ -46,7 +46,7 @@ export const finderKeys = {
 }
 
 /** The scope a model searches in. */
-export const scopeOf = (model: ProgramModel): FinderScope =>
+const scopeOf = (model: ProgramModel): FinderScope =>
     model.program
         ? { kind: 'program', id: model.program }
         : { kind: 'trackedEntityType', id: model.trackedEntityType }

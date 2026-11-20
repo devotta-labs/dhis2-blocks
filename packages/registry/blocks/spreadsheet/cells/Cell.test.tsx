@@ -3,7 +3,7 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
 import { useCellView } from '../provider/context'
-import { CELL, HEADER, inputOf, rig, withEditor } from './__tests__/harness'
+import { CELL, HEADER, inputOf, rig, withEditor } from './test/harness'
 import type { CellComponent } from './cellProps'
 import { Cell } from './Cell'
 
@@ -44,7 +44,6 @@ test('a read-only cell is focusable and says why', async () => {
     await expect.element(cell).toHaveAccessibleDescription(reason)
     inputOf(cell).focus()
     await expect.element(cell).toHaveFocus()
-    // It takes no typing, and still moves with the keys.
     await userEvent.keyboard('7{Enter}{ArrowRight}')
     await expect.element(cell).toHaveValue('12')
     expect(enqueued).toEqual([])
@@ -184,7 +183,6 @@ test('a cell its annotations send to its own form says so', async () => {
     await expect.element(cell).toHaveAccessibleDescription(reason)
 })
 
-/** A replacement control that shows what the cell hands it. */
 const Probe: CellComponent = ({ id, readOnly, hidden }) => (
     <p id={id}>{`readOnly: ${readOnly ?? 'none'}, hidden: ${hidden}`}</p>
 )
@@ -318,7 +316,6 @@ test('text typed into a cell a rule then hides and locks is not saved', async ()
     expect(stored()?.value).toBe('1')
 })
 
-/** A replacement that puts what the cell hands it on its own focusable element. */
 const Notes: CellComponent = ({ id, cellKey, labelledBy, aria }) => {
     const { value, commit } = useCellView(cellKey)
     return (

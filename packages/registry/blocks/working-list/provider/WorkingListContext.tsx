@@ -26,7 +26,7 @@ const usePublicContext = () => {
 
 export const useWorkingListState = <TSelected,>(
     selector: (state: WorkingListState) => TSelected
-): TSelected => {
+) => {
     const { store } = usePublicContext()
     return useStore(store, (snapshot) => {
         if (!snapshot.activeState) {
@@ -40,19 +40,19 @@ export const useWorkingListState = <TSelected,>(
 
 export const useWorkingListMeta = <TSelected,>(
     selector: (meta: WorkingListMeta) => TSelected
-): TSelected => {
+) => {
     const { store } = usePublicContext()
     return useStore(store, (snapshot) => selector(snapshot.meta))
 }
 
-export const useWorkingListActions = (): WorkingListActions => {
+export const useWorkingListActions = () => {
     const { actions } = usePublicContext()
     return actions
 }
 
-export const useStableWorkingListActions = (
+export const useStableWorkingListActions: (
     current: WorkingListActionImplementation
-): WorkingListActions => {
+) => WorkingListActions = (current) => {
     const currentRef = useRef(current)
     currentRef.current = current
     return useMemo(

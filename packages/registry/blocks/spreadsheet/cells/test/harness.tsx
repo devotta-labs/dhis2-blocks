@@ -45,6 +45,7 @@ interface RigOptions {
     offline?: boolean
     /** Where the server serves a cell's stored file; none by default. */
     fileUrl?: ComponentProps<typeof Spreadsheet>['fileUrl']
+    onAnnouncement?: (text: string) => void
 }
 
 /** One cell in a store of its own, with the effects store and what the cell asked of the grid. */
@@ -60,6 +61,7 @@ export const rig = (
         data = {},
         offline = false,
         fileUrl,
+        onAnnouncement,
     }: RigOptions = {}
 ) => {
     const enqueued: Array<[CellKey, string | null, string | null]> = []
@@ -95,21 +97,19 @@ export const rig = (
     const announcer = {
         announce: (text: string) => {
             announced.push(text)
+            onAnnouncement?.(text)
         },
     }
     return {
         store,
         effects: effectsStore,
-        /** The names the cell shows for org unit and file ids. */
         ...names,
         enqueued,
         moves,
-        /** What the cell said in the grid's live region. */
         announced,
         move: (key: NavKey) => {
             moves.push(key)
         },
-        /** What the grid would put around a cell: the header that names it. */
         ui: (cell: ReactNode) => (
             <CustomDataProvider data={data}>
                 <Spreadsheet
@@ -145,7 +145,7 @@ export const withEditor = (
     })
 }
 
-export const inputOf = (locator: Locator): HTMLInputElement => {
+export const inputOf = (locator: Locator) => {
     const element = locator.element()
     if (!(element instanceof HTMLInputElement)) {
         throw new Error('Expected the cell to be an input')

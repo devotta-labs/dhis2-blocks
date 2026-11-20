@@ -24,7 +24,9 @@ export const CanonicalValueSchema: z.ZodType<CanonicalValue> = z.lazy(() =>
 const CanonicalRecordSchema = z.record(z.string(), CanonicalValueSchema)
 
 /** Recursively sorts object keys and omits undefined object properties. */
-export const canonicalizeValue = (value: CanonicalValue): CanonicalValue => {
+export const canonicalizeValue: (value: CanonicalValue) => CanonicalValue = (
+    value
+) => {
     if (Array.isArray(value)) {
         return value.map(canonicalizeValue)
     }

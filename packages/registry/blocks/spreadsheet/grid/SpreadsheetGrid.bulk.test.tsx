@@ -5,8 +5,8 @@ import { cellDomId } from '../cells/cellProps'
 import type { CellComponent } from '../cells/cellProps'
 import { useCellContext } from '../cells/CellStatus'
 import { cellKey } from '../model/types'
-import type { CellKey } from '../model/types'
 import {
+    confirmNewEvents,
     control,
     focused,
     ID_SCOPE,
@@ -14,7 +14,7 @@ import {
     mount,
     nextFrame,
     range,
-} from './__tests__/gridRig'
+} from './test/gridRig'
 import { headerDomId } from './headers'
 
 const items = () =>
@@ -23,7 +23,6 @@ const items = () =>
         .elements()
         .map((item) => item.textContent)
 
-/** A context menu raised from the keyboard (Shift+F10, the Menu key), on the element; whether the grid took it. */
 const contextMenu = (target: Element) => {
     const event = new MouseEvent('contextmenu', {
         bubbles: true,
@@ -65,7 +64,6 @@ test('no column button for a column left out of bulk actions or holding several 
         ],
         {
             bulkColumn: (column) => column.id !== 'c1',
-            // Row b's cell in C is A's field.
             fieldIdOf: (key) =>
                 key === cellKey('t1r1', 'c2')
                     ? 'c0'
@@ -115,7 +113,6 @@ test('a row copy fills the empty cells of the next row and says how many changed
         '3',
         '9',
     ])
-    // The row after it is not the next row.
     expect(value(at(2, 0))).toBeUndefined()
     expect(announced).toEqual(['Cells changed: 3.'])
 })
@@ -172,11 +169,7 @@ test('a row copy leaves out a value the person cannot see', async () => {
 
 test('a bulk write the provider asks about waits for the answer', async () => {
     const keys = [cellKey('t1r0', 'c0'), cellKey('t1r0', 'c1')]
-    const confirmBulk = vi.fn((_keys: ReadonlyArray<CellKey>) => ({
-        title: 'Create events?',
-        body: 'This creates 1 events on this page.',
-        confirm: 'Create events',
-    }))
+    const { confirmBulk, confirmations } = confirmNewEvents()
     const { value, announced } = await mount(
         [makeTable({ columns: ['A', 'B'], rows: ROWS })],
         {
@@ -189,7 +182,7 @@ test('a bulk write the provider asks about waits for the answer', async () => {
     )
     await page.getByRole('button', { name: 'Row actions a' }).click()
     await page.getByRole('menuitem', { name: 'Clear row' }).click()
-    expect(confirmBulk).toHaveBeenLastCalledWith(keys)
+    expect(confirmations.at(-1)).toEqual(keys)
     const dialog = page.getByRole('alertdialog', { name: 'Create events?' })
     await expect
         .element(dialog)
@@ -201,7 +194,6 @@ test('a bulk write the provider asks about waits for the answer', async () => {
     expect(announced).toEqual([])
     await expect.element(button).toHaveFocus()
 
-    // From a cell's context menu, focus goes back to the cell, where Ctrl+Z undoes.
     const cell = control(keys[0])
     cell.focus()
     contextMenu(cell)
@@ -265,7 +257,6 @@ test('a context menu on a cell, from the keyboard or a right click, holds its ro
     await expect.element(row).not.toBeInTheDocument()
     expect(focused()).toBe(cell.id)
 
-    // A right click on the selected cell opens it too, rather than starting to edit.
     await userEvent.click(cell, { button: 'right' })
     await expect.element(row).toBeVisible()
     await expect.element(column).toBeVisible()
@@ -274,7 +265,6 @@ test('a context menu on a cell, from the keyboard or a right click, holds its ro
     expect(focused()).toBe(cell.id)
     await expect.element(cell).toHaveAttribute('data-mode', 'ready')
 
-    // Ctrl+click is a Mac's right click: it does not start editing either.
     await userEvent.click(cell, { modifiers: ['Control'] })
     await expect.element(cell).toHaveAttribute('data-mode', 'ready')
 })
@@ -282,7 +272,6 @@ test('a context menu on a cell, from the keyboard or a right click, holds its ro
 test('Ctrl+Shift+\\ (Cmd+Shift+\\ on Apple keyboards) on a cell opens its menu, as a context menu does', async () => {
     await mount([makeTable({ columns: ['A', 'B'], rows: ROWS })])
     const apple = /Mac|iPhone|iPad/.test(navigator.platform)
-    // Matched on the key's place, whatever the layout prints on it.
     const press = (target: Element) => {
         const event = new KeyboardEvent('keydown', {
             code: 'Backslash',
@@ -323,7 +312,7 @@ test('one undo after a column action restores every cell and focuses the first',
     const { value, announced } = await mount(
         [makeTable({ columns: ['A', 'B'], rows: ROWS })],
         {
-            values: keys.map((key, i): [CellKey, string] => [key, `${i + 1}`]),
+            values: keys.map((key, i) => [key, `${i + 1}`]),
         }
     )
     const last = control(keys[2])
@@ -351,7 +340,6 @@ test('the last column, focused while scrolled, is not hidden under the sticky ac
         throw new Error('No actions cell')
     }
     expect(getComputedStyle(actions).position).toBe('sticky')
-    // The last column half under the actions column, then focused.
     const target = control(cellKey('t1r0', 'c11'))
     region.scrollLeft = 0
     region.scrollLeft +=
@@ -372,7 +360,6 @@ test('the last column, focused while scrolled, is not hidden under the sticky ac
 const BOOLEAN: Field = { valueType: 'BOOLEAN' }
 const columnKeys = ROWS.map((_, i) => cellKey(`t1r${i}`, 'c0'))
 
-/** The column's value popover, named by its header. */
 const popover = (column: string) => page.getByRole('dialog', { name: column })
 
 const openPopover = async (column: string) => {
@@ -412,7 +399,6 @@ test('Yes from the column’s popover fills its empty cells; with Overwrite it r
     await popover('Done')
         .getByRole('checkbox', { name: 'Overwrite existing values' })
         .click()
-    // The cells that hold Yes already are not changed.
     await expect
         .element(popover('Done').getByText('Changes 1 cell.', { exact: true }))
         .toBeVisible()
@@ -422,11 +408,7 @@ test('Yes from the column’s popover fills its empty cells; with Overwrite it r
 })
 
 test('the popover’s preview says what the summary then announces, after the provider is asked', async () => {
-    const confirmBulk = vi.fn((_keys: ReadonlyArray<CellKey>) => ({
-        title: 'Create events?',
-        body: 'This creates 1 events on this page.',
-        confirm: 'Create events',
-    }))
+    const { confirmBulk, confirmations } = confirmNewEvents()
     const { value, announced } = await mount(
         [makeTable({ columns: ['A'], rows: ROWS })],
         {
@@ -437,7 +419,6 @@ test('the popover’s preview says what the summary then announces, after the pr
     )
     await openPopover('A')
     const apply = popover('A').getByRole('button', { name: 'Apply' })
-    // Text that is not a value keeps Apply disabled.
     await userEvent.keyboard('abc{Enter}')
     await expect.element(apply).toBeDisabled()
     expect(announced).toEqual(['Enter a whole number'])
@@ -450,7 +431,7 @@ test('the popover’s preview says what the summary then announces, after the pr
         )
         .toBeVisible()
     await apply.click()
-    expect(confirmBulk).toHaveBeenLastCalledWith([columnKeys[2]])
+    expect(confirmations.at(-1)).toEqual([columnKeys[2]])
     await page
         .getByRole('alertdialog')
         .getByRole('button', { name: 'Create events' })
@@ -505,7 +486,6 @@ test('from a cell’s context menu the popover sits under the column’s header,
             (header?.getBoundingClientRect().bottom ?? Number.NaN)
     ).toBeCloseTo(0, 0)
     expect(page.getByRole('status').elements()).toHaveLength(1)
-    // Escape while typing puts the cell back and keeps the popover.
     await userEvent.keyboard('5{Escape}')
     await expect
         .element(popover('A').getByRole('textbox', { name: 'A' }))
@@ -526,15 +506,12 @@ test('a press elsewhere closes the popover and leaves focus where the press put 
     const button = page.getByRole('button', { name: 'Column actions A' })
     await openPopover('A')
     await expect.element(popover('A')).toBeVisible()
-    // On text that takes no focus: focus does not go back to the button.
     await userEvent.click(page.getByText('Table t1'))
     await expect.element(popover('A')).not.toBeInTheDocument()
-    // Past the frames in which a closing popover moves focus.
     await nextFrame()
     await nextFrame()
     await expect.element(button).not.toHaveFocus()
 
-    // On another cell, past the popover's width: that cell keeps focus.
     await openPopover('A')
     await expect.element(popover('A')).toBeVisible()
     const other = control(cellKey('t1r0', 'c5'))

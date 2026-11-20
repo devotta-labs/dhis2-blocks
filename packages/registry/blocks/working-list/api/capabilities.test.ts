@@ -5,10 +5,10 @@ import {
 } from '../registry/valueTypes'
 import { resolveWorkingListCapabilities } from './capabilities'
 
-const field = (
+const field: (
     valueType: WorkingListField['valueType'],
-    overrides: Partial<WorkingListField> = {}
-): WorkingListField => ({
+    overrides?: Partial<WorkingListField>
+) => WorkingListField = (valueType, overrides = {}) => ({
     id: `field-${valueType}`,
     displayName: valueType,
     source: 'trackedEntityAttribute',

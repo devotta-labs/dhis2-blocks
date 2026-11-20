@@ -51,8 +51,6 @@ export const MoreFilters = ({
     const i18n = { t: translate }
     const lockMessageId = useId()
     const [open, setOpen] = useState(false)
-    // Disabling closes the menu for good, so it doesn't reappear by itself
-    // once the button is enabled again.
     useEffect(() => {
         if (disabled) {
             setOpen(false)
@@ -114,8 +112,6 @@ export const MoreFilters = ({
                                 {stages.map((stage) => {
                                     const selected =
                                         stage.id === selectedStageId
-                                    // Only one stage can be filtered on at a
-                                    // time, so every stage locks once one is.
                                     if (!selectedStageId) {
                                         return (
                                             <DropdownMenuItem

@@ -305,9 +305,9 @@ describe('Tracker working-list request serialization', () => {
 })
 
 describe('Date windows on a working-list request', () => {
-    const scheduledEvents = (
+    const scheduledEvents: (
         filters: WorkingListConfiguration['filters']
-    ): WorkingListConfiguration => ({
+    ) => WorkingListConfiguration = (filters) => ({
         mode: 'event',
         programId: 'Program0001',
         programStageId: 'ProgramStg1',

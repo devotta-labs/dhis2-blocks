@@ -3,7 +3,7 @@ import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { NOTE_TONES, NOTES_POPUP_CLASS } from '../CellStatus'
 
-const luminance = (rgb: string): number => {
+const luminance = (rgb: string) => {
     const [r, g, b] = (rgb.match(/\d+/g) ?? []).slice(0, 3).map((channel) => {
         const value = Number(channel) / 255
         return value <= 0.03928
@@ -13,7 +13,7 @@ const luminance = (rgb: string): number => {
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
-const contrast = (first: string, second: string): number => {
+const contrast = (first: string, second: string) => {
     const [lighter, darker] = [luminance(first), luminance(second)].sort(
         (a, b) => b - a
     )

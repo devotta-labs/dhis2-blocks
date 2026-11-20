@@ -5,7 +5,7 @@ import type { NavGrid } from './navigation'
  * Splits what spreadsheets put on the clipboard: tab-separated cells, rows ending in \n or \r\n, one trailing line
  * break ignored, and a field holding a tab, line break or quote wrapped in double quotes with each " doubled.
  */
-export const parseBlock = (text: string): string[][] => {
+export const parseBlock = (text: string) => {
     const rows: string[][] = []
     let row: string[] = []
     let field = ''
@@ -29,14 +29,13 @@ export const parseBlock = (text: string): string[][] => {
             field += char
         }
     }
-    // An unterminated quote keeps what it holds rather than dropping it.
     if (text !== '' && (quoted || !text.endsWith('\n')))
         rows.push([...row, field])
     return rows
 }
 
 /** True when the text holds a tab or a line break outside quotes: more than one cell, or a copied cell's line break. */
-export const isBlock = (text: string): boolean => {
+export const isBlock = (text: string) => {
     const [first, ...rest] = parseBlock(text)
     return rest.length > 0 || (first?.length ?? 0) > 1 || text.endsWith('\n')
 }
@@ -46,7 +45,7 @@ export const isBlock = (text: string): boolean => {
  * it holds a tab; everything else is parsed when it is a block or exactly one quoted field with each " doubled (a
  * spreadsheet's way of wrapping a cell), and otherwise pasted whole, so `"Hi" she said` keeps its quotes.
  */
-export const pastedBlock = (text: string, longText: boolean): string[][] => {
+export const pastedBlock = (text: string, longText: boolean) => {
     if (text === '') {
         return []
     }
@@ -62,11 +61,11 @@ export const pastedBlock = (text: string, longText: boolean): string[][] => {
  * The cells a block lands on, laid out from `from`: read-only and closed cells are skipped without shifting the
  * rest, and what falls past the table's last row or column is dropped, never spilled into the next table.
  */
-export const pasteTargets = (
+export const pasteTargets: (
     grid: NavGrid,
     from: CellPlace,
     block: ReadonlyArray<ReadonlyArray<string>>
-): Array<{ at: CellPlace; text: string }> => {
+) => Array<{ at: CellPlace; text: string }> = (grid, from, block) => {
     const { rows, columns, isEditable } = grid.tables[from.table]
     return block.flatMap((cells, r) =>
         cells.flatMap((text, c) => {

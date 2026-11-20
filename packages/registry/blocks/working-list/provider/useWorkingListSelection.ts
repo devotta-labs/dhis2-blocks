@@ -208,8 +208,6 @@ export const useWorkingListSelection = ({
         updateStore,
     ])
 
-    // Same-id passive refresh updates metadata only. It invalidates the active
-    // context if the selected server resource disappears or becomes stale.
     useEffect(() => {
         const active = store.getState().activeState
         if (!active || !confirmedLists) return

@@ -13,17 +13,10 @@ interface CellNote {
     text: string
 }
 
-// Reasons are shown as DHIS2 and the rules give them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-// Changes the outbox still holds: on this device, not yet in DHIS2.
 const UNSENT = new Set<SyncState>(['queued', 'sending', 'waiting'])
 
-/**
- * Everything to say about a cell, as separate notes: `reason` (why it cannot be edited) or `hint` (how to type it),
- * its errors and warnings, and whether it is saved. Each is its own element, so a screen reader reads them one after
- * another.
- */
 const notesOf = (
     id: string,
     view: CellView,
@@ -59,7 +52,7 @@ const notesOf = (
         }
         texts.push(['info', i18n.t('Saved on this device')])
     }
-    return texts.map(([tone, text], index): CellNote => ({
+    return texts.map(([tone, text], index) => ({
         id: `${id}-note-${index}`,
         tone,
         text,
@@ -90,8 +83,6 @@ export const describeCell = (
     }
 }
 
-// A quiet ring while sending, a solid dot once saved on this device, a red square when refused: told apart by shape,
-// not only colour.
 const MARKERS = new Map<SyncState, string>([
     ['sending', 'rounded-full border-2 border-dhis2-neutral-indicator'],
     ['queued', 'rounded-full bg-dhis2-primary'],
@@ -113,7 +104,7 @@ interface BoundCell {
  */
 export const CellContext = createContext<BoundCell | undefined>(undefined)
 
-export const useCellContext = (): BoundCell => {
+export const useCellContext = () => {
     const bound = useContext(CellContext)
     if (bound === undefined) {
         throw new Error('Default controls must be used inside Cell.')
@@ -188,7 +179,6 @@ export const CellStatus = ({
                         POPOVER_CLASS,
                         NOTES_POPUP_CLASS,
                         !dismissed && 'group-focus-within/cell:flex',
-                        // An open editor covers the cell's place below it.
                         'group-has-[[role=dialog]]/cell:hidden'
                     )}
                 >

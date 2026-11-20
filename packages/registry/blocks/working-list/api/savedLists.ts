@@ -126,13 +126,13 @@ export const getSharingType = (resource: SavedListResource) =>
 export const defaultWorkingListId = (programId: string) =>
     `${programId}-default`
 
-export const createDefaultWorkingList = ({
-    programId,
-    columns,
-}: {
+export const createDefaultWorkingList: (options: {
     programId: string
     columns: string[]
-}): Extract<NormalizedSavedWorkingList, { compatibility: 'compatible' }> => ({
+}) => Extract<NormalizedSavedWorkingList, { compatibility: 'compatible' }> = ({
+    programId,
+    columns,
+}) => ({
     id: defaultWorkingListId(programId),
     name: 'default',
     resource: 'trackedEntityInstanceFilters',
@@ -147,15 +147,11 @@ export const createDefaultWorkingList = ({
     },
 })
 
-export const createGeneratedDefaultLists = ({
-    programId,
-    columns,
-    fields,
-}: {
+export const createGeneratedDefaultLists: (options: {
     programId: string
     columns: string[]
     fields: FieldCatalog
-}): NormalizedSavedWorkingList[] => {
+}) => NormalizedSavedWorkingList[] = ({ programId, columns, fields }) => {
     const statusField = fields.get('enrollmentStatus')
     if (!statusField) {
         return []

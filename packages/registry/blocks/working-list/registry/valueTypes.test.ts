@@ -6,10 +6,10 @@ import {
     validateAppliedFilter,
 } from './valueTypes'
 
-const field = (
+const field: (
     valueType: WorkingListField['valueType'],
-    overrides: Partial<WorkingListField> = {}
-): WorkingListField => ({
+    overrides?: Partial<WorkingListField>
+) => WorkingListField = (valueType, overrides = {}) => ({
     id: `Field${valueType}`,
     displayName: valueType,
     source: 'trackedEntityAttribute',
@@ -148,7 +148,6 @@ describe('value formatting and filtering contracts', () => {
             text: 'consent-form.pdf',
             href: '/api/tracker/trackedEntities/Tei00000001/attributes/FileAttr001/file?program=Program0001',
         })
-        // Capture parity: a file whose name cannot be resolved renders empty.
         expect(
             getCellDisplayValue('Abcdef12345', field('FILE_RESOURCE'))
         ).toEqual({ kind: 'empty', text: '' })
@@ -169,7 +168,6 @@ describe('value formatting and filtering contracts', () => {
             previewHref:
                 '/api/tracker/events/Event000001/dataValues/ImageDe0001/image?dimension=small',
         })
-        // A bare UID (no tracker context) falls back to the direct download.
         expect(getCellDisplayValue('Abcdef12345', field('IMAGE'))).toEqual({
             kind: 'image',
             alt: '',

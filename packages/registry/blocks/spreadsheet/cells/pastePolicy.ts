@@ -3,7 +3,6 @@ import type { Field } from '@/components/dhis2-value-types'
 import { editorFor } from '@/components/dhis2-value-input'
 import type { PopupValueType } from '@/components/dhis2-value-input'
 
-/** Value types whose typed text parses, so paste can fill them. */
 const pasteable: ReadonlySet<string> = new Set<PopupValueType>([
     'LONG_TEXT',
     'MULTI_TEXT',
@@ -20,6 +19,5 @@ export const takesPastedText = (field: Field) => {
             pasteable.has(field.valueType)
         )
     }
-    // A username is checked against DHIS2 as it is typed, which paste cannot do.
     return kind !== 'readOnly' && field.valueType !== 'USERNAME'
 }

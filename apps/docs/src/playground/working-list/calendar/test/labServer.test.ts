@@ -8,7 +8,7 @@ const TODAY = '2026-11-02'
 const config = (changes: {
     data?: Partial<LabConfig['data']>
     server?: Partial<LabConfig['server']>
-}): LabConfig => ({
+}) => ({
     data: { ...DEFAULT_CONFIG.data, ...changes.data },
     server: { ...DEFAULT_CONFIG.server, ...changes.server },
     network: DEFAULT_CONFIG.network,

@@ -38,7 +38,6 @@ export const TableLab = () => {
     const linked = mode === 'lab' ? state.preset : undefined
     useEffect(() => setLinkedPreset(linked), [linked, setLinkedPreset])
 
-    // Stable, so neither the lab server nor the list is rebuilt for each entry.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []
@@ -54,7 +53,6 @@ export const TableLab = () => {
 
     const { data, server } = config
     const world = useMemo(() => generateWorld(data), [data])
-    // A fresh server each run, so views saved in one run are gone in the next.
     const respond = useMemo(
         () => createLabServer({ data, server }, world),
         [data, server, world, run]

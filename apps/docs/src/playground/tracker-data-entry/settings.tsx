@@ -9,7 +9,6 @@ export const OptionsControls = ({
     settings: LabSettings
     onChange: (changes: Partial<LabSettings>) => void
 }) =>
-    // The register's program has no rules, so the check would do nothing there.
     settings.example === 'immunisation' ? null : (
         <Section title="Options">
             <Check

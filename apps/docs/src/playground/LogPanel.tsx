@@ -11,7 +11,6 @@ const tone = {
 
 const code = { pending: 'WAIT', ok: 'OK', failed: 'FAIL', aborted: 'ABRT' }
 
-/** One column of the panel: its name set in ink, an optional clear, and a list that scrolls on its own. */
 const Column = ({
     title,
     onClear,

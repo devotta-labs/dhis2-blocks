@@ -54,7 +54,6 @@ export const CalendarCanvas = ({
 
     const calendar = (
         <ListCalendar
-            // The display is a default, so a new choice remounts the calendar.
             key={view.display}
             className="p-2"
             defaultDisplay={view.display}
@@ -113,7 +112,6 @@ export const CalendarCanvas = ({
         )
     }
     if (view.layout === 'toggle') body = toggle === 'table' ? table : calendar
-    // Columns are the table's; a calendar has none to choose.
     const showsTable =
         view.layout === 'both' ||
         (view.layout === 'toggle' && toggle === 'table')

@@ -32,7 +32,6 @@ const tone = {
 
 const tag = { pending: 'WAIT', ok: '', failed: 'FAIL', aborted: 'ABRT' }
 
-// A tenth of the span between each scale line.
 const scale =
     'bg-[repeating-linear-gradient(to_right,var(--lab-rule-faint)_0_1px,transparent_1px_10%)]'
 const grid = 'grid grid-cols-[minmax(0,10rem)_4.5rem_1fr] items-center gap-2'

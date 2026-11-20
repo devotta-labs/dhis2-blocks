@@ -29,17 +29,14 @@ interface Props {
     settings: Pick<LabSettings, 'arrangement' | 'width' | 'frame'>
 }
 
-// The banner draws no edge; the host adds one, and matches the padding to its page.
 const FRAMES = {
     card: 'rounded-dhis2-md border border-dhis2-border-strong',
     page: 'border-b border-dhis2-border-strong px-6',
 }
 
-// A stand-in for the host's page, so the bar shows across its top.
 const PAGE =
     'overflow-hidden rounded-dhis2-md border border-dhis2-border bg-dhis2-background'
 
-/** The banner on its own, or with every part placed by hand. */
 const Banner = ({
     parts,
     arrangement,
@@ -103,7 +100,6 @@ const Banner = ({
     </TrackedEntityBanner>
 )
 
-/** The facts line reads the person's visits, so only a person with one needs the observations loaded. */
 const WithObservations = ({
     trackedEntity,
     program,

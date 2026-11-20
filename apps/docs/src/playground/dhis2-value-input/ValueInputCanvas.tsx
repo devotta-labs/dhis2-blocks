@@ -43,7 +43,6 @@ export const ValueInputCanvas = ({
 }: Props) => {
     const hidden = useMemo(() => new Set(hiddenOptions), [hiddenOptions])
     return (
-        // The block draws on a white page; the lab's canvas follows the docs' theme.
         <div
             data-density={density}
             dir={rtl ? 'rtl' : 'ltr'}

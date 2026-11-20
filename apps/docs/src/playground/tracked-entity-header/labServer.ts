@@ -29,13 +29,11 @@ export const RESOURCES = [
     'trackedEntityAttributes',
 ]
 
-/** The ids of a `id:in:[a,b]` filter. */
 const idsOf = (filter: string | number | boolean | undefined) =>
     String(filter)
         .replace(/^id:in:\[|\]$/g, '')
         .split(',')
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
@@ -66,7 +64,6 @@ export const answer = (
                 if (request.params?.program === undefined) {
                     return data.record.without
                 }
-                // As DHIS2 does for a person not enrolled in the program.
                 if (
                     request.params.program !== subject.program ||
                     settings.enrollment === 'none'
@@ -78,7 +75,6 @@ export const answer = (
                 if (request.id !== subject.program) {
                     throw httpError(404, `Program ${request.id} not found`)
                 }
-                // The observation cards ask for the same resource for the stages.
                 return data.program
             case 'trackedEntityTypes':
                 return data.type

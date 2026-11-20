@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process'
+import { resolve } from 'node:path'
 import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test'
 import {
     TRACKER_IMPORT,
@@ -15,6 +17,9 @@ import {
 const REGISTER = 'tracker-data-entry/tracker-register'
 const COHORT = 'tracker-data-entry/cohort-anc-register'
 const DIASTOLIC = 'dyYdfamSY2Z'
+const localDhis2 = ['127.0.0.1', 'localhost'].includes(
+    new URL(process.env.DOCS_DHIS2_URL ?? 'http://unset').hostname
+)
 
 const openSlowed = async (page: Page, example = REGISTER) => {
     const cdp = await page.context().newCDPSession(page)
@@ -118,6 +123,15 @@ const medianWithinBudget = (
 
 const WOMEN = 25
 
+const seedCohort = () => {
+    test.skip(!localDhis2, 'Requires the disposable docs DHIS2 stack')
+    execFileSync(
+        resolve(__dirname, '../metadata/seed-cohort-performance.sh'),
+        [process.env.E2E_VERSION_SLUG ?? '42'],
+        { stdio: 'inherit' }
+    )
+}
+
 const diastolic = (page: Page) => page.locator(`tbody [id$=".${DIASTOLIC}"]`)
 
 test.describe.configure({ timeout: 120_000 })
@@ -140,6 +154,7 @@ test('cohort register shows 25 women by 41 columns within 1 s', async ({
     page,
     browser,
 }, testInfo) => {
+    seedCohort()
     const loads = await onThreeLoads(
         page,
         browser,
@@ -186,6 +201,7 @@ test('no keypress slower than 150 ms while saving online', async ({
     request,
     shared,
 }, testInfo) => {
+    test.skip(!localDhis2, 'Changes existing events; requires local DHIS2')
     await openSlowed(page)
     const ids = (
         await diastolic(page).evaluateAll((cells) =>
@@ -232,6 +248,7 @@ test('no keypress slower than 150 ms while saving online', async ({
 })
 
 const editAfterTenPages = async (page: Page, context: BrowserContext) => {
+    seedCohort()
     await openSlowed(page, COHORT)
     const more = page.getByRole('button', { name: /show more/i })
     const rulesVisible = 'data-entry:rules-visible'

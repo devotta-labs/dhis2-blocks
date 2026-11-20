@@ -1,3 +1,4 @@
+import { Probe } from './headerTestSupport'
 import { formatDhis2Value } from '@/components/dhis2-value-display'
 import React from 'react'
 import { page } from 'vitest/browser'
@@ -132,9 +133,18 @@ describe('TrackedEntityOwner', () => {
 
     it('asks for no org unit when the part is not mounted', async () => {
         const requests: ResourceRequest[] = []
-        await renderParts(<TrackedEntityStatus />, { requests })
+        await renderParts(
+            <>
+                <TrackedEntityStatus />
+                <Probe />
+            </>,
+            { requests }
+        )
 
-        await expect.poll(() => requests.length).toBeGreaterThan(0)
+        await expect
+            .element(page.getByTestId('state'))
+            .toHaveTextContent(/^ready/)
+        expect(requests.length).toBeGreaterThan(0)
         expect(
             requests.filter((r) => r.resource === 'organisationUnits')
         ).toHaveLength(0)

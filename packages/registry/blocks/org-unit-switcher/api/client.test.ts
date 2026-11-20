@@ -1,14 +1,21 @@
+import { openDhis2TestServer } from '../../../test/dhis2-server.test-utils'
 import { Result } from 'better-result'
 import { z } from 'zod'
 import {
     createOrgUnitResourceClient,
-    type DataEngineLike,
     shouldRetryOrgUnitRequest,
 } from './client'
 
-const failWith = async (cause: unknown) => {
-    const query = vi.fn<DataEngineLike['query']>().mockRejectedValue(cause)
-    const result = await createOrgUnitResourceClient({ query }).query(
+const failWith = async (httpStatusCode: number, message: string) => {
+    const { engine } = await openDhis2TestServer((url) =>
+        url.pathname === '/api/42/me'
+            ? Response.json(
+                  { httpStatusCode, message },
+                  { status: httpStatusCode }
+              )
+            : undefined
+    )
+    const result = await createOrgUnitResourceClient(engine).query(
         { resource: 'me' },
         z.unknown()
     )
@@ -20,27 +27,19 @@ const failWith = async (cause: unknown) => {
 
 describe('shouldRetryOrgUnitRequest', () => {
     it('retries a server failure on the first failure', async () => {
-        const unavailable = await failWith(
-            Object.assign(new Error('Unavailable'), { httpStatusCode: 503 })
-        )
+        const unavailable = await failWith(503, 'Unavailable')
 
         expect(shouldRetryOrgUnitRequest(0, unavailable)).toBe(true)
     })
 
     it('does not retry a client error', async () => {
-        const forbidden = await failWith(
-            Object.assign(new Error('Forbidden'), {
-                details: { httpStatusCode: 403 },
-            })
-        )
+        const forbidden = await failWith(403, 'Forbidden')
 
         expect(shouldRetryOrgUnitRequest(0, forbidden)).toBe(false)
     })
 
     it('stops after the second failure', async () => {
-        const unavailable = await failWith(
-            Object.assign(new Error('Unavailable'), { httpStatusCode: 503 })
-        )
+        const unavailable = await failWith(503, 'Unavailable')
 
         expect(shouldRetryOrgUnitRequest(2, unavailable)).toBe(false)
     })

@@ -36,7 +36,7 @@ describe('metadata errors in production', () => {
     })
 
     it('shows the short message and logs in production', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderInFinder(
             <FinderForm>
                 <FinderField attribute="legacyId" />
@@ -72,7 +72,7 @@ describe('metadata errors in production', () => {
     })
 
     it('reports a form that can never search, in production', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderInFinder(
             <FinderForm aria-label="Legacy">
                 <FinderField attribute="legacyId" />
@@ -95,7 +95,7 @@ describe('metadata errors in production', () => {
     })
 
     it('logs no problem when one form swaps for another', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         const Swap = () => {
             const [hasId, setHasId] = useState(true)
             return hasId ? (
@@ -130,7 +130,7 @@ describe('metadata errors in production', () => {
     })
 
     it('reports a form that can never search when it mounts after loading', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         const Later = () => {
             const [shown, setShown] = useState(false)
             return (

@@ -344,7 +344,10 @@ describe('FinderForm', () => {
     })
 
     it('passes className and native props through', async () => {
-        const onSubmit = vi.fn()
+        let submissions = 0
+        const onSubmit = () => {
+            submissions += 1
+        }
         await renderFinder(
             <FinderForm
                 aria-label="Find"
@@ -368,7 +371,7 @@ describe('FinderForm', () => {
 
         await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
         await submit.click()
-        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(submissions).toBe(1)
         await expect
             .element(submission())
             .toHaveTextContent('artNumber:eq:ART-1')
@@ -470,7 +473,11 @@ describe('FinderForm', () => {
     })
 
     it('skips the search when a consumer onSubmit prevents it', async () => {
-        const onSubmit = vi.fn((event: FormEvent) => event.preventDefault())
+        let submissions = 0
+        const onSubmit = (event: FormEvent) => {
+            event.preventDefault()
+            submissions += 1
+        }
         await renderFinder(
             <FinderForm onSubmit={onSubmit}>
                 <FinderField attribute="artNumber" />
@@ -481,7 +488,7 @@ describe('FinderForm', () => {
         await userEvent.fill(page.getByLabelText('ART number'), 'ART-1')
         await page.getByRole('button', { name: 'Search' }).click()
 
-        expect(onSubmit).toHaveBeenCalledTimes(1)
+        expect(submissions).toBe(1)
         await expect.element(submission()).toHaveTextContent('none')
     })
 

@@ -240,7 +240,7 @@ describe('TrackedEntityAttribute', () => {
     })
 
     it('says what is wrong, in development, for an attribute the program lacks', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderParts(<TrackedEntityAttribute attribute="nope0000001" />)
 
         const message = page.getByRole('alert')
@@ -332,7 +332,7 @@ describe('TrackedEntityDate', () => {
     })
 
     it('names the missing program prop when there is none', async () => {
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await renderParts(<TrackedEntityDate enrollmentDate="enrolledAt" />, {
             program: null,
         })

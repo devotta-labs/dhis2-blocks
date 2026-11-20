@@ -67,6 +67,7 @@ export interface FakeServer {
     requests: ResourceRequest[]
     /** With `deferSearches`, every search request, in order, still open or not. */
     pendingSearches: PendingSearch[]
+    waitForSearch: (index: number) => Promise<PendingSearch>
 }
 
 export interface FakeServerOptions {
@@ -101,6 +102,19 @@ export const createFakeServer: (options?: FakeServerOptions) => FakeServer = (
 ) => {
     const requests: ResourceRequest[] = []
     const pendingSearches: PendingSearch[] = []
+    const searchSignals = new Map<number, PromiseWithResolvers<PendingSearch>>()
+    const waitForSearch = (index: number) => {
+        const pending = pendingSearches[index]
+        if (pending !== undefined) {
+            return Promise.resolve(pending)
+        }
+        let signal = searchSignals.get(index)
+        if (!signal) {
+            signal = Promise.withResolvers<PendingSearch>()
+            searchSignals.set(index, signal)
+        }
+        return signal.promise
+    }
     const program = options.program ?? hivProgram
     const respond: CustomResourceFactory = async (_type, request) => {
         requests.push(request)
@@ -130,7 +144,10 @@ export const createFakeServer: (options?: FakeServerOptions) => FakeServer = (
                 }
                 if (options.deferSearches) {
                     return new Promise<EngineValue>((resolve) => {
-                        pendingSearches.push({ request, respond: resolve })
+                        const pending = { request, respond: resolve }
+                        const index = pendingSearches.push(pending) - 1
+                        searchSignals.get(index)?.resolve(pending)
+                        searchSignals.delete(index)
                     })
                 }
                 return (
@@ -150,6 +167,7 @@ export const createFakeServer: (options?: FakeServerOptions) => FakeServer = (
         },
         requests,
         pendingSearches,
+        waitForSearch,
     }
 }
 

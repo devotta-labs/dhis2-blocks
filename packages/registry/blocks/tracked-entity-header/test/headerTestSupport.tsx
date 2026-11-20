@@ -170,10 +170,11 @@ export const createFakeServer = (options: FakeServerOptions = {}) => {
 }
 
 /** A fresh QueryClient with retries off, and app-runtime's provider with a Gregorian system. */
-export const createWrapper = () => {
-    const queryClient = new QueryClient({
+export const createWrapper = (
+    queryClient = new QueryClient({
         defaultOptions: { queries: { retry: false } },
     })
+) => {
     const systemInfo = {
         version: '2.42.0',
         contextPath: '',

@@ -15,9 +15,15 @@ const RememberedSchema = z.object({
 const keyOf = (userId: string) => `dhis2-blocks:org-unit-switcher:${userId}`
 
 /** Storage can be blocked or full, and the choice is only a convenience, so neither call throws. */
-export const readRemembered: (userId: string) => Remembered = (userId) => {
+export const readRemembered: (
+    userId: string,
+    browserWindow?: Window
+) => Remembered = (userId, browserWindow) => {
     try {
-        const raw = localStorage.getItem(keyOf(userId))
+        const storage = browserWindow
+            ? browserWindow.localStorage
+            : localStorage
+        const raw = storage.getItem(keyOf(userId))
         const parsed = RememberedSchema.safeParse(
             raw === null ? undefined : JSON.parse(raw)
         )

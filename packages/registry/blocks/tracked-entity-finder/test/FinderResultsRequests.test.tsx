@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { act } from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { useFinderResults } from '../hooks'
 import { FinderResults } from '../results/FinderResults'
@@ -190,7 +190,9 @@ describe('FinderResults paging and requests', () => {
                 <FinderResults data-testid="results" />
             )
         )
-        server.pendingSearches[0].respond(answer([amina]))
+        await act(async () => {
+            server.pendingSearches[0].respond(answer([amina]))
+        })
 
         await expect
             .element(page.getByRole('textbox', { name: 'ART number' }))
@@ -202,7 +204,6 @@ describe('FinderResults paging and requests', () => {
             page.getByTestId('results').getByText('Searching…').query()
         ).toBeNull()
 
-        await new Promise((resolve) => setTimeout(resolve, 50))
         expect(page.getByText('Amina').query()).toBeNull()
         expect(
             page.getByTestId('results').getByText('No one found').query()
@@ -217,12 +218,14 @@ describe('FinderResults paging and requests', () => {
 
         await searchFor('A1')
         await searchFor('A2')
-        await expect.poll(() => server.pendingSearches.length).toBe(2)
+        await server.waitForSearch(1)
+        expect(server.pendingSearches).toHaveLength(2)
 
-        server.pendingSearches[0].respond(
-            answer([entity('old', { firstName: 'Older' })])
-        )
-        await new Promise((resolve) => setTimeout(resolve, 50))
+        await act(async () => {
+            server.pendingSearches[0].respond(
+                answer([entity('old', { firstName: 'Older' })])
+            )
+        })
         expect(page.getByText('Older').query()).toBeNull()
         await expect
             .element(page.getByTestId('results').getByText('Searching…'))
@@ -283,7 +286,8 @@ describe('FinderResults paging and requests', () => {
             options: { deferSearches: true },
         })
         await searchFor('A1')
-        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        await server.waitForSearch(0)
+        expect(server.pendingSearches).toHaveLength(1)
         await page.getByRole('button', { name: 'Search' }).click()
         await settle()
         expect(searchRequests(server)).toHaveLength(1)
@@ -309,7 +313,8 @@ describe('FinderResults paging and requests', () => {
                 <FinderResults data-testid="results" />
             )
         )
-        await expect.poll(() => other.pendingSearches.length).toBe(1)
+        await other.waitForSearch(0)
+        expect(other.pendingSearches).toHaveLength(1)
         expect(page.getByText('Amina').query()).toBeNull()
         expect(
             other.requests.filter(({ resource }) => resource === 'programs')
@@ -339,7 +344,8 @@ describe('FinderResults paging and requests', () => {
             options: { deferSearches: true },
         })
         await searchFor('A1')
-        await expect.poll(() => server.pendingSearches.length).toBe(1)
+        await server.waitForSearch(0)
+        expect(server.pendingSearches).toHaveLength(1)
         server.pendingSearches[0].respond(answer([amina]))
         await expect.element(page.getByText('Amina')).toBeVisible()
         await screen.unmount()
@@ -349,7 +355,8 @@ describe('FinderResults paging and requests', () => {
         expect(next.baseUrl).toBe(server.baseUrl)
         await searchFor('A1')
         expect(page.getByText('Amina').query()).toBeNull()
-        await expect.poll(() => next.pendingSearches.length).toBe(1)
+        await next.waitForSearch(0)
+        expect(next.pendingSearches).toHaveLength(1)
         expect(
             next.requests.filter(({ resource }) => resource === 'programs')
         ).toHaveLength(1)
@@ -398,18 +405,20 @@ describe('FinderResults paging and requests', () => {
             options: { deferSearches: true },
         })
         const now = Date.now()
-        const clock = vi.spyOn(Date, 'now').mockReturnValue(now)
+        vi.useFakeTimers({ toFake: ['Date'] })
+        vi.setSystemTime(now)
         try {
             await searchFor('A1')
             server.pendingSearches[0].respond(answer([amina]))
             await expect.element(page.getByText('Amina')).toBeVisible()
-            clock.mockReturnValue(now + 5 * 60_000 - 1)
+            vi.setSystemTime(now + 5 * 60_000 - 1)
             await searchFor('A1')
             await settle()
             expect(searchRequests(server)).toHaveLength(1)
-            clock.mockReturnValue(now + 5 * 60_000)
+            vi.setSystemTime(now + 5 * 60_000)
             await searchFor('A1')
-            await expect.poll(() => server.pendingSearches.length).toBe(2)
+            await server.waitForSearch(1)
+            expect(server.pendingSearches).toHaveLength(2)
             server.pendingSearches[1].respond(
                 answer([entity('new', { firstName: 'Zainab' })])
             )
@@ -425,7 +434,7 @@ describe('FinderResults paging and requests', () => {
                 )
             ).toHaveLength(1)
         } finally {
-            clock.mockRestore()
+            vi.useRealTimers()
         }
     })
 

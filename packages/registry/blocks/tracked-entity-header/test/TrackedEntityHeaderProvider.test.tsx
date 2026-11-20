@@ -1,4 +1,4 @@
-import { focusManager } from '@tanstack/react-query'
+import { focusManager, QueryClient } from '@tanstack/react-query'
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
@@ -130,9 +130,7 @@ describe('TrackedEntityHeaderProvider', () => {
     it.each(['', '   '])(
         '%j as trackedEntity makes no request, stays loading and says why in the console',
         async (id) => {
-            const errors = vi
-                .spyOn(console, 'error')
-                .mockImplementation(() => {})
+            const errors = vi.spyOn(console, 'error')
             const server = createFakeServer()
             const Wrapper = createWrapper()
 
@@ -165,7 +163,10 @@ describe('TrackedEntityHeaderProvider', () => {
         'a refetch that fails with %i after loading shows %s',
         async (status, shown) => {
             const server = createFakeServer()
-            const Wrapper = createWrapper()
+            const queryClient = new QueryClient({
+                defaultOptions: { queries: { retry: false } },
+            })
+            const Wrapper = createWrapper(queryClient)
 
             await render(
                 <Wrapper>
@@ -185,15 +186,30 @@ describe('TrackedEntityHeaderProvider', () => {
             server.failWith(status)
             const before = server.countOf('tracker/trackedEntities')
 
-            focusManager.setFocused(false)
-            focusManager.setFocused(true)
-            await expect
-                .poll(() => server.countOf('tracker/trackedEntities'))
-                .toBeGreaterThan(before)
+            const refetchFailed = Promise.withResolvers<void>()
+            const unsubscribe = queryClient
+                .getQueryCache()
+                .subscribe((event) => {
+                    if (
+                        event.type === 'updated' &&
+                        event.action.type === 'error'
+                    ) {
+                        refetchFailed.resolve()
+                    }
+                })
 
-            await new Promise((resolve) => setTimeout(resolve, 100))
-            expect(state().element()).toHaveTextContent(shown)
-            focusManager.setFocused(undefined)
+            try {
+                focusManager.setFocused(false)
+                focusManager.setFocused(true)
+                await refetchFailed.promise
+                expect(
+                    server.countOf('tracker/trackedEntities')
+                ).toBeGreaterThan(before)
+                await expect.element(state()).toHaveTextContent(shown)
+            } finally {
+                unsubscribe()
+                focusManager.setFocused(undefined)
+            }
         }
     )
 
@@ -328,7 +344,7 @@ describe('TrackedEntityHeaderProvider', () => {
             useTrackedEntityHeader()
             return null
         }
-        const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const error = vi.spyOn(console, 'error')
         await expect(render(<Bare />)).rejects.toThrow(
             'Tracked entity header parts and hooks must be rendered inside TrackedEntityHeaderProvider'
         )

@@ -1,3 +1,4 @@
+import { useRelationships } from '../parts/relationships/useRelationships'
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
@@ -20,6 +21,15 @@ const FOCUS_TYPE = 'Mv8R4MPcNcX'
 const INDEX_TYPE = 'm6XJSapEvOa'
 const BIDIRECTIONAL_TYPE = 'mxZDvSZYxlw'
 
+const RelationshipState = () => {
+    const { kind } = useRelationships()
+    return (
+        <output data-testid="relationships-state" hidden>
+            {kind}
+        </output>
+    )
+}
+
 type ServerOptions = Parameters<typeof createFakeServer>[0]
 
 const setup = async (
@@ -40,6 +50,7 @@ const setup = async (
                     relationshipType={FOCUS_TYPE}
                     {...props}
                 />
+                {props.hideWhenEmpty && <RelationshipState />}
             </TrackedEntityHeaderProvider>
         </Wrapper>
     )
@@ -281,8 +292,10 @@ describe('TrackedEntityRelationship', () => {
 
     it('shows nothing, when told, without a link of the type', async () => {
         const server = await setup({ hideWhenEmpty: true }, { links: 'none' })
-        await expect.poll(() => server.countOf('tracker/relationships')).toBe(1)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await expect
+            .element(page.getByTestId('relationships-state'))
+            .toHaveTextContent('ready')
+        expect(server.countOf('tracker/relationships')).toBe(1)
         expect(document.body.textContent).not.toContain('Not recorded')
         expect(labels().elements()).toHaveLength(0)
     })
@@ -292,7 +305,9 @@ describe('TrackedEntityRelationship', () => {
             { hideWhenEmpty: true },
             { links: 'focus', relationshipsFail: 500 }
         )
-        await expect.element(page.getByText('Unavailable')).toBeVisible()
+        await expect
+            .element(page.getByText('Unavailable', { exact: true }))
+            .toBeVisible()
     })
 
     it('shows a skeleton while loading', async () => {

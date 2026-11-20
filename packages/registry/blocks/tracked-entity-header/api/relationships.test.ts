@@ -1,8 +1,8 @@
+import { openDhis2TestServer } from '../../../test/dhis2-server.test-utils'
 import { Result } from 'better-result'
 import { fixture } from '../test/header.fixture'
 import {
     createTrackedEntityHeaderResourceClient,
-    type DataEngineLike,
     type DataEngineValue,
 } from './client'
 import {
@@ -11,15 +11,16 @@ import {
     fetchViewAttributes,
 } from './relationships'
 
-const engineReturning = (response: DataEngineValue) => {
-    const query = vi
-        .fn<DataEngineLike['query']>()
-        .mockResolvedValue({ trackedEntityHeaderResource: response })
-    return {
-        client: createTrackedEntityHeaderResourceClient({ query }),
-        query,
-        request: () => Object.values(query.mock.calls[0]?.[0] ?? {})[0],
-    }
+const engineReturning = async (path: string, response: DataEngineValue) => {
+    const requests: URL[] = []
+    const { engine } = await openDhis2TestServer((url) => {
+        if (url.pathname === path) {
+            requests.push(url)
+            return Response.json(response)
+        }
+        return undefined
+    })
+    return { client: createTrackedEntityHeaderResourceClient(engine), requests }
 }
 
 const ok = <T>(result: Result<T, Error>) => {
@@ -49,20 +50,18 @@ const link = (id: string, from: DataEngineValue, to: DataEngineValue) => ({
 
 describe('fetchRelationships', () => {
     it('reads the case relationships, asking once for every page with the narrowed fields', async () => {
-        const { client, query, request } = engineReturning(
+        const { client, requests } = await engineReturning(
+            '/api/tracker/relationships',
             fixture('relationships.case.json')
         )
 
         const records = ok(await fetchRelationships(client, 'DsSlC54GNXy'))
 
-        expect(query).toHaveBeenCalledTimes(1)
-        expect(request()).toMatchObject({
-            resource: 'tracker/relationships',
-            params: {
-                trackedEntity: 'DsSlC54GNXy',
-                paging: false,
-                fields: expect.stringContaining('attributes[attribute,value]'),
-            },
+        expect(requests).toHaveLength(1)
+        expect(Object.fromEntries(requests[0].searchParams)).toMatchObject({
+            trackedEntity: 'DsSlC54GNXy',
+            paging: 'false',
+            fields: expect.stringContaining('attributes[attribute,value]'),
         })
         expect(records).toHaveLength(2)
         expect(records.map((r) => r.end)).toEqual(['to', 'to'])
@@ -77,7 +76,10 @@ describe('fetchRelationships', () => {
     })
 
     it('reads the focus relationships from the from end', async () => {
-        const { client } = engineReturning(fixture('relationships.focus.json'))
+        const { client } = await engineReturning(
+            '/api/tracker/relationships',
+            fixture('relationships.focus.json')
+        )
 
         const records = ok(await fetchRelationships(client, 'neR4cmMY22o'))
 
@@ -87,7 +89,7 @@ describe('fetchRelationships', () => {
     })
 
     it('reads event and enrollment ends, and marks the rest unreadable', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning('/api/tracker/relationships', {
             relationships: [
                 link('r1', te('a', []), { event: { event: 'ev1' } }),
                 link('r2', te('a', []), { enrollment: { enrollment: 'en1' } }),
@@ -107,7 +109,7 @@ describe('fetchRelationships', () => {
     })
 
     it('drops one malformed relationship and keeps the rest', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning('/api/tracker/relationships', {
             relationships: [
                 { relationship: 'bad' },
                 link('r1', te('a', []), te('b', [])),
@@ -120,7 +122,7 @@ describe('fetchRelationships', () => {
     })
 
     it('gives a self-link as one record from the from end', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning('/api/tracker/relationships', {
             relationships: [link('r1', te('a', []), te('a', []))],
         })
 
@@ -131,7 +133,7 @@ describe('fetchRelationships', () => {
     })
 
     it('keeps a relationship whose own end has no attributes', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning('/api/tracker/relationships', {
             relationships: [link('r1', te('a'), te('b', []))],
         })
 
@@ -145,7 +147,7 @@ describe('fetchRelationships', () => {
     })
 
     it('drops a relationship the tracked entity is no end of', async () => {
-        const { client } = engineReturning({
+        const { client } = await engineReturning('/api/tracker/relationships', {
             relationships: [link('r1', te('x', []), te('y', []))],
         })
 
@@ -155,7 +157,8 @@ describe('fetchRelationships', () => {
 
 describe('fetchRelationshipTypes', () => {
     it('maps the type with its end names and data views', async () => {
-        const { client, request } = engineReturning(
+        const { client, requests } = await engineReturning(
+            '/api/42/relationshipTypes',
             fixture('relationshipTypes.malaria.json')
         )
 
@@ -167,11 +170,10 @@ describe('fetchRelationshipTypes', () => {
             ])
         )
 
-        expect(request()).toMatchObject({
-            params: {
-                filter: 'id:in:[m6XJSapEvOa,Mv8R4MPcNcX,mxZDvSZYxlw]',
-                paging: false,
-            },
+        expect(requests).toHaveLength(1)
+        expect(Object.fromEntries(requests[0].searchParams)).toMatchObject({
+            filter: 'id:in:[m6XJSapEvOa,Mv8R4MPcNcX,mxZDvSZYxlw]',
+            paging: 'false',
         })
         const focusToCase = types.get('Mv8R4MPcNcX')
         expect(focusToCase).toMatchObject({
@@ -191,7 +193,8 @@ describe('fetchRelationshipTypes', () => {
 
 describe('fetchViewAttributes', () => {
     it('maps attributes to their label and value type', async () => {
-        const { client } = engineReturning(
+        const { client } = await engineReturning(
+            '/api/42/trackedEntityAttributes',
             fixture('trackedEntityAttributes.malaria.json')
         )
 

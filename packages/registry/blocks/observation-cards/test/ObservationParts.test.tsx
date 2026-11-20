@@ -18,7 +18,6 @@ const NOW = new Date('2026-06-01T12:00:00.000Z')
 const cardOf = (container: HTMLElement) =>
     container.querySelector<HTMLElement>('[data-slot="observation-card"]')
 
-/** The line's own dots, not recharts' hover dot: the pointer can rest over a chart from an earlier test. */
 const plottedDots = (container: HTMLElement) =>
     container.querySelectorAll('.recharts-line-dots .recharts-dot').length
 
@@ -203,7 +202,6 @@ describe('ObservationSparkline', () => {
             ?.getBBox()
         const svgHeight =
             container.querySelector('svg.recharts-surface')?.clientHeight ?? 0
-        // From zero up, a 2% change would span about 1px of a 40px chart.
         expect(box?.height).toBeGreaterThan(svgHeight / 2)
     })
 
@@ -394,11 +392,9 @@ describe('a composed card', () => {
     })
 
     it('a part outside a card says where it belongs', async () => {
-        const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
         await expect(render(<ObservationValue />)).rejects.toThrow(
             'Observation parts must be rendered inside ObservationCard'
         )
-        errors.mockRestore()
     })
 })
 
@@ -454,11 +450,9 @@ describe('calendars and sizes', () => {
         expect(card?.clientWidth).toBeLessThanOrEqual(160)
         expect(card?.scrollWidth).toBeLessThanOrEqual(card?.clientWidth ?? 0)
         expect(row?.scrollWidth).toBeLessThanOrEqual(row?.clientWidth ?? 0)
-        // The sparkline is the first thing a narrow card drops, without mounting the chart.
         await new Promise((resolve) => requestAnimationFrame(resolve))
         expect(slot(container, 'chart')).toBeNull()
         expect(warnings).not.toHaveBeenCalled()
-        // Its summary stays for screen readers.
         const summary = slot(container, 'observation-sparkline')?.querySelector(
             '.sr-only'
         )

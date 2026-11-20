@@ -22,10 +22,7 @@ const legends: ObservationLegendBand[] = [
     { name: 'High', color: '#00ff00', startValue: 7, endValue: 11 },
 ]
 
-const point = (
-    value: string,
-    overrides: Partial<ObservationPoint> = {}
-): ObservationPoint => ({
+const point = (value: string, overrides: Partial<ObservationPoint> = {}) => ({
     value,
     occurredAt: '2026-03-12T00:00:00.000',
     source: { eventId: 'ev1', programStageId: 's1', programStageName: 'Visit' },
@@ -35,7 +32,7 @@ const point = (
 const series = (
     valueType: string,
     overrides: Partial<ObservationSeries> = {}
-): ObservationSeries => ({
+) => ({
     dataElementId: 'de1',
     label: 'Element',
     valueType,
@@ -49,12 +46,11 @@ const decimals = (value: number) => String(value).split('.')[1]?.length ?? 0
 const reading = (value: number, occurredAt: string) =>
     point(String(value), { numericValue: value, occurredAt })
 
-/** A numeric series whose previous reading is on 1 March; its change is at the readings' precision, as buildSeries gives it. */
 const trend = (
     from: number,
     to: number,
     overrides: Partial<ObservationSeries> = {}
-): ObservationSeries => {
+) => {
     const previous = reading(from, '2026-03-01T00:00:00.000')
     const latest = reading(to, '2026-03-05T00:00:00.000')
     return series('NUMBER', {
@@ -255,7 +251,6 @@ describe('isStale', () => {
     })
 
     it('181 days old with threshold 180 is stale', () => {
-        // 2026-03-13 to 2026-09-10 is 181 days.
         expect(
             isStale(
                 point('1', { occurredAt: '2026-03-13T00:00:00.000' }),
@@ -397,7 +392,6 @@ describe('relativeTime', () => {
     })
 
     it('rounds to the nearest month or year, so an old reading never looks newer', () => {
-        // 59 days and 729 days before 12 March 2026.
         expect(relativeTime(at('2026-01-12T12:00:00.000'), now, 'en')).toBe(
             '2 months ago'
         )

@@ -1,14 +1,9 @@
 import * as engine from '@dhis2/rule-engine'
-import {
-    currentEventVariable,
-    programMetadata,
-    rule,
-} from '../__tests__/metadata'
-import { RMNCH, rmnchMetadata } from '../__tests__/rmnch'
+import { currentEventVariable, programMetadata, rule } from '../test/metadata'
+import { RMNCH, rmnchMetadata } from '../test/rmnch'
 import { buildRuleContext } from './buildContext'
-import type { RuleDependencies } from './types'
 
-const rmnchRule = (name: string): RuleDependencies => {
+const rmnchRule = (name: string) => {
     const context = buildRuleContext(engine, rmnchMetadata())
     const info = [...context.ruleInfo.values()].find((candidate) =>
         candidate.name.startsWith(name)

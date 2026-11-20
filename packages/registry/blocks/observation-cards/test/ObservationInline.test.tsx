@@ -126,7 +126,6 @@ describe('ObservationInline', () => {
         )
         expect(inlineOf(container)?.textContent).toContain('14')
         expect(inlineOf(container)?.textContent).not.toContain('Unavailable')
-        // Newer visits may be hidden, so the reading says so, as the card does.
         expect(inlineOf(container)?.textContent).toContain(
             'Some visits are hidden by your access'
         )

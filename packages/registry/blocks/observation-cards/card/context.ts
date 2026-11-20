@@ -17,7 +17,7 @@ export interface ObservationCardContextValue {
 export const ObservationCardContext =
     createContext<ObservationCardContextValue | null>(null)
 
-export const useObservationCard = (): ObservationCardContextValue => {
+export const useObservationCard = () => {
     const context = useContext(ObservationCardContext)
     if (!context) {
         throw new Error(

@@ -14,7 +14,9 @@ const context: InputContext = {
     ]),
 }
 
-const event = (overrides: Partial<RuleEventInput> = {}): RuleEventInput => ({
+const event: (overrides?: Partial<RuleEventInput>) => RuleEventInput = (
+    overrides = {}
+) => ({
     id: 'event',
     programStageId: 'stage',
     orgUnitId: 'ou',
@@ -36,8 +38,6 @@ const values = (target: engine.RuleEventJs) =>
     )
 
 describe('buildEngineInput', () => {
-    // Spike pitfall 1: tracker timestamps have no offset; the engine wants
-    // yyyy-MM-dd dates and offset instants.
     it('cuts tracker timestamps to dates and gives instants an offset', () => {
         const { event: built } = build({
             event: event({
@@ -85,7 +85,6 @@ describe('buildEngineInput', () => {
         expect(values(built)).toEqual({})
     })
 
-    // Spike pitfall 2: d2:hasValue is true for '', so empty values are left out.
     it('leaves empty values out', () => {
         const built = build({
             event: event({ dataValues: { a: '', b: 'x' } }),
@@ -105,7 +104,6 @@ describe('buildEngineInput', () => {
         ).toEqual([['d', 'y']])
     })
 
-    // Spike pitfall 11: the current event must not compete with itself.
     it('drops the current event from the other events', () => {
         const built = build({
             otherEvents: [event(), event({ id: 'other' })],
@@ -136,7 +134,6 @@ describe('buildEngineInput', () => {
 })
 
 describe('ruleValueType', () => {
-    // Spike pitfall 9.
     it.each([
         ['NUMBER', 'NUMERIC'],
         ['INTEGER', 'NUMERIC'],

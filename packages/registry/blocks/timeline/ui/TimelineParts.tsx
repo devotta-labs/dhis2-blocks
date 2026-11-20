@@ -26,9 +26,7 @@ export const TimelineMarker = ({
         data-slot="timeline-marker"
         className={cn(
             'absolute top-1.5 start-0 size-2.5 rounded-full border-2 border-dhis2-primary bg-dhis2-background',
-            // The phase: grey for what is coming, red for what is overdue.
             'group-data-[phase=future]/phase:border-dhis2-neutral-indicator group-data-[phase=overdue]/phase:border-dhis2-destructive-indicator',
-            // An entry can set data-marker on its content to say more.
             'group-has-[[data-marker=filled]]/item:bg-dhis2-primary',
             'group-has-[[data-marker=muted]]/item:border-dhis2-border-strong',
             'group-has-[[data-marker=dot]]/item:top-[7px] group-has-[[data-marker=dot]]/item:start-[2px] group-has-[[data-marker=dot]]/item:size-1.5 group-has-[[data-marker=dot]]/item:border-0 group-has-[[data-marker=dot]]/item:bg-dhis2-neutral-indicator',

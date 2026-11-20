@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const ROOT = dirname(fileURLToPath(import.meta.url))
 const DHIS2 = join(ROOT, 'dhis2')
 
-const sourceFiles = (directory: string): string[] =>
+const sourceFiles: (directory: string) => string[] = (directory) =>
     readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
         const path = join(directory, entry.name)
         if (entry.isDirectory()) {
@@ -16,8 +16,6 @@ const sourceFiles = (directory: string): string[] =>
 
 const SPECIFIER = /(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g
 
-// The generic timeline installs and runs without its DHIS2 layer, so a host
-// with its own data can delete `dhis2/`.
 test('nothing outside dhis2/ imports from it', () => {
     const offenders = sourceFiles(ROOT).flatMap((file) =>
         [...readFileSync(file, 'utf8').matchAll(SPECIFIER)]

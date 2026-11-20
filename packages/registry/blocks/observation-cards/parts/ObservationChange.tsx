@@ -15,7 +15,6 @@ export type ObservationChangeProps = Omit<
     'children'
 >
 
-/** An arrow for sighted users and the word a screen reader says instead. */
 function Direction({
     direction,
 }: {
@@ -48,7 +47,6 @@ export function ObservationChange({
     ...props
 }: ObservationChangeProps) {
     const { series, unit, display } = useObservationCard()
-    // Option codes are categories: a difference between them means nothing.
     const change = showsTrend(series)
         ? changeLine(series, unit, display)
         : categoryChangeLine(series, display)

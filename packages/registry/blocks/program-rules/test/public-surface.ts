@@ -29,7 +29,6 @@ import type {
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
     ExpressionReference,
-    ExpressionReferences,
     ProgramRulesInput,
     ProgramRulesStatus,
     RuleEnrollmentInput as HookEnrollmentInput,
@@ -111,25 +110,22 @@ export type SupportedProgramRulesTypes = [
     HookEnrollmentInput,
 ]
 
-// The lib is engine-in, effects-out.
 export const evaluateLoaded = async (
     metadata: ProgramRulesMetadata,
     input: EventRuleInput
-): Promise<RuleEffects> => {
+) => {
     const engine = await loadRuleEngine()
     const context = buildRuleContext(engine, metadata)
     return evaluateEventRules(engine, context, input)
 }
 
-// A host that knows a program has rules starts the engine early.
-export const startEngine = (): void => preloadRuleEngine()
+export const startEngine = () => preloadRuleEngine()
 
-// The effect maps carry attributions the form can show.
-export const whyHidden = (effects: RuleEffects, fieldId: string): string[] =>
+export const whyHidden = (effects: RuleEffects, fieldId: string) =>
     (effects.hiddenFields.get(fieldId) ?? []).map(
         (by) => `${by.ruleName}: ${by.condition}`
     )
-export const explainLmp = (effects: RuleEffects): Attribution[] =>
+export const explainLmp = (effects: RuleEffects) =>
     explainField(effects, 'w4ky6EkVahL')
 export const messageKinds: RuleMessage['kind'][] = [
     'error',
@@ -154,8 +150,7 @@ export const missingStage: RuleEventInput = stageless
 // @ts-expect-error The lib's input always lists the other events.
 export const missingOtherEvents: EventRuleInput = { event }
 
-// The hook fetches the enrollment and its events when they are not passed.
-export const useEventRules = (): UseProgramRulesResult =>
+export const useEventRules = () =>
     useProgramRules({
         programId: 'WSGAb5XwJ3Y',
         programStageId: 'WZbXY0S00lP',
@@ -163,8 +158,7 @@ export const useEventRules = (): UseProgramRulesResult =>
         input: { event },
     })
 
-// One context evaluates any number of events; each result is a Result.
-export const useTwoEvaluations = (): RuleEffects[] => {
+export const useTwoEvaluations = () => {
     const { evaluate } = useProgramRuleEvaluator({
         programId: 'WSGAb5XwJ3Y',
         programStageId: 'WZbXY0S00lP',
@@ -181,18 +175,13 @@ declare const evaluation: RuleEvaluation
 // @ts-expect-error An evaluation is a Result, not the effects themselves.
 export const unwrapped: RuleEffects = evaluation
 
-// The references an expression reads, with where they are, for displays.
-export const referencedNames = (expression: string): string[] =>
+export const referencedNames = (expression: string) =>
     expressionReferences(expression).map(({ name }) => name)
-// The references grouped by kind.
-export const readsByKind = (expression: string): ExpressionReferences =>
-    scanExpression(expression)
-export const writes = (
-    action: Parameters<typeof assignedVariable>[0]
-): string | undefined => assignedVariable(action)
+export const readsByKind = (expression: string) => scanExpression(expression)
+export const writes = (action: Parameters<typeof assignedVariable>[0]) =>
+    assignedVariable(action)
 
-// The graph, invalid rules and requirements need no event.
-export const useStageGraph = (): RuleDependencyGraph | undefined => {
+export const useStageGraph = () => {
     const { context } = useProgramRuleContext({
         programId: 'WSGAb5XwJ3Y',
         programStageId: 'WZbXY0S00lP',
@@ -208,19 +197,17 @@ export const statuses: UseProgramRulesResult['status'][] = [
 // @ts-expect-error There is no idle status.
 export const idle: UseProgramRulesResult['status'] = 'idle'
 
-// Hosts invalidate rule data with the exported keys.
 export const ruleQueryKey: readonly string[] = programRulesQueryKeys.all
 export const metadataKey = programRulesQueryKeys.metadata('WSGAb5XwJ3Y')
 
-// A grid evaluates many rows at once, on its live values; a person's other rows re-run when a field they read changes.
 export const evaluateGrid = async (
     metadata: ProgramRulesMetadata,
     input: EventsRuleInput,
     changed: { rowId: string; fieldId: string }
-): Promise<EventsRulesEvaluation> => {
+) => {
     const engine = await loadRuleEngine()
     const contexts = new Map(
-        metadata.programStages.map(({ id }): [string, RuleContext] => [
+        metadata.programStages.map<[string, RuleContext]>(({ id }) => [
             id,
             buildRuleContext(engine, metadataForStage(metadata, id)),
         ])
@@ -251,8 +238,7 @@ export const missingTracker: EventsRuleInput = {
     personsLoaded: true,
 }
 
-// A grid hands the hook its stages and people; the rules evaluate its rows and name the rows an edit affects.
-export const useGridRules = (): Map<string, RuleEffects> => {
+export const useGridRules = () => {
     const { rules } = useEventsRules({
         programId: 'WSGAb5XwJ3Y',
         programStageIds: ['WZbXY0S00lP'],
@@ -265,23 +251,15 @@ export const useGridRules = (): Map<string, RuleEffects> => {
     ]
     return rules?.evaluate(rows, affected).effects ?? new Map()
 }
-// A row the engine failed on is in `failures`, never in `effects`.
-export const gridFailures = (evaluation: EventsRulesEvaluation): Error[] => [
+export const gridFailures = (evaluation: EventsRulesEvaluation) => [
     ...evaluation.failures.values(),
 ]
 declare const gridEvaluation: EventsRulesEvaluation
 // @ts-expect-error An evaluation holds the effects and the failures, not the effects alone.
 export const gridEffectsOnly: Map<string, RuleEffects> = gridEvaluation
-export const gridRules = (
-    result: UseEventsRulesResult
-): EventsRules | undefined => result.rules
-export const gridInvalidRules = (rules: EventsRules): InvalidRule[] =>
-    rules.invalidRules
-// The option codes of the groups that rows' option group effects name, across every stage.
-export const gridOptionGroups = (
-    rules: EventsRules
-): Map<string, Set<string>> => rules.optionGroupOptions
-// A row the rules do not act on.
+export const gridRules = (result: UseEventsRulesResult) => result.rules
+export const gridInvalidRules = (rules: EventsRules) => rules.invalidRules
+export const gridOptionGroups = (rules: EventsRules) => rules.optionGroupOptions
 export const noEffects: RuleEffects = emptyEffects()
 // @ts-expect-error The hook needs to know whether the program is a tracker program.
 export const missingTrackerOption: UseEventsRulesOptions = {
@@ -290,15 +268,12 @@ export const missingTrackerOption: UseEventsRulesOptions = {
     enrollmentIds: [],
 }
 
-// A person row brings its live enrolment; enrolment rules run on program-wide rules, with the person's events.
 export const liveRow: EventsRuleRow = {
     event,
     enrollmentId: 'PE6abx7Zhn0',
     enrollment: loadedPerson.enrollment,
 }
-export const evaluatePerson = async (
-    metadata: ProgramRulesMetadata
-): Promise<RuleEffects> => {
+export const evaluatePerson = async (metadata: ProgramRulesMetadata) => {
     const engine = await loadRuleEngine()
     const context = buildRuleContext(engine, metadataForEnrollment(metadata))
     return evaluateEnrollmentRules(engine, context, {
@@ -306,8 +281,7 @@ export const evaluatePerson = async (
         events: [],
     })
 }
-// A register asks for enrolment rules; they are keyed by enrolment id.
-export const usePersonRules = (): Map<string, RuleEffects> => {
+export const usePersonRules = () => {
     const { rules } = useEventsRules({
         programId: 'WSGAb5XwJ3Y',
         programStageIds: [],

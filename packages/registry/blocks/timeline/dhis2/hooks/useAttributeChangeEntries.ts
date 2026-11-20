@@ -30,11 +30,13 @@ export interface AttributeChangeEntriesOptions {
  * logging is enabled on the server. A 404 means the server has no changelog,
  * which is a notice, not a failure.
  */
-export const useAttributeChangeEntries = ({
+export const useAttributeChangeEntries: (
+    options: AttributeChangeEntriesOptions
+) => HistoryResult<ChangeEntryData> = ({
     trackedEntity,
     programs,
     maxRows = 500,
-}: AttributeChangeEntriesOptions): HistoryResult<ChangeEntryData> => {
+}) => {
     const client = useTimelineClient()
     const ids = useProgramIds({ trackedEntity, programs })
     const info = useProgramInfo(ids.ids)
@@ -45,7 +47,6 @@ export const useAttributeChangeEntries = ({
                 program,
                 maxRows
             ),
-            // A failure shows its notice and Retry at once.
             retry: false,
             queryFn: async ({ signal }: { signal: AbortSignal }) =>
                 unwrap(
@@ -58,8 +59,6 @@ export const useAttributeChangeEntries = ({
         })),
         combine: summarize<ChangeLogResult>,
     })
-    // A program's changes show once its metadata has answered, so they never
-    // show attribute ids that labels are about to replace.
     const entries = useMemo(() => {
         const attributes = attributesOf(info.programs.values())
         const rows = changelogs.data.flatMap((data, index) => {
@@ -81,7 +80,6 @@ export const useAttributeChangeEntries = ({
         (error) => error !== null && isNotFound(error)
     )
     const unsupported = notFound.includes(true)
-    // A 404 is an answer, not a failure.
     const changelogStatuses: TimelineStatus[] = changelogs.statuses.map(
         (status, index) => (notFound[index] ? 'success' : status)
     )
@@ -96,7 +94,6 @@ export const useAttributeChangeEntries = ({
         firstStatus !== 'pending',
         [trackedEntity, programs?.join(), maxRows].join('|')
     )
-    // Once shown, later loading never empties the history again.
     const status: TimelineStatus =
         firstStatus === 'pending' && shown ? 'success' : firstStatus
 
@@ -113,37 +110,35 @@ export const useAttributeChangeEntries = ({
                   },
               ]
             : []),
-        ...changelogStatuses.flatMap(
-            (changesStatus, index): TimelineNotice[] => {
-                const program = ids.ids?.[index] ?? ''
-                const label = programLabel(info.programs, program)
-                if (changesStatus === 'error') {
-                    return [
-                        {
-                            id: `changes-failed:${program}`,
-                            tone: 'error',
-                            message: i18n.t(
-                                "Changes in {{program}} couldn't load.",
-                                { program: label }
-                            ),
-                            retry: changelogs.retries[index],
-                        },
-                    ]
-                }
-                return changelogs.data[index]?.truncated
-                    ? [
-                          {
-                              id: `changes-truncated:${program}`,
-                              tone: 'info',
-                              message: i18n.t(
-                                  "Older changes in {{program}} aren't shown.",
-                                  { program: label }
-                              ),
-                          },
-                      ]
-                    : []
+        ...changelogStatuses.flatMap<TimelineNotice>((changesStatus, index) => {
+            const program = ids.ids?.[index] ?? ''
+            const label = programLabel(info.programs, program)
+            if (changesStatus === 'error') {
+                return [
+                    {
+                        id: `changes-failed:${program}`,
+                        tone: 'error',
+                        message: i18n.t(
+                            "Changes in {{program}} couldn't load.",
+                            { program: label }
+                        ),
+                        retry: changelogs.retries[index],
+                    },
+                ]
             }
-        ),
+            return changelogs.data[index]?.truncated
+                ? [
+                      {
+                          id: `changes-truncated:${program}`,
+                          tone: 'info',
+                          message: i18n.t(
+                              "Older changes in {{program}} aren't shown.",
+                              { program: label }
+                          ),
+                      },
+                  ]
+                : []
+        }),
         ...info.notices,
     ]
 

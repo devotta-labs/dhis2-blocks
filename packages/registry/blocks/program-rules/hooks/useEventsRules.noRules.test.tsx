@@ -1,11 +1,10 @@
 import { renderHook } from 'vitest-browser-react'
-import { RMNCH, rmnchResponses } from '../__tests__/rmnch'
-import { serve } from '../__tests__/serve'
+import { RMNCH, rmnchResponses } from '../test/rmnch'
+import { serve } from '../test/serve'
 import { emptyEffects, type EventsRuleRow } from '../lib'
 import { loadRuleEngine } from './loadRuleEngine'
 import { useEventsRules } from './useEventsRules'
 
-// In its own file: the engine is imported once per page, so an import by another test would hide the one checked here.
 const engineRequested = () =>
     performance
         .getEntriesByType('resource')
@@ -62,7 +61,6 @@ describe('useEventsRules for a program without rules', () => {
         expect(rules.invalidRules).toEqual([])
         expect(rules.optionGroupOptions.size).toBe(0)
 
-        // The check above can see the engine: it does once something imports it.
         await loadRuleEngine()
         expect(engineRequested()).toBe(true)
     })

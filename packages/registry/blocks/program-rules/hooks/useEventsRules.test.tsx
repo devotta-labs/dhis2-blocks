@@ -1,10 +1,6 @@
 import { renderHook } from 'vitest-browser-react'
-import {
-    RMNCH,
-    rmnchEnrollmentResponse,
-    rmnchResponses,
-} from '../__tests__/rmnch'
-import { SECOND_PERSON, serve } from '../__tests__/serve'
+import { RMNCH, rmnchEnrollmentResponse, rmnchResponses } from '../test/rmnch'
+import { SECOND_PERSON, serve } from '../test/serve'
 import type { EventsRuleRow, RuleEffects } from '../lib'
 import {
     RuleEnrollmentResponseSchema,
@@ -26,12 +22,15 @@ const person = toRuleEnrollmentData(
 )
 const stageIds = [...new Set(person.events.map((e) => e.programStageId))]
 
-/** A fixture event as a row of the fixture's person, with live values over the server's. */
-const row = (
+const row: (
     eventId: string,
-    live: Record<string, string> = {},
-    enrollmentId: string = RMNCH.enrollmentId
-): EventsRuleRow => {
+    live?: Record<string, string>,
+    enrollmentId?: string
+) => EventsRuleRow = (
+    eventId,
+    live = {},
+    enrollmentId = RMNCH.enrollmentId
+) => {
     const event = person.events.find((e) => e.id === eventId)
     if (event === undefined) {
         throw new Error(`the RMNCH fixture lost event ${eventId}`)
@@ -42,9 +41,7 @@ const row = (
     }
 }
 
-const options = (
-    overrides: Partial<UseEventsRulesOptions> = {}
-): UseEventsRulesOptions => ({
+const options = (overrides: Partial<UseEventsRulesOptions> = {}) => ({
     programId: RMNCH.programId,
     programStageIds: stageIds,
     tracker: true,
@@ -52,7 +49,6 @@ const options = (
     ...overrides,
 })
 
-/** Enrollment ids a1, a2, … from `first` to `last`, none of them known to the server. */
 const people = (first: number, last: number) =>
     Array.from({ length: last - first + 1 }, (_, i) => `a${first + i}`)
 
@@ -62,7 +58,6 @@ const settle = async (read: () => string) => {
 
 const hiddenFollowUps = (effects: Map<string, RuleEffects>, rowId: string) => {
     const forRow = effects.get(rowId)
-    // An empty list must mean "none hidden", never "not evaluated".
     if (forRow === undefined) {
         throw new Error(`row ${rowId} was not evaluated`)
     }
@@ -94,10 +89,8 @@ describe('useEventsRules', () => {
                 LATER_VISIT
             )
         ).toEqual(RMNCH.chronicFollowUps)
-        // Each row's rules come from its own stage's context.
         const both = rules.evaluate(saysNo, [FIRST_VISIT, LATER_VISIT]).effects
         expect([...both.keys()]).toEqual([FIRST_VISIT, LATER_VISIT])
-        // A 'true' on the first visit can only reach the later visit through the person's other rows.
         const saysYes = [
             row(FIRST_VISIT, { [RMNCH.chronic]: 'true' }),
             row(LATER_VISIT),
@@ -116,7 +109,6 @@ describe('useEventsRules', () => {
             () =>
                 useEventsRules(
                     options({
-                        // The same person twice, and one the server does not know.
                         enrollmentIds: [
                             RMNCH.enrollmentId,
                             'unknownPe01',
@@ -134,7 +126,6 @@ describe('useEventsRules', () => {
         expect(requests.filter((name) => name === 'programRules')).toHaveLength(
             1
         )
-        // Cached under the distinct ids.
         expect(
             queryClient.getQueryData(
                 programRulesQueryKeys.enrollments(
@@ -151,7 +142,6 @@ describe('useEventsRules', () => {
             wrapper,
         })
         await settle(() => result.current.status)
-        // A persisted cache restores a Map as {}, so the persons are cached as entries.
         const cached = queryClient.getQueryData(
             programRulesQueryKeys.enrollments([RMNCH.enrollmentId], true)
         )
@@ -160,7 +150,6 @@ describe('useEventsRules', () => {
 
     it('loads no persons for an event program', async () => {
         const { requests, wrapper } = serve(rmnchResponses)
-        // The rows carry enrollment ids, and the rules read them: only `tracker` keeps the request away.
         const { result } = await renderHook(
             () => useEventsRules(options({ tracker: false })),
             { wrapper }
@@ -196,7 +185,6 @@ describe('useEventsRules', () => {
         if (rules === undefined) {
             throw new Error('the rules did not load')
         }
-        // The first visit says 'true', but a row of an event program never reads another row.
         const rows = [
             row(FIRST_VISIT, { [RMNCH.chronic]: 'true' }),
             row(LATER_VISIT),
@@ -242,7 +230,6 @@ describe('useEventsRules', () => {
             wrapper,
         })
         await settle(() => result.current.status)
-        // Program-wide rules sit in every stage's context, so each is listed once, not once per stage.
         expect(stageIds.length).toBeGreaterThan(1)
         const invalid = result.current.rules?.invalidRules ?? []
         expect(invalid).toHaveLength(3)
@@ -338,7 +325,6 @@ describe('useEventsRules', () => {
             { wrapper }
         )
         await settle(() => result.current.status)
-        // Each stage's context holds only its own rule's group.
         expect(result.current.rules?.optionGroupOptions).toEqual(
             new Map([
                 ['firstGroup', new Set(['A'])],
@@ -371,17 +357,26 @@ describe('useEventsRules', () => {
     it('stays ready when a background refetch fails', async () => {
         const { requests, wrapper, failing, queryClient } =
             serve(rmnchResponses)
-        const { result } = await renderHook(() => useEventsRules(options()), {
-            wrapper,
-        })
+        const { result, rerender } = await renderHook(
+            () => useEventsRules(options()),
+            {
+                wrapper,
+            }
+        )
         await settle(() => result.current.status)
         failing.push('tracker/enrollments', 'programRules')
         const before = requests.length
         await queryClient.invalidateQueries({
             queryKey: programRulesQueryKeys.all,
         })
-        await expect.poll(() => requests.length).toBeGreaterThan(before)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        expect(requests.slice(before)).toContain('programRules')
+        expect(
+            queryClient
+                .getQueryCache()
+                .findAll({ queryKey: programRulesQueryKeys.all })
+                .some((query) => query.state.status === 'error')
+        ).toBe(true)
+        await rerender()
         expect(result.current.status).toBe('ready')
         expect(result.current.error).toBeUndefined()
         expect(result.current.rules).toBeDefined()
@@ -389,9 +384,12 @@ describe('useEventsRules', () => {
 
     it('reloads the persons when the enrollments prefix is invalidated, and keeps rules whose data is equal', async () => {
         const { requests, wrapper, queryClient } = serve(rmnchResponses)
-        const { result } = await renderHook(() => useEventsRules(options()), {
-            wrapper,
-        })
+        const { result, rerender } = await renderHook(
+            () => useEventsRules(options()),
+            {
+                wrapper,
+            }
+        )
         await settle(() => result.current.status)
         const loaded = result.current.rules
         const before = requests.filter(
@@ -400,18 +398,13 @@ describe('useEventsRules', () => {
         await queryClient.invalidateQueries({
             queryKey: [...programRulesQueryKeys.all, 'enrollments'],
         })
-        await expect
-            .poll(
-                () =>
-                    requests.filter((name) => name === 'tracker/enrollments')
-                        .length
-            )
-            .toBe(before + 1)
+        expect(
+            requests.filter((name) => name === 'tracker/enrollments')
+        ).toHaveLength(before + 1)
         expect(requests.filter((name) => name === 'programRules')).toHaveLength(
             1
         )
-        // Let the hook render the reloaded data before reading it.
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await rerender()
         expect(loaded).toBeDefined()
         expect(result.current.rules).toBe(loaded)
     })
@@ -444,7 +437,6 @@ describe('useEventsRules', () => {
                         .length
             )
             .toBe(2)
-        // The first person's rows run on the data already loaded; the new person's wait for their own.
         const waiting = result.current.rules
         expect(result.current.status).toBe('ready')
         expect([
@@ -479,11 +471,11 @@ describe('useEventsRules', () => {
         )
         await settle(() => result.current.status)
         expect(asked()).toEqual([people(1, 100), people(101, 150)])
+        const previous = result.current.rules
         await rerender({
             options: options({ enrollmentIds: people(1, 200) }),
         })
-        await expect.poll(() => asked().length).toBeGreaterThan(2)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await expect.poll(() => result.current.rules).not.toBe(previous)
         expect(asked().slice(2)).toEqual([people(101, 200)])
     })
 
@@ -524,7 +516,6 @@ describe('useEventsRules', () => {
             )
             .toBeGreaterThan(1)
         expect(result.current.rules).toBe(loaded)
-        // The new person's row waits for their chunk: it is left out, not failed.
         const rows = [row(FIRST_VISIT), row('yDPqyTvcRpA', {}, SECOND_PERSON)]
         const ids = [FIRST_VISIT, 'yDPqyTvcRpA']
         const waiting = loaded.evaluate(rows, ids)
@@ -584,7 +575,6 @@ describe('useEventsRules', () => {
             () => useEventsRules(options({ enabled: false })),
             { wrapper }
         )
-        await new Promise((resolve) => setTimeout(resolve, 200))
         expect(result.current.status).toBe('loading')
         expect(requests).toEqual([])
     })

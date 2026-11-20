@@ -5,9 +5,7 @@ import type {
     DataElementMetadata,
     ObservationLegendBand,
     ObservationOption,
-    ProgramMetadata,
     StageMetadata,
-    TrackerEventRecord,
 } from '../api/types'
 import {
     ObservationsContext,
@@ -45,7 +43,7 @@ export type FakeStatus =
 const DEFAULT_STAGE = 'Antenatal visit'
 const stageId = (name: string) => `stage-${name}`
 
-const metadataFor = (observation: FakeObservation): ProgramMetadata => {
+const metadataFor = (observation: FakeObservation) => {
     const {
         label = 'Haemoglobin',
         valueType = 'NUMBER',
@@ -94,7 +92,7 @@ const metadataFor = (observation: FakeObservation): ProgramMetadata => {
     }
 }
 
-const eventsFor = ({ readings = [] }: FakeObservation): TrackerEventRecord[] =>
+const eventsFor = ({ readings = [] }: FakeObservation) =>
     readings.map(({ value, day, stage = DEFAULT_STAGE }, index) => ({
         event: `ev${String(index).padStart(3, '0')}`,
         programStage: stageId(stage),
@@ -103,23 +101,21 @@ const eventsFor = ({ readings = [] }: FakeObservation): TrackerEventRecord[] =>
         dataValues: [{ dataElement: DE, value }],
     }))
 
-const contextFor = (
+const contextFor: (
     observation: FakeObservation,
     status: FakeStatus
-): ObservationsContextValue => {
+) => ObservationsContextValue = (observation, status) => {
     const base = { program: PROGRAM, logProblem: () => {} }
     switch (status) {
         case 'pending':
             return base
         case 'error':
-            // A failed person request after the program's metadata loaded.
             return {
                 ...base,
                 metadata: metadataFor(observation),
                 error: new Error('boom'),
             }
         case 'failed-early':
-            // A failed request before the program's metadata loaded: no name to show.
             return { ...base, error: new Error('boom') }
         case 'misconfigured':
             return {
@@ -140,10 +136,6 @@ const contextFor = (
     }
 }
 
-/**
- * Feeds the provider's context directly, so a card sees the data a real
- * provider would have loaded, with no requests.
- */
 function FakeObservations({
     observation = {},
     status = 'ready',
@@ -160,7 +152,6 @@ function FakeObservations({
     )
 }
 
-/** app-runtime's own provider, so cards read the system calendar as in an app. */
 function Runtime({
     calendar,
     children,
@@ -202,7 +193,7 @@ export const renderWith = (
     )
 
 /** Readings on consecutive days of March 2026, from the 1st. */
-export const march = (...values: number[]): Reading[] =>
+export const march = (...values: number[]) =>
     values.map((value, index) => ({
         value: String(value),
         day: `2026-03-${String(index + 1).padStart(2, '0')}`,

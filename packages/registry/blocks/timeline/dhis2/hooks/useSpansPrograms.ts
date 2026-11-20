@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useOptionalTimeline } from '../../hooks/useTimeline'
 import type { HistoryEntryData } from '../types'
 
-const programOf = (data: HistoryEntryData): string | undefined => {
+const programOf = (data: HistoryEntryData) => {
     switch (data.kind) {
         case 'event':
             return data.event.program
@@ -18,7 +18,7 @@ const programOf = (data: HistoryEntryData): string | undefined => {
  * Whether the surrounding feed holds entries from more than one program, so
  * naming the program tells the entries apart. Outside a feed, always true.
  */
-export const useSpansPrograms = (): boolean => {
+export const useSpansPrograms = () => {
     const timeline = useOptionalTimeline()
     const entries = timeline?.state.entries
     return useMemo(() => {

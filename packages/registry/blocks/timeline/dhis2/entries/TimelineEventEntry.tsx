@@ -55,7 +55,6 @@ export const TimelineEventStage = ({
     ...props
 }: ComponentPropsWithoutRef<'span'>) => {
     const { data } = useTimelineEventEntry()
-    // A skipped event is muted by the frame's data-status: lighter, still readable.
     return (
         <span
             {...props}
@@ -70,7 +69,7 @@ export const TimelineEventStage = ({
     )
 }
 
-const statusLabel = (status: DerivedEventStatus): string => {
+const statusLabel: (status: DerivedEventStatus) => string = (status) => {
     switch (status) {
         case 'completed':
             return i18n.t('Completed')
@@ -85,7 +84,6 @@ const statusLabel = (status: DerivedEventStatus): string => {
     }
 }
 
-/** How the line's marker shows each status; the feed's phase covers the rest. */
 const MARKER = {
     completed: 'filled',
     active: undefined,
@@ -102,11 +100,7 @@ const STATUS_STYLE = {
     skipped: 'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
 } satisfies Record<DerivedEventStatus, string>
 
-/**
- * Whether the entry's place in the feed already says its status: a scheduled
- * event above "now", an overdue one in the Overdue group.
- */
-const usePlaceTellsStatus = (entry: TimelineEntry<EventEntryData>): boolean => {
+const usePlaceTellsStatus = (entry: TimelineEntry<EventEntryData>) => {
     const timeline = useOptionalTimeline()
     const inFeed = timeline !== null
     const { today } = useTimelineMeta()
@@ -146,7 +140,6 @@ export const TimelineEventStatus = ({
         showsDue && !stage?.hideDueDate && event.scheduledAt !== undefined
             ? storedDay(event.scheduledAt)
             : undefined
-    // Under a day heading that is the due date, the date would say it twice.
     const day =
         inFeed && entry.phase !== 'overdue' && due === storedDay(entry.at)
             ? undefined
@@ -273,7 +266,6 @@ export const TimelineEventValues = ({
         if (value === undefined) {
             return []
         }
-        // Unknown to the stage: named by its id, like a change to it.
         const info = stage?.dataElements.get(id)
         const text = formatDhis2Value(
             value,
@@ -296,9 +288,7 @@ export const TimelineEventValues = ({
                 id={listId}
                 className="m-0 flex flex-col gap-0.5 text-sm wrap-break-word"
             >
-                {/* Inline rows: a long label wraps and its value follows it.
-                    The space keeps copied text apart; <bdi> stops the value's
-                    script reordering it against the label. */}
+                {}
                 {(open ? values : values.slice(0, MAX_VALUES)).map(
                     ({ id, name, text }) => (
                         <div key={id}>
@@ -333,7 +323,6 @@ const EventNote = ({ note }: { note: Note }) => {
     const author = note.createdBy?.displayName ?? note.storedBy
     const time =
         note.storedAt === undefined ? undefined : storedTime(note.storedAt)
-    // Written on another day than the event's: say which, or it reads as the event's day.
     const day =
         note.storedAt === undefined ? undefined : storedDay(note.storedAt)
     let when = time
@@ -483,7 +472,6 @@ export const TimelineEventChanges = ({
     const entry = useTimelineEventEntry()
     const [open, setOpen] = useState(false)
     const bodyId = useId()
-    // Never edited and holding no values: its log is only the scheduling.
     const { event } = entry.data
     if (
         event.dataValues.length === 0 &&
@@ -516,7 +504,6 @@ export const TimelineEventChanges = ({
     )
 }
 
-/** "ANC 1st visit, 12 Jun 2026"; no date where the stage hides due dates. */
 const useEventName = (entry: TimelineEntry<EventEntryData>) => {
     const { calendar, locale } = useTimelineMeta()
     const { stage, event, status } = entry.data
@@ -573,7 +560,7 @@ export const TimelineEventEntry = ({
                                 <TimelineEventStatus />
                             </span>
                             <TimelineEventMeta>
-                                {/* Midnight is a date stored as a date-time. */}
+                                {}
                                 {storedTime(entry.at) === '00:00' ? null : (
                                     <TimelineTime entry={entry} />
                                 )}

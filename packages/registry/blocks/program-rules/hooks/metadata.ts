@@ -1,9 +1,6 @@
 import type { ProgramRulesClient } from './client'
 import type {
-    ProgramRuleActionMetadata,
-    ProgramRuleMetadata,
     ProgramRulesMetadata,
-    ProgramRuleVariableMetadata,
     RuleOptionSetMetadata,
     RuleOrgUnitGroupMetadata,
 } from '../lib'
@@ -87,9 +84,7 @@ export const ProgramRulesResponseSchema = z.object({
 
 export type ProgramRulesResponse = z.infer<typeof ProgramRulesResponseSchema>
 
-const toAction = (
-    action: z.infer<typeof ActionSchema>
-): ProgramRuleActionMetadata => ({
+const toAction = (action: z.infer<typeof ActionSchema>) => ({
     id: action.id,
     type: action.programRuleActionType,
     content: action.content,
@@ -107,7 +102,7 @@ const toAction = (
     },
 })
 
-const toRule = (rule: z.infer<typeof RuleSchema>): ProgramRuleMetadata => ({
+const toRule = (rule: z.infer<typeof RuleSchema>) => ({
     id: rule.id,
     name: rule.name,
     displayName: rule.displayName,
@@ -117,9 +112,7 @@ const toRule = (rule: z.infer<typeof RuleSchema>): ProgramRuleMetadata => ({
     actions: rule.programRuleActions.map(toAction),
 })
 
-const toVariable = (
-    variable: z.infer<typeof VariableSchema>
-): ProgramRuleVariableMetadata => {
+const toVariable = (variable: z.infer<typeof VariableSchema>) => {
     const source = variable.dataElement ?? variable.trackedEntityAttribute
     return {
         id: variable.id,
@@ -136,9 +129,9 @@ const toVariable = (
 }
 
 /** API responses → the lib's metadata. Option sets come nested in the variables. */
-export const toProgramRulesMetadata = (
+export const toProgramRulesMetadata: (
     response: ProgramRulesResponse
-): ProgramRulesMetadata => {
+) => ProgramRulesMetadata = (response) => {
     const optionSets = new Map<string, RuleOptionSetMetadata>()
     for (const variable of response.variables.programRuleVariables) {
         const optionSet = (
@@ -171,7 +164,7 @@ export const fetchProgramRulesMetadata = async (
     client: ProgramRulesClient,
     programId: string,
     signal?: AbortSignal
-): Promise<ProgramRulesMetadata> =>
+) =>
     toProgramRulesMetadata(
         await client.query(
             {
@@ -223,11 +216,11 @@ const OrgUnitGroupsResponseSchema = z.object({
 })
 
 /** The groups `d2:inOrgUnitGroup` names (by id or code), with their members. */
-export const fetchOrgUnitGroups = async (
+export const fetchOrgUnitGroups: (
     client: ProgramRulesClient,
     groups: ReadonlyArray<string>,
     signal?: AbortSignal
-): Promise<RuleOrgUnitGroupMetadata[]> => {
+) => Promise<RuleOrgUnitGroupMetadata[]> = async (client, groups, signal) => {
     const list = `[${groups.join(',')}]`
     const response = await client.query(
         {

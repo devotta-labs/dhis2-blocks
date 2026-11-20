@@ -7,14 +7,8 @@ import {
     ProgramTimelineMetadataSchema,
     TrackedEntitySchema,
     type ChangeLogRow,
-    type OrgUnitName,
-    type ProgramTimelineMetadata,
-    type TrackedEntity,
     type TrackerEvent,
 } from './schemas'
-
-// Parameters are the ones recorded in __tests__/fixtures/README.md; 2.41, 2.42 and
-// 2.43 accept the same requests.
 
 export type EventTimeField =
     | 'occurredAt'
@@ -52,21 +46,20 @@ export interface EventsResult {
  * so a person's history asks once per program. Asking for `cap + 1` tells
  * whether any were left out.
  */
-export const fetchEvents = async (
+export const fetchEvents: (
     client: TimelineClient,
-    {
-        trackedEntity,
-        program,
-        timeField,
-        cap,
-    }: {
+    arg1: {
         trackedEntity: string
         program: string
         timeField: EventTimeField
         cap: number
     },
     signal?: AbortSignal
-): Promise<Result<EventsResult, Error>> => {
+) => Promise<Result<EventsResult, Error>> = async (
+    client,
+    { trackedEntity, program, timeField, cap },
+    signal
+) => {
     const result = await client.query(
         {
             resource: 'tracker/events',
@@ -97,7 +90,7 @@ export const fetchTrackedEntity = (
     client: TimelineClient,
     { trackedEntity }: { trackedEntity: string },
     signal?: AbortSignal
-): Promise<Result<TrackedEntity, Error>> =>
+) =>
     client.query(
         {
             resource: 'tracker/trackedEntities',
@@ -118,18 +111,13 @@ export interface ChangeLogResult {
 
 const CHANGELOG_PAGE_SIZE = 100
 
-/**
- * Every changelog row, newest first, a page at a time until the last page or
- * more than `maxRows`. "More pages" is "the page came back full", counted before rows
- * this block doesn't know were skipped.
- */
 const fetchChangeLog = async (
     client: TimelineClient,
     resource: string,
     params: Record<string, string>,
     maxRows: number,
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> => {
+) => {
     const rows: ChangeLogRow[] = []
     for (let page = 1; ; page++) {
         const result = await client.query(
@@ -149,8 +137,6 @@ const fetchChangeLog = async (
             return Result.err(result.error)
         }
         rows.push(...result.value.rows)
-        // More than `maxRows` read: some were left out. Exactly `maxRows`
-        // on full pages asks once more, to tell "no more" from "more".
         if (rows.length > maxRows) {
             return Result.ok({ rows: rows.slice(0, maxRows), truncated: true })
         }
@@ -173,7 +159,7 @@ export const fetchAttributeChangeLog = (
         maxRows,
     }: { trackedEntity: string; program: string; maxRows: number },
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> =>
+) =>
     fetchChangeLog(
         client,
         `tracker/trackedEntities/${trackedEntity}/changeLogs`,
@@ -187,7 +173,7 @@ export const fetchEventChangeLog = (
     client: TimelineClient,
     { event, maxRows }: { event: string; maxRows: number },
     signal?: AbortSignal
-): Promise<Result<ChangeLogResult, Error>> =>
+) =>
     fetchChangeLog(
         client,
         `tracker/events/${event}/changeLogs`,
@@ -200,7 +186,7 @@ export const fetchProgramTimelineMetadata = (
     client: TimelineClient,
     { program }: { program: string },
     signal?: AbortSignal
-): Promise<Result<ProgramTimelineMetadata, Error>> =>
+) =>
     client.query(
         {
             resource: 'programs',
@@ -216,8 +202,7 @@ export const fetchOrgUnitNames = async (
     client: TimelineClient,
     { ids }: { ids: ReadonlyArray<string> },
     signal?: AbortSignal
-): Promise<Result<OrgUnitName[], Error>> => {
-    // An empty `id:in:[]` filter is not guaranteed to match nothing.
+) => {
     if (ids.length === 0) {
         return Result.ok([])
     }

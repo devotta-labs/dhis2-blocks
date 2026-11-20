@@ -1,11 +1,12 @@
 import { groupTimeline, type GroupOptions } from './group'
 import type { TimelineEntry } from './types'
 
-const entry = (
-    id: string,
-    at: string,
-    extra: Partial<TimelineEntry> = {}
-): TimelineEntry => ({ id, at, data: null, ...extra })
+const entry = (id: string, at: string, extra: Partial<TimelineEntry> = {}) => ({
+    id,
+    at,
+    data: null,
+    ...extra,
+})
 
 const labels = { overdue: 'Overdue', undated: 'Undated', allEntries: 'All' }
 
@@ -122,7 +123,7 @@ describe('groupTimeline', () => {
 
     it('puts entries with an unreadable at in Undated at the end in input order, and warns once in development', async () => {
         vi.resetModules()
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         const { groupTimeline: build } = await import('./group')
         const entries = [
             entry('x', 'nope'),

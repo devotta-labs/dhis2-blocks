@@ -11,9 +11,10 @@ interface ResponseFixture {
 export const serveDhis2 = async (
     respond: (request: URL, index: number) => ResponseFixture | undefined
 ) => {
-    let index = 0
+    const requests: URL[] = []
     const { engine } = await openDhis2TestServer((request) => {
-        const reply = respond(request, index++)
+        const reply = respond(request, requests.length)
+        requests.push(request)
         if (!reply) {
             return undefined
         }
@@ -26,5 +27,9 @@ export const serveDhis2 = async (
         })
     })
     const readEngine: DataEngineLike = engine
-    return { engine: readEngine, query: vi.spyOn(readEngine, 'query') }
+    return {
+        engine: readEngine,
+        query: vi.spyOn(readEngine, 'query'),
+        requests,
+    }
 }

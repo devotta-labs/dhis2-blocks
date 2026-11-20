@@ -1,9 +1,8 @@
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { AppNavigation } from './sidebar.fixtures'
+import { AppNavigation } from './sidebar.fixture'
 
-// Forced colours drop the accent fill, so the current page needs another mark.
 describe('sidebar in forced colours', () => {
     beforeEach(async () => {
         await page.viewport(1280, 720)

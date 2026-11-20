@@ -4,6 +4,7 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema'
 
 const ADDRESS_PREFIX = 'devotta-labs/dhis2-blocks/'
 
+/** Rewrites GitHub dependency references to the item files built from this checkout. */
 export const prepareLocalRegistry = (directory: string) => {
     const catalog = registrySchema.parse(
         JSON.parse(readFileSync(join(directory, 'registry.json'), 'utf8'))
@@ -20,7 +21,6 @@ export const prepareLocalRegistry = (directory: string) => {
             JSON.parse(readFileSync(path, 'utf8'))
         )
 
-        // GitHub dependency refs are not inherited: test this checkout, not main.
         item.registryDependencies = item.registryDependencies?.map(
             (dependency) => {
                 if (!dependency.startsWith(ADDRESS_PREFIX)) return dependency

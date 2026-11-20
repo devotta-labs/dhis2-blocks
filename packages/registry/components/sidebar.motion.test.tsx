@@ -1,9 +1,8 @@
 import React from 'react'
 import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { AppNavigation } from './sidebar.fixtures'
+import { AppNavigation } from './sidebar.fixture'
 
-// Runs with the system asking for reduced motion (the browser-motion project).
 test('the sidebar collapses without sliding for reduced motion', async () => {
     await page.viewport(1280, 720)
     await render(<AppNavigation />)

@@ -3,12 +3,10 @@ import * as React from 'react'
 import { cn } from './cn'
 
 /** shadcn Textarea restyled to match @dhis2/ui TextArea. Inside a `Field`, it takes the field's label, description, error and `invalid`. */
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const Textarea = React.forwardRef<
     HTMLTextAreaElement,
     React.ComponentPropsWithoutRef<'textarea'>
 >(({ className, id, name, value, defaultValue, disabled, ...props }, ref) => (
-    // Field.Control types its props for an input, so the textarea's own props go on the element.
     <FieldPrimitive.Control
         id={id}
         name={name}

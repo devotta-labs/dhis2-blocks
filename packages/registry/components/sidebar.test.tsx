@@ -1,7 +1,7 @@
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { AppNavigation, ControlledNavigation } from './sidebar.fixtures'
+import { AppNavigation, ControlledNavigation } from './sidebar.fixture'
 import { roleColour } from '../test/roleColour'
 
 const sidebar = () => {
@@ -11,7 +11,6 @@ const sidebar = () => {
     }
     return element
 }
-// The rail carries the same name for the mouse; the trigger is the control.
 const trigger = () =>
     page
         .getByRole('button', { name: 'Toggle sidebar' })
@@ -180,7 +179,6 @@ describe('sidebar', () => {
         await trigger().click()
         const sheet = page.getByRole('dialog', { name: 'Navigation' })
 
-        // Stop the new tab itself; the sheet still sees the click.
         const stay = (event: Event) => event.preventDefault()
         window.addEventListener('click', stay, { capture: true })
         sheet

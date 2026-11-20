@@ -41,7 +41,6 @@ const buttonVariants = cva(
     }
 )
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const Button = React.forwardRef<
     HTMLButtonElement,
     ButtonPrimitive.Props & VariantProps<typeof buttonVariants>

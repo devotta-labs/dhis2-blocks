@@ -3,7 +3,6 @@ import * as React from 'react'
 import { cn } from './cn'
 
 /** shadcn Input (Base UI) restyled to match @dhis2/ui Input. */
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const Input = React.forwardRef<
     HTMLInputElement,
     React.ComponentPropsWithoutRef<'input'>

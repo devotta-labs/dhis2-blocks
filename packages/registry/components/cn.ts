@@ -1,8 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { extendTailwindMerge } from 'tailwind-merge'
 
-// tailwind-merge only knows Tailwind's own radius and shadow scales; teach it
-// the DHIS2 tokens from theme.css so a caller's rounded-*/shadow-* still wins.
 const twMerge = extendTailwindMerge({
     extend: {
         theme: {
@@ -12,4 +10,5 @@ const twMerge = extendTailwindMerge({
     },
 })
 
+/** Merges Tailwind classes, including DHIS2 radius and shadow tokens, so later classes in each group win. */
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs))

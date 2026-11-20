@@ -1,4 +1,4 @@
-import { text } from 'node:stream/consumers'
+import { buffer } from 'node:stream/consumers'
 import type { Download, Page } from 'playwright'
 import type { BrowserCommandContext } from 'vitest/node'
 
@@ -35,7 +35,9 @@ export const downloadCommands = {
         try {
             return {
                 filename: download.suggestedFilename(),
-                contents: await text(await download.createReadStream()),
+                contents: (
+                    await buffer(await download.createReadStream())
+                ).toString('utf8'),
             }
         } finally {
             await download.delete()

@@ -4,10 +4,10 @@ import type { Plugin } from 'vite'
 import type { CanvasSource, PropReference } from './src/playground/canvasSource'
 
 /** Resolve prop references at build time, never evaluating code in the browser. */
-export const inspectCanvas = (
+export const inspectCanvas: (
     code: string,
-    filename = 'Canvas.tsx'
-): Omit<CanvasSource, 'props'> => {
+    filename?: string
+) => Omit<CanvasSource, 'props'> = (code, filename = 'Canvas.tsx') => {
     const options = { noLib: true, noResolve: true, jsx: ts.JsxEmit.Preserve }
     const file = ts.createSourceFile(
         filename,
@@ -46,7 +46,7 @@ export const inspectCanvas = (
         }
     }
 
-    const pathOf = (node: ts.Node): string[] | undefined => {
+    const pathOf: (node: ts.Node) => string[] | undefined = (node) => {
         if (ts.isIdentifier(node)) {
             const symbol = ts.isShorthandPropertyAssignment(node.parent)
                 ? checker.getShorthandAssignmentValueSymbol(node.parent)
@@ -97,7 +97,7 @@ export const inspectCanvas = (
     return { code, references }
 }
 
-export const canvasSourcePlugin = (): Plugin => ({
+export const canvasSourcePlugin: () => Plugin = () => ({
     name: 'canvas-source',
     async resolveId(id, importer) {
         if (!id.endsWith('?canvas')) return

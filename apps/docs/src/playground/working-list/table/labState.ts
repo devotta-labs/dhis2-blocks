@@ -41,17 +41,18 @@ export type LabAction =
 
 const LIVE: Live = { programId: 'IpHINAT79UW', orgUnitId: 'y77LiPqLMoq' }
 
-/** Callbacks kept in the log. */
 const MAX_CALLBACKS = 80
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -66,7 +67,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -77,21 +81,18 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 config: action.preset.config,
                 callbacks: [],
             })
-        // Props apply in place.
         case 'changeView':
             return {
                 ...state,
                 preset: undefined,
                 config: { ...state.config, view: action.view },
             }
-        // A new network needs a fresh list.
         case 'changeNetwork':
             return restarted({
                 ...state,
                 preset: undefined,
                 config: { ...state.config, network: action.network },
             })
-        // The list is keyed by its ids, so it remounts by itself.
         case 'changeLive':
             return { ...state, live: { ...state.live, ...action.changes } }
         case 'changeWidth':

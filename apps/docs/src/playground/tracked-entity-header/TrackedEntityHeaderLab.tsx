@@ -21,7 +21,6 @@ import { SidebarCanvas } from './SidebarCanvas'
 import sidebarSource from './SidebarCanvas.tsx?canvas'
 import { OptionsControls } from './settings'
 
-/** The tracked entity header lab: the banner and a popover of the same parts, beside the requests they make. */
 const CANVASES = {
     banner: { Canvas: BannerCanvas, source: bannerSource },
     'quick-look': { Canvas: QuickLookCanvas, source: quickLookSource },
@@ -41,7 +40,6 @@ export const TrackedEntityHeaderLab = () => {
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []

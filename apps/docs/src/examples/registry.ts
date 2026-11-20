@@ -531,5 +531,6 @@ const examples = [
 
 export type ExampleSlug = (typeof examples)[number]['slug']
 
-export const getExample = (slug: string): ExampleDefinition | undefined =>
-    examples.find((example) => example.slug === slug)
+export const getExample: (slug: string) => ExampleDefinition | undefined = (
+    slug
+) => examples.find((example) => example.slug === slug)

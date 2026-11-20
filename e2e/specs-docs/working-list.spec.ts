@@ -1,12 +1,7 @@
 import { request as playwrightRequest, type Page } from '@playwright/test'
 import { z } from 'zod'
-import { expect, openLivePreview, resultRows, test } from './fixtures'
+import { expect, openLivePreview, resultRows, test } from './docs.fixture'
 
-/**
- * Live Working List preview coverage. Everything below runs against real
- * DHIS2 metadata and records through the docs app's same-origin `/dhis2`
- * proxy — no fixture handlers.
- */
 const PROGRAM = 'IpHINAT79UW'
 
 const ProgramMetadataSchema = z.object({
@@ -23,8 +18,6 @@ const ProgramMetadataSchema = z.object({
 })
 
 const getProgramMetadata = async () => {
-    // A standalone request context keeps its own cookie jar so this probe
-    // stays independent of the browser session.
     const api = await playwrightRequest.newContext({
         baseURL: process.env.DOCS_APP_URL ?? 'http://localhost:3002',
     })
@@ -103,8 +96,6 @@ test.describe('live Working List preview', () => {
     }) => {
         await page.goto('/preview/working-list/default')
 
-        // The proxy injects demo credentials upstream, so the adapter never
-        // renders its sign-in dialog and data arrives immediately.
         await expect(page.getByTestId('working-list-main')).toBeVisible({
             timeout: 30_000,
         })
@@ -133,8 +124,6 @@ test.describe('live Working List preview', () => {
         const request = await applyTextFilter(page, second, 'e')
         const url = new URL(request.url())
 
-        // Tracked-entity mode serializes attribute filters as `filter` params;
-        // `filterAttributes` is only used in event mode.
         const filters = url.searchParams.getAll('filter')
 
         expect(
@@ -194,8 +183,6 @@ test.describe('live Working List preview', () => {
 
         await openLivePreview(page, 'working-list/default')
 
-        // Selecting a program stage and applying it morphs the list to
-        // event mode, which queries /tracker/events.
         const eventRequest = trackerRequest(page, 'events', async () => {
             await page.getByTestId('more-filters-tracked-entity').click()
             await page
@@ -223,7 +210,6 @@ test.describe('live Working List preview', () => {
             timeout: 30_000,
         })
 
-        // A program-stage column can be added on top of event mode.
         await page.getByTestId('more-filters-tracked-entity').click()
         await page
             .locator(`[data-test="stage-filter-fields-${stageId}"]`)
@@ -245,9 +231,6 @@ test.describe('live Working List preview', () => {
 
         await openLivePreview(page, 'working-list/default')
 
-        // On the default (unsaved) view the Save button opens the name
-        // dialog directly; the save-as menu item only exists in the dropdown
-        // shown while a persisted view is selected.
         await page.locator('[data-test="save-working-list"]').click()
 
         const nameInput = page
@@ -261,12 +244,9 @@ test.describe('live Working List preview', () => {
         const viewButton = page.getByRole('button', { name: viewName }).first()
         await expect(viewButton).toBeVisible({ timeout: 30_000 })
 
-        // The view is persisted on the server — it survives a full reload.
         await page.reload()
         await expect(viewButton).toBeVisible({ timeout: 30_000 })
 
-        // The menu trigger sits in the same pill as the view button; it is
-        // marked data-saved-view-menu (its testid embeds the server list id).
         await viewButton.locator('..').locator('[data-saved-view-menu]').click()
 
         const deleteItem = page.locator('[data-test="delete-saved-view"]')

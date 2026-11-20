@@ -102,7 +102,6 @@ const SidebarLinks = ({
     </ul>
 )
 
-/** A category of blocks, folded away by its heading. */
 const SidebarCategory = ({
     category,
     onNavigate,

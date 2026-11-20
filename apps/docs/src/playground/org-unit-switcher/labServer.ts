@@ -22,7 +22,6 @@ const orgUnitJson = ({ id, displayName, displayShortName, path }: LabUnit) => ({
     path,
 })
 
-/** Shaped like app-runtime's HTTP failure, so the block reads the 500 and retries as it would for real. */
 const serverError = () =>
     Object.assign(new Error('Internal server error'), {
         details: { httpStatusCode: 500, message: 'Internal server error' },
@@ -40,7 +39,6 @@ export const answer =
             case 'me':
                 return {
                     id: data.userId,
-                    // `children::isNotEmpty` turns the children into a boolean.
                     organisationUnits: data.assigned.map((unit) => ({
                         ...orgUnitJson(unit),
                         children: unit.hasChildren,
@@ -65,7 +63,6 @@ export const answer =
                 }
                 {
                     if (settings.failSearch) throw serverError()
-                    // No query pages through the whole hierarchy.
                     const query = String(params.query ?? '').toLowerCase()
                     const pageSize = Number(params.pageSize ?? 50)
                     const page = Number(params.page ?? 1)

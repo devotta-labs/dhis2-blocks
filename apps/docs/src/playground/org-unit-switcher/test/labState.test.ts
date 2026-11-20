@@ -63,7 +63,6 @@ describe('the organisation unit switcher lab state', () => {
         expect(state.seeding).not.toBe(withRequest.seeding)
     })
 
-    // The lab writes the seed whenever `seeding` is replaced; anything else replacing it wipes storage before the block reads.
     it.each([
         ['storage is edited by hand', { type: 'editStorage' }],
         [
@@ -260,7 +259,6 @@ describe('the organisation unit switcher lab state', () => {
         )
         const folded = PRESETS.filter(({ folded }) => folded)
         expect(folded).toHaveLength(8)
-        // PresetControls already heads them Edge cases.
         expect(folded.some(({ group }) => group === 'Edge cases')).toBe(false)
     })
 
@@ -275,7 +273,6 @@ describe('the organisation unit switcher lab state', () => {
                     (id) => !data.units.some((unit) => unit.id === id)
                 )
             ).toEqual([])
-            // The host's value names a unit of the data.
             const value = valueFor(preset.settings, data)
             if (value !== undefined) {
                 expect(data.units.some((unit) => unit.id === value)).toBe(true)

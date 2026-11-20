@@ -42,7 +42,7 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    `usePresetParam` keeps the chosen one in the URL (`?preset=`), so a link
    opens the same case.
 5. Keep the lab's state in its own reducer, `labState.ts`, tested in
-   `__tests__/labState.test.ts`: the mode, preset, settings, live ids, run
+   `test/labState.test.ts`: the mode, preset, settings, live ids, run
    count and logs, and which changes restart the block. The lab component only
    dispatches, so nothing about the state needs a browser to test. A reload
    opens on the URL's preset or the first; nothing else is kept.
@@ -52,7 +52,7 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    Use the same props object for inspection and for the rendered composition so
    they stay in sync.
 
-Tests live in a `__tests__/` folder beside the code they test. Vitest already
+Tests live in a `test/` folder beside the code they test. Vitest already
 runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
 
 ## Shared parts
@@ -75,7 +75,7 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
   version. Blocks parse responses at their boundary, so a wrong shape shows up
   as the block's own error, which is worth seeing too.
 - Keep the server a plain function of the lab's settings and the request, in
-  its own file, so it can have a Vitest test (`<block>/__tests__/labServer.test.ts`).
+  its own file, so it can have a Vitest test (`<block>/test/labServer.test.ts`).
 - Generate data from settings (counts, spread, bad values, dates around
   today) rather than writing fixtures, and keep named presets of those
   settings for the cases worth showing; each lab's `labData.ts` and

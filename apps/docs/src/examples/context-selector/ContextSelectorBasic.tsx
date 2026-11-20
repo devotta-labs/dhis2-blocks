@@ -7,12 +7,6 @@ import {
 } from '@/components/context-selector'
 import { useState } from 'react'
 
-/**
- * Registration context with sample data.
- *
- * Your app owns every option, selected value, and open menu. Replace the
- * sample programs and organisation units with data from your DHIS2 instance.
- */
 const programOptions: readonly Option[] = [
     { value: 'malaria', label: 'Malaria case registration' },
     { value: 'tuberculosis', label: 'Tuberculosis program' },
@@ -90,4 +84,10 @@ const ContextSelectorBasic = () => {
     )
 }
 
+/**
+ * Registration context with sample data.
+ *
+ * Your app owns every option, selected value, and open menu. Replace the
+ * sample programs and organisation units with data from your DHIS2 instance.
+ */
 export default ContextSelectorBasic

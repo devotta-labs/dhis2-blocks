@@ -12,7 +12,6 @@ import { answer, type LabRequest, type Payload } from '../labServer'
 const server = (example: Example, changes = {}) =>
     answer({ example, rules: true, refuse: false, ...changes })
 
-/** What app-runtime returns for a query: each resource's answer under its name. */
 const query = (
     respond: ReturnType<typeof server>,
     requests: Record<string, LabRequest>
@@ -34,7 +33,6 @@ const events = (
         })
         .parse(respond({ resource: 'tracker/events', params })).events
 
-// The block's report schema sits beside code that needs a browser; this is the part of it the block reads.
 const importReportSchema = z.object({
     status: z.string(),
     validationReport: z.object({
@@ -100,7 +98,6 @@ describe('the tracker data entry lab server', () => {
             systemInfo: { resource: 'system/info' },
         })
         expect(() => registerProgramSchema.parse(answer.program)).not.toThrow()
-        // The register's own schema is beside its loader, which needs a browser; its enrolment part, as it reads it.
         const { enrollments } = z
             .object({
                 enrollments: z.array(

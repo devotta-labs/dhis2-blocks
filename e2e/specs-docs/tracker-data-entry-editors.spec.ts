@@ -23,12 +23,6 @@ import {
     valuesOf,
 } from './tracker-data-entry.support'
 
-/**
- * The pop-up editors and paging against the docs DHIS2 (Sierra Leone demo),
- * whose data is shared: see `data-entry.support.ts`. The people these tests
- * enter data for are created for the test and deleted after it; a change to
- * an existing event is only validated (`importMode=VALIDATE`).
- */
 const EVENT_PROGRAM = 'tracker-data-entry/event-program'
 const REGISTER = 'tracker-data-entry/tracker-register'
 const PERSON = 'tracker-data-entry/person-events'
@@ -60,18 +54,12 @@ const WORKING_LIST_E2E = {
 const WORKING_LIST_E2E_STAGE = 'WlE2eStg001'
 const MULTI_SELECT = 'WlDeMult001'
 
-/** The editor dialog, named by its column (and row). */
 const editor = (page: Page, column: string) =>
     page.getByRole('dialog', { name: new RegExp(`^Edit ${column}\\b`) })
 
-/** What the grid's live region says. */
 const announced = (page: Page, text: string | RegExp) =>
     expect(page.getByRole('status').filter({ hasText: text })).toHaveCount(1)
 
-/**
- * The one-person example for another person: its ids are replaced in its code as it loads, as a reader replaces them
- * in their copy.
- */
 const openPerson = async (
     page: Page,
     person: { program: string; orgUnit: string; enrollment: string },
@@ -85,7 +73,6 @@ const openPerson = async (
         ['edqlbukwRfQ', stage],
     ]
     const replaced = new Set<string>()
-    // The production build's `[name]-[hash].js` chunk: the docs e2e serves `pnpm preview`.
     await page.route('**/assets/PersonEventsGrid-*.js', async (route) => {
         const response = await route.fetch()
         let code = await response.text()
@@ -102,7 +89,6 @@ const openPerson = async (
     expect([...replaced]).toEqual(ids.map(([from]) => from))
 }
 
-/** The fields an inpatient event is sent with, so a new one leaves the device. */
 const fillRequired = async (page: Page, rowId: string, date: string) => {
     await enter(page, cell(page, rowId, EVENT_DATE), date)
     await enter(page, cell(page, rowId, ADMISSION), addDays(date, -7))
@@ -126,7 +112,6 @@ test('every value type: each editor opens by its name, passes axe and closes wit
     await formReady(page)
     await expectNoAxeViolations(page)
 
-    // File and image are empty here, and nothing is uploaded. Org unit and username search in the cell: no editor.
     for (const [column, name] of [
         ['longText', 'Long text'],
         ['symptoms', 'Multi-select'],
@@ -140,7 +125,6 @@ test('every value type: each editor opens by its name, passes axe and closes wit
         await page.keyboard.press('Enter')
         const dialog = editor(page, name)
         await expect(dialog).toBeVisible()
-        // Focus moves into the editor.
         await expect
             .poll(() =>
                 dialog.evaluate((box) => box.contains(document.activeElement))
@@ -168,11 +152,9 @@ test('inpatient: an org unit and a coordinate picked in their editors save', asy
 }) => {
     const date = await nextInpatientDate(request)
     await openGrid(page, EVENT_PROGRAM)
-    // Before the event date, so nothing is sent, and announced, while the editors are open.
     const rowId = await addRow(page)
     shared.adds(rowId)
 
-    // Typing in the cell searches and lists the matches under it.
     const place = cell(page, rowId, PLACE_OF_INFECTION)
     await place.click()
     await page.keyboard.type('Ngelehun')
@@ -215,7 +197,6 @@ test('inpatient: a file chosen for Documentation uploads and the cell shows its 
     shared,
 }, testInfo) => {
     await openGrid(page, EVENT_PROGRAM)
-    // Without an event date the new event stays on the device: only the upload reaches DHIS2.
     const rowId = await addRow(page)
     shared.adds(rowId)
     const documentation = cell(page, rowId, DOCUMENTATION)
@@ -241,7 +222,6 @@ test('inpatient: a file chosen for Documentation uploads and the cell shows its 
             response: z.object({ fileResource: z.object({ id: z.string() }) }),
         })
         .parse(await answer.json()).response.fileResource
-    // DHIS2 has no delete for a file resource; one no event holds is removed by its own clean-up.
     console.log(
         `[shared DHIS2] ${testInfo.title}: file resource ${id} uploaded, held by no event`
     )
@@ -269,7 +249,6 @@ test('one child: a long text Apgar comment saves with its line break', async ({
 
     const comment = cell(page, rowId, APGAR_COMMENT)
     await comment.click()
-    // The first key typed opens the editor and is its first character.
     await page.keyboard.type('A')
     const dialog = editor(page, 'Apgar comment')
     await expect(dialog).toBeVisible()
@@ -296,14 +275,12 @@ test('working list E2E program: a multi-select saves its codes in the option set
     shared,
 }) => {
     const person = await shared.newPerson(WORKING_LIST_E2E)
-    // The program has no rules.
     await openPerson(
         page,
         { ...WORKING_LIST_E2E, enrollment: person.enrollment },
         WORKING_LIST_E2E_STAGE,
         formReady
     )
-    // Before the event date, so nothing is sent, and announced, while the editor is open.
     const rowId = await addRow(page)
     shared.adds(rowId)
 
@@ -311,7 +288,6 @@ test('working list E2E program: a multi-select saves its codes in the option set
     await choices.focus()
     await page.keyboard.press('Enter')
     const dialog = editor(page, 'E2E multi-text data element')
-    // Chosen in reverse, saved in the option set's order.
     await dialog.getByRole('checkbox', { name: 'Beta' }).click()
     await dialog.getByRole('checkbox', { name: 'Alpha' }).click()
     await announced(page, 'Selected options: Alpha, Beta')
@@ -343,7 +319,6 @@ test('register: "Show more events" appends 50 rows, and a value typed on page 2 
     await expect(more).toBeFocused()
     await announced(page, 'Events shown: 100')
 
-    // The first row of page 2 that takes a value, among those drawn once the table scrolls to its end.
     await page
         .locator('tbody')
         .first()
@@ -379,7 +354,6 @@ test('register: "Show more events" appends 50 rows, and a value typed on page 2 
     shared.keep([before])
     const value = valuesOf(before).get(DIASTOLIC) === '85' ? '86' : '85'
 
-    // Validated, not written: DHIS2 checks the import as it would save it, and the shared event stays as it is.
     await page.route(
         (url) => TRACKER_IMPORT.test(url.pathname),
         (route) => {

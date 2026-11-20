@@ -71,7 +71,6 @@ export const SidebarControls = ({
         <SelectRow
             label="Value"
             value={settings.value}
-            // A live instance has none of the lab's clinics to hold.
             options={VALUE_OPTIONS.filter(
                 ([value]) => !live || value !== 'valid'
             )}
@@ -97,7 +96,6 @@ export const SidebarControls = ({
     </Section>
 )
 
-/** Each uid in a stored value with its clinic's name, so it reads without looking them up. */
 const namesIn = (raw: string, data: LabData) =>
     [...new Set(raw.match(/\b[A-Za-z][A-Za-z0-9]{10}\b/g) ?? [])]
         .map(
@@ -111,7 +109,6 @@ const StoredValue = ({
     data,
 }: {
     stored: ReturnType<typeof useStored>
-    /** The lab's clinics, to name each stored id. */
     data: LabData
 }) => {
     if (stored === UNAVAILABLE) {
@@ -155,7 +152,6 @@ export const RememberedControls = ({
         onEdit()
     }
     if (!data) {
-        // The lab does not know who is signed in to a live instance, so it shows nobody's stored value.
         return (
             <Section title="Remembered">
                 <p className="m-0 text-xs text-muted-foreground">

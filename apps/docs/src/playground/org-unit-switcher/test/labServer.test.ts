@@ -14,7 +14,7 @@ import {
 import { answer } from '../labServer'
 import { DEFAULT_SETTINGS } from '../presets'
 
-const settings = (changes: Partial<LabSettings> = {}): LabSettings => ({
+const settings = (changes: Partial<LabSettings> = {}) => ({
     ...DEFAULT_SETTINGS,
     ...changes,
 })
@@ -119,7 +119,6 @@ describe('the organisation unit switcher lab server', () => {
     })
 
     it('drops an id outside the assigned subtrees, or that no unit has, from the validity check', () => {
-        // The second district exists but is not assigned.
         const ids = [flatOrgUnitId(1), districtOrgUnitId(2, 1), 'labGone0001']
         expect(
             byId(ids, { orgUnitsPerDistrict: 5 }).map(({ id }) => id)
@@ -140,7 +139,6 @@ describe('the organisation unit switcher lab server', () => {
     })
 
     it('fails the search alone, or the validity check alone, with a 500', () => {
-        // The message the network shows: the 500 for a failure, nothing for an answer.
         const outcome = (run: () => object) => {
             try {
                 run()

@@ -38,7 +38,7 @@ const preset = (
         canvas = 'banner',
         folded = false,
     }: Partial<Pick<Preset, 'canvas' | 'folded'>> = {}
-): Preset => ({
+) => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },
@@ -50,7 +50,7 @@ const edge = (
     group: string,
     name: string,
     changes: Partial<LabSettings> = {}
-): Preset => preset(group, name, changes, { folded: true })
+) => preset(group, name, changes, { folded: true })
 
 /**
  * A few examples of what the block is for, then the edge cases, folded.

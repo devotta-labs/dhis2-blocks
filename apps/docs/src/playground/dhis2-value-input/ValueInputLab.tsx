@@ -29,7 +29,6 @@ const MESSAGES = {
     warning: [{ tone: 'warning', text: 'This is unusual for this patient' }],
 } as const
 
-// One empty list, so the fields' hidden options keep their identity across renders.
 const NONE_HIDDEN: string[] = []
 
 /** The value input lab: a field of every DHIS2 value type, and every value each one reports. */
@@ -46,7 +45,6 @@ export const ValueInputLab = () => {
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []
@@ -57,7 +55,6 @@ export const ValueInputLab = () => {
         []
     )
 
-    // What this run uploads, so its names are known until the next.
     const uploads = useMemo(() => new Map<string, string>(), [run])
     const respond = useMemo(() => answer(uploads), [uploads])
     const canvasProps = {
@@ -107,7 +104,7 @@ export const ValueInputLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    {/* The fields need no ids, so the examples open on live DHIS2 too. */}
+                    {}
                     <PresetControls
                         presets={PRESETS}
                         selected={state.preset}

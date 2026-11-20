@@ -4,7 +4,6 @@ import type { CanvasSource } from './canvasSource'
 import { LabPicker } from './labPicker'
 import './lab.css'
 
-/** A card's heading row, as the docs' example cards have. */
 const cardHeader =
     'm-0 flex h-10 shrink-0 items-center gap-2 border-b border-border px-3 text-sm font-medium text-foreground'
 

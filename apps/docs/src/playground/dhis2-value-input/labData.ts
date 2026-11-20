@@ -25,8 +25,7 @@ export interface LabField {
     field: Field
 }
 
-/** One field of a value type, labelled with it so a tester knows which type it is. */
-const typed = (valueType: string, name: string): LabField => ({
+const typed = (valueType: string, name: string) => ({
     id: valueType,
     label: `${name} (${valueType})`,
     field: { valueType },
@@ -37,13 +36,13 @@ const optionSet = (
     valueType: string,
     name: string,
     options: Option[]
-): LabField => ({
+) => ({
     id,
     label: `${name} (${valueType}, ${options.length} options)`,
     field: { valueType, options },
 })
 
-const options = (names: Record<string, string>): Option[] =>
+const options = (names: Record<string, string>) =>
     Object.entries(names).map(([code, name]) => ({ code, name }))
 
 /** Every DHIS2 value type, and an option set of each size, grouped by how they edit. */
@@ -191,7 +190,6 @@ export const USERS = [
     { username: 'mariama.bangura', displayName: 'Mariama Bangura' },
 ]
 
-// A file the docs serve, so "Download" and an image's preview (`?dimension=MEDIUM`) load.
 const SYMBOL = `${import.meta.env.BASE_URL}dhis2-symbol.svg`
 
 /** The stored files' links, by file resource id. */

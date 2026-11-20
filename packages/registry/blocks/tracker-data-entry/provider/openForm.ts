@@ -28,6 +28,7 @@ import type {
 } from '../sources/types'
 import { addRow } from './addRow'
 import { afterPaint } from './afterPaint'
+import { respondToVisibility } from './pageVisibility'
 import { appendPage, withPage } from './appendPage'
 import { completionChecks, refusalOf, showStatus } from './completion'
 import type { TrackerEffectsState } from '../logic/effects'
@@ -85,7 +86,6 @@ interface OpenFormOptions {
     onSignedInAsOther(): void
 }
 
-// Long enough that a burst of edits is announced once, after the last of them is saved.
 const SETTLE_MS = 500
 
 /**
@@ -93,7 +93,9 @@ const SETTLE_MS = 500
  * and starts the sync loop. Every change the store queues is written to the outbox, then sent, with the changes made
  * in the program's other grids.
  */
-export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
+export const openForm: (options: OpenFormOptions) => Promise<OpenForm> = async (
+    options
+) => {
     const outbox = await openOutbox(options.serverUrl, options.userId)
     try {
         const unsent = await outbox.list(options.source.key)
@@ -109,7 +111,7 @@ export const openForm = async (options: OpenFormOptions): Promise<OpenForm> => {
     }
 }
 
-const connect = (
+const connect: (
     outbox: Outbox,
     unsent: ReadonlyArray<OutboxRecord>,
     restored: Awaited<ReturnType<TrackerDataEntrySource['restoreRows']>>,
@@ -124,9 +126,23 @@ const connect = (
         announce,
         onSignedInAsOther,
     }: OpenFormOptions
-): OpenForm => {
+) => OpenForm = (
+    outbox,
+    unsent,
+    restored,
+    {
+        source,
+        form,
+        engine,
+        settings,
+        serverUrl,
+        userId,
+        view,
+        announce,
+        onSignedInAsOther,
+    }
+) => {
     let closed = false
-    // What statuses saved here have changed since the form loaded.
     const readOnlyRecords = new Map([
         ...form.readOnlyRecords,
         ...(restored.readOnlyRecords ?? []),
@@ -158,7 +174,6 @@ const connect = (
         rowNotes: new Map(form.rowNotes),
     }))
 
-    // Each cell's changes get strictly later times, so an outcome for one never removes the next from the outbox.
     const lastAt = new Map(unsent.map(({ key, at }) => [key, at]))
     let batch: PendingChange[] = []
     let cancelFlush: (() => void) | undefined
@@ -197,20 +212,16 @@ const connect = (
                 at,
                 record: tables.getState().records.get(recordIdOf(key)),
             })
-            // Every cell changed until the next paint goes to the outbox in one write, after the rules that change
-            // asks for: they were asked first, so what they commit joins the person's change in one save.
             if (batch.length === 1) {
                 cancelFlush = afterPaint(flush)
             }
         },
         annotations: effects,
-        // Read-only records stay as DHIS2 has them, whatever path a change comes by.
         locked: (key) => readOnlyRecords.has(recordIdOf(key)),
     })
     store.getState().restore(
         unsent
             .filter(({ key }) => inForm(key))
-            // DHIS2 holds what was just loaded, whatever it held when the change was made.
             .map((record) => ({
                 ...record,
                 base: form.values.get(record.key) ?? null,
@@ -218,9 +229,6 @@ const connect = (
             }))
     )
 
-    // Changes of the source no cell of the form holds (made in the program's other grids, or for people on pages not
-    // loaded yet) that could not be saved, or wait: counted here, so none is stuck where no grid shows it. The failed
-    // ones are downloaded and discarded here too.
     const elsewhere = (held: ReadonlyArray<OutboxRecord>) => {
         const there = held.filter(({ key }) => !inForm(key))
         return {
@@ -237,11 +245,9 @@ const connect = (
                     summarize()
                 }
             },
-            // Closed meanwhile: there is no one to tell.
             () => {}
         )
 
-    // Whether this form heard of its own outcomes since it last said so.
     let applied = false
     const apply = (outcomes: ReadonlyArray<SyncOutcome>) => {
         const groups = new Map<
@@ -251,7 +257,6 @@ const connect = (
         const later: SyncOutcome[] = []
         for (const outcome of outcomes) {
             const last = lastAt.get(outcome.key) ?? 0
-            // A refusal of an older change says nothing of the newer one in its cell.
             if (
                 outcome.sourceKey !== source.key ||
                 (outcome.result !== 'saved' && outcome.at < last)
@@ -259,7 +264,6 @@ const connect = (
                 continue
             }
             applied = true
-            // Another tab changed the cell later: its value, and what became of it, replace this tab's.
             if (outcome.at > last && inForm(outcome.key)) {
                 lastAt.set(outcome.key, outcome.at)
                 later.push(outcome)
@@ -296,7 +300,6 @@ const connect = (
 
     let settling: ReturnType<typeof setTimeout> | undefined
     let previous: SyncStatus | undefined
-    // The last state a pass ended in; each paused pass goes through `sending`, and the pause is said once.
     let ended: SyncStatus | undefined
     const onStatus = (status: SyncStatus) => {
         view.setState({ sync: status })
@@ -307,7 +310,6 @@ const connect = (
         if (status !== 'sending') {
             ended = status
         }
-        // Outcomes, never progress: said once sending stops and nothing follows for a moment.
         if (status === 'idle' && previous === 'sending') {
             settling = setTimeout(() => {
                 if (!applied) {
@@ -324,14 +326,12 @@ const connect = (
                         })
                     )
                 } else if (left === 0) {
-                    // Changes from the program's other grids are sent from here too: all are saved once none is left.
                     outbox.list(source.key).then(
                         (held) => {
                             if (held.length === 0 && !closed) {
                                 announce(i18n.t('All changes saved'))
                             }
                         },
-                        // Closed meanwhile: there is no one to tell.
                         () => {}
                     )
                 }
@@ -344,7 +344,6 @@ const connect = (
     const summarize = () => {
         cancelSummary?.()
         cancelSummary = undefined
-        // Closed, the view is another's: the locked form's, or the next form's.
         if (closed) {
             return
         }
@@ -357,8 +356,6 @@ const connect = (
             },
         })
     }
-    // The stores' changes until the next paint are summed up once, after it; what reads the summary first sums up what
-    // waits.
     const summarizeLater = () => {
         cancelSummary ??= afterPaint(summarize)
     }
@@ -372,12 +369,9 @@ const connect = (
         recordId: string,
         status: 'COMPLETED' | 'ACTIVE'
     ) => {
-        // Under the sync lock, so no tab's save sends a status read before this one. `complete` waits for the record's
-        // sends before it gets here, outside the lock, so nothing under it waits on the loop: no deadlock.
         const outcomes = await sync
             .exclusive(() => source.setStatus(engine, recordId, status, form))
             .catch((error: Error) => {
-                // The loop stopped while this waited for the lock: someone else signed in.
                 if (closed || error.name !== 'AbortError') {
                     throw error
                 }
@@ -394,7 +388,6 @@ const connect = (
         return outcomes
     }
 
-    // Someone else signed in: nothing more is sent from here, and the provider locks the form.
     const { signedIn, notNow } = userCheck(engine, userId, () => {
         sync.stop()
         onSignedInAsOther()
@@ -419,13 +412,10 @@ const connect = (
         watchSlotOrder({ store, effects, tables }, form.slots ?? []),
     ]
 
-    // Created last, once nothing before can throw: the channel and the loop outlive this call.
-    // Another tab's loop may send this tab's changes; it says what became of them here.
     const name = outboxName(serverUrl, userId)
     const channel = new BroadcastChannel(name)
     channel.onmessage = ({ data }) => {
         const parsed = outcomesMessageSchema.safeParse(data)
-        // Closed, the form only posts: what other tabs say is not put on its store.
         if (parsed.success && !closed) {
             apply(parsed.data.outcomes)
         }
@@ -433,11 +423,9 @@ const connect = (
     const sync = startSync({
         outbox,
         save: async (sourceKey, records) => {
-            // Another form's changes stay in the outbox until that form is open.
             if (sourceKey !== source.key) {
                 return []
             }
-            // Sent only as the user who made them: signed out, the loop pauses as for a lapsed session.
             const who = await signedIn()
             if (who === 'lapsed') {
                 throw new FetchError({
@@ -449,7 +437,6 @@ const connect = (
             return who === 'here' ? source.save(engine, records, form) : []
         },
         onOutcomes(outcomes) {
-            // Closed during the round: the other tabs still hear what it saved.
             if (!closed) {
                 apply(outcomes)
             }
@@ -459,21 +446,14 @@ const connect = (
         lockName: `dhis2-data-entry-sync:${name}`,
     })
 
-    // A hidden or closing page may never paint again: what waits for a paint is stored at once.
     const onPageHide = () => flush()
-    // A pause for signing in ends when the person comes back: they may have signed in again elsewhere.
     const onFocus = () => {
         if (view.getState().sync === 'signIn') {
             sync.nudge()
         }
     }
-    const onVisibility = () => {
-        if (document.visibilityState === 'hidden') {
-            flush()
-        } else {
-            onFocus()
-        }
-    }
+    const onVisibility = () =>
+        respondToVisibility(document.visibilityState, flush, onFocus)
     window.addEventListener('pagehide', onPageHide)
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onVisibility)
@@ -493,7 +473,6 @@ const connect = (
             }
         },
         async complete(recordId) {
-            // Only an event completes.
             const locked =
                 tables.getState().records.get(recordId)?.kind === 'event'
                     ? readOnlyRecords.get(recordId)
@@ -515,7 +494,6 @@ const connect = (
             if (now.length > 0) {
                 return now
             }
-            // The record's changes go first, so DHIS2 completes what the person sees.
             flush()
             sync.nudge()
             const stopped = await sentFrom(recordId)
@@ -526,7 +504,6 @@ const connect = (
             if (later.length > 0) {
                 return later
             }
-            // Asked again: someone else may have signed in while the record's changes were on their way.
             const notAnyMore = await notNow()
             return notAnyMore === undefined
                 ? setStatus(recordId, 'COMPLETED')
@@ -551,16 +528,13 @@ const connect = (
                 outbox.list(source.key)
             )
             form = withPage(form, page)
-            // Changes counted as another grid's may be this form's now.
             if (!closed) {
                 there = elsewhere(held)
                 summarize()
             }
         },
         downloadUnsent() {
-            // A change made since the last paint is stored first, so the file has it.
             flush()
-            // A closed outbox still leaves the failed changes only this page holds.
             void outbox
                 .list(source.key)
                 .catch(() => [])
@@ -579,7 +553,6 @@ const connect = (
             await countElsewhere()
         },
         close() {
-            // A change made since the last paint still reaches the outbox before it closes.
             flush()
             closed = true
             clearTimeout(settling)
@@ -589,7 +562,6 @@ const connect = (
             window.removeEventListener('focus', onFocus)
             document.removeEventListener('visibilitychange', onVisibility)
             unsubscribes.forEach((unsubscribe) => unsubscribe())
-            // A round in flight still settles its outcomes in the outbox and posts them first.
             void sync.stop().finally(() => {
                 channel.close()
                 outbox.close()

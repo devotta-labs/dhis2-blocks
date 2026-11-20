@@ -10,7 +10,7 @@ import type { FormTables, OpenForm } from './openForm'
 import { signedInAsOther } from './signedIn'
 
 /** What the provider shows until a form is open: no tables, no cells, nothing to do. */
-export const emptyForm = (): OpenForm => {
+export const emptyForm: () => OpenForm = () => {
     const effects = createStore<TrackerEffectsState>()(() => ({
         cells: {},
         rowMessages: new Map(),
@@ -46,15 +46,16 @@ export const emptyForm = (): OpenForm => {
  * What the provider shows once someone else has signed in: the form as DHIS2 had it when loaded, without this user's
  * unsent changes, every cell read-only with the reason, which the summary says too. Nothing is written or sent.
  */
-export const lockedForm = (
+export const lockedForm: (
     form: LoadedForm,
     settings: ValueSettings,
     sourceKey: string
-): OpenForm => {
+) => OpenForm = (form, settings, sourceKey) => {
     const reason = signedInAsOther()
-    // Every record the form holds, a slot's too: its cells are read-only as well.
     const readOnlyRecords = new Map(
-        [...form.records.keys()].map((id): [string, string] => [id, reason])
+        [...form.records.keys()].map(
+            (id) => [id, reason] satisfies [string, string]
+        )
     )
     const refuse = async (recordId: string) => [
         refusalOf(sourceKey, cellKey(recordId, 'status'), reason),

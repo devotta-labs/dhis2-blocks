@@ -1,8 +1,7 @@
 import type { StoreApi } from 'zustand/vanilla'
 import { cellKey } from '@/components/spreadsheet'
-import type { SyncState, CellStoreState } from '@/components/spreadsheet'
+import type { CellStoreState } from '@/components/spreadsheet'
 import { fieldIdOfKey, recordIdOf } from '../model/types'
-import type { PendingChange } from '../model/types'
 import type { Outbox } from '../outbox/outbox'
 
 /**
@@ -30,7 +29,6 @@ export const discardFailed = async (
     )
     const keys = new Set(failed.map(({ key }) => key))
     const held = await outbox.list(sourceKey)
-    // By `at`: a change entered again meanwhile stays.
     await outbox.remove(held.filter(({ state }) => state === 'failed'))
     const kept = new Map(
         held
@@ -39,9 +37,8 @@ export const discardFailed = async (
     )
     store.getState().restore(
         failed
-            // A cell entered again meanwhile keeps its new change.
             .filter(({ key }) => store.getState().cells[key]?.sync === 'failed')
-            .map(({ key, base }): PendingChange & { sync: SyncState } => {
+            .map(({ key, base }) => {
                 const record = kept.get(key)
                 return record === undefined
                     ? { sourceKey, key, value: base, base, at: 0, sync: 'idle' }

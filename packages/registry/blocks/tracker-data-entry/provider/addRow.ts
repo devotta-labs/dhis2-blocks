@@ -8,10 +8,9 @@ import type {
 import type { Growing } from './appendPage'
 import { formEffects, newEventRow, withRows } from './formRows'
 
-/** A new event of the form's new-row stage, when it has one. */
-const eventRow = (
+const eventRow: (
     target: NonNullable<LoadedForm['newRows']>
-): NewRow | undefined => {
+) => NewRow | undefined = (target) => {
     if (target.programStageId === undefined) {
         return undefined
     }
@@ -43,7 +42,6 @@ export const addRow = (
     for (const record of made.records) {
         known.set(record.id, record)
     }
-    // Before its cells' effects and the store's lock read them.
     for (const [id, reason] of made.readOnlyRecords ?? []) {
         readOnlyRecords.set(id, reason)
     }
@@ -68,7 +66,6 @@ export const addRow = (
         ),
         records: known,
     }))
-    // Once its records are known: each change keeps the record it saves to.
     store.getState().commitMany(
         [...made.values].map(([key, value]) => {
             const field = store.getState().fieldOf(key)

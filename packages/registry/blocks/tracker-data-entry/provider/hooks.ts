@@ -68,7 +68,7 @@ export const TrackerReactContext = createContext<TrackerContext | undefined>(
     undefined
 )
 
-export const useTrackerContext = (): TrackerContext => {
+export const useTrackerContext: () => TrackerContext = () => {
     const context = useContext(TrackerReactContext)
     if (context === undefined) {
         throw new Error(
@@ -85,7 +85,6 @@ export const useTrackerContext = (): TrackerContext => {
 export const reasonOf = (error: Error | null) => {
     const body =
         error instanceof FetchError ? bodySchema.parse(error.details) : {}
-    // A DHIS2 body has a status code; a network error's details are the browser's own error.
     return (
         (body.httpStatusCode === undefined ? undefined : body.message) ??
         error?.message ??
@@ -98,9 +97,9 @@ export const TrackerDataEntryViewContext = createContext<
 >(undefined)
 
 /** Anything about the form: re-renders only when what `select` returns changes, so select a value, not a new object. */
-export const useTrackerDataEntry = <T>(
+export const useTrackerDataEntry: <T>(
     select: (view: TrackerDataEntryView) => T
-): T => {
+) => T = (select) => {
     const view = useContext(TrackerDataEntryViewContext)
     if (view === undefined) {
         throw new Error(

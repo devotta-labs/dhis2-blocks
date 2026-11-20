@@ -117,8 +117,6 @@ export const ComboboxField = ({
         [options]
     )
     const labelFor = (value: string) => labels.get(value) ?? value
-    // A caller that searches remotely gets the input text and does its own
-    // filtering; otherwise Base UI filters the options by label.
     const filter = onSearchChange ? null : undefined
     const content = (
         <ComboboxContent anchor={multiple ? anchor : undefined}>
@@ -134,8 +132,7 @@ export const ComboboxField = ({
                     noMatchText
                 )}
             </ComboboxEmpty>
-            {/* A new search keeps the previous results listed until it
-                resolves, so show that it is still loading above them. */}
+            {}
             {loading && items.length > 0 && (
                 <div className="flex justify-center px-6 py-2">
                     <Spinner label={translate('Loading')} className="size-4" />
@@ -197,8 +194,7 @@ export const ComboboxField = ({
                 value={[...values]}
                 onValueChange={(next: string[]) => onChange(next)}
             >
-                {/* The trigger covers the whole box so a press anywhere opens
-                    it; only the chips' remove buttons sit above it. */}
+                {}
                 <ComboboxChips
                     ref={anchor}
                     size="sm"

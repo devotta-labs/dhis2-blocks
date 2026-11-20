@@ -133,7 +133,6 @@ const datedRecords = (
         })
     })
 
-/** The list's request and the API dates its saved filters allow on `fieldId`. */
 const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
     const {
         client,
@@ -183,9 +182,9 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
  * The days the saved filters allow on `fieldId`, and the calendar, time zone
  * and locale to show them in. `undefined` until the list is ready.
  */
-export const useWorkingListDateBounds = (
+export const useWorkingListDateBounds: (
     fieldId: WorkingListDateFieldId
-): WorkingListDateBounds | undefined => {
+) => WorkingListDateBounds | undefined = (fieldId) => {
     const { calendarContext, parsingContext } = useWorkingListPrivateUi()
     const request = useDateFieldRequest(fieldId)
     const fromApiDate = parsingContext?.fromApiDate
@@ -207,12 +206,9 @@ export const useWorkingListDateBounds = (
  * narrows the saved filters without changing them, so a date layout never
  * dirties the saved view or moves the table's page.
  */
-export const useWorkingListDateRange = ({
-    fieldId,
-    start,
-    end,
-    limit = 1000,
-}: WorkingListDateRangeOptions): WorkingListDateRangeResults => {
+export const useWorkingListDateRange: (
+    options: WorkingListDateRangeOptions
+) => WorkingListDateRangeResults = ({ fieldId, start, end, limit = 1000 }) => {
     const { client, programId, systemInfo, locale, translate, parsingContext } =
         useWorkingListPrivateUi()
     const configuration = useWorkingListState((state) => state.configuration)
@@ -227,7 +223,6 @@ export const useWorkingListDateRange = ({
                 start: request.toApiDate(start),
                 end: request.toApiDate(end),
             }
-            // A window outside the saved filter has nothing to load.
             if (!intersectDateBounds(request.filterBounds, range)) return {}
             const rangeInput = { ...request.input, range }
             return {
@@ -237,7 +232,6 @@ export const useWorkingListDateRange = ({
                 ),
             }
         } catch (error) {
-            // An invalid day, or an event date on a tracked-entity list.
             return { error }
         }
     }, [end, fieldId, request, start])

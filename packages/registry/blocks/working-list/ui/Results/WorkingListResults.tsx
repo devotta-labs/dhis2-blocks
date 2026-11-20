@@ -35,7 +35,7 @@ const visuallyHiddenClassName =
 const getResultsAnnouncement = (
     results: WorkingListMeta['results'],
     translate: WorkingListTranslate
-): string => {
+) => {
     if (results.status === 'pending') {
         return translate('Loading working list results…')
     }
@@ -102,7 +102,6 @@ const SelectionLoading = () => {
     const translate = useWorkingListText()
     const pageSize = useWorkingListMeta((meta) => meta.pagination.pageSize)
 
-    // While the list initializes, the container already announces loading.
     const initializing = useWorkingListMeta(
         (meta) => meta.lifecycle.status === 'pending'
     )

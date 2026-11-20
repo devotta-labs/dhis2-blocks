@@ -26,7 +26,6 @@ const OrganisationUnitLabelsResponseSchema = z
 
 export type OrganisationUnitLabel = z.infer<typeof OrganisationUnitLabelSchema>
 
-/** Invalid cells never feed downstream requests, so only valid values count. */
 const collectValueOrganisationUnits = (
     result: Set<string>,
     values: WorkingListRowValues,
@@ -59,7 +58,7 @@ const collectTrackedEntityOrganisationUnits = (
 export const collectOrganisationUnitIds = (
     page: WorkingListPage,
     fields: FieldCatalog
-): string[] => {
+) => {
     const result = new Set<string>()
     if (page.mode === 'trackedEntity') {
         page.records.forEach((record) =>
@@ -81,15 +80,15 @@ export const collectOrganisationUnitIds = (
     return [...result].sort()
 }
 
-const fetchOrganisationUnitLabels = async ({
-    client,
-    ids,
-    signal,
-}: {
+const fetchOrganisationUnitLabels: (options: {
     client: WorkingListClient
     ids: string[]
     signal?: AbortSignal
-}): Promise<ReadonlyMap<string, OrganisationUnitLabel>> => {
+}) => Promise<ReadonlyMap<string, OrganisationUnitLabel>> = async ({
+    client,
+    ids,
+    signal,
+}) => {
     const uniqueIds = [...new Set(ids)].sort()
     if (!uniqueIds.length) {
         return new Map()

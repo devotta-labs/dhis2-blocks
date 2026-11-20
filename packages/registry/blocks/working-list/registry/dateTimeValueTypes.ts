@@ -145,9 +145,9 @@ const parseDateEditorValue = (
     return parsed
 }
 
-export const dateDefinition = (
+export const dateDefinition: (
     valueType: 'AGE' | 'DATE' | 'DATETIME'
-): ValueTypeDefinition => ({
+) => ValueTypeDefinition = (valueType) => ({
     valueType,
     editor: 'dateRange',
     parseServerValue(value) {

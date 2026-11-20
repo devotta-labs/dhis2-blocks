@@ -96,9 +96,11 @@ interface CreateWorkingListActionsOptions {
     ) => ReturnType<WorkingListActionImplementation['setColumns']>
 }
 
-const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
+const idleMutation: () => WorkingListMutationStatus = () => ({ status: 'idle' })
 
-export const createWorkingListActions = ({
+export const createWorkingListActions: (
+    options: CreateWorkingListActionsOptions
+) => WorkingListActionImplementation = ({
     runtimeRef,
     selectionToken,
     capabilities,
@@ -112,7 +114,7 @@ export const createWorkingListActions = ({
     translate,
     updateStore,
     validateAndCommit,
-}: CreateWorkingListActionsOptions): WorkingListActionImplementation => ({
+}) => ({
     setFilter(filter: AppliedFilter) {
         const runtime = runtimeRef.current
         if (!runtime.activeState)
@@ -490,7 +492,7 @@ export const createWorkingListActions = ({
             setMutation('delete', idleMutation())
         }
     },
-    downloadVisibleRows(): Result<void, DownloadVisibleRowsError> {
+    downloadVisibleRows() {
         const runtime = runtimeRef.current
         if (
             !runtime.activeState ||

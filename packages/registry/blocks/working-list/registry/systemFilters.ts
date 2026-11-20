@@ -68,15 +68,15 @@ const validateOperator = (
     }
 }
 
-const optionValidator =
-    (allowedValues: ReadonlySet<string>): SystemFilterDefinition['validate'] =>
-    (filter) => {
-        validateOperator(filter, ['in'])
-        const value = optionValue(filter.value)
-        if (!allowedValues.has(value)) {
-            throw new Error(`${value} is not valid for ${filter.field.id}`)
-        }
+const optionValidator: (
+    allowedValues: ReadonlySet<string>
+) => SystemFilterDefinition['validate'] = (allowedValues) => (filter) => {
+    validateOperator(filter, ['in'])
+    const value = optionValue(filter.value)
+    if (!allowedValues.has(value)) {
+        throw new Error(`${value} is not valid for ${filter.field.id}`)
     }
+}
 
 const validateDateFilter: SystemFilterDefinition['validate'] = (filter) => {
     validateOperator(filter, ['range'])
@@ -114,17 +114,12 @@ const validateAssigneeFilter: SystemFilterDefinition['validate'] = (filter) => {
     }
 }
 
-const dateParameters = ({
-    filter,
-    after,
-    before,
-    context,
-}: {
+const dateParameters: (options: {
     filter: AppliedFilter
     after: string
     before: string
     context?: FilterSerializationContext
-}): DataEngineQueryParameters => {
+}) => DataEngineQueryParameters = ({ filter, after, before, context }) => {
     const serialized = dateValueTypeDefinition.serializeQuery(filter, context)
     const parts = serialized.split(':')
     const ge = parts.indexOf('ge')
@@ -148,21 +143,21 @@ const assigneeParameters = (filter: AppliedFilter) => {
     }
 }
 
-const systemField = ({
-    id,
-    displayName,
-    scope,
-    valueType,
-    options,
-    apiName,
-}: {
+const systemField: (options: {
     id: string
     displayName: string
     scope: FilterScope
     valueType: WorkingListField['valueType']
     options?: WorkingListField['options']
     apiName?: string
-}): WorkingListField => ({
+}) => WorkingListField = ({
+    id,
+    displayName,
+    scope,
+    valueType,
+    options,
+    apiName,
+}) => ({
     id,
     apiName: apiName ?? id,
     displayName,
@@ -421,9 +416,9 @@ export const systemFilterRegistry: ReadonlyMap<
 export const getSystemFilterDefinition = (id: string) =>
     definitions.find((definition) => definition.id === id)
 
-export const getSystemFilterOperators = (
+export const getSystemFilterOperators: (
     id: string
-): readonly FilterOperator[] | undefined =>
+) => readonly FilterOperator[] | undefined = (id) =>
     getSystemFilterDefinition(id)?.operators
 
 export const validateSystemFilter = (filter: AppliedFilter) => {

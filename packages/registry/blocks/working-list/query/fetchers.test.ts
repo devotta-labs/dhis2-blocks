@@ -9,6 +9,7 @@ import type {
     WorkingListConfiguration,
     WorkingListField,
 } from '../domain/model'
+import { openWorkingListServer } from '../test/workingListServer'
 import { fetchWorkingListPage } from './fetchers'
 
 const integerAttribute: WorkingListField = {
@@ -51,20 +52,25 @@ const pageInput = (client: WorkingListClient) => ({
     fields,
 })
 
-const clientReturning = (response: DataEngineValue): WorkingListClient => ({
-    async query(_request, schema) {
-        return schema.parse(response)
-    },
-    async mutate() {
-        throw new Error('Mutation is not implemented by this query-only fake')
-    },
-})
+const clientReturning = async (response: DataEngineValue) => {
+    const { client } = await openWorkingListServer(
+        ({ pathname }, { method }) => {
+            if (
+                method === 'GET' &&
+                pathname.endsWith('/tracker/trackedEntities')
+            ) {
+                return Response.json(response)
+            }
+        }
+    )
+    return client
+}
 
 describe('working-list page fetching with lenient data values', () => {
     let warn: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
-        warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+        warn = vi.spyOn(console, 'warn')
     })
 
     afterEach(() => {
@@ -74,7 +80,7 @@ describe('working-list page fetching with lenient data values', () => {
     it('returns rows with invalid cells and warns once per page', async () => {
         const page = await fetchWorkingListPage(
             pageInput(
-                clientReturning({
+                await clientReturning({
                     trackedEntities: [
                         {
                             trackedEntity: 'EntityAaaa1',
@@ -143,7 +149,7 @@ describe('working-list page fetching with lenient data values', () => {
     it('stays silent when every data value is valid', async () => {
         await fetchWorkingListPage(
             pageInput(
-                clientReturning({
+                await clientReturning({
                     trackedEntities: [
                         {
                             trackedEntity: 'EntityAaaa1',
@@ -168,7 +174,7 @@ describe('working-list page fetching with lenient data values', () => {
         await expect(
             fetchWorkingListPage(
                 pageInput(
-                    clientReturning({
+                    await clientReturning({
                         trackedEntities: [
                             {
                                 trackedEntity: 'EntityAaaa1',
@@ -204,7 +210,7 @@ describe('working-list next-page capability semantics', () => {
 
     it('uses pager.nextPage authoritatively on DHIS2 42 and newer', async () => {
         const base = pageInput(
-            clientReturning({
+            await clientReturning({
                 trackedEntities: records,
                 pager: { page: 1, pageSize: 2, total: 99 },
             })
@@ -217,7 +223,7 @@ describe('working-list next-page capability semantics', () => {
 
         const withNext = await fetchWorkingListPage({
             ...base,
-            client: clientReturning({
+            client: await clientReturning({
                 trackedEntities: records,
                 pager: {
                     page: 1,
@@ -233,7 +239,7 @@ describe('working-list next-page capability semantics', () => {
     it('uses the full-page heuristic on DHIS2 41', async () => {
         const page = await fetchWorkingListPage({
             ...pageInput(
-                clientReturning({
+                await clientReturning({
                     trackedEntities: records,
                     pager: { page: 1, pageSize: 2, total: 2 },
                 })
@@ -245,7 +251,7 @@ describe('working-list next-page capability semantics', () => {
 
         const oversized = await fetchWorkingListPage({
             ...pageInput(
-                clientReturning({
+                await clientReturning({
                     trackedEntities: records,
                     pager: { page: 1, pageSize: 1, total: 2 },
                 })
@@ -261,7 +267,7 @@ describe('working-list tracked-entity enrollments', () => {
     it('describes each row by the enrollment inside the date window', async () => {
         const page = await fetchWorkingListPage({
             ...pageInput(
-                clientReturning({
+                await clientReturning({
                     trackedEntities: [
                         {
                             trackedEntity: 'EntityAaaa1',

@@ -1,58 +1,25 @@
-/* oxlint-disable anti-slop/no-module-mocking -- The view-switcher boundary is isolated from saved-view data behavior already covered separately. */
-import { Result } from 'better-result'
 import React from 'react'
 import { render } from 'vitest-browser-react'
-import type {
-    WorkingListActions,
-    WorkingListMeta,
-} from '../../provider/contracts'
-import { WorkingListPublicContext } from '../../provider/WorkingListContext'
-import { WorkingListInitializationError } from '../../provider/errors'
-import { createWorkingListProviderStore } from '../../provider/store'
+import { WorkingListProvider } from '../../provider/WorkingListProvider'
+import {
+    readyWorkingListData,
+    WorkingListTestRuntime,
+    workingListTestQueryClient,
+    WORKING_LIST_PROGRAM,
+} from '../../test/WorkingListTestRuntime'
+import { WorkingListViewSwitcher } from '../WorkingList'
 import { WorkingListContainer } from '../Container'
 import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
 import { WorkingListTextProvider } from '../WorkingListText'
 import { WorkingListTableSkeleton } from '../WorkingListTable'
 
-vi.mock('../SavedViews', () => ({
-    WorkingListSavedViews: () => <div data-testid="saved-views-content" />,
-}))
-
-import { WorkingListViewSwitcher } from '../WorkingList'
-
-const actions: WorkingListActions = {
-    setFilter: () => Result.ok(),
-    removeFilter: () => Result.ok(),
-    setColumns: () => Result.ok(),
-    setSort: () => Result.ok(),
-    setProgramStage: () => Result.ok(),
-    setPage: () => Result.ok(),
-    setPageSize: () => Result.ok(),
-    selectView: () => Result.ok(),
-    clearViewSelection: () => Result.ok(),
-    createView: async () => Result.ok({ viewId: 'new-view' }),
-    updateSelectedView: async () => Result.ok(),
-    deleteView: async () => Result.ok(),
-    downloadVisibleRows: () => Result.ok(),
+const controlledProps = {
+    programId: WORKING_LIST_PROGRAM,
+    orgUnitId: 'OrgUnit00001',
+    selectedSavedListId: null,
+    pagination: { page: 1, pageSize: 15 } as const,
 }
-
-const meta = (lifecycle: WorkingListMeta['lifecycle']): WorkingListMeta => ({
-    lifecycle,
-    selection: { status: 'pending' },
-    activeConfiguration: { status: 'unavailable' },
-    savedViews: { status: 'pending', views: [] },
-    mutations: {
-        create: { status: 'idle' },
-        update: { status: 'idle' },
-        delete: { status: 'idle' },
-    },
-    results: { status: 'pending' },
-    dirty: false,
-    online: true,
-    pagination: { page: 1, pageSize: 15 },
-    fields: [],
-})
 
 describe('WorkingList structural components', () => {
     it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
@@ -78,12 +45,17 @@ describe('WorkingList structural components', () => {
     })
 
     it('provides localized accessible defaults and forwards native props', async () => {
-        const store = createWorkingListProviderStore(
-            meta({ status: 'pending' })
-        )
+        const { data } = readyWorkingListData()
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPublicContext.Provider value={{ store, actions }}>
+            <WorkingListTestRuntime
+                client={workingListTestQueryClient()}
+                data={data}
+            >
+                <WorkingListProvider
+                    {...controlledProps}
+                    onSelectedSavedListChange={vi.fn()}
+                    onPaginationChange={vi.fn()}
+                >
                     <WorkingListViewSwitcher
                         className="views-class"
                         data-consumer="views"
@@ -98,8 +70,8 @@ describe('WorkingList structural components', () => {
                         className="table-class"
                         data-consumer="table"
                     />
-                </WorkingListPublicContext.Provider>
-            </WorkingListTextProvider>
+                </WorkingListProvider>
+            </WorkingListTestRuntime>
         )
 
         await expect
@@ -142,17 +114,23 @@ describe('WorkingList structural components', () => {
     })
 
     it('keeps composed parts visible while initializing and hides them on fatal errors', async () => {
-        const store = createWorkingListProviderStore(
-            meta({ status: 'pending' })
-        )
+        const { data, program } = readyWorkingListData()
+        const pendingProgram = Promise.withResolvers<typeof program>()
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListPublicContext.Provider value={{ store, actions }}>
+            <WorkingListTestRuntime
+                client={workingListTestQueryClient()}
+                data={{ ...data, programs: () => pendingProgram.promise }}
+            >
+                <WorkingListProvider
+                    {...controlledProps}
+                    onSelectedSavedListChange={vi.fn()}
+                    onPaginationChange={vi.fn()}
+                >
                     <WorkingListContainer>
                         <span data-testid="composed-child">Child</span>
                     </WorkingListContainer>
-                </WorkingListPublicContext.Provider>
-            </WorkingListTextProvider>
+                </WorkingListProvider>
+            </WorkingListTestRuntime>
         )
 
         await expect
@@ -167,17 +145,10 @@ describe('WorkingList structural components', () => {
         expect(frame?.getAttribute('aria-busy')).toBe('true')
         await expect.element(screen.getByTestId('composed-child')).toBeVisible()
 
-        store.setState((current) => ({
-            meta: {
-                ...current.meta,
-                lifecycle: {
-                    status: 'error',
-                    error: new WorkingListInitializationError({
-                        message: 'Failed to initialize',
-                    }),
-                },
-            },
-        }))
+        pendingProgram.resolve({
+            ...program,
+            programType: 'WITHOUT_REGISTRATION',
+        })
         await expect
             .element(screen.getByTestId('working-list-lifecycle-error'))
             .toBeVisible()

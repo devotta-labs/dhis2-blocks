@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
 import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig, type Plugin } from 'vitest/config'
+import { downloadCommands } from './test/download-commands.test-utils'
 
 // Ordered: the more specific `@/components/dhis2/ui` must win over `@/components`.
 const resolve = {
@@ -108,6 +109,7 @@ const browserTestOptions = (contextOptions: BrowserContextOptions = {}) => ({
     browser: {
         enabled: true,
         headless: true,
+        commands: downloadCommands,
         provider: playwright({ contextOptions }),
         instances: [{ browser: 'chromium' as const }],
     },

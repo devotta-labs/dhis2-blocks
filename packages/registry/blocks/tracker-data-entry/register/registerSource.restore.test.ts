@@ -22,16 +22,15 @@ import {
     edit,
     engineFor,
     enrolledAs,
-} from './__tests__/registerRig'
+} from './test/registerRig'
 import {
     ENROLMENT,
     OPV,
     PERSON,
     restoredDose,
     restoring,
-} from './__tests__/restoreRig'
+} from './test/restoreRig'
 
-/** The new person comes back as one row, with the ids their changes name, holding every typed cell. */
 const expectTheirRow = (rows: GridRow[], outbox: OutboxRecord[]) => {
     expect(rows).toHaveLength(1)
     const [row] = rows
@@ -135,13 +134,11 @@ test('an unsent slot event of a loaded person replaces the id minted for its slo
         { ...amara, slots: { ...amara.slots, [DPT_1]: dpt.id } },
     ])
     expect(records).toEqual([dpt])
-    // A later load keeps the restored id for that slot.
     const again = await source.load(engineFor().engine)
     expect(again.tables[0].rows[0].slots?.[DPT_1]).toBe(dpt.id)
     expect(again.records.get(dpt.id)).toEqual(dpt)
 })
 
-/** A loaded person's restored dose the row cannot take: it is refused with `reason` when saved, never sent. */
 const expectRefused = async (
     dose: EventRecord,
     reason: string,
@@ -175,14 +172,12 @@ test('a restored event for a cancelled enrolment’s row is refused with the row
 })
 
 test('a restored event for a slot DHIS2 filled since is refused, not sent as a second event', async () => {
-    // Amara's BCG slot holds ImmEvt00001.
     await expectRefused(
         restoredDose('ImmEnr00010', BCG),
         'Another event fills this slot now; this change was not saved'
     )
 })
 
-// A person DHIS2 holds whose enrolment is not on the pages loaded.
 const LATER_PERSON = 'ImmTei00099'
 const LATER_ENROLMENT = 'ImmEnr00099'
 const heldLater = (events: object[] = []) => ({
@@ -256,7 +251,6 @@ test('a dose typed for a held person beyond the loaded pages is not a new person
     const fake = engineFor()
     await source.save(fake.engine, outbox, form)
     expect(fake.mutations).toHaveLength(1)
-    // No second enrolment is made: the dose names the one DHIS2 holds.
     for (const mutation of fake.mutations) {
         const data = mutation.type === 'create' ? mutation.data : {}
         expect(data).not.toHaveProperty('enrollments')
@@ -283,7 +277,6 @@ test('an unsent dose whose slot DHIS2 filled since, on a page not loaded yet, is
     const dose = restoredDose(LATER_ENROLMENT, BCG)
     const taken = 'Another event fills this slot now; this change was not saved'
     await expectRefused(dose, taken, filled)
-    // The same when the dose names the person it was typed for.
     await expectRefused(
         { ...dose, trackedEntityId: LATER_PERSON },
         taken,
@@ -291,18 +284,15 @@ test('an unsent dose whose slot DHIS2 filled since, on a page not loaded yet, is
     )
 })
 
-/** A reload that cannot ask DHIS2: the half-typed child, their dose, and a loaded person's dose beyond page 1. */
 const UNCHECKED = [
     edit(PERSON, FIRST_NAME, 'Isatu'),
     edit(OPV, EVENT_DATE_COLUMN, '2026-10-21'),
     edit(restoredDose(LATER_ENROLMENT, DPT_1), EVENT_DATE_COLUMN, '2026-10-30'),
 ]
 
-/** As the platform's `FetchError` is shaped with no network. */
 const offline = () =>
     Object.assign(new Error('Failed to fetch'), { type: 'network' })
 
-/** The child shows as one read-only row with `reason`, and nothing is sent: every change waits with `reason`. */
 const expectUnchecked = async (failure: Error, reason: string) => {
     const { source, form, rows, records, readOnlyRecords } = await restoring(
         UNCHECKED,
@@ -335,7 +325,6 @@ test('offline, a half-typed child shows read-only with why, and nothing is sent 
 
 test('when DHIS2 fails the check, the child shows read-only with DHIS2’s reason', async () => {
     await expectUnchecked(
-        // As the platform's `FetchError` is shaped for a 500.
         Object.assign(new Error('Internal Server Error'), {
             type: 'unknown',
             details: { httpStatusCode: 500 },

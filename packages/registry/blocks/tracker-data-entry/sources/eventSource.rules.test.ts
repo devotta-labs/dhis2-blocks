@@ -1,10 +1,10 @@
 import type { DataEngine } from '@/components/spreadsheet'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import meAdmin from './__tests__/fixtures/me-admin.json'
-import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
-import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
-import systemInfo from './__tests__/fixtures/system-info.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import meAdmin from './test/fixtures/me-admin.json'
+import rmnchEvents from './test/fixtures/rmnch-person-events.json'
+import rmnchProgram from './test/fixtures/rmnch-program.json'
+import systemInfo from './test/fixtures/system-info.json'
 import { eventSource } from './eventSource'
 
 const INPATIENT = 'eBAyeGv0exc'
@@ -14,7 +14,6 @@ const PERSON = 'PE6abx7Zhn0'
 
 type Request = Parameters<DataEngine['query']>[0]
 
-/** DHIS2 answering from the fixtures; `ruleAnswer` is what it says to the question whether the program has rules. */
 const engineFor = <P, E>(
     program: P,
     events: E,
@@ -30,7 +29,6 @@ const engineFor = <P, E>(
             if (request.rules !== undefined) {
                 return ruleAnswer()
             }
-            // The form's query is the heavier one: it answers after the question about rules, unless that is still out.
             await new Promise((resolve) => setTimeout(resolve))
             return { program, events, me: meAdmin, systemInfo }
         },
@@ -94,7 +92,6 @@ test('the form says whether the program has rules, from one rule’s id asked fo
         ruleIds('Fj2WZ8EGGGA')
     )
     const loading = inpatient.load(withRules.engine)
-    // Both go out together, before either answers; the form's first.
     expect(withRules.requests).toHaveLength(2)
     expect(withRules.requests[0]).not.toHaveProperty('rules')
     expect(withRules.requests[1].rules).toEqual({

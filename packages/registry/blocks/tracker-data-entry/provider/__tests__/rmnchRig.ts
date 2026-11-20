@@ -7,9 +7,9 @@ import {
     rmnchResponses,
 } from '@/components/program-rules/test/rmnch'
 import type { DataEngine } from '@/components/spreadsheet'
-import meAdmin from '../../sources/__tests__/fixtures/me-admin.json'
-import rmnchProgram from '../../sources/__tests__/fixtures/rmnch-program.json'
-import systemInfo from '../../sources/__tests__/fixtures/system-info.json'
+import meAdmin from '../../sources/test/fixtures/me-admin.json'
+import rmnchProgram from '../../sources/test/fixtures/rmnch-program.json'
+import systemInfo from '../../sources/test/fixtures/system-info.json'
 import { eventSource } from '../../sources/eventSource'
 
 const ANTENATAL = new Set<string>([RMNCH.stageId, 'edqlbukwRfQ'])

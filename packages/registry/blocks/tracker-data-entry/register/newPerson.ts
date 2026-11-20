@@ -17,11 +17,10 @@ type EventSlot = SlotDef & { stageId: string }
 const isEventSlot = (slot: SlotDef): slot is EventSlot =>
     slot.stageId !== undefined
 
-/** The new event an empty slot gets, made with the values its `where` holds. */
-const slotEvent = (
+const slotEvent: (
     slot: EventSlot,
     enrollment: EnrollmentRecord
-): EventRecord => ({
+) => EventRecord = (slot, enrollment) => ({
     kind: 'event',
     id: generateUid(),
     programStageId: slot.stageId,
@@ -124,7 +123,6 @@ export const newPerson = (
     )
 }
 
-// DHIS2 keeps a reserved value 60 days, which outlasts an outbox that waits.
 const RESERVE = 10
 const REFILL_BELOW = 3
 
@@ -166,7 +164,6 @@ export const reservedValues = (attributeIds: ReadonlyArray<string>) => {
                     .reserved.map(({ value }) => value)
             )
         } catch (error) {
-            // A value that cannot be reserved (no pattern, no access) only leaves the cell for the clerk.
             if (signal?.aborted) {
                 throw error
             }
@@ -175,13 +172,11 @@ export const reservedValues = (attributeIds: ReadonlyArray<string>) => {
         }
     }
     return {
-        /** Tops every attribute up to ten. */
         fill: async (engine: DataEngine, signal?: AbortSignal) => {
             await Promise.all(
                 attributeIds.map((id) => refill(engine, id, signal))
             )
         },
-        /** One value of each attribute that has any left, by attribute id. */
         take(engine: DataEngine) {
             const values = new Map<string, string>()
             for (const [id, pool] of pools) {

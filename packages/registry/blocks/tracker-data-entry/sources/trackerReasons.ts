@@ -1,7 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import type { DataRecord } from '../model/types'
 
-// Field names are shown as DHIS2 gives them, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
 /** Why a change to a record DHIS2 no longer returns fails. */

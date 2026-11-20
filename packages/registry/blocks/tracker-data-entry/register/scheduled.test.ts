@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import rmnch from './__tests__/fixtures/rmnch-register-program.json'
+import rmnch from './test/fixtures/rmnch-register-program.json'
 import { registerMetadataOf, registerProgramSchema } from './metadata'
-import type { RegisterMetadata, RegisterStage } from './metadata'
+import type { RegisterStage } from './metadata'
 import { scheduledEventsFor } from './scheduled'
 
 const BASE = registerMetadataOf(registerProgramSchema.parse(rmnch))
-const stage = (changes: Partial<RegisterStage>): RegisterStage => ({
+const stage: (changes: Partial<RegisterStage>) => RegisterStage = (
+    changes
+) => ({
     name: 'Postnatal',
     repeatable: false,
     validationStrategy: 'ON_UPDATE_AND_INSERT',
@@ -16,7 +18,7 @@ const stage = (changes: Partial<RegisterStage>): RegisterStage => ({
     openAfterEnrollment: false,
     ...changes,
 })
-const metadataOf = (...stages: RegisterStage[]): RegisterMetadata => ({
+const metadataOf = (...stages: RegisterStage[]) => ({
     ...BASE,
     stages: new Map(stages.map((s, i) => [`S${i}`, s])),
 })
@@ -34,7 +36,6 @@ describe('scheduledEventsFor', () => {
                 occurredAt: '2026-01-20',
             })
         ).toEqual([
-            // From the incident date, which the dates carry as `occurredAt`.
             {
                 stageId: 'S0',
                 scheduledAt: '2026-02-17',

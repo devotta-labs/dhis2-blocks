@@ -11,7 +11,6 @@ import type { OutboxRecord } from '../../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../eventSchemas'
 import type { LoadedForm } from '../types'
 
-// The RMNCH program on the Sierra Leone demo, as the import fixtures were captured against it.
 export const PROGRAM = 'WSGAb5XwJ3Y'
 export const PERSON_TYPE = 'nEenWmSyUEp'
 export const NGELEHUN = 'DiszpKrYNg8'
@@ -28,7 +27,11 @@ export const DELIVERY_PLACE = 'DelivPlace1'
 export const ENROLLED_AT = 'enrolledAt'
 export const SOURCE = 'events:WSGAb5XwJ3Y'
 
-const column = (slot: string, field: string, label: string): TrackerColumn => ({
+const column: (slot: string, field: string, label: string) => TrackerColumn = (
+    slot,
+    field,
+    label
+) => ({
     id: `${slot}:${field}`,
     label,
     field: { valueType: 'TEXT' },
@@ -36,7 +39,6 @@ const column = (slot: string, field: string, label: string): TrackerColumn => ({
     fieldId: field,
 })
 
-/** One register row: the person, the enrolment, two visits with dates, and care at birth with no date column. */
 const COLUMNS = [
     column('person', UNIQUE_ID, 'Unique ID'),
     column('person', FIRST_NAME, 'First name'),
@@ -55,10 +57,10 @@ const COLUMNS = [
 export const MANDATORY = [UNIQUE_ID, FIRST_NAME, LAST_NAME, BIRTH_DATE]
 
 /** A register form holding `records`, whose program requires `mandatory`. */
-export const registerForm = (
+export const registerForm: (
     records: ReadonlyArray<DataRecord>,
-    mandatory: ReadonlyArray<string> = MANDATORY
-): LoadedForm => ({
+    mandatory?: ReadonlyArray<string>
+) => LoadedForm = (records, mandatory = MANDATORY) => ({
     tables: [
         {
             id: 'register',
@@ -101,11 +103,11 @@ export const newRow = (ids: {
     anc2: string
     birth?: string
 }) => {
-    const visit = (
+    const visit: (
         id: string,
         programStageId: string,
         slot: string
-    ): EventRecord => ({
+    ) => EventRecord = (id, programStageId, slot) => ({
         kind: 'event',
         id,
         programStageId,
@@ -140,18 +142,18 @@ export const newRow = (ids: {
     }
 }
 
-export type Row = ReturnType<typeof newRow>
+type Row = ReturnType<typeof newRow>
 
 /** The row's records, for the form. */
-export const recordsOf = (row: Row): DataRecord[] => Object.values(row)
+export const recordsOf: (row: Row) => DataRecord[] = (row) => Object.values(row)
 
 let clock = 0
 /** A change to `field` of `record`, made in the grid, with the record it saves to. */
-export const edit = (
+export const edit: (
     record: DataRecord,
     field: string,
     value: string | null
-): OutboxRecord => ({
+) => OutboxRecord = (record, field, value) => ({
     sourceKey: SOURCE,
     key: cellKey(record.id, field),
     value,
@@ -176,7 +178,7 @@ export const typed = (
 ]
 
 /** What DHIS2 holds, by the list a read returns it in. */
-export interface Server {
+interface Server {
     events?: unknown[]
     enrollments?: unknown[]
     trackedEntities?: unknown[]
@@ -211,7 +213,6 @@ export const trackerEngine = (server: Server, answers: unknown[] = []) => {
             return answers.shift() ?? IMPORTED
         },
     } as DataEngine
-    /** What each import sent. */
     const sent = () =>
         mutations.map((mutation) =>
             mutation.type === 'delete' ? {} : mutation.data

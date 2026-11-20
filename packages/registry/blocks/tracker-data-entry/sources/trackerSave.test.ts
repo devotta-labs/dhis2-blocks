@@ -1,9 +1,9 @@
 import { recordIdOf } from '../model/types'
 import type { PersonRecord } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
-import importEnrollmentRefused from './__tests__/fixtures/import-enrollment-refused.json'
-import importPersonRefused from './__tests__/fixtures/import-person-refused.json'
-import importUniqueClash from './__tests__/fixtures/import-unique-clash.json'
+import importEnrollmentRefused from './test/fixtures/import-enrollment-refused.json'
+import importPersonRefused from './test/fixtures/import-person-refused.json'
+import importUniqueClash from './test/fixtures/import-unique-clash.json'
 import {
     DELIVERY_PLACE,
     FIRST_NAME,
@@ -21,7 +21,7 @@ import {
     registerForm,
     trackerEngine,
     typed,
-} from './__tests__/trackerRig'
+} from './test/trackerRig'
 import {
     ENROLLMENT_LEVEL_FIELDS,
     EVENT_LEVEL_FIELDS,
@@ -48,7 +48,6 @@ const outcomes = (
         ...(reason !== undefined && { reason }),
     }))
 
-/** DHIS2's message for its report of `code`. */
 const messageOf = (
     report: {
         validationReport: {
@@ -133,7 +132,6 @@ test('reads what DHIS2 holds of each kind, people by their type, and imports the
 })
 
 test('a refused person keeps its enrolment and events waiting', async () => {
-    // DHIS2 2.42 reports the person and its enrolment; the events are ignored with no report of their own.
     const fake = trackerEngine({}, [importPersonRefused])
     const records = typed(REFUSED, { birthDate: 'not-a-date' })
     expect(
@@ -157,7 +155,6 @@ test('a refused person keeps its enrolment and events waiting', async () => {
 })
 
 test('a refused enrolment keeps its events waiting, and its person is saved', async () => {
-    // Loaded before the program made Last name mandatory: DHIS2 refuses the enrolment and saves the person.
     const fake = trackerEngine({}, [importEnrollmentRefused])
     const row = newRow({
         person: 'PsnNoLastN1',
@@ -207,7 +204,6 @@ test('two people with one unique value are both refused on the attribute', async
         records,
         registerForm(rows.flatMap(recordsOf))
     )
-    // DHIS2's refusal sits on the Unique ID cell; the rest of each row waits for its person.
     expect(saved).toEqual(
         rows.flatMap(({ person, enrollment, anc1, anc2 }) =>
             of(records, person.id, enrollment.id, anc1.id, anc2.id).map(
@@ -244,7 +240,6 @@ test('a held person’s valid change waits while the clashing value fails', asyn
         trackedEntityTypeId: PERSON_TYPE,
         orgUnitId: NGELEHUN,
     }
-    // DHIS2's E1064, on this person.
     const clash = importUniqueClash.validationReport.errorReports.find(
         ({ uid }) => uid === 'PsnClashA01'
     )
@@ -328,7 +323,6 @@ test('sending a refused person again creates all three with the same ids', async
         typed(REFUSED, { birthDate: 'not-a-date' }),
         form
     )
-    // The birth date corrected; the rest of the row waits in the outbox as it was.
     const fixed = typed(REFUSED)
     expect(await saver.save(fake.engine, fixed, form)).toEqual(
         outcomes(fixed, 'saved')

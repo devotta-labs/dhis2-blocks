@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-named-as-default
 import AxeBuilder from '@axe-core/playwright'
+import { once } from 'node:events'
 import { isDeepStrictEqual } from 'node:util'
 import type {
     APIRequestContext,
@@ -164,12 +165,25 @@ export const settleTrackerImports = async (
         (url) => TRACKER_IMPORT.test(url.pathname),
         (route) => route.abort()
     )
-    await Promise.all(
-        [...sending].map(async (request) => {
-            const response = await request.response()
-            await response?.finished()
-        })
-    )
+    const deadline = AbortSignal.timeout(30_000)
+    const completed = new AbortController()
+    try {
+        await Promise.race([
+            Promise.all(
+                [...sending].map(async (request) => {
+                    const response = await request.response()
+                    await response?.finished()
+                })
+            ),
+            once(deadline, 'abort', { signal: completed.signal }).then(() => {
+                throw new Error(
+                    'Tracker imports did not finish within 30 seconds'
+                )
+            }),
+        ])
+    } finally {
+        completed.abort()
+    }
 }
 
 const ImportSchema = z.object({

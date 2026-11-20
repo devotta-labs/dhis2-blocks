@@ -1,28 +1,21 @@
 import { z, type ZodType } from 'zod'
 
-// Shapes recorded from DHIS2 2.41, 2.42 and 2.43 in __tests__/fixtures (see its
-// README). Dates and date-times are kept exactly as stored: the timeline
-// places them by their stored day and never routes them through `Date`.
-
-/** Absent and `null` both read as "not set". */
 const optionalString = z
     .string()
     .nullish()
     .transform((value) => value ?? undefined)
 
-/** A list the server may leave out or send as `null`. */
 const listOf = <T>(item: ZodType<T>) =>
     z
         .array(item)
         .nullish()
-        .transform((items): T[] => items ?? [])
+        .transform((items) => items ?? [])
 
 const flag = z
     .boolean()
     .nullish()
     .transform((value) => value ?? false)
 
-/** The user snapshot on events, enrollments, notes and changelog rows. */
 const UserSchema = z.object({
     uid: optionalString,
     username: z.string(),
@@ -68,8 +61,6 @@ export const TrackerEventSchema = z.object({
     updatedAt: optionalString,
     createdBy: optionalUser,
     updatedBy: optionalUser,
-    // A value without a value is skipped, so one bad entry cannot fail the
-    // whole page.
     dataValues: listOf(DataValueSchema).transform((dataValues) =>
         dataValues.flatMap(({ dataElement, value }) =>
             value === null || value === undefined
@@ -96,15 +87,11 @@ export const EventsPageSchema = z
             })
         }
     })
-    .transform(
-        (response): TrackerEvent[] =>
-            response.events ?? response.instances ?? []
-    )
+    .transform((response) => response.events ?? response.instances ?? [])
 
 const EnrollmentSchema = z.object({
     enrollment: z.string().min(1),
     program: z.string(),
-    /** ACTIVE, COMPLETED or CANCELLED. */
     status: z.string(),
     orgUnit: optionalString,
     enrolledAt: optionalString,
@@ -169,7 +156,7 @@ const withValues = (
     kind: ChangeLogRow['change']['kind'],
     id: string,
     values: { previousValue?: string; currentValue?: string }
-): ChangeLogRow['change'] => {
+) => {
     const change: ChangeLogRow['change'] = { kind, id }
     if (values.previousValue !== undefined) {
         change.previousValue = values.previousValue
@@ -187,7 +174,7 @@ const ChangeLogRowSchema = z
         type: z.string(),
         change: ChangeSchema,
     })
-    .transform((row): ChangeLogRow | undefined => {
+    .transform<ChangeLogRow | undefined>((row) => {
         const { attributeValue, dataValue, eventField } = row.change
         let change: ChangeLogRow['change'] | undefined
         if (attributeValue) {
@@ -224,7 +211,7 @@ export interface ParsedChangeLogPage {
 
 export const ChangeLogPageSchema = z
     .object({ changeLogs: z.array(ChangeLogRowSchema) })
-    .transform((page): ParsedChangeLogPage => ({
+    .transform<ParsedChangeLogPage>((page) => ({
         rows: page.changeLogs.flatMap((row) => (row ? [row] : [])),
         received: page.changeLogs.length,
     }))

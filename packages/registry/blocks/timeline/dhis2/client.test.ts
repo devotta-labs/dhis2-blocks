@@ -2,7 +2,6 @@ import { Result } from 'better-result'
 import { z } from 'zod'
 import { createTimelineClient, httpStatusOf } from './client'
 
-/** Shaped like app-runtime's FetchError for a 404 with a DHIS2 JSON body. */
 const notFound = () =>
     Object.assign(new Error('An unknown error occurred - Not Found (404)'), {
         type: 'unknown',

@@ -1,10 +1,7 @@
 import { deriveEventStatus } from './eventStatus'
 import { TrackerEventSchema, type TrackerEvent } from './schemas'
 
-const event = (
-    status: string,
-    extra: Partial<TrackerEvent> = {}
-): TrackerEvent =>
+const event = (status: string, extra: Partial<TrackerEvent> = {}) =>
     TrackerEventSchema.parse({
         event: 'e1',
         status,

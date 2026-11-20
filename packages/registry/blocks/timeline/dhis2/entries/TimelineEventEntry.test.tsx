@@ -2,7 +2,7 @@ import axe from 'axe-core'
 import React from 'react'
 import { userEvent } from 'vitest/browser'
 import { formatCalendarDate } from '@/components/dhis2-value-display/calendar'
-import eventChangelog from '../__tests__/fixtures/v43/event-changelog.json'
+import eventChangelog from '../test/fixtures/v43/event-changelog.json'
 import {
     buttonIn,
     ChangeLogsSchema,
@@ -15,7 +15,7 @@ import {
     stageOf,
     type ProgramMetadata,
     type RenderOptions,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import { TimelineEventAction } from './TimelineEventAction'
 import {
     TimelineEventChanges,
@@ -48,9 +48,7 @@ const renderEvent = (
     event: ReturnType<typeof recordedEvent>,
     parts: React.ReactNode = <AllParts />,
     options: RenderOptions & {
-        /** Edits the program metadata the entry is resolved with. */
         metadata?: (metadata: ProgramMetadata) => void
-        /** The program's metadata couldn't be read. */
         withoutMetadata?: boolean
     } = {}
 ) => {
@@ -161,7 +159,6 @@ describe('TimelineEventEntry', () => {
         expect(frame.className).toContain('custom-event')
         expect(frame.textContent).toContain('First antenatal care visit')
         expect(frame.textContent).toContain('Ngelehun CHC')
-        // Host actions close the action row and look like the part toggles.
         const open = elementIn(
             frame,
             '[data-slot=timeline-event-actions]'
@@ -214,7 +211,6 @@ describe('TimelineEventEntry', () => {
             getComputedStyle(elementIn(container, '[data-status] span'))
         const frameColor = (container: HTMLElement) =>
             getComputedStyle(elementIn(container, '[data-status]')).color
-        // The frame mutes what a host composes without TimelineEventStage.
         expect(frameColor(skipped.container)).not.toBe(
             frameColor(active.container)
         )
@@ -280,7 +276,6 @@ describe('TimelineEventEntry', () => {
         )
         const button = buttonIn(container)
 
-        await new Promise((resolve) => setTimeout(resolve, 30))
         expect(changelogRequests).toHaveLength(0)
         expect(button.textContent).toBe('Show changes')
         expect(button.getAttribute('aria-expanded')).toBe('false')
@@ -369,7 +364,6 @@ describe('TimelineEventEntry', () => {
         expect(container.querySelector('button')).toBeNull()
         expect(container.textContent).toContain(note)
         expect(container.textContent).toContain('John Traore')
-        // The event is from 15 Jan; the note was written on 22 Oct.
         expect(container.querySelector('time')?.textContent?.trim()).toBe(
             `${formatCalendarDate('2026-10-22', 'gregorian', 'en')} 19:11`
         )
@@ -420,7 +414,7 @@ describe('TimelineEventEntry', () => {
 
     it('renders events of one repeatable stage used for every visit kind without special cases', async () => {
         const events = (
-            await import('../__tests__/fixtures/ugly/one-stage-every-visit.json')
+            await import('../test/fixtures/ugly/one-stage-every-visit.json')
         ).default.events
         const parsed = events.slice(0, 3).map((raw) => ({
             ...recordedEvent('TlE2eEvt002'),
@@ -461,7 +455,6 @@ describe('TimelineEventEntry', () => {
             container
                 .querySelectorAll('button')
                 .forEach((button) => button.click())
-            // An event never edited and holding no values offers no changes.
             if (container.querySelector('[data-slot=timeline-event-changes]')) {
                 await expect
                     .poll(() => container.textContent)

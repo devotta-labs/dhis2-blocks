@@ -13,7 +13,6 @@ import { TimelineTime } from '../../ui/TimelineParts'
 import { useSpansPrograms } from '../hooks/useSpansPrograms'
 import type { NoteEntryData } from '../types'
 
-/** Whether the text is taller than the box that clamps it. */
 const useIsClamped = (expanded: boolean, text: string) => {
     const ref = useRef<HTMLParagraphElement>(null)
     const [clamped, setClamped] = useState(false)

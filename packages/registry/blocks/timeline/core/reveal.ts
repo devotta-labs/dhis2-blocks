@@ -20,7 +20,6 @@ const isPast = (entry: TimelineEntry<unknown>, today: string) => {
         return entry.phase === 'past'
     }
     const day = storedDay(entry.at)
-    // Undated entries count as past: they are listed last.
     return day === undefined || day <= today
 }
 
@@ -32,7 +31,7 @@ const isPast = (entry: TimelineEntry<unknown>, today: string) => {
 export const revealPast = <TData>(
     entries: ReadonlyArray<TimelineEntry<TData>>,
     { count, today }: RevealOptions
-): Revealed<TData> => {
+) => {
     const past = entries.filter((entry) => isPast(entry, today))
     if (past.length <= count) {
         return { entries: [...entries], hidden: 0 }
@@ -40,10 +39,11 @@ export const revealPast = <TData>(
     const shown = new Set(
         [...past].sort(compareEntries('desc')).slice(0, count)
     )
-    return {
+    const revealed: Revealed<TData> = {
         entries: entries.filter(
             (entry) => !isPast(entry, today) || shown.has(entry)
         ),
         hidden: past.length - count,
     }
+    return revealed
 }

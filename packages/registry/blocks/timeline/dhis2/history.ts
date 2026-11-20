@@ -8,10 +8,7 @@ import type { HistoryResult } from './types'
 /** What a history shows while it waits for its first answers. */
 export const NO_ENTRIES: ReadonlyArray<never> = []
 
-/** The first notice of each id: hooks that share a request repeat its notice. */
-const uniqueNotices = (
-    notices: ReadonlyArray<TimelineNotice>
-): TimelineNotice[] => {
+const uniqueNotices = (notices: ReadonlyArray<TimelineNotice>) => {
     const seen = new Set<string>()
     return notices.filter((notice) => {
         if (seen.has(notice.id)) {
@@ -26,9 +23,7 @@ const uniqueNotices = (
  * The status of a history made of parts: `pending` while any part has not
  * answered once, `error` when every part failed, otherwise `success`.
  */
-export const combineStatus = (
-    statuses: ReadonlyArray<TimelineStatus>
-): TimelineStatus => {
+export const combineStatus = (statuses: ReadonlyArray<TimelineStatus>) => {
     if (statuses.some((status) => status === 'pending')) {
         return 'pending'
     }
@@ -42,8 +37,7 @@ export const combineStatus = (
 export const mergeEntries = <TData>(
     status: TimelineStatus,
     lists: ReadonlyArray<ReadonlyArray<TimelineEntry<TData>>>
-): ReadonlyArray<TimelineEntry<TData>> =>
-    status === 'pending' ? NO_ENTRIES : lists.flat()
+) => (status === 'pending' ? NO_ENTRIES : lists.flat())
 
 /**
  * Several histories as one: their entries and notices together, with one
@@ -54,9 +48,9 @@ export const mergeEntries = <TData>(
  */
 export const mergeHistory = <TData>(
     ...results: ReadonlyArray<HistoryResult<TData>>
-): HistoryResult<TData> => {
+) => {
     const status = combineStatus(results.map((result) => result.status))
-    return {
+    const history: HistoryResult<TData> = {
         entries: mergeEntries(
             status,
             results.map((result) => result.entries)
@@ -70,6 +64,7 @@ export const mergeHistory = <TData>(
             }
         },
     }
+    return history
 }
 
 /**
@@ -81,7 +76,7 @@ export const mergeHistory = <TData>(
 export const addWhenReady = <TData>(
     history: HistoryResult<TData>,
     ...parts: ReadonlyArray<HistoryResult<TData>>
-): HistoryResult<TData> =>
+) =>
     mergeHistory(
         history,
         ...parts.map((part) =>

@@ -1,4 +1,3 @@
-import type { LabNetwork } from '../network'
 import {
     generateLabData,
     LAB_PERSON,
@@ -15,11 +14,6 @@ export interface LabRequest {
     params?: Record<string, string | number | boolean>
 }
 
-/**
- * The resources the block asks for by name. The changelogs carry their
- * record's id in the resource itself, so `resourcesOf` adds one per record.
- * The calendar comes from app-runtime's config, not a request.
- */
 const RESOURCES = [
     'tracker/trackedEntities',
     'tracker/events',
@@ -33,14 +27,13 @@ const attributeChangeLogOf = (trackedEntity: string) =>
 const eventChangeLogOf = (event: string) => `tracker/events/${event}/changeLogs`
 
 /** Every resource the block can ask the lab for: `RESOURCES`, the person's changelog and each event's. */
-export const resourcesOf = (data: LabData): string[] => [
+export const resourcesOf: (data: LabData) => string[] = (data) => [
     ...RESOURCES,
     attributeChangeLogOf(LAB_PERSON),
     ...data.events.map(({ event }) => eventChangeLogOf(event)),
 ]
 
-/** The resources that fail, for the part of the history the lab breaks. */
-const failingResources = (settings: LabSettings, data: LabData): string[] => {
+const failingResources = (settings: LabSettings, data: LabData) => {
     switch (settings.failing) {
         case 'changes':
             return [
@@ -59,10 +52,7 @@ const failingResources = (settings: LabSettings, data: LabData): string[] => {
 }
 
 /** The lab's network with the broken part's requests failing too. */
-export const labNetwork = (
-    settings: LabSettings,
-    data: LabData
-): LabNetwork => ({
+export const labNetwork = (settings: LabSettings, data: LabData) => ({
     ...settings.network,
     endpoints: {
         ...settings.network.endpoints,
@@ -78,7 +68,6 @@ export const labNetwork = (
     },
 })
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
@@ -94,8 +83,7 @@ const paged = <T>(items: readonly T[], params: LabRequest['params'] = {}) => {
     }
 }
 
-/** The event's value for an `order` field; fields the lab doesn't sort by have none. */
-const sortValue = (event: LabEvent, field: string): string | undefined => {
+const sortValue = (event: LabEvent, field: string) => {
     switch (field) {
         case 'event':
             return event.event
@@ -114,10 +102,6 @@ const sortValue = (event: LabEvent, field: string): string | undefined => {
     }
 }
 
-/**
- * Sorts events by `order` (`field:dir,…`) as Postgres does: text compared as
- * stored, no value last when ascending and first when descending.
- */
 const sortEvents = (events: readonly LabEvent[], order: string) => {
     const keys = order
         .split(',')
@@ -147,7 +131,6 @@ const changeLogPage = (
     return { pager, changeLogs: items }
 }
 
-/** `filter=id:in:[a,b]` as a list of ids. */
 const idsIn = (filter: string) =>
     /^id:in:\[(.*)\]$/.exec(filter)?.[1]?.split(',').filter(Boolean) ?? []
 

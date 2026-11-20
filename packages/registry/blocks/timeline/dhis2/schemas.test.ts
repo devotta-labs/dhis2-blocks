@@ -24,7 +24,7 @@ const SCHEMA_BY_FIXTURE = {
 } satisfies Record<string, ZodType>
 
 const fixtureDir = (version: string) =>
-    new URL(`./__tests__/fixtures/${version}/`, import.meta.url)
+    new URL(`./test/fixtures/${version}/`, import.meta.url)
 
 const fixture = (version: string, name: string) =>
     z

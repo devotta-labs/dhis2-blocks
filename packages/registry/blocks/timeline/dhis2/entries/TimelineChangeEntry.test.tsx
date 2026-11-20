@@ -14,7 +14,7 @@ import {
     renderEntries,
     type ProgramMetadata,
     type RenderOptions,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import {
     TimelineChangeEntry,
     TimelineChangeList,
@@ -26,13 +26,13 @@ import { useTimelineSave } from './hooks/useTimelineSave'
 
 const CREATED_AT = '2026-10-22T19:11:40.388'
 
-const row = (
+const row: (
     kind: ChangeLogRow['change']['kind'],
     id: string,
     type: ChangeLogRow['type'],
     previousValue?: string,
     currentValue?: string
-): ChangeLogRow => ({
+) => ChangeLogRow = (kind, id, type, previousValue, currentValue) => ({
     createdAt: CREATED_AT,
     createdBy: {
         uid: undefined,
@@ -45,11 +45,10 @@ const row = (
     change: { kind, id, previousValue, currentValue },
 })
 
-/** One save, labelled from the recorded program as the hooks label it. */
 const saveOf = (
     rows: ChangeLogRow[],
     edit?: (metadata: ProgramMetadata) => void
-): ChangeSave => {
+) => {
     const program = recordedProgram(edit)
     const attributes = attributesOf([program])
     const [save] = groupChangelogRows(rows, (field) =>
@@ -246,7 +245,6 @@ describe('TimelineChangeEntry', () => {
 
         expect(container.textContent).toContain('First name')
         expect(container.textContent).toContain('John Traore changed 1 field')
-        // The day heading above says the day; the summary says only the time.
         expect(
             container.querySelector('[data-slot=timeline-change-summary] time')
                 ?.textContent
@@ -326,7 +324,6 @@ describe('TimelineChangeEntry', () => {
             }
             const left = (element: Element) =>
                 element.getBoundingClientRect().left
-            // In reading order: before, arrow, after; the arrow points at after.
             const order = [before, arrow, after].map(left)
             expect(order).toEqual(
                 [...order].sort((a, b) => (dir === 'ltr' ? a - b : b - a))

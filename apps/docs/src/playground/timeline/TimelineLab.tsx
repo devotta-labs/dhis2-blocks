@@ -30,7 +30,6 @@ export const TimelineLab = () => {
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []

@@ -5,7 +5,7 @@ import type { ChangeSave } from '../../types'
 export const TimelineSaveContext = createContext<ChangeSave | null>(null)
 
 /** The save the surrounding `TimelineSave` or `TimelineChangeEntry` shows. */
-export const useTimelineSave = (): ChangeSave => {
+export const useTimelineSave = () => {
     const save = useContext(TimelineSaveContext)
     if (save === null) {
         throw new Error(

@@ -1,5 +1,5 @@
 import { ZodError } from 'zod'
-import { rmnchMetadata, rmnchResponses } from '../__tests__/rmnch'
+import { rmnchMetadata, rmnchResponses } from '../test/rmnch'
 import { ProgramRulesResponseSchema } from './metadata'
 
 describe('toProgramRulesMetadata', () => {

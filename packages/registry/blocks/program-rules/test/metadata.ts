@@ -8,7 +8,7 @@ import type {
 /** A small program for synthetic rule tests. */
 export const programMetadata = (
     overrides: Partial<ProgramRulesMetadata> = {}
-): ProgramRulesMetadata => ({
+) => ({
     programId: 'program',
     programName: 'Program',
     programStages: [{ id: 'stage', name: 'Stage' }],
@@ -20,11 +20,11 @@ export const programMetadata = (
     ...overrides,
 })
 
-export const currentEventVariable = (
+export const currentEventVariable: (
     name: string,
     dataElementId: string,
-    overrides: Partial<ProgramRuleVariableMetadata> = {}
-): ProgramRuleVariableMetadata => ({
+    overrides?: Partial<ProgramRuleVariableMetadata>
+) => ProgramRuleVariableMetadata = (name, dataElementId, overrides = {}) => ({
     id: `var_${name}`,
     name,
     sourceType: 'DATAELEMENT_CURRENT_EVENT',
@@ -34,12 +34,12 @@ export const currentEventVariable = (
     ...overrides,
 })
 
-export const rule = (
+export const rule: (
     id: string,
     condition: string,
     actions: ProgramRuleMetadata['actions'],
-    overrides: Partial<ProgramRuleMetadata> = {}
-): ProgramRuleMetadata => ({
+    overrides?: Partial<ProgramRuleMetadata>
+) => ProgramRuleMetadata = (id, condition, actions, overrides = {}) => ({
     id,
     name: `rule ${id}`,
     condition,
@@ -47,10 +47,10 @@ export const rule = (
     ...overrides,
 })
 
-export const eventInput = (
-    dataValues: Record<string, string> = {},
-    orgUnitId = 'ou'
-): EventRuleInput => ({
+export const eventInput: (
+    dataValues?: Record<string, string>,
+    orgUnitId?: string
+) => EventRuleInput = (dataValues = {}, orgUnitId = 'ou') => ({
     event: {
         id: 'event',
         programStageId: 'stage',

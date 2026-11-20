@@ -2,8 +2,8 @@ import type { ExpressionJs, ExpressionMode } from '@dhis2/rule-engine'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import large from '../__tests__/fixtures/large/bundle.json'
-import rmnch from '../__tests__/fixtures/rmnch/programRules.json'
+import large from '../test/fixtures/large/bundle.json'
+import rmnch from '../test/fixtures/rmnch/programRules.json'
 import { expressionReferences, scanExpression } from './scanExpression'
 
 interface ExpressionParser {
@@ -11,9 +11,7 @@ interface ExpressionParser {
     ExpressionMode: typeof ExpressionMode
 }
 
-// The engine's own collectors live in an internal file that the package's
-// exports map does not expose, so only tests reach it, by file path.
-const loadExpressionParser = async (): Promise<ExpressionParser> => {
+const loadExpressionParser = async () => {
     const entry = createRequire(import.meta.url).resolve('@dhis2/rule-engine')
     const file = join(dirname(entry), 'expression-parser.mjs')
     // SAFETY: expression-parser.mjs is the module rule-engine.d.mts declares ExpressionJs and ExpressionMode for.

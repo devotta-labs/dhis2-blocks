@@ -107,22 +107,16 @@ export interface UseEventsRulesResult {
 
 const HOUR = 60 * 60_000
 
-/**
- * One chunk's people as cached: entries, since a persisted query cache restores a Map as an empty object, with null for
- * a person the server did not return.
- */
 type ChunkPersons = Array<[string, RuleEnrollmentData | null]>
 
 interface LoadedPersons {
     persons: ReadonlyMap<string, RuleEnrollmentData>
-    /** Every id a loaded chunk asked for, returned or not. */
     answered: ReadonlySet<string>
 }
 
 const NO_PERSONS: LoadedPersons = { persons: new Map(), answered: new Set() }
 const NONE: ReadonlyArray<string> = []
 
-/** A program without rules: every row is evaluated, to nothing, and stands alone. */
 const NO_RULES: EventsRules = {
     evaluate: (rows, rowIds) => {
         const ids = new Set(rows.map((row) => row.event.id))
@@ -142,14 +136,19 @@ const NO_RULES: EventsRules = {
 
 type StageContexts = Result<Map<string, RuleContext>, Error>
 
-/** A context per stage, and with `enrollments` one for the enrolment under the program's id. */
-const buildContexts = (
+const buildContexts: (
     engine: RuleEngineModule | undefined,
     metadata: ProgramRulesMetadata | undefined,
     stageIds: ReadonlyArray<string>,
     enrollments: boolean,
     orgUnitGroups?: ReadonlyArray<RuleOrgUnitGroupMetadata>
-): StageContexts | undefined => {
+) => StageContexts | undefined = (
+    engine,
+    metadata,
+    stageIds,
+    enrollments,
+    orgUnitGroups
+) => {
     if (engine === undefined || metadata === undefined) {
         return undefined
     }
@@ -161,7 +160,7 @@ const buildContexts = (
     return Result.try({
         try: () =>
             new Map([
-                ...stageIds.map((stageId): [string, RuleContext] => [
+                ...stageIds.map<[string, RuleContext]>((stageId) => [
                     stageId,
                     build(metadataForStage(metadata, stageId)),
                 ]),
@@ -178,14 +177,10 @@ const buildContexts = (
     })
 }
 
-/**
- * The distinct ids in chunks of 100, in first-seen order: an id keeps its chunk while it is asked for, and new ids fill
- * the last chunk, then new ones. A chunk whose ids did not change keeps its query key, so its people are not fetched again.
- */
 const chunksOf = (
     previous: ReadonlyArray<ReadonlyArray<string>>,
     ids: ReadonlyArray<string>
-): string[][] => {
+) => {
     const wanted = new Set(ids)
     const chunks = previous
         .map((chunk) => chunk.filter((id) => wanted.has(id)))
@@ -205,12 +200,11 @@ const chunksOf = (
     return chunks
 }
 
-/** The requested rows whose person a loaded chunk answered for; a row without a person has nothing to wait for. */
 const withLoadedPerson = (
     rows: ReadonlyArray<EventsRuleRow>,
     answered: ReadonlySet<string>,
     rowIds: ReadonlyArray<string>
-): string[] => {
+) => {
     const { byId } = indexRows(rows)
     return rowIds.filter((rowId) => {
         const enrollmentId = byId.get(rowId)?.enrollmentId
@@ -222,7 +216,6 @@ type EnrollmentUnits = Parameters<
     NonNullable<EventsRules['evaluateEnrollments']>
 >[0]
 
-/** Each enrolment's rules over its events and the fetched person's (`loaded`), whose person a chunk answered for. */
 const evaluateUnits = (
     engine: RuleEngineModule,
     context: RuleContext,
@@ -256,24 +249,15 @@ const evaluateUnits = (
     return { effects, failures }
 }
 
-/** Program-wide rules sit in every stage's context, so the same rule would be listed once per stage. */
-const distinctInvalidRules = (
-    contexts: Iterable<RuleContext>
-): InvalidRule[] => [
+const distinctInvalidRules = (contexts: Iterable<RuleContext>) => [
     ...new Map(
         [...contexts]
             .flatMap((context) => context.invalidRules)
-            .map((rule): [string, InvalidRule] => [
-                `${rule.ruleId}:${rule.actionId ?? ''}`,
-                rule,
-            ])
+            .map((rule) => [`${rule.ruleId}:${rule.actionId ?? ''}`, rule])
     ).values(),
 ]
 
-/** Group ids are global, so each stage's groups merge into one map. */
-const allOptionGroups = (
-    contexts: Iterable<RuleContext>
-): Map<string, Set<string>> =>
+const allOptionGroups = (contexts: Iterable<RuleContext>) =>
     new Map([...contexts].flatMap((context) => [...context.optionGroupOptions]))
 
 /**
@@ -282,7 +266,9 @@ const allOptionGroups = (
  * whose rules read the enrollment or other events, the people in batched requests of 100. Shares the metadata query
  * and the engine with the other hooks.
  */
-export const useEventsRules = ({
+export const useEventsRules: (
+    options: UseEventsRulesOptions
+) => UseEventsRulesResult = ({
     programId,
     programStageIds,
     tracker,
@@ -290,7 +276,7 @@ export const useEventsRules = ({
     newEnrollmentIds = NONE,
     enrollments = false,
     enabled = true,
-}: UseEventsRulesOptions): UseEventsRulesResult => {
+}) => {
     const client = useProgramRulesClient()
 
     const metadataQuery = useQuery({
@@ -304,10 +290,8 @@ export const useEventsRules = ({
     const metadata = metadataQuery.data
     const hasRules = metadata !== undefined && metadata.rules.length > 0
     const ruleEngine = useRuleEngine(enabled && hasRules)
-    // Another hook may have loaded the engine already; a program without rules still needs no context.
     const engine = hasRules ? ruleEngine.engine : undefined
 
-    // Read through its content, so a new array of the same stages keeps the contexts.
     const stageKey = [...new Set(programStageIds)].sort().join(',')
     const stageIds = useMemo(
         () => (stageKey === '' ? [] : stageKey.split(',')),
@@ -353,20 +337,17 @@ export const useEventsRules = ({
         tracker &&
         requirements.some((needs) => needs.enrollment || needs.otherEvents)
     const isNew = new Set(newEnrollmentIds)
-    // A stable key, so the same new people keep the same `persons`.
     const newPeople = [...isNew].sort().join(',')
     const personIds = [...new Set(enrollmentIds)].filter((id) => !isNew.has(id))
     const fetchPersons = needsPersons && personIds.length > 0
-    // Rewritten on every render to the same chunks for the same ids, so a render React throws away does no harm.
     const chunkMemory = useRef<string[][]>([])
     const chunks = chunksOf(chunkMemory.current, personIds)
     chunkMemory.current = chunks
-    // Each chunk's last data: a chunk that gains ids keeps its people in use while it loads again.
     const lastData = useRef<ReadonlyArray<ChunkPersons | undefined>>([])
     const personChunks = useQueries({
         queries: chunks.map((ids, index) => ({
             queryKey: programRulesQueryKeys.enrollments(ids, withEvents),
-            queryFn: async ({ signal }): Promise<ChunkPersons> => {
+            queryFn: async ({ signal }) => {
                 const found = await fetchRuleEnrollments(
                     client,
                     programId,
@@ -374,14 +355,16 @@ export const useEventsRules = ({
                     withEvents,
                     signal
                 )
-                return ids.map((id) => [id, found.get(id) ?? null])
+                return ids.map<ChunkPersons[number]>((id) => [
+                    id,
+                    found.get(id) ?? null,
+                ])
             },
             enabled: enabled && fetchPersons,
             staleTime: 60_000,
             retry: shouldRetryProgramRulesRequest,
             placeholderData: () => lastData.current[index],
         })),
-        // Shared structurally: `loaded` stays the same list until a chunk's data changes.
         combine: (results) => ({
             data: results.map(({ data }) => data),
             loaded: results.flatMap(({ data }) =>
@@ -396,8 +379,7 @@ export const useEventsRules = ({
         lastData.current = personChunks.data
     }, [personChunks.data])
     const loadedChunks = personChunks.loaded
-    const persons = useMemo((): LoadedPersons | undefined => {
-        // New people are answered already: the server has none of them, so their rows never wait for a chunk.
+    const persons = useMemo<LoadedPersons | undefined>(() => {
         const fresh = newPeople === '' ? [] : newPeople.split(',')
         if (!fetchPersons || (loadedChunks.length === 0 && fresh.length > 0)) {
             return fresh.length === 0
@@ -410,16 +392,15 @@ export const useEventsRules = ({
         const entries = loadedChunks.flat()
         return {
             persons: new Map(
-                entries.flatMap(
-                    ([id, person]): Array<[string, RuleEnrollmentData]> =>
-                        person === null ? [] : [[id, person]]
+                entries.flatMap<[string, RuleEnrollmentData]>(([id, person]) =>
+                    person === null ? [] : [[id, person]]
                 )
             ),
             answered: new Set([...entries.map(([id]) => id), ...fresh]),
         }
     }, [fetchPersons, loadedChunks, newPeople])
 
-    const rules = useMemo((): EventsRules | undefined => {
+    const rules = useMemo(() => {
         if (metadata !== undefined && metadata.rules.length === 0) {
             return NO_RULES
         }
@@ -436,7 +417,6 @@ export const useEventsRules = ({
             ? contexts.get(metadata.programId)
             : undefined
         return {
-            // A row whose person is still loading waits; one whose person the server did not return fails.
             evaluate: (rows, rowIds) =>
                 evaluateEventsRules(
                     engine,
@@ -460,7 +440,6 @@ export const useEventsRules = ({
                         needsPersons ? persons : undefined,
                         units
                     )),
-            // An event program's events share one hidden enrollment and must never couple.
             rowsAffectedBy: (rows, rowId, fieldId) =>
                 tracker
                     ? rowsAffectedBy(rows, crossFields, rowId, fieldId)
@@ -478,8 +457,6 @@ export const useEventsRules = ({
         enrollments,
     ])
 
-    // A query only fails the hook while it is needed and has nothing to show:
-    // a failed background refetch keeps the last good data, and so do we.
     const error =
         ruleEngine.error ??
         neededFailure(metadataQuery, true) ??

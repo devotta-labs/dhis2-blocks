@@ -50,13 +50,15 @@ export interface UseProgramRulesResult {
  * To evaluate more than one event against the same rules, use
  * `useProgramRuleEvaluator`.
  */
-export const useProgramRules = ({
+export const useProgramRules: (
+    options: UseProgramRulesOptions
+) => UseProgramRulesResult = ({
     programId,
     programStageId,
     enrollmentId,
     input,
     enabled = true,
-}: UseProgramRulesOptions): UseProgramRulesResult => {
+}) => {
     const evaluator = useProgramRuleEvaluator({
         programId,
         programStageId,
@@ -65,8 +67,6 @@ export const useProgramRules = ({
         otherEvents: input.otherEvents,
         enabled,
     })
-    // Memoised on the event's content, so a new input with the same content
-    // returns the same effects.
     const evaluation = evaluator.evaluate?.(input.event)
     const effects = evaluation?.isOk() ? evaluation.value : undefined
     const error =

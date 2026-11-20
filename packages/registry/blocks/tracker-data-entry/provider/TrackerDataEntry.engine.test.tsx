@@ -2,7 +2,7 @@
 import { FetchError } from '@dhis2/app-runtime'
 import { z } from 'zod'
 import { ruleEngineChunk } from '@/components/program-rules/hooks/loadRuleEngine'
-import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
+import { RMNCH } from '@/components/program-rules/test/rmnch'
 import inpatientEvents from '../sources/__tests__/fixtures/inpatient-events.json'
 import inpatientProgram from '../sources/__tests__/fixtures/inpatient-program.json'
 import meAdmin from '../sources/__tests__/fixtures/me-admin.json'

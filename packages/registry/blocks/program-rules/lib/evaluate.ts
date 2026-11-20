@@ -25,7 +25,7 @@ const MESSAGE_KINDS = new Map<string, RuleMessage['kind']>([
 ])
 
 /** Effects with nothing in them: what a row gets when no rule acts on it. */
-export const emptyEffects = (): RuleEffects => ({
+export const emptyEffects: () => RuleEffects = () => ({
     hiddenFields: new Map(),
     hiddenSections: new Map(),
     mandatoryFields: new Map(),
@@ -47,11 +47,11 @@ const push = <T>(map: Map<string, T[]>, key: string, value: T) => {
 const text = (action: ProgramRuleActionMetadata) =>
     action.displayContent ?? action.content ?? ''
 
-const displayItem = (
+const displayItem: (
     action: ProgramRuleActionMetadata,
     data: string,
     by: Attribution
-): RuleDisplayItem => ({
+) => RuleDisplayItem = (action, data, by) => ({
     location: action.location === 'indicators' ? 'indicators' : 'feedback',
     label: text(action),
     value: data,
@@ -67,11 +67,10 @@ const optionGroupsOf = (effects: RuleEffects, field: string) => {
     return groups
 }
 
-/** The engine's effects sorted by what they do; effects of actions the context does not know are dropped. */
 const sortEffects = (
     context: RuleContext,
     raw: ReadonlyArray<Engine.RuleEffectJs>
-): RuleEffects => {
+) => {
     const effects = emptyEffects()
     for (const effect of raw) {
         const values = effect.ruleAction.values
@@ -113,7 +112,6 @@ const sortEffects = (
                 }
                 break
             case 'ASSIGN':
-                // Later assignments run later (priority order), so they win.
                 if (field !== undefined) {
                     effects.assignedValues.set(field, {
                         value: effect.data ?? null,
@@ -166,7 +164,6 @@ const sortEffects = (
                 }
                 break
             default:
-            // Server-side actions (messages, scheduling, event creation) have no client effect.
         }
     }
     return effects
@@ -177,7 +174,7 @@ export const evaluateEventRules = (
     engine: RuleEngineModule,
     context: RuleContext,
     input: EventRuleInput
-): RuleEffects => {
+) => {
     const built = buildEngineInput(engine, context, input)
     return sortEffects(
         context,
@@ -202,7 +199,7 @@ export const evaluateEnrollmentRules = (
         enrollment: RuleEnrollmentInput
         events: ReadonlyArray<RuleEventInput>
     }
-): RuleEffects =>
+) =>
     sortEffects(
         context,
         context.engine.evaluateEnrollment(
@@ -213,10 +210,7 @@ export const evaluateEnrollmentRules = (
     )
 
 /** Every rule action that hid, required, assigned, messaged or filtered the options of a field, once each. */
-export const explainField = (
-    effects: RuleEffects,
-    fieldId: string
-): Attribution[] => {
+export const explainField = (effects: RuleEffects, fieldId: string) => {
     const assigned = effects.assignedValues.get(fieldId)
     const all = [
         ...(effects.hiddenFields.get(fieldId) ?? []),

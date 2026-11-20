@@ -22,7 +22,7 @@ export interface EngineInput {
 const normalisedValues = (
     context: InputContext,
     values: Record<string, string>
-): [string, string][] =>
+) =>
     Object.entries(values).flatMap(([fieldId, value]) => {
         const normalised = normaliseValue(
             value,
@@ -35,7 +35,7 @@ export const toEngineEvent = (
     engine: RuleEngineModule,
     context: InputContext,
     event: RuleEventInput
-): Engine.RuleEventJs =>
+) =>
     new engine.RuleEventJs(
         event.id,
         event.programStageId,
@@ -59,7 +59,7 @@ export const toEngineEnrollment = (
     engine: RuleEngineModule,
     context: InputContext,
     enrollment: RuleEnrollmentInput
-): Engine.RuleEnrollmentJs => {
+) => {
     const enrolledAt =
         toLocalDate(engine, enrollment.enrolledAt) ??
         engine.RuleLocalDate.currentDate()
@@ -82,14 +82,14 @@ export const buildEngineInput = (
     engine: RuleEngineModule,
     context: InputContext,
     input: EventRuleInput
-): EngineInput => ({
-    event: toEngineEvent(engine, context, input.event),
-    enrollment:
-        input.enrollment === undefined
-            ? null
-            : toEngineEnrollment(engine, context, input.enrollment),
-    // The current event's stored values would compete with the edited ones.
-    otherEvents: input.otherEvents
-        .filter((other) => other.id !== input.event.id)
-        .map((other) => toEngineEvent(engine, context, other)),
-})
+) =>
+    ({
+        event: toEngineEvent(engine, context, input.event),
+        enrollment:
+            input.enrollment === undefined
+                ? null
+                : toEngineEnrollment(engine, context, input.enrollment),
+        otherEvents: input.otherEvents
+            .filter((other) => other.id !== input.event.id)
+            .map((other) => toEngineEvent(engine, context, other)),
+    }) satisfies EngineInput

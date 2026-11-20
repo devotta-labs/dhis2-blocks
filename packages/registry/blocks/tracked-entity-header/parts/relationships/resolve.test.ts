@@ -8,10 +8,7 @@ import { labelFor, resolveRelationships } from './resolve'
 
 const view = ['aW66s2QSosT', 'h5FuguPFF2j', 'flGbXLXCrEo']
 const end = (typeName?: string, v: string[] = []) => ({ typeName, view: v })
-const meta = (
-    id: string,
-    extra: Partial<RelationshipTypeMeta> = {}
-): RelationshipTypeMeta => ({
+const meta = (id: string, extra: Partial<RelationshipTypeMeta> = {}) => ({
     id,
     name: id,
     bidirectional: false,
@@ -36,7 +33,10 @@ const mutual = meta('mu', {
     bidirectional: true,
 })
 
-const te = (id: string, values: Record<string, string> = {}): LinkedEnd => ({
+const te: (id: string, values?: Record<string, string>) => LinkedEnd = (
+    id,
+    values = {}
+) => ({
     kind: 'trackedEntity',
     id,
     type: 'tt',
@@ -48,7 +48,7 @@ const rec = (
     endName: 'from' | 'to',
     other: LinkedEnd,
     name?: string
-): RelationshipRecord => ({ id, type, end: endName, other, name })
+) => ({ id, type, end: endName, other, name })
 
 const display = { calendar: 'ethiopian' as const }
 const resolve = (

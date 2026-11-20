@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import { describeMetadataError } from './describeMetadataError'
 import { buildProgramModel } from './programModel'
 
@@ -64,8 +64,6 @@ describe('describeMetadataError', () => {
         expect(message).toContain('HIV Program')
     })
 
-    // d2-app-scripts' extractor reads ': ' as a namespace separator and drops
-    // such strings from en.pot, so no message may contain one.
     it.each([
         { kind: 'form-cannot-search' },
         { kind: 'unknown-attribute', attribute: 'photo' },

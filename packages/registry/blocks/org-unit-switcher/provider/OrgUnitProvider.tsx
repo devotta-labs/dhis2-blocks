@@ -39,33 +39,27 @@ export interface OrgUnitProviderProps {
     children?: ReactNode
 }
 
-// Stored ids are untrusted: only a uid may go into the by-id filter.
 const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
 const NO_ASSIGNED: AssignedOrgUnit[] = []
 
-/** Everything that belongs to one user, so a different user starts afresh. */
 interface UserState {
     userId?: string
     remembered: Remembered
-    /** Every id picked or checked: its unit, or null when the server did not return it. */
+
     known: ReadonlyMap<string, OrgUnit | null>
 }
 
-const startFor = (userId?: string): UserState => ({
+const startFor: (userId?: string) => UserState = (userId) => ({
     userId,
     remembered: userId === undefined ? { recent: [] } : readRemembered(userId),
     known: new Map(),
 })
 
-const statusOf = ({
-    failed,
-    validated,
-    assigned,
-}: {
+const statusOf: (props: {
     failed: boolean
     validated: boolean
     assigned: AssignedOrgUnit[]
-}): OrgUnitStatus => {
+}) => OrgUnitStatus = ({ failed, validated, assigned }) => {
     if (failed) {
         return 'failed'
     }
@@ -129,7 +123,6 @@ export function OrgUnitProvider({
         [assigned]
     )
 
-    // Only ids never checked, so an id leaving the set never starts a new check.
     const toCheck = useMemo(
         () =>
             [
@@ -150,12 +143,11 @@ export function OrgUnitProvider({
             unwrap(await fetchOrgUnitsById(resourceClient, toCheck, signal)),
         enabled: checking,
         retry: shouldRetryOrgUnitRequest,
-        // Asked again on every mount, whatever the host's defaults: access can be lost between visits.
+
         staleTime: 0,
         refetchOnMount: 'always',
     })
 
-    // Only an answer fetched by this mount counts: one left in the cache by an earlier visit may be out of date.
     const answer =
         byId.isFetchedAfterMount && byId.isSuccess ? byId.data : undefined
     useEffect(() => {
@@ -179,8 +171,6 @@ export function OrgUnitProvider({
         )
     }, [known, answer, assigned])
 
-    // Data held through a failed refetch still counts: a background failure never blanks the unit.
-    // A check that cannot be made leaves its units unknown; the user's own units still work.
     const unchecked = checking && byId.isError && answer === undefined
     const validated =
         me.data !== undefined &&
@@ -191,7 +181,6 @@ export function OrgUnitProvider({
         assigned,
     })
 
-    // An unknown remembered unit is neither shown nor replaced: the user chooses, or the check succeeds later.
     const awaitsCheck =
         unchecked &&
         remembered.current !== undefined &&
@@ -203,7 +192,6 @@ export function OrgUnitProvider({
     const current = value === undefined ? remembers : controlled
     const orgUnit = status === 'ready' ? current : undefined
 
-    // Written only after a successful check, so a failed one never forgets a unit.
     useEffect(() => {
         if (!validated || unchecked) {
             return
@@ -222,7 +210,6 @@ export function OrgUnitProvider({
         }
     }, [validated, unchecked, valid, remembered, remember])
 
-    // The host's unit is remembered, whether a pick or the host itself changed it.
     useEffect(() => {
         if (controlled === undefined) {
             return
@@ -241,16 +228,14 @@ export function OrgUnitProvider({
 
     const setOrgUnit = useCallback(
         (next: OrgUnit) => {
-            // Nothing to pick from before the units load, and nothing from outside the user's.
             if (
                 status !== 'ready' ||
-                // Choosing the current unit again changes nothing, so nothing is said or called.
                 next.id === orgUnit?.id ||
                 !isWithinAssigned(next.path, assigned)
             ) {
                 return
             }
-            // A picked unit needs no check.
+
             update((before) => ({
                 known: new Map(before.known).set(next.id, next),
             }))

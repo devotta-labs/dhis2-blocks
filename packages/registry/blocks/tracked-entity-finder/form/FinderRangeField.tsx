@@ -30,7 +30,6 @@ export function FinderRangeField(props: FinderRangeFieldProps) {
         case 'dateTime':
             return <DateRangeInput {...input} />
         default:
-            // The rules report any other kind as a metadata error first.
             return null
     }
 }

@@ -23,18 +23,12 @@ export interface FinderSystemInfo {
     dateFormat: FinderDateFormat
 }
 
-/** The system info the finder reads: its calendar, and what search allows. */
 interface FinderServerInfo extends FinderSystemInfo {
-    /**
-     * Whether the server matches each code of a MULTI_TEXT value (DHIS2 2.43
-     * and later). Older servers compare the whole stored list.
-     */
     multiTextSearch: boolean
 }
 
 const MULTI_TEXT_SEARCH_FROM = 43
 
-/** Reads `2.43.1`, `2.43-SNAPSHOT` or `43.0`; anything else is too old. */
 const searchesMultiText = (version?: string) => {
     const [major = NaN, minor = NaN] = (version ?? '').split(/[.-]/).map(Number)
     const release = major === 2 ? minor : major
@@ -50,7 +44,7 @@ const DateFormatSchema = z
         'yyyy-mm-dd',
         'dd-mm-yyyy',
     ])
-    .transform((value): FinderDateFormat =>
+    .transform((value) =>
         value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
     )
 
@@ -60,7 +54,7 @@ const FinderSystemInfoSchema = z
         dateFormat: DateFormatSchema,
         version: z.string().optional(),
     })
-    .transform(({ calendar, dateFormat, version }): FinderServerInfo => ({
+    .transform<FinderServerInfo>(({ calendar, dateFormat, version }) => ({
         calendar,
         dateFormat,
         multiTextSearch: searchesMultiText(version),

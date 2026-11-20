@@ -42,9 +42,7 @@ export interface SearchSupport {
     readonly multiTextSearch: boolean
 }
 
-const kindOf = (meta: AttributeMetadata, support: SearchSupport): FieldKind => {
-    // Before 2.43 a filter compares the whole stored list, "A,B", so a search
-    // for one code would miss everyone who has more than it.
+const kindOf = (meta: AttributeMetadata, support: SearchSupport) => {
     if (meta.valueType === 'MULTI_TEXT') {
         return meta.options && support.multiTextSearch
             ? 'multiText'
@@ -74,13 +72,7 @@ const kindOf = (meta: AttributeMetadata, support: SearchSupport): FieldKind => {
     }
 }
 
-/**
- * Operators that can be read but not changed: unlike a frozen Set, this has
- * no add/delete/clear, and Set methods called on it throw.
- */
-const blockedOperators = (
-    operators: Iterable<SearchOperator>
-): BlockedOperators => {
+const blockedOperators = (operators: Iterable<SearchOperator>) => {
     const set = new Set(operators)
     return Object.freeze({
         get size() {
@@ -91,10 +83,7 @@ const blockedOperators = (
     })
 }
 
-const textOperatorOf = (
-    meta: AttributeMetadata,
-    blocked: BlockedOperators
-): FinderAttribute['textOperator'] => {
+const textOperatorOf = (meta: AttributeMetadata, blocked: BlockedOperators) => {
     const preferred = TEXT_OPERATORS.find(
         (operator) => operator === meta.preferredSearchOperator
     )
@@ -113,11 +102,10 @@ export const RANGE_KINDS: ReadonlySet<FieldKind> = new Set([
 
 type OperatorSource = Pick<FinderAttribute, 'kind' | 'unique' | 'textOperator'>
 
-/** The operators a field of this kind and match sends; all must be allowed. */
-const operatorsFor = (
+const operatorsFor: (
     attribute: OperatorSource,
     match: 'exact' | 'range'
-): readonly (SearchOperator | undefined)[] => {
+) => readonly (SearchOperator | undefined)[] = (attribute, match) => {
     if (match === 'range' || attribute.kind === 'dateTime') {
         return attribute.unique ? ['eq'] : ['ge', 'le']
     }
@@ -132,19 +120,12 @@ export const canSendMatch = (
     attribute: OperatorSource,
     blocked: BlockedOperators,
     match: 'exact' | 'range'
-): boolean =>
+) =>
     operatorsFor(attribute, match).every(
         (operator) => operator !== undefined && !blocked.has(operator)
     )
 
-/**
- * Whether some field can search this attribute: the exact match, or the range
- * match where the kind allows one. The same check judges composed fields.
- */
-const canSend = (
-    attribute: OperatorSource,
-    blocked: BlockedOperators
-): boolean => {
+const canSend = (attribute: OperatorSource, blocked: BlockedOperators) => {
     if (attribute.kind === 'unsupported') {
         return false
     }
@@ -155,47 +136,45 @@ const canSend = (
     )
 }
 
-const toAttribute =
-    (support: SearchSupport) =>
-    (meta: AttributeMetadata): FinderAttribute => {
-        const kind = kindOf(meta, support)
-        const blocked = blockedOperators(
-            meta.blockedSearchOperators.filter(
-                (operator): operator is SearchOperator =>
-                    SEARCH_OPERATORS.includes(operator)
-            )
+const toAttribute = (support: SearchSupport) => (meta: AttributeMetadata) => {
+    const kind = kindOf(meta, support)
+    const blocked = blockedOperators(
+        meta.blockedSearchOperators.filter(
+            (operator): operator is SearchOperator =>
+                SEARCH_OPERATORS.includes(operator)
         )
-        const textOperator =
-            kind === 'text' ? textOperatorOf(meta, blocked) : undefined
-        return Object.freeze({
-            id: meta.id,
-            label: meta.label,
-            valueType: meta.valueType,
-            kind,
-            unique: meta.unique,
-            searchable: meta.searchable,
-            displayInList: meta.displayInList,
-            blocked,
-            minCharacters: meta.minCharactersToSearch,
-            usable:
-                meta.searchable &&
-                canSend({ kind, unique: meta.unique, textOperator }, blocked),
-            ...(meta.options && {
-                options: Object.freeze(
-                    meta.options.map(({ code, name }) =>
-                        Object.freeze({ code, name })
-                    )
-                ),
-            }),
-            ...(textOperator && { textOperator }),
-        })
-    }
+    )
+    const textOperator =
+        kind === 'text' ? textOperatorOf(meta, blocked) : undefined
+    return Object.freeze({
+        id: meta.id,
+        label: meta.label,
+        valueType: meta.valueType,
+        kind,
+        unique: meta.unique,
+        searchable: meta.searchable,
+        displayInList: meta.displayInList,
+        blocked,
+        minCharacters: meta.minCharactersToSearch,
+        usable:
+            meta.searchable &&
+            canSend({ kind, unique: meta.unique, textOperator }, blocked),
+        ...(meta.options && {
+            options: Object.freeze(
+                meta.options.map(({ code, name }) =>
+                    Object.freeze({ code, name })
+                )
+            ),
+        }),
+        ...(textOperator && { textOperator }),
+    })
+}
 
 /** Without `support`, MULTI_TEXT attributes cannot be searched. */
-export const buildProgramModel = (
+export const buildProgramModel: (
     meta: ProgramMetadata,
-    support: SearchSupport = { multiTextSearch: false }
-): ProgramModel =>
+    support?: SearchSupport
+) => ProgramModel = (meta, support = { multiTextSearch: false }) =>
     Object.freeze({
         program: meta.program,
         name: meta.name,
@@ -205,14 +184,11 @@ export const buildProgramModel = (
         maxResults: meta.maxTeiCountToReturn,
     })
 
-export const attributeOf = (
-    model: ProgramModel,
-    id: string
-): FinderAttribute | undefined =>
+export const attributeOf = (model: ProgramModel, id: string) =>
     model.attributes.find((attribute) => attribute.id === id)
 
 /** Usable attributes, in metadata order. */
-export const searchableAttributes = (
+export const searchableAttributes: (
     model: ProgramModel
-): readonly FinderAttribute[] =>
+) => readonly FinderAttribute[] = (model) =>
     model.attributes.filter((attribute) => attribute.usable)

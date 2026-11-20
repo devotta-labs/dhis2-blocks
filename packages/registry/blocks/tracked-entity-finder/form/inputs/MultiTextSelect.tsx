@@ -58,8 +58,7 @@ export const MultiTextSelect = ({
                     setValue({ kind: 'multiText', codes: next })
                 }
             >
-                {/* The trigger covers the whole box, so a press anywhere opens
-                    it; only the chips' remove buttons sit above it. */}
+                {}
                 <ComboboxChips
                     ref={anchor}
                     className="pe-6 [&_[data-slot=combobox-chip-remove]]:relative"

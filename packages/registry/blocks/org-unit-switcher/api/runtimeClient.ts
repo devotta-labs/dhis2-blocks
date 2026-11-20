@@ -1,12 +1,8 @@
 import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
-import {
-    createRuntimeOrgUnitClient,
-    type DataEngineLike,
-    type OrgUnitClient,
-} from './client'
+import { createRuntimeOrgUnitClient, type DataEngineLike } from './client'
 
-export const useOrgUnitClient = (): OrgUnitClient => {
+export const useOrgUnitClient = () => {
     const engine = useDataEngine()
     return useMemo(
         () =>

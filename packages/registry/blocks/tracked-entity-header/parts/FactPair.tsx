@@ -84,7 +84,7 @@ export const AttributeFact = ({
                     className={className}
                     row={row}
                 >
-                    {/* Isolated, so the value keeps its own direction: a phone number stays left to right on a right-to-left page. */}
+                    {}
                     <bdi>{state.text}</bdi>
                 </FactPair>
             )

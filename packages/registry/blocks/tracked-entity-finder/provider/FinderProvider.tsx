@@ -36,6 +36,5 @@ const FinderScope = ({ program, onSelect, children }: FinderProviderProps) => {
  * renders only its children, so any UI inside it can use the finder hooks.
  */
 export function FinderProvider(props: FinderProviderProps) {
-    // A new program starts from nothing: values, forms and results.
     return <FinderScope key={props.program} {...props} />
 }

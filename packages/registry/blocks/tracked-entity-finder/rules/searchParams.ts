@@ -5,14 +5,10 @@ export const PAGE_SIZE = 10
 const FIELDS =
     'trackedEntity,trackedEntityType,orgUnit,programOwners[orgUnit,program],attributes[attribute,value]'
 
-/** DHIS2 filter escaping: `/` first, so the added slashes stay single. */
 const escapeFilterValue = (value: string) =>
     value.replaceAll('/', '//').replaceAll(':', '/:').replaceAll(',', '/,')
 
-export const serializeFilter = ({
-    attribute,
-    conditions,
-}: SearchFilter): string =>
+export const serializeFilter = ({ attribute, conditions }: SearchFilter) =>
     [
         attribute,
         ...conditions.flatMap(({ op, value }) => [

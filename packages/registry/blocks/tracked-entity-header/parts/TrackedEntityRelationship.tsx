@@ -69,7 +69,7 @@ export function TrackedEntityRelationship({
                 ? state.types.get(relationshipType)
                 : undefined
         const fallback = meta?.name ?? i18n.t('Relationship')
-        // A one-way type with no `end` has no end to name: it keeps the type's own name, unless one `label` names the pair.
+
         const emptyLabel =
             end === undefined &&
             !meta?.bidirectional &&

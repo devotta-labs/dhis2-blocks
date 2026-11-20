@@ -7,6 +7,8 @@ import {
     ProgramTimelineMetadataSchema,
     TrackedEntitySchema,
     type ChangeLogRow,
+    type OrgUnitName,
+    type TrackedEntity,
     type TrackerEvent,
 } from './schemas'
 
@@ -91,7 +93,7 @@ export const fetchTrackedEntity = (
     { trackedEntity }: { trackedEntity: string },
     signal?: AbortSignal
 ) =>
-    client.query(
+    client.query<TrackedEntity>(
         {
             resource: 'tracker/trackedEntities',
             id: trackedEntity,
@@ -204,7 +206,7 @@ export const fetchOrgUnitNames = async (
     signal?: AbortSignal
 ) => {
     if (ids.length === 0) {
-        return Result.ok([])
+        return Result.ok<OrgUnitName[]>([])
     }
     return client.query(
         {

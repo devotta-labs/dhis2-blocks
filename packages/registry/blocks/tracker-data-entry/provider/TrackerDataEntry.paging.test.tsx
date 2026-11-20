@@ -1,7 +1,7 @@
 /// <reference types="@vitest/browser-playwright" />
 import { page, userEvent } from 'vitest/browser'
-import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { RMNCH } from '@/components/program-rules/test/rmnch'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'
 import meAdmin from '../sources/test/fixtures/me-admin.json'

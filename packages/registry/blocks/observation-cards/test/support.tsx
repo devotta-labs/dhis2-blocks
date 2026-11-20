@@ -16,7 +16,7 @@ import {
 export const DE = 'hbDE0000001'
 export const PROGRAM = 'prog1'
 
-export interface Reading {
+interface Reading {
     value: string
     /** `YYYY-MM-DD`; the reading is recorded at midnight that day. */
     day: string

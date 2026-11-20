@@ -43,10 +43,10 @@ export interface DependencyGraphResult {
  * an ASSIGN only feeds the rules after it: a variable's upstream fields are
  * the ones known when the reading rule runs.
  */
-export const buildDependencyGraph = (
+export const buildDependencyGraph: (
     rules: ReadonlyArray<ProgramRuleMetadata>,
     variables: ReadonlyArray<ProgramRuleVariableMetadata>
-) => {
+) => DependencyGraphResult = (rules, variables) => {
     const variablesByName = new Map(
         variables.map((variable) => [variable.name, variable])
     )

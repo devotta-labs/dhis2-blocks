@@ -2648,6 +2648,11 @@
                     "target": "@components/tracker-data-entry/provider/openForm.ts"
                 },
                 {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/pageVisibility.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/pageVisibility.ts"
+                },
+                {
                     "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",
                     "type": "registry:file",
                     "target": "@components/tracker-data-entry/provider/signedIn.ts"

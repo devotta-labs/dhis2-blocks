@@ -1,6 +1,16 @@
 import type { Browser, BrowserContext, Page, TestInfo } from '@playwright/test'
-import { bodyRows, cell, gridReady } from './tracker-data-entry.support'
-import { expect, test } from './docs.fixture'
+import {
+    TRACKER_IMPORT,
+    bodyRows,
+    cell,
+    expect,
+    found,
+    gridReady,
+    readEvent,
+    settled,
+    test,
+    valuesOf,
+} from './tracker-data-entry.support'
 
 const REGISTER = 'tracker-data-entry/tracker-register'
 const COHORT = 'tracker-data-entry/cohort-anc-register'
@@ -171,18 +181,48 @@ test('rules for the first rows within 300 ms, an edit within 100 ms', async ({
     withinBudget(testInfo, 'data-entry:rules-edit', edit ?? Infinity, 100)
 })
 
-test('no keypress slower than 150 ms', async ({ page, context }, testInfo) => {
+test('no keypress slower than 150 ms while saving online', async ({
+    page,
+    request,
+    shared,
+}, testInfo) => {
     await openSlowed(page)
-    await context.setOffline(true)
+    const ids = (
+        await diastolic(page).evaluateAll((cells) =>
+            cells.slice(0, 10).map(({ id }) => id)
+        )
+    ).map((id) => found(/-cell-(\w+)\./.exec(id)?.[1], 'event in the register'))
+    expect(ids).toHaveLength(10)
+    const originals = await Promise.all(
+        ids.map(async (id) =>
+            found(await readEvent(request, id), `event ${id}`)
+        )
+    )
+    shared.keep(originals)
+    const values = originals.map((event, index) => {
+        const value = String(80 + index)
+        return valuesOf(event).get(DIASTOLIC) === value
+            ? String(90 + index)
+            : value
+    })
+    const saved = page.waitForResponse(
+        (response) =>
+            response.request().method() === 'POST' &&
+            TRACKER_IMPORT.test(new URL(response.url()).pathname)
+    )
     const timing = await watchKeys(page)
 
     await diastolic(page).first().click()
-    for (let row = 0; row < 10; row += 1) {
-        await page.keyboard.type(String(80 + row))
+    for (const value of values) {
+        await page.keyboard.type(value)
         await page.keyboard.press('Enter')
     }
-    await expect(diastolic(page).nth(9)).toHaveValue('89')
+    await expect(diastolic(page).nth(9)).toHaveValue(values[9])
     const slowest = await slowestKey(timing)
+    expect((await saved).ok()).toBe(true)
+    await settled(page)
+    const last = await readEvent(request, ids[9])
+    expect(valuesOf(last).get(DIASTOLIC)).toBe(values[9])
     withinBudget(
         testInfo,
         `slowest keypress (${slowest.name}; ${slowest.count} key events of 16 ms or more)`,

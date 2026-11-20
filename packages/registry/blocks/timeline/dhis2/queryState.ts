@@ -49,13 +49,14 @@ export interface QueriesSummary<T> {
  * result that haven't changed, so `data` and `statuses` keep their
  * references until an answer or a status changes, and can be memo deps.
  */
-export const summarize = <T>(queries: ReadonlyArray<UseQueryResult<T>>) => ({
-    data: queries.map((query) => query.data),
-    statuses: queries.map(statusOf),
-    errors: queries.map((query) => query.error),
-    isFetching: queries.some((query) => query.isFetching),
-    retries: queries.map(refetchOf),
-})
+export const summarize = <T>(queries: ReadonlyArray<UseQueryResult<T>>) =>
+    ({
+        data: queries.map((query) => query.data),
+        statuses: queries.map(statusOf),
+        errors: queries.map((query) => query.error),
+        isFetching: queries.some((query) => query.isFetching),
+        retries: queries.map(refetchOf),
+    }) satisfies QueriesSummary<T>
 
 /** The display name of a program for notices: its name once known, else its id. */
 export const programLabel = (

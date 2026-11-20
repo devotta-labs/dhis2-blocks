@@ -7,7 +7,7 @@ import {
     control,
     focused,
     paste,
-} from '@/components/spreadsheet/grid/__tests__/gridRig'
+} from '@/components/spreadsheet/grid/test/gridRig'
 import type { TrackerColumn } from '../model/types'
 import { cleanUp, KEY, memorySource, mount, notesOf, records } from './test/rig'
 import type { LoadedForm } from '../sources/types'

@@ -2,7 +2,7 @@
 import { setBrowserOffline } from '../../../test/network-status.test-utils'
 import { page, userEvent } from 'vitest/browser'
 import { SpreadsheetGrid, cellKey } from '@/components/spreadsheet'
-import { control, paste } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control, paste } from '@/components/spreadsheet/grid/test/gridRig'
 import type { TrackerColumn } from '../model/types'
 import { outboxName } from '../outbox/outbox'
 import type { LoadedForm } from '../sources/types'

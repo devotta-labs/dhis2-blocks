@@ -5,7 +5,7 @@ import {
     RMNCH,
     rmnchEnrollmentResponse,
     rmnchResponses,
-} from '@/components/program-rules/__tests__/rmnch'
+} from '@/components/program-rules/test/rmnch'
 import type { DataEngine } from '@/components/spreadsheet'
 import meAdmin from '../../sources/test/fixtures/me-admin.json'
 import rmnchProgram from '../../sources/test/fixtures/rmnch-program.json'

@@ -2,7 +2,7 @@
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
 import { userEvent } from 'vitest/browser'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import enrollments from '../register/test/fixtures/immunisation-enrollments.json'
 import immunisation from '../register/test/fixtures/immunisation-program.json'

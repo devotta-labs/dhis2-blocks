@@ -6,7 +6,7 @@ import {
     control,
     focused,
     paste,
-} from '@/components/spreadsheet/grid/__tests__/gridRig'
+} from '@/components/spreadsheet/grid/test/gridRig'
 import type { DataRecord, TrackerColumn, TrackerRow } from '../model/types'
 import {
     BLOCKED,

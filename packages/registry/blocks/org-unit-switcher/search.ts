@@ -33,7 +33,7 @@ export interface OrgUnitSearch {
 }
 
 /** The selector's search: held in the selector, so typing re-renders only the menu. */
-export function useOrgUnitSearch() {
+export const useOrgUnitSearch: () => OrgUnitSearch = () => {
     const { state, source } = useOrgUnitContext()
     const { assigned } = state
     const { client, cacheId, userId } = source

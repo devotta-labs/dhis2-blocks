@@ -2,13 +2,13 @@
 import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { addDaysIso, todayIso } from '@/components/dhis2-value-types'
-import { RMNCH } from '@/components/program-rules/__tests__/rmnch'
+import { RMNCH } from '@/components/program-rules/test/rmnch'
 import {
     SpreadsheetGrid,
     rowHeaderDomId,
     cellKey,
 } from '@/components/spreadsheet'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { recordIdOf } from '../model/types'
 import type { TrackerDataEntrySource } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'

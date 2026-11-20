@@ -68,7 +68,7 @@ export interface ElementSpec {
     value: (context: ValueContext) => string | undefined
 }
 
-export interface StageSpec {
+interface StageSpec {
     id: string
     name: string
     repeatable: boolean

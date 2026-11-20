@@ -20,7 +20,7 @@ export const LAST = 'zDhUuAYrxNC'
 export const ALLERGIES = 'gu1fqsmoU8r'
 export const BIRTH_DATE = 'gHGyrwKPzej'
 export const CITY = 'FO4sWYJ64LQ'
-export { CHILD, RMNCH }
+export { CHILD }
 
 interface RawAttribute {
     attribute: string

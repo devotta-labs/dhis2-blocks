@@ -82,13 +82,14 @@ export const buildEngineInput = (
     engine: RuleEngineModule,
     context: InputContext,
     input: EventRuleInput
-) => ({
-    event: toEngineEvent(engine, context, input.event),
-    enrollment:
-        input.enrollment === undefined
-            ? null
-            : toEngineEnrollment(engine, context, input.enrollment),
-    otherEvents: input.otherEvents
-        .filter((other) => other.id !== input.event.id)
-        .map((other) => toEngineEvent(engine, context, other)),
-})
+) =>
+    ({
+        event: toEngineEvent(engine, context, input.event),
+        enrollment:
+            input.enrollment === undefined
+                ? null
+                : toEngineEnrollment(engine, context, input.enrollment),
+        otherEvents: input.otherEvents
+            .filter((other) => other.id !== input.event.id)
+            .map((other) => toEngineEvent(engine, context, other)),
+    }) satisfies EngineInput

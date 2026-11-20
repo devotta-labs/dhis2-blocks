@@ -33,6 +33,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 "$SCRIPT_DIR/up.sh" "$E2E_VERSION_SLUG"
+"$E2E_REPO_ROOT/e2e/metadata/seed-cohort-performance.sh" "$E2E_VERSION_SLUG"
 
 # The tests hit $DOCS_APP_URL exactly: without a free port the preview would
 # silently move to the next one while a stale server keeps answering 3002.

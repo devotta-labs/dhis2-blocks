@@ -6,6 +6,7 @@ import {
 } from '../__tests__/metadata'
 import { RMNCH, rmnchMetadata } from '../__tests__/rmnch'
 import { buildRuleContext } from './buildContext'
+import { buildDependencyGraph } from './dependencyGraph'
 import type { RuleDependencies } from './types'
 
 const rmnchRule = (name: string): RuleDependencies => {
@@ -48,6 +49,26 @@ describe('the dependency graph', () => {
         expect(context.graph.fieldWriters.get(RMNCH.gestationalAge)).toEqual([
             'KRMEVVbex0q',
         ])
+    })
+
+    it('keeps rules without a classifiable field read in every edit pass', () => {
+        const { graph } = buildDependencyGraph(
+            [
+                rule('noField', 'true', [
+                    { id: 'always', type: 'HIDEFIELD', dataElementId: 'x' },
+                ]),
+                rule('unknownField', '#{unknown} == 1', [
+                    { id: 'unknown', type: 'HIDEFIELD', dataElementId: 'y' },
+                ]),
+                rule('knownField', '#{known} == 1', [
+                    { id: 'known', type: 'HIDEFIELD', dataElementId: 'z' },
+                ]),
+            ],
+            [currentEventVariable('known', 'knownField')]
+        )
+
+        expect(graph.alwaysRun).toEqual(['noField', 'unknownField'])
+        expect(graph.fieldReaders.get('knownField')).toEqual(['knownField'])
     })
 
     const chain = (consumerPriority: number) =>

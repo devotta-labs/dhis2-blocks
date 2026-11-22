@@ -1,8 +1,9 @@
 import i18n from '@dhis2/d2-i18n'
 import type { CellKey, CellState, GridTable } from '@/components/spreadsheet'
 import type { TrackerColumn, TrackerRow } from '../model/types'
+import { effectsWriter } from './effects'
 import type { TrackerEffects, TrackerMessage } from './effects'
-import { summarise } from './summary'
+import { runningSummary, summarise } from './summary'
 
 const NO_EFFECTS: TrackerEffects = { required: false, messages: [] }
 const NO_ROW_MESSAGES = new Map<string, TrackerMessage[]>()
@@ -296,4 +297,88 @@ test('an empty slot’s required fields are not summary items', () => {
     expect(summarised()).toMatchObject({ items: [], canComplete: true })
     expect(summarised('s3-2').items).toHaveLength(2)
     expect(summarised('s3-2').canComplete).toBe(false)
+})
+
+test('a running summary told of one cell sums up only that cell’s record again', () => {
+    const required = { required: true, messages: [] }
+    const effects = {
+        'e1.a': required,
+        'e1.b': required,
+        'e2.a': required,
+        'e2.b': required,
+    } satisfies Partial<Record<CellKey, TrackerEffects>>
+    const asked: string[] = []
+    const summary = runningSummary()
+    const read = (cells: Partial<Record<CellKey, CellState>>) =>
+        summary.read(
+            cells,
+            effects,
+            NO_ROW_MESSAGES,
+            TABLES,
+            undefined,
+            (record) => {
+                asked.push(record)
+                return false
+            }
+        )
+    const whole = (cells: Partial<Record<CellKey, CellState>>) =>
+        summarise(cells, effects, NO_ROW_MESSAGES, TABLES)
+
+    const cells = { 'e1.a': FILLED } satisfies Record<CellKey, CellState>
+    const first = read(cells)
+    expect(first).toEqual(whole(cells))
+    expect(first.items).toHaveLength(3)
+    expect(asked).toEqual(['e1', 'e2'])
+    // Told of nothing, nothing is read: the summary is the same object.
+    expect(read(cells)).toBe(first)
+
+    asked.length = 0
+    const typed = { ...cells, 'e2.b': FILLED }
+    summary.cellsWritten(['e2.b'])
+    expect(read(typed)).toEqual(whole(typed))
+    expect(asked).toEqual(['e2'])
+
+    // A cell on its way changes the count alone: the items are the same list.
+    const queued = { ...typed, 'e2.b': { ...FILLED, sync: 'queued' as const } }
+    summary.cellsWritten(['e2.b'])
+    expect(read(queued)).toEqual(whole(queued))
+    expect(read(queued).items).toBe(read(typed).items)
+})
+
+test('a running summary lists effects deleted and written again after the others, as the whole summary does', () => {
+    const warning = (text: string): TrackerEffects => ({
+        required: false,
+        messages: [{ tone: 'warning', text, source: 'rule' }],
+    })
+    const summary = runningSummary()
+    const read = (
+        state: ReturnType<ReturnType<typeof effectsWriter>['state']>
+    ) => summary.read({}, state.cells, state.rowMessages, TABLES)
+    const whole = (state: Parameters<typeof read>[0]) =>
+        summarise({}, state.cells, state.rowMessages, TABLES)
+
+    const first = effectsWriter({ cells: {}, rowMessages: new Map() })
+    first.setCell('e1.a', warning('One'))
+    first.setCell('e2.a', warning('Two'))
+    first.setRowMessages('e1', warning('Row one').messages)
+    first.setRowMessages('e2', warning('Row two').messages)
+    expect(read(first.state())).toEqual(whole(first.state()))
+
+    const second = effectsWriter(first.state())
+    second.setCell('e1.a', { required: false, messages: [] })
+    second.setCell('e3.a', warning('Three'))
+    second.setCell('e1.a', warning('One again'))
+    second.setCell('e2.a', warning('Two again'))
+    second.setRowMessages('e1', [])
+    second.setRowMessages('e1', warning('Row one again').messages)
+    summary.effectsWritten(second.state().written)
+    const after = read(second.state())
+    expect(after).toEqual(whole(second.state()))
+    expect(after.items.map(({ text }) => text)).toEqual([
+        'Two again',
+        'Three',
+        'One again',
+        'Row two',
+        'Row one again',
+    ])
 })

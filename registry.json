@@ -1676,6 +1676,11 @@
                     "target": "@components/spreadsheet/grid/TableBody.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/spreadsheet/grid/TableHead.tsx",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/TableHead.tsx"
+                },
+                {
                     "path": "packages/registry/blocks/spreadsheet/grid/TableRow.tsx",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/TableRow.tsx"
@@ -1684,6 +1689,11 @@
                     "path": "packages/registry/blocks/spreadsheet/grid/bulk.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/bulk.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/columnWindow.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/columnWindow.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/grid/fillDown.ts",
@@ -1714,6 +1724,11 @@
                     "path": "packages/registry/blocks/spreadsheet/grid/useAddRow.ts",
                     "type": "registry:file",
                     "target": "@components/spreadsheet/grid/useAddRow.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/spreadsheet/grid/useColumnWindow.ts",
+                    "type": "registry:file",
+                    "target": "@components/spreadsheet/grid/useColumnWindow.ts"
                 },
                 {
                     "path": "packages/registry/blocks/spreadsheet/index.ts",
@@ -2646,6 +2661,16 @@
                     "path": "packages/registry/blocks/tracker-data-entry/provider/openForm.ts",
                     "type": "registry:file",
                     "target": "@components/tracker-data-entry/provider/openForm.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ruleChanges.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ruleChanges.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tracker-data-entry/provider/ruleWindow.ts",
+                    "type": "registry:file",
+                    "target": "@components/tracker-data-entry/provider/ruleWindow.ts"
                 },
                 {
                     "path": "packages/registry/blocks/tracker-data-entry/provider/signedIn.ts",

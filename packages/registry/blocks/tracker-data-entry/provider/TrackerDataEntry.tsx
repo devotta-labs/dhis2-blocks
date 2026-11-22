@@ -11,6 +11,7 @@ import { parseDhis2Calendar } from '@/components/dhis2-value-display'
 import { parseDateFormat } from '@/components/dhis2-value-types'
 import { preloadRuleEngine } from '@/components/program-rules'
 import { formatCount, Spreadsheet } from '@/components/spreadsheet'
+import type { DrawnRows } from '@/components/spreadsheet'
 import type { CellKey, CellOverrides } from '@/components/spreadsheet'
 import { summarise } from '../logic/summary'
 import { recordIdOf, recordsOf, trackerKeyOf } from '../model/types'
@@ -305,6 +306,10 @@ export const TrackerDataEntry = ({
         () => fileUrlOf(baseUrl, () => active.tables.getState().records),
         [baseUrl, active]
     )
+    // The rows the grid draws: program rules run for these and the rows people change before the other rows.
+    const [drawn] = useState(() =>
+        createStore<DrawnRows>()(() => ({ rows: new Map() }))
+    )
     useRuleEffects({
         open: opened,
         form,
@@ -312,6 +317,7 @@ export const TrackerDataEntry = ({
         settings,
         announce,
         idScope,
+        drawn,
     })
     const people = form?.rowKind === 'person'
     const addRow = useMemo(() => {
@@ -390,6 +396,7 @@ export const TrackerDataEntry = ({
                     addRow={addRow}
                     orgUnitNames={orgUnitNames}
                     fileNames={fileNames}
+                    drawnRows={drawn}
                     offline={offline}
                     fileUrl={fileUrl}
                     RowLabel={TrackerRowLabel}

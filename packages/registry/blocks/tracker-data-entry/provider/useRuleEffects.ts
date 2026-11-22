@@ -8,6 +8,7 @@ import type { LoadedForm } from '../sources/types'
 import { connectRules } from './connectRules'
 import { FORM_MESSAGES } from '../logic/effects'
 import type { OpenForm } from './openForm'
+import type { Drawn } from './ruleWindow'
 
 interface RuleEffectsOptions {
     open?: OpenForm
@@ -18,6 +19,8 @@ interface RuleEffectsOptions {
     announce: Announcer['announce']
     /** Starts the form's DOM ids. */
     idScope: string
+    /** The rows the grid draws: rules run for these, and for the rows people change, before the others. */
+    drawn?: Drawn
 }
 
 /**
@@ -31,6 +34,7 @@ export const useRuleEffects = ({
     settings,
     announce,
     idScope,
+    drawn,
 }: RuleEffectsOptions) => {
     // Event rules: the stages and people of the event records; a register's enrolments run enrolment rules too.
     const held = [...records.values()].flatMap((record) =>
@@ -131,6 +135,7 @@ export const useRuleEffects = ({
             ruleNotes,
             seen,
             idScope,
+            drawn,
         })
-    }, [open, form, rules, settings, announce, idScope])
+    }, [open, form, rules, settings, announce, idScope, drawn])
 }

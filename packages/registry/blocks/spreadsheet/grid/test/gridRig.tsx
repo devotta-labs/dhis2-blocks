@@ -52,7 +52,7 @@ interface TableOptions {
     closed?: CellKey[]
 }
 
-export const makeTable = ({
+export const makeTable: (options?: TableOptions) => RigTable = ({
     id = 't1',
     columns = ['Age (years)'],
     fields = [],
@@ -60,7 +60,7 @@ export const makeTable = ({
     groups,
     headerRows,
     closed = [],
-}: TableOptions = {}): RigTable => {
+} = {}) => {
     const gridColumns = columns.map((label, i) => ({
         id: `c${i}`,
         label,
@@ -78,18 +78,17 @@ export const makeTable = ({
     }
 }
 
-/** The table with a new row at its end, as the provider adds one: `<table id>r<n>`, closed in `closedColumns`. */
-const withNewRow = (
+const withNewRow: (
     table: RigTable,
     closedColumns: ReadonlyArray<string>
-): RigTable => {
+) => RigTable = (table, closedColumns) => {
     const id = `${table.id}r${table.rows.length}`
     return {
         ...table,
         rows: [...table.rows, { id, label: 'New event' }],
         closed: new Map([
             ...table.closed,
-            ...closedColumns.map((column): [CellKey, string] => [
+            ...closedColumns.map<[CellKey, string]>((column) => [
                 cellKey(id, column),
                 'Not in this stage',
             ]),
@@ -174,10 +173,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
     const store = createCellStore({
         fields: new Map(
             tables.flatMap((each) =>
-                each.columns.map(({ id, field }): [string, Field] => [
-                    id,
-                    field,
-                ])
+                each.columns.map(({ id, field }) => [id, field])
             )
         ),
         fieldIdOf,
@@ -211,11 +207,10 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
         sharedAnnounce(text, politeness)
     }
     const added: string[] = []
-    /** The spreadsheet's context, counting each read of its tables, as the grid makes one when it renders. */
     const CountedTables = ({ children }: { children: ReactNode }) => {
         const context = useSpreadsheetContext()
         const reading = useMemo(
-            (): SpreadsheetContext => ({
+            () => ({
                 ...context,
                 get tables() {
                     onRead?.('tables')
@@ -233,7 +228,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
     const Harness = () => {
         const [current, setTables] = useState(tables)
         const addRow = useMemo(
-            (): SpreadsheetContext['addRow'] =>
+            () =>
                 options.addRow ??
                 new Map(
                     newRowTables.map((tableId) => [
@@ -298,7 +293,7 @@ export const mount = async (tables: RigTable[], options: MountOptions = {}) => {
 }
 
 /** The cell's control, whichever form on the page it is in: its id ends in the cell's key. */
-export const control = (key: CellKey): HTMLElement => {
+export const control = (key: CellKey) => {
     const element = document.querySelector(`[id$="-cell-${key}"]`)
     if (!(element instanceof HTMLElement)) {
         throw new Error(`No control for ${key}`)
@@ -319,6 +314,22 @@ export const paste = (target: HTMLElement, text: string) => {
     })
     target.dispatchEvent(event)
     return event.defaultPrevented
+}
+
+export const confirmNewEvents = () => {
+    const confirmations: Array<ReadonlyArray<CellKey>> = []
+    const confirmBulk: NonNullable<SpreadsheetContext['confirmBulk']> = (
+        keys
+    ) => {
+        confirmations.push(keys)
+        const rows = new Set(keys.map((key) => key.split('.')[0]))
+        return {
+            title: 'Create events?',
+            body: `This creates ${rows.size} events on this page.`,
+            confirm: 'Create events',
+        }
+    }
+    return { confirmBulk, confirmations }
 }
 
 export const nextFrame = () =>

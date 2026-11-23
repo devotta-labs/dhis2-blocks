@@ -16,7 +16,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { cellDomId } from '../cells/cellProps'
 import { formatCount } from '@/components/dhis2-value-input'
 import { addsRow } from '../cells/useCellMode'
-import type { CellKey, CellPlace, GridColumn, GridTable } from '../model/types'
+import type { CellKey, CellPlace, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import { AddRowButton } from './AddRowButton'
 import {
@@ -51,17 +51,13 @@ interface TableViewProps {
     idScope: string
     table: GridTable
     move(key: NavKey): void
-    /** The table takes new rows: a button with this label follows it. */
     addLabel?: string
-    /** Adds a row to the table and focuses its first open cell. */
     addRow(tableId: string): void
     openMenu(target: BulkTarget): void
     openNotes(target: NotesTarget): void
-    /** A row to draw wherever the region has scrolled, for a cell about to get focus. */
     reveal?: number
 }
 
-/** One table in its own scrolling region, its header row and first column sticky. */
 const TableView = memo(function TableView({
     idScope,
     table,
@@ -79,22 +75,19 @@ const TableView = memo(function TableView({
         () => columnHeaderIds(idScope, table),
         [idScope, table]
     )
-    // The column each leaf heading names, for the columns that take column actions.
     const bulkLeaves = useMemo(
         () =>
             new Map(
-                table.columns.flatMap(
-                    (column, c): Array<[string, GridColumn]> =>
-                        takesColumnActions(context, table, column)
-                            ? [[labels[c].split(' ').at(-1) ?? '', column]]
-                            : []
+                table.columns.flatMap((column, c) =>
+                    takesColumnActions(context, table, column)
+                        ? [[labels[c].split(' ').at(-1) ?? '', column]]
+                        : []
                 )
             ),
         [context, table, labels]
     )
     const titleId = `${idScope}-${table.id}-title`
     const [headerHeight, setHeaderHeight] = useState(0)
-    // Scroll padding as tall as the sticky header, however its labels wrap, so a focused cell never sits under it.
     useLayoutEffect(() => {
         const scroller = region.current
         const header = head.current
@@ -123,7 +116,7 @@ const TableView = memo(function TableView({
                 aria-labelledby={titleId}
                 className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-border bg-dhis2-background"
             >
-                {/* Only the rows near the view are drawn: the row count and each row's index say where they sit. */}
+                {}
                 <table
                     aria-labelledby={titleId}
                     aria-rowcount={table.headerRows.length + table.rows.length}
@@ -143,7 +136,6 @@ const TableView = memo(function TableView({
                                     />
                                 ) : null}
                                 {cells.map(({ id, label, span, rowSpan }) => {
-                                    // The label alone names the cells; a button in the heading is not part of it.
                                     const labelId = headerDomId(
                                         idScope,
                                         table.id,
@@ -169,7 +161,7 @@ const TableView = memo(function TableView({
                                                     LAST_CLASS
                                             )}
                                         >
-                                            {/* A group wider than the screen keeps its label beside the row headers. */}
+                                            {}
                                             {span > 1 ? (
                                                 <span
                                                     id={labelId}
@@ -285,9 +277,7 @@ export const SpreadsheetGrid = ({
         keyOf(tables[table].rows[row], tables[table].columns[column])
     const end = useId()
 
-    // The DOM id of the cell that has focus, or last had it.
     const focused = useRef<string>()
-    // The column a run of Tabs began in; Enter returns below it (as Excel does), an arrow or a click ends the run.
     const tabStart = useRef<number>()
     const moveTo = useRef<(key: NavKey) => void>()
     moveTo.current = (key) => {
@@ -295,12 +285,10 @@ export const SpreadsheetGrid = ({
         if (from === undefined) {
             return
         }
-        // The browser moves focus on Tab; the grid only notes where the run began.
         if (key === 'tab') {
             tabStart.current ??= from.column
             return
         }
-        // Left and Right go the way they point: in a right-to-left table the next column is on the left.
         const table = document
             .getElementById(focused.current ?? '')
             ?.closest('table')
@@ -320,12 +308,10 @@ export const SpreadsheetGrid = ({
             focusCell(keyAt(to))
         }
     }
-    // One function for the grid's life, so no cell re-renders for it.
     const move = useCallback((key: NavKey) => moveTo.current?.(key), [])
 
     const add = useAddRow(focusCell, tables, addRow, keyOf)
 
-    // A cell `focusCell` waits on: its row is drawn, then it gets focus.
     const waiting = useStore(focusing, (state) => state.key)
     const reveal =
         waiting === undefined
@@ -343,20 +329,17 @@ export const SpreadsheetGrid = ({
     }, [waiting, idScope, focusing])
     const { ask, dialog } = useBulkConfirm()
 
-    // The one menu of row and column actions, kept after it closes so it closes in place.
     const [menu, setMenu] = useState<BulkTarget & { open: boolean }>()
     const openMenu = useCallback(
         (target: BulkTarget) => setMenu({ ...target, open: true }),
         []
     )
-    // The one popover of a row's notes, kept the same way.
     const [notes, setNotes] = useState<NotesTarget & { open: boolean }>()
     const openNotes = useCallback(
         (target: NotesTarget) => setNotes({ ...target, open: true }),
         []
     )
 
-    // A value refused where the person is (Enter, an arrow, leaving the cell, a paste) is said aloud, once per text.
     useEffect(
         () =>
             store.subscribe((state, before) => {
@@ -375,16 +358,13 @@ export const SpreadsheetGrid = ({
                     announce(cell.error, 'assertive')
                 }
             }),
-        // `keyAt` reads `tables` and `keyOf`, which `positions` follows.
         [store, announce, positions]
     )
 
-    /** The cell a Ready-mode paste or undo is for: a default control in Ready. A replacement keeps its own. */
     const readyCell = (target: EventTarget) =>
         target instanceof HTMLElement && target.dataset.mode === 'ready'
             ? positions.get(target.id)
             : undefined
-    /** Runs a store change on the screen at once, then selects the cell's new value, as Ready shows it. */
     const changeHere = (target: EventTarget, change: () => void) => {
         flushSync(change)
         if (target instanceof HTMLInputElement) {
@@ -392,7 +372,6 @@ export const SpreadsheetGrid = ({
         }
     }
 
-    /** Opens the grid's menu on a ready cell, its row's and its column's actions; an editor keeps the browser's. */
     const cellMenu = (event: SyntheticEvent) => {
         const at = readyCell(event.target)
         if (at === undefined || !(event.target instanceof HTMLElement)) {
@@ -473,7 +452,6 @@ export const SpreadsheetGrid = ({
             changeHere(event.target, () => {
                 undone = store.getState().undo()
             })
-            // Undo can change a cell elsewhere in the grid: focus goes there, so the change is seen and heard.
             if (undone.length > 0) {
                 focusCell(undone[0])
             }
@@ -514,7 +492,6 @@ export const SpreadsheetGrid = ({
         if (opensMenu(event)) {
             cellMenu(event)
         }
-        // A cell that saved the typing lets the key through; one that kept the text, or an editor, stops it.
         const at =
             event.target instanceof HTMLElement
                 ? positions.get(event.target.id)
@@ -547,7 +524,6 @@ export const SpreadsheetGrid = ({
             <a
                 href={`#${end}`}
                 onClick={(event) => {
-                    // Focus moves without touching the address, which some apps route by.
                     event.preventDefault()
                     document.getElementById(end)?.focus()
                 }}

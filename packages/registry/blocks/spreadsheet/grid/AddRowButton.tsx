@@ -21,9 +21,9 @@ export const AddRowButton = ({
         onClick={onClick}
     >
         {label}
-        {/* Screen readers hear the shortcut from aria-keyshortcuts; the button keeps its name. */}
+        {}
         <Kbd aria-hidden>
-            {/* Apple keyboards say ⌘ where others say Ctrl. */}
+            {}
             {/Mac|iPhone|iPad/.test(navigator.platform)
                 ? '⌘↵'
                 : i18n.t('Ctrl ↵')}

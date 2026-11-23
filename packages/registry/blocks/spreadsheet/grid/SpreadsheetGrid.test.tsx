@@ -1,6 +1,6 @@
 import type { CDPSession } from '@vitest/browser-playwright'
 import { cdp, page, userEvent } from 'vitest/browser'
-import { withEditor } from '../cells/__tests__/harness'
+import { withEditor } from '../cells/test/harness'
 import { cells } from '../cells/Cell'
 import { cellDomId } from '../cells/cellProps'
 import type { CellComponent } from '../cells/cellProps'
@@ -19,10 +19,9 @@ import {
     range,
     stylesFor,
     visibleBox,
-} from './__tests__/gridRig'
+} from './test/gridRig'
 
 // SAFETY: these tests run on the playwright provider, whose `cdp()` is this
-// session; its typing lands on only one of the workspace's two vitest installs.
 const devtools = () => cdp() as CDPSession
 
 test('every editable cell is named by its row and column headers', async () => {
@@ -38,7 +37,6 @@ test('every editable cell is named by its row and column headers', async () => {
     await expect
         .element(page.getByRole('textbox', { name: 'Age (years) 2026-10-20' }))
         .toBeVisible()
-    // Header ids repeat across tables; each cell is named by its own table's headers.
     await expect
         .element(page.getByRole('textbox', { name: 'Child Weight 2026-10-22' }))
         .toBeVisible()
@@ -83,7 +81,6 @@ test('the focused cell is not hidden under the sticky header', async () => {
     await expect
         .poll(() => parseFloat(getComputedStyle(region).scrollPaddingTop))
         .toBeCloseTo(height, 0)
-    // Row 10 half under the header, then focused.
     const target = control(cellKey('t1r10', 'c0'))
     region.scrollTop +=
         target.getBoundingClientRect().top -
@@ -106,7 +103,6 @@ test('Enter at the last row of the first table continues into the second', async
             }),
             makeTable({ id: 't2', rows: ['d'] }),
         ],
-        // Read-only cells take focus; only closed ones are skipped.
         { effects: { [cellKey('t1r2', 'c0')]: { readOnly: 'Completed' } } }
     )
     control(cellKey('t1r0', 'c0')).focus()
@@ -125,7 +121,6 @@ test('Enter after a run of Tabs returns to the column the run began in; an arrow
         makeTable({ columns: ['A', 'B', 'C'], rows: ['a', 'b', 'c', 'd'] }),
     ])
     control(cellKey('t1r0', 'c0')).focus()
-    // Typing a row of values, as Excel's Tab-then-Enter is for.
     await userEvent.keyboard('1{Tab}2{Tab}3{Enter}')
     expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
     expect(['c0', 'c1', 'c2'].map((c) => value(cellKey('t1r0', c)))).toEqual([
@@ -156,7 +151,6 @@ test('pasting a 2×2 block fills four cells', async () => {
     ]
     expect(block.map(value)).toEqual(['1', '2', '3', '4'])
     expect(announced).toEqual(['Cells pasted: 4'])
-    // One undo step for the whole block.
     store.getState().undo()
     expect(block.map(value)).toEqual([
         undefined,
@@ -206,7 +200,6 @@ test('a single value pasted in Ready is saved without its quotes; in Edit it is 
     input.focus()
     expect(paste(input, '"12"')).toBe(true)
     expect(value(key)).toBe('12')
-    // Still Ready: typing replaces the pasted value.
     await userEvent.keyboard('7{Enter}')
     expect(value(key)).toBe('7')
     input.focus()
@@ -224,7 +217,6 @@ test('a skip link moves focus past the grid', async () => {
     await expect
         .element(page.getByRole('button', { name: 'After' }))
         .toHaveFocus()
-    // The page's address is left alone, for apps that route by it.
     expect(location.hash).toBe('')
 })
 
@@ -235,9 +227,7 @@ test('Ctrl+Z undoes the last change', async () => {
     await userEvent.keyboard('{Control>}z{/Control}')
     expect(value(cellKey('t1r1', 'c0'))).toBeUndefined()
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
-    // Focus goes to the cell that changed, so the undo is seen and heard.
     expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
-    // In Edit, Ctrl+Z belongs to the text.
     await userEvent.keyboard('{F2}{Control>}z{/Control}')
     expect(value(cellKey('t1r0', 'c0'))).toBe('7')
     expect(focused()).toBe(cellDomId(ID_SCOPE, cellKey('t1r1', 'c0')))
@@ -283,7 +273,6 @@ test('a right-to-left label reads right to left; its row header keeps the table�
     const start = region.getBoundingClientRect().left + region.clientLeft
     for (const header of page.getByRole('rowheader').elements()) {
         expect(header.getBoundingClientRect().left).toBeCloseTo(start, 0)
-        // Its edge between header and cells is on the cells' side.
         expect(getComputedStyle(header).direction).toBe('ltr')
         expect(getComputedStyle(header).borderRightWidth).toBe('1px')
         expect(getComputedStyle(header).borderLeftWidth).toBe('0px')
@@ -307,12 +296,10 @@ test('a cell’s notes show outside the scrolling table', async () => {
     control(last).focus()
     const note = page.getByText('Too old for this stage')
     await expect.element(note).toBeVisible()
-    // A popover follows its scrolled cell from the next frame, before it is painted.
     await nextFrame()
     await nextFrame()
     const region = page.getByRole('region').element().getBoundingClientRect()
     const box = note.element().getBoundingClientRect()
-    // Under its cell, which sits at the bottom of the scrolled region.
     expect(box.top).toBeGreaterThanOrEqual(
         control(last).getBoundingClientRect().bottom
     )
@@ -320,7 +307,6 @@ test('a cell’s notes show outside the scrolling table', async () => {
         control(last).getBoundingClientRect().bottom + 8
     )
     expect(box.bottom).toBeGreaterThan(region.bottom)
-    // The table's scrolling region does not cut off the part below it.
     expect((await visibleBox(note.element())).bottom).toBeCloseTo(box.bottom, 0)
 })
 
@@ -348,7 +334,6 @@ test('without anchor positioning, popovers hang under their cell inside the tabl
     )
     control(key).focus()
     await userEvent.keyboard('{F4}')
-    // The notes and the option list are each the parent of what they say.
     const [note, list] = [
         page.getByText('Check it'),
         page.getByRole('listbox'),
@@ -402,7 +387,6 @@ test('the option list opens above its cell when there is no room below, over the
     expect(list.contains(shown)).toBe(true)
 })
 
-/** Of the 50-row, 50-column grid, only the rows near the view are drawn, each whole; the table counts them all. */
 const expectRowsNearTheView = () => {
     const drawn = page.getByRole('row').elements().length - 1
     expect(drawn).toBeLessThan(50)
@@ -415,7 +399,6 @@ const expectRowsNearTheView = () => {
 test('typing renders one cell, not the others or the table, in a 2,500-cell grid', async () => {
     const reads = { effects: 0, tables: 0 }
     const started = performance.now()
-    // A clinic desktop, as the performance budgets measure.
     await devtools().send('Emulation.setCPUThrottlingRate', { rate: 4 })
     try {
         await mount(
@@ -441,14 +424,12 @@ test('typing renders one cell, not the others or the table, in a 2,500-cell grid
     }
     expectRowsNearTheView()
     control(cellKey('t1r5', 'c20')).focus()
-    // The focused cell is scrolled into view before the typing is counted.
     await nextFrame()
     await nextFrame()
     reads.effects = 0
     reads.tables = 0
     await userEvent.keyboard('12{Enter}')
     expect(reads.tables).toBe(0)
-    // A handful of reads for the typed and the newly focused cell, against one per cell for a grid redrawn.
     expect(reads.effects).toBeLessThan(25)
 })
 
@@ -460,7 +441,6 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
         text: 'Low',
     }
     const rendered: CellKey[] = []
-    // The default control, counting its renders by cell.
     const Counted: CellComponent = (props) => {
         rendered.push(props.cellKey)
         return <cells.number {...props} />
@@ -481,9 +461,7 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
     )
     const controls = page.getByRole('textbox').elements()
     expectRowsNearTheView()
-    // The rows subscribe to the stores and hand each cell its state.
     expect(subscriptions).toBeLessThan(2_500)
-    // A cell without notes holds its control alone, described by nothing.
     const notesOf = (key: CellKey) =>
         control(key)
             .getAttribute('aria-describedby')
@@ -497,7 +475,6 @@ test('a 2,500-cell grid mounts notes only for cells that have them, subscribes b
         )
     ).toEqual([control(noted)])
     expect(notesOf(noted)).toEqual(['Low'])
-    // A cell that gains a note gets its description node and the attribute naming it.
     const later = cellKey('t1r1', 'c1')
     effects.setState(({ cells: all }) => ({
         cells: {

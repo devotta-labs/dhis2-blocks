@@ -1,7 +1,7 @@
 /// <reference types="@vitest/browser-playwright" />
 import { userEvent } from 'vitest/browser'
 import { cellKey } from '../model/types'
-import { control, makeTable, mount } from './__tests__/gridRig'
+import { control, makeTable, mount } from './test/gridRig'
 
 const ROWS = ['a', 'b', 'c']
 
@@ -43,7 +43,6 @@ test('Ctrl+D with nothing above, in the first row of any table, says so and take
             cancelable: true,
         })
         control(at(table, 0)).dispatchEvent(down)
-        // The grid took the key and said why.
         expect(down.defaultPrevented).toBe(true)
     }
     expect(announced).toEqual([

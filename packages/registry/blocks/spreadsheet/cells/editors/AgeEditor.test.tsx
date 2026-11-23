@@ -8,10 +8,10 @@ import {
     makeTable,
     mount as mountGrid,
     paste,
-} from '../../grid/__tests__/gridRig'
+} from '../../grid/test/gridRig'
 import { cellKey } from '../../model/types'
 import { addDaysIso, todayIso } from '@/components/dhis2-value-types'
-import { CELL, HEADER, inputOf, rig, withEditor } from '../__tests__/harness'
+import { CELL, HEADER, inputOf, rig, withEditor } from '../test/harness'
 import { Cell } from '../Cell'
 import type { PopupEditor } from '@/components/dhis2-value-input'
 import { AgeEditor } from '@/components/dhis2-value-input/editors/AgeEditor'
@@ -26,7 +26,6 @@ const GREGORIAN_DAY_FIRST = {
 const FUTURE = 'Enter a date of birth that is not in the future'
 const WHOLE = 'Enter whole numbers of zero or more'
 
-// Today is fixed, so the ages are too.
 const Today: PopupEditor = (props) => <AgeEditor {...props} today={TODAY} />
 
 const mount = async (
@@ -58,7 +57,6 @@ const months = dialog.getByRole('textbox', { name: 'Months' })
 const days = dialog.getByRole('textbox', { name: 'Days' })
 const save = () => page.getByRole('button', { name: 'Save' })
 
-// F2, not Enter: the Enter right after a save moves on.
 const open = async (cell: Locator) => {
     inputOf(cell).focus()
     await userEvent.keyboard('{F2}')
@@ -71,7 +69,6 @@ test('typing years, months or days fills the date of birth in the system calenda
     await expect.element(birth).toHaveValue('')
     await expect.element(birth).toHaveAttribute('placeholder', 'DD-MM-YYYY')
 
-    // 2020-10-27, six years back. What is not typed stays empty, and counts as zero.
     await userEvent.fill(years, '6')
     await expect.element(birth).toHaveValue('17-02-2013')
     await expect.element(months).toHaveValue('')
@@ -79,19 +76,16 @@ test('typing years, months or days fills the date of birth in the system calenda
     await userEvent.fill(months, '7')
     await expect.element(birth).toHaveValue('18-07-2012')
     await userEvent.fill(days, '28')
-    // 2020-02-29.
     await expect.element(birth).toHaveValue('21-06-2012')
     await userEvent.click(save())
     expect(stored()?.value).toBe('2020-02-29')
     await expect.element(cell).toHaveValue('21-06-2012')
 
-    // A date typed in the system calendar fills the years, months and days.
     await open(cell)
     await expect.element(birth).toHaveValue('21-06-2012')
     await expect.element(years).toHaveValue('6')
     await expect.element(months).toHaveValue('7')
     await expect.element(days).toHaveValue('28')
-    // One year before today.
     await userEvent.fill(birth, '17-02-2018')
     await expect.element(years).toHaveValue('1')
     await expect.element(months).toHaveValue('0')
@@ -108,7 +102,6 @@ test('a date of birth in the future is refused with its message', async () => {
     })
     await open(cell)
     await userEvent.fill(birth, '2026-10-28')
-    // Nothing is said while the date is typed.
     await expect.element(dialog.getByText(FUTURE)).not.toBeInTheDocument()
     await userEvent.click(save())
     await expect.element(dialog.getByText(FUTURE)).toBeVisible()
@@ -117,7 +110,6 @@ test('a date of birth in the future is refused with its message', async () => {
     await expect.element(dialog).toBeVisible()
     expect(enqueued).toEqual([])
 
-    // Typing takes the message away; today is not in the future.
     await userEvent.fill(birth, '2026-10-27')
     await expect.element(dialog.getByText(FUTURE)).not.toBeInTheDocument()
     await expect.element(years).toHaveValue('0')
@@ -127,7 +119,6 @@ test('a date of birth in the future is refused with its message', async () => {
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('2026-10-27')
 
-    // Focus leaving with a future date keeps it in the cell, refused, and saves nothing; Escape on the cell drops it.
     await open(cell)
     await userEvent.fill(birth, '2026-10-28')
     await userEvent.click(page.getByText('Age (years)'))
@@ -139,7 +130,6 @@ test('a date of birth in the future is refused with its message', async () => {
     })
     await expect.element(cell).toHaveValue('2026-10-28')
     await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
-    // Beside the cell's other notes, such as whether its value is saved.
     await expect.element(cell).toHaveAccessibleDescription(new RegExp(FUTURE))
     expect(enqueued).toHaveLength(1)
     inputOf(cell).focus()
@@ -147,7 +137,6 @@ test('a date of birth in the future is refused with its message', async () => {
     expect(stored()).toMatchObject({ draft: undefined, error: undefined })
     await expect.element(cell).toHaveValue('2026-10-27')
 
-    // A date the calendar does not have is refused with the date message.
     await open(cell)
     await userEvent.fill(birth, '2026-02-30')
     await userEvent.click(save())
@@ -170,7 +159,6 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
     await userEvent.click(save())
     await expect.element(dialog.getByText(WHOLE)).toBeVisible()
 
-    // Up to three digits: more would reach back past the calendar.
     await userEvent.fill(years, '1000')
     await userEvent.click(save())
     await expect.element(dialog.getByText(WHOLE)).toBeVisible()
@@ -178,7 +166,6 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
     await expect.element(dialog.getByText(WHOLE)).not.toBeInTheDocument()
     await expect.element(birth).toHaveValue('1027-10-27')
 
-    // The message is about the part that is wrong, and focus goes to it.
     await userEvent.fill(years, '1')
     await userEvent.fill(months, '2.5')
     await userEvent.click(save())
@@ -193,7 +180,6 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('2025-08-27')
 
-    // Focus leaving with a part that is not a whole number keeps the parts in the cell, refused, and saves nothing.
     await open(cell)
     await userEvent.fill(days, '-3')
     await userEvent.click(page.getByText('Age (years)'))
@@ -205,7 +191,6 @@ test('negative or fractional parts are refused with "Enter whole numbers of zero
         error: WHOLE,
     })
     await expect.element(cell).toHaveValue(parts)
-    // Beside the cell's other notes, such as whether its value is saved.
     await expect.element(cell).toHaveAccessibleDescription(new RegExp(WHOLE))
     expect(enqueued).toHaveLength(1)
 })
@@ -216,7 +201,6 @@ test('an age no date of birth is on today is refused with its message', async ()
         <AgeEditor {...props} today="2026-03-31" />
     ))
     await open(cell)
-    // Born 28 February, one is one month and three days old on 31 March.
     await userEvent.fill(months, '1')
     await userEvent.click(save())
     await expect.element(dialog.getByText(NONE)).toBeVisible()
@@ -249,7 +233,6 @@ test('the editor opens on the stored date of birth and its age; a clear saves no
     await expect.element(cell).toHaveFocus()
     expect(enqueued).toEqual([])
 
-    // Saving what was stored changes nothing.
     await open(cell)
     await userEvent.click(save())
     await expect.element(dialog).not.toBeInTheDocument()
@@ -278,7 +261,6 @@ test('a stored date of birth that is not up to today leaves the age empty, and i
     await expect.element(years).toHaveValue('')
     await expect.element(months).toHaveValue('')
     await expect.element(days).toHaveValue('')
-    // A value the cell holds is not refused again.
     await userEvent.click(save())
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()).toMatchObject({ value: '2999-01-01', sync: 'idle' })
@@ -289,7 +271,6 @@ test('a stored date of birth that is not up to today leaves the age empty, and i
 test('retyping an age part leaves the date of birth that was typed, and does not move it to another day', async () => {
     const { cell, stored } = await mount()
     await open(cell)
-    // 31 December has no month-end counterpart in September: the age 26 years 9 months 27 days also means the 30th.
     await userEvent.fill(birth, '1999-12-31')
     await expect.element(years).toHaveValue('26')
     await expect.element(months).toHaveValue('9')
@@ -297,18 +278,15 @@ test('retyping an age part leaves the date of birth that was typed, and does not
     await userEvent.fill(days, '27')
     await expect.element(birth).toHaveValue('1999-12-31')
 
-    // Typed key by key, the parts pass through other ages and come back to this one.
     await userEvent.fill(days, '')
     await userEvent.keyboard('27')
     await expect.element(days).toHaveValue('27')
     await expect.element(birth).toHaveValue('1999-12-31')
 
-    // Another age is another date, and the first age brings the date back.
     await userEvent.fill(days, '26')
     await expect.element(birth).toHaveValue('2000-01-01')
     await userEvent.fill(days, '27')
     await expect.element(birth).toHaveValue('1999-12-31')
-    // Emptying every part is no age, not the age of the date typed.
     await userEvent.fill(years, '')
     await userEvent.fill(months, '')
     await userEvent.fill(days, '')
@@ -329,7 +307,6 @@ test('a problem is shown next to the field it is about', async () => {
     await userEvent.click(save())
     const future = dialog.getByText(FUTURE)
     await expect.element(birth).toHaveAccessibleDescription(FUTURE)
-    // Under the date of birth, above the parts.
     expect(top(future)).toBeGreaterThanOrEqual(bottom(birth))
     expect(top(future)).toBeLessThan(top(years))
 
@@ -338,7 +315,6 @@ test('a problem is shown next to the field it is about', async () => {
     await userEvent.click(save())
     const whole = dialog.getByText(WHOLE)
     await expect.element(months).toHaveAccessibleDescription(WHOLE)
-    // Under the parts, and not under the date of birth.
     expect(top(whole)).toBeGreaterThanOrEqual(bottom(months))
     await expect.element(birth).not.toHaveAccessibleDescription(WHOLE)
 })

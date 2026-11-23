@@ -4,7 +4,7 @@ What the searching and uploading cells get from DHIS2, captured from the docs DH
 revision dd8bdbb), started with `pnpm docs:up`. Run from the repository root:
 
 ```bash
-D=packages/registry/blocks/spreadsheet/cells/__tests__/fixtures; B=http://127.0.0.1:58080/api
+D=packages/registry/blocks/spreadsheet/cells/test/fixtures; B=http://127.0.0.1:58080/api
 curl -s -u admin:district -G "$B/organisationUnits" -d query=ngelehun -d withinUserSearchHierarchy=true --data-urlencode "fields=id,displayName,ancestors[displayName]" > $D/org-unit-search.json
 curl -s -u admin:district -G "$B/userLookup" -d query=admin > $D/user-lookup.json
 pnpm exec oxfmt --write $D

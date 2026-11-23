@@ -9,14 +9,13 @@ import {
     nextFrame,
     range,
     visibleBox,
-} from './__tests__/gridRig'
+} from './test/gridRig'
 
 const ROWS = range(200, (i) => `Row ${i + 1}`)
 const at = (table: string, row: number) => cellKey(`${table}r${row}`, 'c0')
 const mounted = (key: string) =>
     document.querySelector(`[id$="-cell-${key}"]`) !== null
 
-/** Scrolls the table's region to its end, and waits for the grid to draw the rows there. */
 const scrollToEnd = async (table = 0) => {
     const region = page.getByRole('region').elements()[table]
     region.scrollTop = region.scrollHeight
@@ -34,7 +33,6 @@ test('draws only the rows near the view, and says where each sits in the whole t
     expect(
         rows.map((row) => row.getAttribute('aria-rowindex')).slice(0, 3)
     ).toEqual(['1', '2', '3'])
-    // The last row stays drawn, so Shift+Tab from after the table lands in it.
     expect(rows.at(-1)?.getAttribute('aria-rowindex')).toBe('201')
     expect(mounted(at('t1', 100))).toBe(false)
 })

@@ -36,7 +36,6 @@ export const LabCanvas = ({
                 </Tabs.Tab>
             ))}
         </Tabs.List>
-        {}
         <Tabs.Panel
             value="canvas"
             keepMounted

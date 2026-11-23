@@ -167,7 +167,6 @@ export function ObservationSparkline({
                             }}
                             onMouseLeave={() => setAnchor(undefined)}
                         >
-                            {}
                             <ChartTooltip
                                 position={anchor}
                                 allowEscapeViewBox={{ x: true, y: true }}
@@ -201,7 +200,6 @@ export function ObservationSparkline({
                                 }}
                             />
                             <YAxis hide domain={domain} />
-                            {}
                             <Line
                                 dataKey="value"
                                 type="linear"

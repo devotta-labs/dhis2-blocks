@@ -520,6 +520,10 @@ and TypeScript-only wrappers do not hide chained access. Hook names follow
 hooks. This is an expression-placement rule, not a replacement for React's
 Rules of Hooks control-flow checks.
 
+`anti-slop/no-empty-jsx-expression` bans empty JSX expression containers such
+as `{}`, which render nothing. A container holding a JSX comment
+(`{/* ... */}`) is left to `landmines-style/no-comments`.
+
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes
 do not start the web app's E2E stack). Feature branches compare against their

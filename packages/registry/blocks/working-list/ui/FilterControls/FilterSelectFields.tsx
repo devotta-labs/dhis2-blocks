@@ -132,7 +132,6 @@ export const ComboboxField = ({
                     noMatchText
                 )}
             </ComboboxEmpty>
-            {}
             {loading && items.length > 0 && (
                 <div className="flex justify-center px-6 py-2">
                     <Spinner label={translate('Loading')} className="size-4" />
@@ -194,7 +193,6 @@ export const ComboboxField = ({
                 value={[...values]}
                 onValueChange={(next: string[]) => onChange(next)}
             >
-                {}
                 <ComboboxChips
                     ref={anchor}
                     size="sm"

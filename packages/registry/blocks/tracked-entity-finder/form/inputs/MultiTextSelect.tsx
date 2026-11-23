@@ -58,7 +58,6 @@ export const MultiTextSelect = ({
                     setValue({ kind: 'multiText', codes: next })
                 }
             >
-                {}
                 <ComboboxChips
                     ref={anchor}
                     className="pe-6 [&_[data-slot=combobox-chip-remove]]:relative"

@@ -93,7 +93,6 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
         className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-accent-strong group-focus-visible/sort:bg-dhis2-accent-strong group-disabled/sort:bg-transparent"
     >
         <svg viewBox="0 0 16 16" className="size-4">
-            {}
             <polygon
                 points="4 9 12 9 8 14"
                 className={

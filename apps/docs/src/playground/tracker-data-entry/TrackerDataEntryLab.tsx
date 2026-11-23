@@ -98,7 +98,6 @@ export const TrackerDataEntryLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    {}
                     <PresetControls
                         presets={PRESETS}
                         selected={state.preset}

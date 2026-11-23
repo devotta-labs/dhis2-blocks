@@ -61,7 +61,6 @@ const renderOrgUnit = async (
                     value={value}
                     onValueChange={change}
                 >
-                    {}
                     <OrgUnitSwitcher />
                     {children}
                 </OrgUnitProvider>

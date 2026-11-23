@@ -126,7 +126,6 @@ export function ObservationInline({
                         display={display}
                     />
                 </span>
-                {}
                 {series.partial ? <PartialNote className="ms-0" /> : null}
             </>
         )
@@ -146,7 +145,6 @@ export function ObservationInline({
 
     return (
         <div data-slot="observation-inline" className={cn(ROW, className)}>
-            {}
             {name ? (
                 <dl className={cn(ROW, 'm-0')}>
                     <dt className="text-dhis2-muted-foreground">{name}</dt>

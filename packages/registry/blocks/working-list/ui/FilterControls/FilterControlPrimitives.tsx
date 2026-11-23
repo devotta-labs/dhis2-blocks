@@ -78,7 +78,6 @@ export const FilterChip = ({
                 data-test={`${dataTest}-select`}
                 data-testid={testId}
             >
-                {}
                 <PopoverTrigger
                     // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props -- PopoverTrigger sets aria-expanded and aria-controls at runtime
                     role="combobox"
@@ -94,7 +93,6 @@ export const FilterChip = ({
                         {prefix}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{value}</span>
-                    {}
                     <span aria-hidden="true" className="w-7 shrink-0" />
                     <span className="ms-0.5 flex text-dhis2-foreground">
                         <IconChevronDown16 />

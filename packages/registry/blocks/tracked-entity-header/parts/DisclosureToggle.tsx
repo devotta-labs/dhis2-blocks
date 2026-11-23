@@ -41,7 +41,7 @@ export const DisclosureToggle = ({
         {label}
         {count !== undefined && (
             <>
-                {}{' '}
+                {' '}
                 <span
                     data-slot="tracked-entity-toggle-count"
                     className="ms-0.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-dhis2-foreground/8 px-1.5 text-xs leading-none font-medium tabular-nums text-dhis2-foreground"

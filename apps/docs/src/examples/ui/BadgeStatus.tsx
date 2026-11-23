@@ -9,7 +9,6 @@ const BadgeStatus = () => (
         <Badge>Active</Badge>
         <Badge variant="secondary">Completed</Badge>
         <Badge variant="outline">Cancelled</Badge>
-        {}
         <Badge style={legendStyle}>High risk</Badge>
     </div>
 )

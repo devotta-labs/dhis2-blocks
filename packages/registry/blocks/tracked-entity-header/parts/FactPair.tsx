@@ -84,7 +84,6 @@ export const AttributeFact = ({
                     className={className}
                     row={row}
                 >
-                    {}
                     <bdi>{state.text}</bdi>
                 </FactPair>
             )

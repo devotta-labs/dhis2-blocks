@@ -39,7 +39,6 @@ const ComboboxTrigger = React.forwardRef<
         {...props}
     >
         {children}
-        {}
         <span className="flex shrink-0 text-dhis2-muted-foreground not-first:ms-auto not-first:ps-0.5">
             <IconChevronDown16 />
         </span>

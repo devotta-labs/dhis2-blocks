@@ -78,7 +78,6 @@ export default function ProgramPicker() {
             </Field>
 
             <FinderProvider program={program.value} onSelect={setPerson}>
-                {}
                 <FinderForm aria-label="Search by ID">
                     <FinderField attribute={program.id} />
                     <FinderHint />

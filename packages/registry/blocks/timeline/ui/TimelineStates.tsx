@@ -24,7 +24,6 @@ export const TimelineLoading = ({
             className={cn('flex flex-col gap-3', className)}
         >
             <span className="sr-only">{i18n.t('Loading')}</span>
-            {}
             <div aria-hidden="true" className="flex flex-col gap-4">
                 <Skeleton className="h-3 w-20" />
                 {[0, 1, 2].map((row) => (

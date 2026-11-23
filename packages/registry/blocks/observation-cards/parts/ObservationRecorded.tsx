@@ -79,7 +79,6 @@ export function RecordedNote({
                     />
                 }
             >
-                {}
                 <span
                     aria-hidden="true"
                     className="underline decoration-current/40 decoration-dotted underline-offset-2"

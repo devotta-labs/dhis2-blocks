@@ -136,7 +136,6 @@ const FileChoices = ({
     value: string | undefined
 }) => (
     <>
-        {}
         <Button
             type="button"
             size="sm"

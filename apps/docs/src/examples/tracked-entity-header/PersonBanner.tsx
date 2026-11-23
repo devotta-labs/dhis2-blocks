@@ -44,7 +44,6 @@ export default function PersonBanner() {
                 >
                     <TrackedEntityBanner className={CARD} />
                 </TrackedEntityHeaderProvider>
-                {}
                 <TrackedEntityHeaderProvider
                     trackedEntity={PERSON}
                     program={PROGRAM}

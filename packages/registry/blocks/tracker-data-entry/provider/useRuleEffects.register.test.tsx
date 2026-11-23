@@ -4,8 +4,8 @@ import type { ComponentProps } from 'react'
 import { userEvent } from 'vitest/browser'
 import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey } from '@/components/spreadsheet'
-import enrollments from '../register/__tests__/fixtures/immunisation-enrollments.json'
-import immunisation from '../register/__tests__/fixtures/immunisation-program.json'
+import enrollments from '../register/test/fixtures/immunisation-enrollments.json'
+import immunisation from '../register/test/fixtures/immunisation-program.json'
 import {
     DOSE,
     DPT_1,
@@ -18,7 +18,7 @@ import {
     LAYOUT,
     PROGRAM,
     VACCINATION,
-} from '../register/__tests__/registerRig'
+} from '../register/test/registerRig'
 import { cleanUp, later, memorySource, mount } from './__tests__/rig'
 
 afterEach(cleanUp)

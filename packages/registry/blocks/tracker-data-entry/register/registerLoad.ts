@@ -19,14 +19,12 @@ import type { RegisterMetadata } from './metadata'
 import { nameOf, personRow } from './newPerson'
 import { fillSlots } from './slots'
 
-/** What a register shows of an enrolment: its dates and status, its person's attributes, its events. */
 const ENROLLMENT_FIELDS =
     'enrollment,trackedEntity,orgUnit,enrolledAt,occurredAt,status,attributes[attribute,value],events[event,enrollment,programStage,orgUnit,occurredAt,scheduledAt,completedAt,status,dataValues[dataElement,value]]'
 
 /** The enrolment date's field: its cells are `<enrolment>.enrolledAt`. */
 export const ENROLLED_AT = 'enrolledAt'
 
-// Translated when used, so the reasons follow the user's language.
 export const READ_ONLY = {
     program: () =>
         i18n.t('You do not have access to enter data in this program'),
@@ -86,7 +84,7 @@ export const registerAnswerSchema = z.object({
  * The register's query: the program, a page of its enrolments at the org unit in the period, oldest first, and the
  * user's authorities; the server's calendar when `withCalendar`.
  */
-export const registerQuery = (
+export const registerQuery: (
     options: {
         programId: string
         orgUnitId: string
@@ -96,7 +94,12 @@ export const registerQuery = (
     pageSize: number,
     page: number | undefined,
     withCalendar: boolean
-): Parameters<DataEngine['query']>[0] => ({
+) => Parameters<DataEngine['query']>[0] = (
+    options,
+    pageSize,
+    page,
+    withCalendar
+) => ({
     program: {
         resource: 'programs',
         id: options.programId,
@@ -124,7 +127,6 @@ export const registerQuery = (
 
 const dateOf = (dateTime: string | undefined) => dateTime?.slice(0, 10)
 
-/** Every field of every form a register's records use, by id, with its name: dates, attributes, data elements. */
 const fieldsOf = (metadata: RegisterMetadata) => {
     const fields = new Map<string, { field: Field; name: string }>([
         [
@@ -136,7 +138,6 @@ const fieldsOf = (metadata: RegisterMetadata) => {
             { field: { valueType: 'DATE' }, name: metadata.enrolmentDateName },
         ],
     ])
-    // The incident date is the enrolment's `occurredAt`, which shares the event date's id.
     if (metadata.incidentDate !== undefined) {
         fields.set(EVENT_DATE_COLUMN, {
             field: { valueType: 'DATE' },
@@ -158,7 +159,7 @@ const fieldsOf = (metadata: RegisterMetadata) => {
  * One page of a register as the grid's form: a row per enrolment, its slots filled from its events, an empty slot's
  * event made new, and why each record is read-only. Names and paging are the source's.
  */
-export const toForm = (
+export const toForm: (
     {
         enrollments: { enrollments },
         me,
@@ -176,7 +177,13 @@ export const toForm = (
         today: string
         hasRules: boolean
     }
-): Omit<LoadedForm, 'orgUnitNames' | 'fileNames' | 'hasMore' | 'newRows'> => {
+) => Omit<LoadedForm, 'orgUnitNames' | 'fileNames' | 'hasMore' | 'newRows'> = (
+    { enrollments: { enrollments }, me, systemInfo },
+    program,
+    metadata,
+    compiled,
+    { layout, today, hasRules }
+) => {
     const { programId, trackedEntityTypeId } = metadata
     const stageEdit = new Map(
         program.programStages.map((stage) => [stage.id, stage])
@@ -287,7 +294,6 @@ export const toForm = (
             },
             ''
         )
-        // Named by its label cells, else by its enrolment date.
         rows.push({
             ...row,
             label: nameOf(row, (key) => values.get(key)) || enrolledAt,
@@ -348,10 +354,13 @@ export const toForm = (
                     ...(incident ? [EVENT_DATE_COLUMN] : []),
                 ]),
             ],
-            ...stages.map(([id, stage]): [string, ReadonlySet<string>] => [
-                id,
-                new Set(stage.dataElements.keys()),
-            ]),
+            ...stages.map(
+                ([id, stage]) =>
+                    [id, new Set(stage.dataElements.keys())] satisfies [
+                        string,
+                        ReadonlySet<string>,
+                    ]
+            ),
         ]),
         required: new Map<string, ReadonlySet<string>>([
             [
@@ -363,14 +372,17 @@ export const toForm = (
                 ),
             ],
             [programId, new Set([ENROLLED_AT])],
-            ...stages.map(([id, stage]): [string, ReadonlySet<string>] => [
-                id,
-                new Set(
-                    [...stage.dataElements]
-                        .filter(([, { compulsory }]) => compulsory)
-                        .map(([dataElement]) => dataElement)
-                ),
-            ]),
+            ...stages.map(
+                ([id, stage]) =>
+                    [
+                        id,
+                        new Set(
+                            [...stage.dataElements]
+                                .filter(([, { compulsory }]) => compulsory)
+                                .map(([dataElement]) => dataElement)
+                        ),
+                    ] satisfies [string, ReadonlySet<string>]
+            ),
         ]),
         strategy: new Map(
             stages.map(([id, stage]) => [id, stage.validationStrategy])

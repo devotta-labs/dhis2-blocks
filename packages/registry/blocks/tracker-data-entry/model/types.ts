@@ -60,7 +60,7 @@ export interface PersonRecord {
 export type DataRecord = EventRecord | EnrollmentRecord | PersonRecord
 
 /** An event's stage, an enrolment's program, a person's tracked entity type. */
-export const formOf = (record: DataRecord): string => {
+export const formOf = (record: DataRecord) => {
     switch (record.kind) {
         case 'event':
             return record.programStageId
@@ -89,10 +89,10 @@ export interface TrackerColumn extends GridColumn {
 }
 
 /** The cell's key: the column's slot's record (else the row's own id) and its field (else its id). */
-export const trackerKeyOf = (
+export const trackerKeyOf: (
     row: TrackerRow,
     column: TrackerColumn
-): CellKey => {
+) => CellKey = (row, column) => {
     const field = column.fieldId ?? column.id
     if (column.slot === undefined) {
         return cellKey(row.id, field)
@@ -105,9 +105,9 @@ export const trackerKeyOf = (
 }
 
 /** The records a row's cells can save to: its own id, then its slots' records, each once. */
-export const recordsOf = (row: Pick<TrackerRow, 'id' | 'slots'>): string[] => [
-    ...new Set([row.id, ...Object.values(row.slots ?? {})]),
-]
+export const recordsOf: (row: Pick<TrackerRow, 'id' | 'slots'>) => string[] = (
+    row
+) => [...new Set([row.id, ...Object.values(row.slots ?? {})])]
 
 export interface PendingChange {
     sourceKey: string
@@ -120,9 +120,9 @@ export interface PendingChange {
 }
 
 /** The row that shows each record. */
-export const rowsByRecord = (
+export const rowsByRecord: (
     tables: ReadonlyArray<{ rows: ReadonlyArray<TrackerRow> }>
-): ReadonlyMap<string, TrackerRow> =>
+) => ReadonlyMap<string, TrackerRow> = (tables) =>
     new Map(
         tables.flatMap(({ rows }) =>
             rows.flatMap((row) =>

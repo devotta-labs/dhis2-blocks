@@ -4,9 +4,9 @@ import { RMNCH } from '@/components/program-rules/test/rmnch'
 import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'
-import meAdmin from '../sources/__tests__/fixtures/me-admin.json'
-import rmnchProgram from '../sources/__tests__/fixtures/rmnch-program.json'
-import systemInfo from '../sources/__tests__/fixtures/system-info.json'
+import meAdmin from '../sources/test/fixtures/me-admin.json'
+import rmnchProgram from '../sources/test/fixtures/rmnch-program.json'
+import systemInfo from '../sources/test/fixtures/system-info.json'
 import type {
     TrackerDataEntrySource,
     FormPage,

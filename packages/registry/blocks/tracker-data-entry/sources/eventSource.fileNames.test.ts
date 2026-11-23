@@ -1,16 +1,16 @@
 import type { DataEngine } from '@/components/spreadsheet'
-import fileNames from './__tests__/fixtures/file-names.json'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import inpatientProgram from './__tests__/fixtures/inpatient-program.json'
-import meAdmin from './__tests__/fixtures/me-admin.json'
-import orgUnitNames from './__tests__/fixtures/org-unit-names.json'
-import systemInfo from './__tests__/fixtures/system-info.json'
+import fileNames from './test/fixtures/file-names.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import inpatientProgram from './test/fixtures/inpatient-program.json'
+import meAdmin from './test/fixtures/me-admin.json'
+import orgUnitNames from './test/fixtures/org-unit-names.json'
+import systemInfo from './test/fixtures/system-info.json'
 import { eventSource } from './eventSource'
+import { recording } from '../test/recording'
 
 type Request = Parameters<DataEngine['query']>[0]
 type Options = Parameters<DataEngine['query']>[1]
 
-// The inpatient stage's file and org unit data elements.
 const DOCUMENTATION = 'ulD2zW0TIy2'
 const PLACE_OF_INFECTION = 'S33cRBsnXPo'
 const CHC = 'DiszpKrYNg8'
@@ -22,7 +22,6 @@ const inpatient = eventSource({
     today: '2026-10-26',
 })
 
-/** The inpatient events: the first holds a file and an org unit, the second another file, the third a value that is no id. */
 const events = {
     ...inpatientEvents,
     events: inpatientEvents.events.map((event, at) => ({
@@ -41,20 +40,18 @@ const events = {
     })),
 }
 
-/** DHIS2 for the load: names are answered once `answer` lets them; the files in `refused` are refused. */
 const engineFor = (
     answer: Promise<void>,
     refused: ReadonlySet<string> = new Set()
 ) => {
-    const requests: Array<[Request, Options]> = []
+    const requests = recording<[Request, Options]>()
     // SAFETY: loading only calls `query`, which answers every request from the fixtures.
     const engine = {
         query: async (request: Request, options: Options) => {
-            // Whether the program has rules is not what these tests count.
             if (request.rules !== undefined) {
                 return { rules: { programRules: [] } }
             }
-            requests.push([request, options])
+            requests.add([request, options])
             if (request.program !== undefined) {
                 return {
                     program: inpatientProgram,
@@ -74,20 +71,20 @@ const engineFor = (
             return { file }
         },
     } as DataEngine
-    return { engine, requests }
+    return { engine, requests: requests.values, requestCount: requests.reached }
 }
 
 test('the form loads the name of each stored file by its id, sent with the org unit names request', async () => {
     let answer = () => {}
-    const { engine, requests } = engineFor(
+    const { engine, requests, requestCount } = engineFor(
         new Promise((resolve) => {
             answer = resolve
         })
     )
     const signal = new AbortController().signal
     const loading = inpatient.load(engine, signal)
-    // Every names request is made before any answers.
-    await expect.poll(() => requests.length).toBe(4)
+    await requestCount(4)
+    expect(requests).toHaveLength(4)
     answer()
     const form = await loading
     expect(requests.filter(([request]) => request.file !== undefined)).toEqual(

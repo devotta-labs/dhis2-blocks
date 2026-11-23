@@ -16,9 +16,6 @@ import {
     immunisationRegister,
 } from './registerRig'
 
-/** What the reload tests restore from: a half-typed new child, and doses typed before a reload. */
-
-// A new person typed before a reload, with the ids their row was made with.
 export const PERSON: PersonRecord = {
     kind: 'trackedEntity',
     id: 'PsnTyped001',
@@ -64,10 +61,10 @@ export const restoring = async (
 }
 
 /** A dose typed for a loaded person, in `slot`, which DHIS2 does not hold. */
-export const restoredDose = (
+export const restoredDose: (
     enrollmentId: string,
     slot: string
-): EventRecord => ({
+) => EventRecord = (enrollmentId, slot) => ({
     kind: 'event',
     id: 'EvtTyped003',
     programStageId: VACCINATION,

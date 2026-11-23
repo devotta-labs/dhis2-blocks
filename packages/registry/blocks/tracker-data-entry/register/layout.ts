@@ -33,7 +33,6 @@ export interface RegisterLayout {
     columns: LayoutNode[]
 }
 
-// An occurrence and a where name two different ways to pick the event.
 const eventPick = {
     stage: z.string(),
     occurrence: z.int().min(1).optional(),
@@ -48,11 +47,6 @@ const onePick = ({
 }) => occurrence === undefined || where === undefined
 const onePickMessage = 'A slot has an occurrence or a where, not both'
 
-/**
- * An event ref with no keys but its own: a misspelt `where` or `occurrence` would pick the stage's first event. A
- * strict object's refusal aborts, so a union reports only "Invalid input" at the column; this one does not, and the
- * union reports it at the field's path, naming the key.
- */
 const eventRef = <Fields extends Record<string, z.ZodType>>(fields: Fields) =>
     z
         .looseObject(fields)

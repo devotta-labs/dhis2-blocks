@@ -38,7 +38,6 @@ export const OptionComboInput = ({
     required: boolean
 }) => {
     const index = useMemo(() => optionIndex(offered), [offered])
-    // Whether the text is being typed: only then is it searched. Typing alone never reports.
     const [typing, setTyping] = useState(false)
     const highlighted = useRef<string>()
     const query = typing ? draft.text : ''
@@ -53,7 +52,6 @@ export const OptionComboInput = ({
     }
     return (
         <Combobox
-            // Ranked and limited by `searchOptions`, not filtered again.
             items={found.codes}
             filter={null}
             autoHighlight
@@ -66,7 +64,6 @@ export const OptionComboInput = ({
                 }
             }}
             onItemHighlighted={(code, { reason }) => {
-                // As in the data entry grid, the mouse highlights nothing for Tab to pick.
                 highlighted.current = reason === 'pointer' ? undefined : code
             }}
             onValueChange={(code, { reason }) => {
@@ -84,7 +81,6 @@ export const OptionComboInput = ({
                 autoComplete="off"
                 spellCheck={false}
                 aria-required={required || undefined}
-                // Not for a required field: it would only empty the text, to be refused when left.
                 showClear={!required && !readOnly}
                 clearLabel={i18n.t('Clear')}
                 onBlur={() => {
@@ -92,7 +88,6 @@ export const OptionComboInput = ({
                     draft.commit()
                 }}
                 onKeyDown={(event) => {
-                    // Emptied text highlights nothing, so Enter or Tab clears the field.
                     const code =
                         typing &&
                         draft.text.trim() !== '' &&
@@ -101,14 +96,12 @@ export const OptionComboInput = ({
                             ? highlighted.current
                             : undefined
                     if (event.key === 'Tab' && code !== undefined) {
-                        // Picked as the field is left, as Tab in the data entry grid does.
                         draft.change(code)
                     } else if (
                         event.key === 'Enter' &&
                         code === undefined &&
                         !composing(event)
                     ) {
-                        // Here, not on keyup: a surrounding form submits on Enter, and must get what was typed.
                         draft.commit()
                     }
                 }}

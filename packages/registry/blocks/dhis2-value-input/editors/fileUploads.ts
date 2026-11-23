@@ -21,12 +21,10 @@ export interface FileUploads {
     subscribe(listener: () => void): () => void
 }
 
-// A file's name and DHIS2's reason are said as they are, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
 const refusalSchema = z.object({ message: z.string() })
 
-/** Why an upload failed, for the person: no connection, DHIS2's own reason, or neither. */
 const failure = (error: Error) => {
     if (error instanceof FetchError && error.type === 'network') {
         return i18n.t('Connect to the internet to upload files')
@@ -53,10 +51,9 @@ export const createFileUploads = (
     runs: Map<string, AbortController>,
     key: string,
     kept?: (id: string, name: string) => void
-): FileUploads => {
+) => {
     const listeners = new Set<() => void>()
     let own: { said: string; controller: AbortController } | undefined
-    /** Forgets `controller` as the field's and as this one's; says whether its upload still counts. */
     const settle = (controller: AbortController) => {
         if (runs.get(key) === controller) {
             runs.delete(key)
@@ -68,10 +65,9 @@ export const createFileUploads = (
         return !controller.signal.aborted
     }
     const stop = () => runs.get(key)?.abort()
-    return {
+    const uploads: FileUploads = {
         running: () => own?.said,
         start(file, image, done, failed) {
-            // A dropped or "All files" file may not be an image; an empty type (HEIC on some systems) passes.
             if (image && file.type !== '' && !file.type.startsWith('image/')) {
                 failed(i18n.t('Choose an image file'))
                 return
@@ -79,7 +75,6 @@ export const createFileUploads = (
             stop()
             const controller = new AbortController()
             runs.set(key, controller)
-            // However it is stopped, it stops running here.
             controller.signal.addEventListener('abort', () =>
                 settle(controller)
             )
@@ -111,6 +106,7 @@ export const createFileUploads = (
             return () => listeners.delete(listener)
         },
     }
+    return uploads
 }
 
 /**

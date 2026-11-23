@@ -18,7 +18,6 @@ interface Editors<Editor> {
     IMAGE?: Editor
 }
 
-/** Whether a save was taken: `invalid` is refused, `unchanged` is the stored value, `queued` is accepted. */
 type CommitResult = 'invalid' | 'unchanged' | 'queued'
 
 export type PopupValueType = keyof Editors<unknown>
@@ -30,30 +29,18 @@ export interface EditorProblem {
     text: string
 }
 
-/** What an editor takes, in a cell's dialog or in a form. */
 interface EditorProps {
     field: Field
-    /** The stored value, or undefined for none. */
     value: string | undefined
     settings: ValueSettings
     labelledBy: string
     hiddenOptions?: ReadonlySet<string>
-    /** A stored value, or null to clear. The cell or the form commits it, and says whether it took it. */
     save(value: string | null): CommitResult
-    /**
-     * The value as it would be saved (null clears), or why it cannot be. Call on every change; the cell or the form
-     * saves it when focus leaves the editor, and with a problem saves nothing and keeps the problem's text as its draft.
-     */
     report(value: string | null, problem?: EditorProblem): void
-    /** Says an outcome to screen reader users; the shared announcer by default. */
     announce?(text: string, politeness?: Politeness): void
-    /** The stored file's name, for file and image fields; its id is shown without one. */
     fileName?: string
-    /** Where the stored file or image can be fetched; without it there is no preview and no "Download". */
     fileUrl?: string
-    /** Whether the server cannot be reached now: files cannot be uploaded. */
     offline?: boolean
-    /** Where the file editor runs its uploads; its own, stopped when it unmounts, by default. */
     uploads?: FileUploads
 }
 
@@ -108,16 +95,14 @@ export const formEditors: Editors<FormEditor> = {
     IMAGE: FileFormEditor,
 }
 
-const lookUp = <Editor>(
-    editors: Editors<Editor>,
-    valueType: string
-): Editor | undefined =>
-    Object.entries(editors).find(([type]) => type === valueType)?.[1]
+const lookUp = <Editor>(editors: Editors<Editor>, valueType: string) => {
+    const registered: [string, Editor | undefined][] = Object.entries(editors)
+    return registered.find(([type]) => type === valueType)?.[1]
+}
 
 /** The editor for a field's value type, which can be any DHIS2 value type. */
-export const editorFor = (valueType: string): PopupEditor | undefined =>
-    lookUp(popupEditors, valueType)
+export const editorFor = (valueType: string) => lookUp(popupEditors, valueType)
 
 /** The form's editor for a field's value type, which can be any DHIS2 value type. */
-export const formEditorFor = (valueType: string): FormEditor | undefined =>
+export const formEditorFor = (valueType: string) =>
     lookUp(formEditors, valueType)

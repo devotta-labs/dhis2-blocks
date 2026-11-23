@@ -12,10 +12,6 @@ const SETTINGS: ValueSettings = {
 }
 const LABEL = 'Notes'
 
-/**
- * A pop-up field in a form, with a button after it to leave the field for. `submits` has, for each time the form
- * submitted, how many changes were reported by then.
- */
 const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     const onChange = vi.fn()
     const submits: number[] = []
@@ -47,7 +43,6 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     }
 }
 
-/** The box drawn around a textbox: its own, or the input group's it sits in. */
 const box = (name: string) => {
     const input = page.getByRole('textbox', { name }).element()
     return (

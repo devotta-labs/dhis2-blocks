@@ -49,7 +49,7 @@ export const asRadios = (
     )
 }
 
-const yesNo = (): ReadonlyArray<Option> => [
+const yesNo = () => [
     { code: 'true', name: i18n.t('Yes') },
     { code: 'false', name: i18n.t('No') },
 ]
@@ -120,7 +120,6 @@ export const ChoiceInput = ({
             />
         )
     }
-    // Shown only for a value the options lack, which has no name among them: it is shown as stored.
     const meta: ValueMeta = {
         valueType: field.valueType,
         optionSet: { options: [] },
@@ -130,10 +129,8 @@ export const ChoiceInput = ({
     })
     const clear = () => {
         onChange(null)
-        // The button leaves with the value; focus goes to the choice, not the page.
         box.current?.querySelector<HTMLElement>('[role="radio"]')?.focus()
     }
-    // × and its words, quiet as the combobox's clear button, the × in line with the radios.
     const clearButton =
         required || readOnly || value === undefined ? null : (
             <Button
@@ -148,7 +145,6 @@ export const ChoiceInput = ({
             </Button>
         )
     const radios = asRadios(field, hiddenOptions) ? (
-        // Named by its title rather than a fieldset's legend, so Clear can sit after the radios, outside the group.
         <RadioGroup
             id={id}
             aria-labelledby={titleId}
@@ -157,11 +153,8 @@ export const ChoiceInput = ({
                 '[role="radio"][aria-checked="true"]',
                 '[role="radio"]'
             )}
-            // An empty value checks no radio.
             value={known ? value : ''}
             readOnly={readOnly}
-            // Not `required`: the radios' form inputs have no name, so each would be a group of its own, missing
-            // when unchecked, and hold back the host's form.
             aria-required={required || undefined}
             onValueChange={(code: string) => onChange(code)}
             className="flex flex-col gap-2"

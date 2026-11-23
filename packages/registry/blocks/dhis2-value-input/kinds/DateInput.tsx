@@ -32,7 +32,6 @@ export const dateFormatHint = (
 
 const DAY: Field = { valueType: 'DATE' }
 
-/** The direction the page sets around an element, if any: not the element's own, as a date's text is always `ltr`. */
 const directionOf = (element: Element | null) => {
     const dir = element?.parentElement?.closest('[dir]')?.getAttribute('dir')
     return dir === 'rtl' || dir === 'ltr' ? dir : undefined
@@ -77,13 +76,11 @@ export const DatePickerButton = ({
             <PopoverTrigger
                 render={<InputGroupButton variant="ghost" size="icon-xs" />}
                 aria-label={i18n.t('Choose date')}
-                // A press opens the calendar without taking focus from the input, whose text is not committed half typed.
                 onMouseDown={(event) => event.preventDefault()}
             >
                 <IconCalendar16 />
             </PopoverTrigger>
             <PopoverContent
-                // Under the whole box the button sits in, not under the button.
                 anchor={() =>
                     input.current?.closest('[data-slot=input-group]') ??
                     input.current
@@ -135,7 +132,6 @@ export const DateInput = ({
     const input = useRef<HTMLInputElement>(null)
     const typed = parseTyped(field, draft.text, settings)
     const stored = typed.ok ? typed.value : undefined
-    // The time typed, also beside a date that is not one yet, or with no date at all.
     const time =
         stored === undefined
             ? draft.text.match(/\b\d{1,2}:\d{2}\b/)?.[0]

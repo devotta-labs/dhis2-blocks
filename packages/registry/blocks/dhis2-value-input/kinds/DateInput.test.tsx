@@ -133,13 +133,11 @@ test('the picker opens on the stored day; arrows move days, Page Down a month, E
     await expect.element(calendar()).not.toBeInTheDocument()
     await expect.element(input).toHaveFocus()
     await expect.element(input).toHaveValue('2026-09-14')
-    // Leaving the field reports nothing more.
     await userEvent.keyboard('{Tab}')
     expect(onChange).toHaveBeenCalledOnce()
 })
 
 test('arrows cross into the next and previous month', async () => {
-    // October 2026 starts on a Thursday; June 2026 on a Monday.
     await mount({ value: '2026-10-01' })
     await userEvent.click(chooser())
     await userEvent.keyboard('{ArrowUp}')
@@ -153,7 +151,6 @@ test('arrows cross into the next and previous month', async () => {
 })
 
 test('arrows cross out of a month that fills its first and last weeks', async () => {
-    // June 2026 runs from a Monday; May 2026 ends on a Sunday.
     await mount({ value: '2026-06-02' })
     await userEvent.click(chooser())
     await userEvent.keyboard('{ArrowUp}')
@@ -216,7 +213,6 @@ test.each([
         await expect
             .element(input)
             .toHaveValue(typedText(DATE, '2026-10-15', settings))
-        // The text the pick wrote parses back to the day picked: leaving reports nothing new.
         await userEvent.keyboard('{Tab}')
         expect(onChange).toHaveBeenCalledOnce()
     }
@@ -255,7 +251,6 @@ test('another calendar or date format shows the stored value again, in the new s
     await userEvent.click(input)
     await userEvent.keyboard('{Backspace}x')
     await rerender({ settings: { ...GREGORIAN } })
-    // The same settings, built anew, keep what is typed.
     await expect.element(input).toHaveValue('2026-10-1x')
     await rerender({ settings: ETHIOPIAN })
     await expect.element(input).toHaveValue('04-02-2019')
@@ -308,7 +303,6 @@ test('right to left, the week runs from the right and Left moves to the next day
 
 test('a click elsewhere closes the picker and leaves focus where it was clicked', async () => {
     const onChange = vi.fn()
-    // The field above: the calendar opens over what is below.
     await render(
         <>
             <input aria-label="Next field" />

@@ -32,7 +32,6 @@ const mount = async (field: Field, props: Partial<ValueInputProps> = {}) => {
     return onChange
 }
 
-/** A host that keeps the value it is told, as a form does. */
 const mountHeld = async (
     field: Field,
     props: Partial<ValueInputProps> = {}
@@ -78,7 +77,6 @@ test('arrow Down moves to No, checks and picks it; Tab leaves the group', async 
     await expect.element(radio('No')).toBeChecked()
     await expect.element(radio('No')).toHaveFocus()
     await userEvent.keyboard('{Tab}')
-    // Tab left the group for the next control in the field, and picked nothing.
     await expect.element(radio('No')).not.toHaveFocus()
     await expect.element(clear()).toHaveFocus()
     expect(onChange).toHaveBeenCalledTimes(2)
@@ -172,7 +170,6 @@ test("a short option set's radios show and are described by each option's descri
         },
         { messages: [{ tone: 'error', text: 'Choose one' }] }
     )
-    // The field's messages describe the group and each radio; an option's description follows on its radio.
     await expect
         .element(page.getByRole('radiogroup', { name: LABEL }))
         .toHaveAccessibleDescription('Error: Choose one')
@@ -208,7 +205,6 @@ test('a long option set is a combobox: typing lists a name, picking reports its 
 })
 
 test('a hidden option is not listed when typed for', async () => {
-    // Six are still visible, so the field is searched; with five it would be radios.
     await mount(
         { valueType: 'TEXT', options: options(7) },
         { hiddenOptions: new Set(['E']) }
@@ -232,8 +228,6 @@ test('a long option set shows the name of the stored value', async () => {
 
 const OUTSIDE = 'Elsewhere'
 
-/** A long option set with something else on the page to click, so the field is left without Tab. Above it, so the
- * open list does not cover it. */
 const mountBeside = async (props: Partial<ValueInputProps> = {}) => {
     const onChange = vi.fn()
     await render(
@@ -458,10 +452,7 @@ test('a required Yes/No in a form lets the form submit, with a value or without'
     await expect
         .element(page.getByRole('radiogroup', { name: LABEL }))
         .toHaveAttribute('aria-required', 'true')
-    // The radios' form inputs have no name, so each is a group of its own, which a browser following HTML (Firefox)
-    // finds missing when unchecked; Chromium does not, so the inputs themselves are checked.
     expect(document.querySelectorAll('input[required]')).toHaveLength(0)
-    // The host checks what it needs: the browser does not hold the form back.
     await userEvent.click(submit)
     expect(submitted).toHaveBeenCalledTimes(1)
     await userEvent.click(radio('Yes'))

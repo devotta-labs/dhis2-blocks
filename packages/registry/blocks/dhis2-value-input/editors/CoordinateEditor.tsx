@@ -15,7 +15,6 @@ type Texts = Record<Axis, string>
 
 const AXES: ReadonlyArray<Axis> = ['latitude', 'longitude']
 
-/** What the fields would save as `[lng,lat]` (null clears), and the fields whose number is wrong. */
 const read = (texts: Texts) => {
     if (AXES.every((axis) => texts[axis].trim() === '')) {
         return { value: null, wrong: [] }
@@ -34,7 +33,6 @@ const read = (texts: Texts) => {
     }
 }
 
-/** The two fields' texts, each change reported; a refused save marks the fields that are wrong. */
 const useCoordinate = ({
     value,
     save,
@@ -45,7 +43,6 @@ const useCoordinate = ({
         latitude: i18n.t('Enter a latitude between -90 and 90'),
         longitude: i18n.t('Enter a longitude between -180 and 180'),
     }
-    // The stored value is [lng,lat]; one that is not shows empty fields.
     const [texts, setTexts] = useState<Texts>(() => {
         const read = value === undefined ? undefined : parseCoordinate(value)
         return {
@@ -53,7 +50,6 @@ const useCoordinate = ({
             longitude: read?.longitude ?? '',
         }
     })
-    // The fields a refused save found wrong, until the next change.
     const [shown, setShown] = useState<ReadonlyArray<Axis>>([])
 
     const change = (axis: Axis, text: string) => {
@@ -67,7 +63,6 @@ const useCoordinate = ({
                 ? undefined
                 : {
                       message: messages[wrong[0]],
-                      // As a coordinate is typed in a cell or pasted.
                       text: `${next.latitude.trim()}, ${next.longitude.trim()}`,
                   }
         )
@@ -79,13 +74,11 @@ const useCoordinate = ({
             return
         }
         setShown(wrong)
-        // Back to the first field a message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
     return { id, messages, texts, shown, change, commit }
 }
 
-/** One axis: its label, its field, and the message of a refused save. Classes size it for a dialog or a form. */
 const CoordinateAxis = ({
     editor: { id, messages, texts, shown, change, commit },
     axis,
@@ -114,7 +107,6 @@ const CoordinateAxis = ({
             <Input
                 id={`${id}-${axis}`}
                 value={texts[axis]}
-                // Signed decimals, in order on a right-to-left page too.
                 dir="ltr"
                 autoComplete="off"
                 spellCheck={false}

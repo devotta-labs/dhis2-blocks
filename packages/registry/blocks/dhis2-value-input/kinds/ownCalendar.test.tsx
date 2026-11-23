@@ -9,7 +9,6 @@ const SETTINGS: ValueSettings = {
     dateFormat: 'YYYY-MM-DD',
 }
 
-// Only a field's own calendar is still the field: a popover the whole form sits in is not.
 test('a field in a popover is reported when focus moves to another control in that popover', async () => {
     const onChange = vi.fn()
     await render(

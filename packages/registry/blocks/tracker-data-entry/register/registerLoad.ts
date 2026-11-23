@@ -25,14 +25,6 @@ const ENROLLMENT_FIELDS =
 /** The enrolment date's field: its cells are `<enrolment>.enrolledAt`. */
 export const ENROLLED_AT = 'enrolledAt'
 
-export const READ_ONLY = {
-    program: () =>
-        i18n.t('You do not have access to enter data in this program'),
-    people: () =>
-        i18n.t('You do not have access to change people of this type'),
-    cancelled: () => i18n.t('This enrolment is cancelled'),
-}
-
 const dataWrite = z.object({ data: z.object({ write: z.boolean() }) })
 
 /** What the edit rules read of the program, from the same answer as its metadata. */
@@ -197,10 +189,10 @@ export const toForm: (
     })
     const programReason = program.access.data.write
         ? undefined
-        : READ_ONLY.program()
+        : i18n.t('You do not have access to enter data in this program')
     const personReason = program.trackedEntityType.access.data.write
         ? undefined
-        : READ_ONLY.people()
+        : i18n.t('You do not have access to change people of this type')
     const incident = metadata.incidentDate !== undefined
 
     const rows: TrackerRow[] = []
@@ -258,7 +250,7 @@ export const toForm: (
         const rowReason =
             programReason ??
             (enrolled.status === 'CANCELLED'
-                ? READ_ONLY.cancelled()
+                ? i18n.t('This enrolment is cancelled')
                 : undefined)
         const { row, records: rowRecords } = personRow(
             compiled,

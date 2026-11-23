@@ -5,7 +5,7 @@ import {
     getCellDisplayValue,
     type CellFormattingContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+
 import type {
     WorkingListConfiguration,
     WorkingListDisplayRow,
@@ -118,7 +118,6 @@ interface VisibleRowsCsvOptions {
     columns: readonly string[]
     fields: FieldCatalog
     formattingContext: CellFormattingContext
-    translate: WorkingListTranslate
 }
 
 export const visibleRowsAsCsv = ({
@@ -126,16 +125,13 @@ export const visibleRowsAsCsv = ({
     columns,
     fields,
     formattingContext,
-    translate,
 }: VisibleRowsCsvOptions) => {
     const visibleFields = columns
         .map((id) => fields.get(id))
         .filter((field): field is WorkingListField => Boolean(field))
     const escape = (value: string) => `"${value.replaceAll('"', '""')}"`
     return [
-        visibleFields
-            .map((field) => escape(fieldDisplayName(field, translate)))
-            .join(','),
+        visibleFields.map((field) => escape(fieldDisplayName(field))).join(','),
         ...rows.map((row) =>
             visibleFields
                 .map((field) => escape(cellText(row, field, formattingContext)))

@@ -11,7 +11,7 @@ import type { WorkingListConfiguration as InternalConfiguration } from '../domai
 import { workingListPageQueryOptions } from '../query/fetchers'
 import { workingListQueryKeys } from '../query/keys'
 import type { FilterSerializationContext } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+
 import type {
     WorkingListConfiguration,
     WorkingListMeta,
@@ -37,7 +37,7 @@ interface UseWorkingListResultsOptions {
     serializationContext?: FilterSerializationContext
     systemInfo?: WorkingListSystemInfo
     locale: string
-    translate: WorkingListTranslate
+
     online: boolean
     stagePagination: (next: WorkingListPagination) => void
     store: WorkingListProviderStore
@@ -60,7 +60,6 @@ export const useWorkingListResults = ({
     serializationContext,
     systemInfo,
     locale,
-    translate,
     online,
     stagePagination,
     store,
@@ -87,7 +86,6 @@ export const useWorkingListResults = ({
                   capabilities,
                   fields,
                   serializationContext,
-                  translate,
               })
             : {
                   queryKey: [...workingListQueryKeys.all, 'records', 'idle'],
@@ -105,7 +103,6 @@ export const useWorkingListResults = ({
         fields,
         systemInfo,
         locale,
-        translate,
     })
     const pageError = pageData && !online ? undefined : pageQuery.error
     const resultsError = pageError || references.error || undefined

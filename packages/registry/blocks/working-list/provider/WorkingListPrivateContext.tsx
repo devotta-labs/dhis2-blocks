@@ -12,7 +12,7 @@ import type {
     FilterParsingContext,
     FilterSerializationContext,
 } from '../registry/valueTypes'
-import type { WorkingListTranslate } from '../ui/WorkingListText'
+
 import type { SavedListRepairPlan } from './repair'
 import type {
     UpdateSelectedViewError,
@@ -45,7 +45,7 @@ export interface WorkingListPrivateUiContextValue {
     orgUnitId: string
     online: boolean
     locale: string
-    translate: WorkingListTranslate
+
     program?: TrackerProgram
     systemInfo?: WorkingListSystemInfo
     capabilities: WorkingListCapabilities

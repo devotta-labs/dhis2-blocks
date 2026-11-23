@@ -3,7 +3,6 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListField } from '../../domain/model'
 import { MoreFilters } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const field: WorkingListField = {
     id: 'followUp',
@@ -18,14 +17,14 @@ describe('MoreFilters real-browser keyboard focus', () => {
     it('activates a menu item and restores its trigger after Enter and Escape', async () => {
         const onAdd = vi.fn()
         const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <MoreFilters
                     fields={[field]}
                     visibleFilterIds={[]}
                     scope="tracked-entity"
                     onAdd={onAdd}
                 />
-            </WorkingListTextProvider>
+            </>
         )
         const trigger = screen.getByRole('button', { name: 'Filter' })
 

@@ -2,7 +2,7 @@ import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { Button } from '@/components/dhis2/ui/button'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import React from 'react'
-import i18n from '../../i18n'
+import i18n from '@dhis2/d2-i18n'
 
 const contextStateClassName =
     'mx-auto mt-4 flex min-h-[220px] w-full min-w-0 max-w-[1440px] flex-col items-center justify-center gap-3 px-6 text-center text-dhis2-muted-foreground [@media(max-width:900px)]:px-3 [&_h2]:text-[20px] [&_h2]:font-medium [&_h2]:text-dhis2-foreground [&_p]:m-0 [&_p]:max-w-[560px]'

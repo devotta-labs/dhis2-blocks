@@ -105,9 +105,8 @@ describe('provider results normalization', () => {
                 columns: ['enrolledAt', 'createdAt'],
                 fields,
                 formattingContext: {},
-                translate: (message) => `translated:${message}`,
             })
-        ).toBe('"Start of treatment date","translated:Registration date"')
+        ).toBe('"Start of treatment date","Registration date"')
     })
 
     it('builds ID-only event targets with provider and tracker context', () => {

@@ -21,7 +21,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/dhis2/ui/dialog'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const options = [
     { value: 'a', label: 'Alpha' },
@@ -36,7 +35,7 @@ const FormDialog = ({
     const [single, setSingle] = useState<string>('a')
     const [multiple, setMultiple] = useState<string[]>([])
     return (
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <Dialog open onOpenChange={onOpenChange}>
                 <DialogContent size="sm" position="middle">
                     <DialogHeader>
@@ -63,7 +62,7 @@ const FormDialog = ({
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </WorkingListTextProvider>
+        </>
     )
 }
 

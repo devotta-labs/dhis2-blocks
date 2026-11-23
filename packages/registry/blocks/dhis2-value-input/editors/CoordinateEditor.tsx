@@ -15,6 +15,11 @@ type Texts = Record<Axis, string>
 
 const AXES: ReadonlyArray<Axis> = ['latitude', 'longitude']
 
+const rangeMessage = (axis: Axis) =>
+    axis === 'latitude'
+        ? i18n.t('Enter a latitude between -90 and 90')
+        : i18n.t('Enter a longitude between -180 and 180')
+
 const read = (texts: Texts) => {
     if (AXES.every((axis) => texts[axis].trim() === '')) {
         return { value: null, wrong: [] }
@@ -39,10 +44,6 @@ const useCoordinate = ({
     report,
 }: Pick<PopupEditorProps, 'value' | 'save' | 'report'>) => {
     const id = useId()
-    const messages = {
-        latitude: i18n.t('Enter a latitude between -90 and 90'),
-        longitude: i18n.t('Enter a longitude between -180 and 180'),
-    }
     const [texts, setTexts] = useState<Texts>(() => {
         const read = value === undefined ? undefined : parseCoordinate(value)
         return {
@@ -62,7 +63,7 @@ const useCoordinate = ({
             wrong.length === 0
                 ? undefined
                 : {
-                      message: messages[wrong[0]],
+                      message: rangeMessage(wrong[0]),
                       text: `${next.latitude.trim()}, ${next.longitude.trim()}`,
                   }
         )
@@ -76,11 +77,11 @@ const useCoordinate = ({
         setShown(wrong)
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
-    return { id, messages, texts, shown, change, commit }
+    return { id, texts, shown, change, commit }
 }
 
 const CoordinateAxis = ({
-    editor: { id, messages, texts, shown, change, commit },
+    editor: { id, texts, shown, change, commit },
     axis,
     describedBy,
     invalid = false,
@@ -96,14 +97,12 @@ const CoordinateAxis = ({
     inputClassName?: string
     problemClassName: string
 }) => {
-    const labels = {
-        latitude: i18n.t('Latitude'),
-        longitude: i18n.t('Longitude'),
-    }
     const wrong = shown.includes(axis)
     return (
         <div className={cn('flex flex-col gap-1', className)}>
-            <Label htmlFor={`${id}-${axis}`}>{labels[axis]}</Label>
+            <Label htmlFor={`${id}-${axis}`}>
+                {axis === 'latitude' ? i18n.t('Latitude') : i18n.t('Longitude')}
+            </Label>
             <Input
                 id={`${id}-${axis}`}
                 value={texts[axis]}
@@ -125,7 +124,7 @@ const CoordinateAxis = ({
                     role="alert"
                     className={cn('text-dhis2-destructive', problemClassName)}
                 >
-                    {messages[axis]}
+                    {rangeMessage(axis)}
                 </p>
             ) : null}
         </div>

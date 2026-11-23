@@ -56,9 +56,6 @@
             "entry": [
                 "d2.config.js",
                 "src/AppWrapper.tsx",
-                "src/workingListTranslationCatalog.ts",
-                "src/dataEntryTranslationCatalog.ts",
-                "src/trackedEntityFinderTranslationCatalog.ts",
                 "src/**/*.test.{ts,tsx}"
             ],
             "project": ["src/**/*.{ts,tsx,css}"],
@@ -73,30 +70,6 @@
                     "namespaceMembers"
                 ],
                 "src/AppWrapper.tsx": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "src/workingListTranslationCatalog.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "src/dataEntryTranslationCatalog.ts": [
-                    "exports",
-                    "types",
-                    "nsExports",
-                    "nsTypes",
-                    "enumMembers",
-                    "namespaceMembers"
-                ],
-                "src/trackedEntityFinderTranslationCatalog.ts": [
                     "exports",
                     "types",
                     "nsExports",

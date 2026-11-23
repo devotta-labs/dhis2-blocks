@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React from 'react'
 import type { WorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
@@ -17,10 +18,7 @@ import {
 } from '@/components/dhis2/ui/field'
 import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
-import {
-    useWorkingListText,
-    type WorkingListTranslate,
-} from '../WorkingListText'
+
 import { CalendarRangeFields } from './CalendarRangeFields'
 import { ComboboxField, SelectField } from './FilterSelectFields'
 import {
@@ -32,21 +30,30 @@ import {
     UserFilterSelect,
 } from './ReferenceFilterSelects'
 
-const relativePeriodOptions = (translate: WorkingListTranslate) => {
-    const labels = {
-        TODAY: translate('Today'),
-        THIS_WEEK: translate('This week'),
-        LAST_WEEK: translate('Last week'),
-        THIS_MONTH: translate('This month'),
-        LAST_MONTH: translate('Last month'),
-        LAST_3_MONTHS: translate('Last three months'),
-        THIS_YEAR: translate('This year'),
-    } satisfies Record<RelativeDatePeriod, string>
-    return RELATIVE_DATE_PERIODS.map((value) => ({
-        value,
-        label: labels[value],
-    }))
+const relativePeriodLabel = (period: RelativeDatePeriod) => {
+    switch (period) {
+        case 'TODAY':
+            return i18n.t('Today')
+        case 'THIS_WEEK':
+            return i18n.t('This week')
+        case 'LAST_WEEK':
+            return i18n.t('Last week')
+        case 'THIS_MONTH':
+            return i18n.t('This month')
+        case 'LAST_MONTH':
+            return i18n.t('Last month')
+        case 'LAST_3_MONTHS':
+            return i18n.t('Last three months')
+        case 'THIS_YEAR':
+            return i18n.t('This year')
+    }
 }
+
+const relativePeriodOptions = () =>
+    RELATIVE_DATE_PERIODS.map((value) => ({
+        value,
+        label: relativePeriodLabel(value),
+    }))
 
 export const EditorValue = ({
     client,
@@ -65,8 +72,6 @@ export const EditorValue = ({
     calendarContext: FilterCalendarContext
     onChange: (value: FilterValue) => void
 }) => {
-    const translate = useWorkingListText()
-    const i18n = { t: translate }
     if (field.id === 'assignedUser' || field.id === 'eventAssignedUser') {
         const assignee =
             value.kind === 'assignee'
@@ -106,7 +111,7 @@ export const EditorValue = ({
         const values = value.kind === 'options' ? value.values : []
         const optionItems = field.options.map((option) => ({
             value: option.code,
-            label: optionDisplayName(field, option, translate),
+            label: optionDisplayName(field, option),
         }))
         if (usesMultipleOptionSelection(field, capabilities)) {
             return (
@@ -259,7 +264,7 @@ export const EditorValue = ({
                                 dataTest={`relative-period-${field.id}`}
                                 label={i18n.t('Relative period')}
                                 value={date.period}
-                                options={relativePeriodOptions(translate)}
+                                options={relativePeriodOptions()}
                                 onChange={(period) =>
                                     onChange({
                                         kind: 'dateRange',

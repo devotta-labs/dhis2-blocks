@@ -39,17 +39,15 @@ const More = ({
     if (!moreHref && !onMore) {
         return <>{text}</>
     }
-    const props = {
-        'aria-label': i18n.t('and {{count}} more {{label}}', {
-            count: rest,
-            label: group.label,
-            interpolation: { escapeValue: false },
-        }),
-    }
+    const label = i18n.t('and {{count}} more {{label}}', {
+        count: rest,
+        label: group.label,
+        interpolation: { escapeValue: false },
+    })
     if (moreHref) {
         return (
             <a
-                {...props}
+                aria-label={label}
                 className={LINK_CLASS}
                 href={moreHref(group.type)}
                 onClick={(event) => {
@@ -65,7 +63,7 @@ const More = ({
     }
     return (
         <button
-            {...props}
+            aria-label={label}
             type="button"
             className={`${LINK_CLASS} border-0 bg-transparent p-0 font-[inherit]`}
             onClick={() => onMore?.(group.type)}

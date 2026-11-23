@@ -20,12 +20,17 @@ export default defineConfig({
         'apps/docs/src/hooks/use-highlighted-code.ts',
         'apps/docs/src/lib/highlighter.tsx',
         'tools/oxlint/anti-slop/**',
+        'tools/oxlint/dhis2/**',
     ],
     jsPlugins: [
         ...landmines.jsPlugins,
         {
             name: 'anti-slop',
             specifier: './tools/oxlint/anti-slop/index.ts',
+        },
+        {
+            name: 'dhis2',
+            specifier: './tools/oxlint/dhis2/index.ts',
         },
     ],
     plugins: ['unicorn', 'oxc', 'typescript', 'jsx-a11y'],
@@ -97,6 +102,25 @@ export default defineConfig({
         'jsx-a11y/tabindex-no-positive': 'error',
     },
     overrides: [
+        {
+            files: [
+                'packages/registry/blocks/**/*.{ts,tsx}',
+                'packages/registry/components/**/*.{ts,tsx}',
+                'apps/web/src/**/*.{ts,tsx}',
+            ],
+            rules: { 'dhis2/inline-translations': 'error' },
+        },
+        {
+            files: [
+                '**/*.test.{ts,tsx}',
+                '**/*.spec.{ts,tsx}',
+                '**/*.{fixture,fixtures,test-utils}.{ts,tsx}',
+                '**/__tests__/**',
+                '**/test/**',
+                'apps/web/src/locales/**',
+            ],
+            rules: { 'dhis2/inline-translations': 'off' },
+        },
         {
             files: [
                 'packages/registry/blocks/observation-cards/format/display.ts',

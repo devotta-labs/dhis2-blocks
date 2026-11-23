@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import React, {
     useCallback,
     useId,
@@ -14,7 +15,6 @@ import { WorkingListFilterControls } from '../Filters'
 import { WorkingListTable, type WorkingListTableProps } from '../Results'
 import { WorkingListSavedViews } from '../SavedViews'
 import { WorkingListToolbar } from '../Toolbar'
-import { useWorkingListText } from '../WorkingListText'
 
 const DEFAULT_PAGINATION: WorkingListPagination = { page: 1, pageSize: 15 }
 
@@ -153,10 +153,8 @@ export const WorkingListViewSwitcher = ({
     'aria-labelledby': ariaLabelledBy,
     ...props
 }: WorkingListViewSwitcherProps) => {
-    const translate = useWorkingListText()
     const headingId = useId()
-    const accessibleHeading =
-        heading ?? translate('Saved views in this program')
+    const accessibleHeading = heading ?? i18n.t('Saved views in this program')
 
     return (
         <section

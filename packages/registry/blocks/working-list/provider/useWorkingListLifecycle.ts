@@ -19,7 +19,7 @@ import {
 } from '../api/savedLists'
 import { workingListSystemInfoQueryOptions } from '../api/systemInfo'
 import { createWorkingListValueTransformers } from '../registry/transformers'
-import { defaultWorkingListTranslate } from '../ui/WorkingListText'
+
 import { WorkingListInitializationError } from './errors'
 import type { WorkingListMeta } from './contracts'
 import type { WorkingListProviderStoreState } from './store'
@@ -60,7 +60,7 @@ export const useWorkingListLifecycle = ({
         ? runtimeConfig.data.apiVersion
         : 41
     const { online } = useOnlineStatus()
-    const translate = defaultWorkingListTranslate
+
     const locale = i18n.language ?? globalThis.navigator?.language ?? 'en'
     const systemInfoQuery = useQuery(workingListSystemInfoQueryOptions(client))
     const programQuery = useQuery(
@@ -156,11 +156,11 @@ export const useWorkingListLifecycle = ({
                 ? createWorkingListValueTransformers({
                       systemInfo,
                       locale,
-                      trueLabel: translate('Yes'),
-                      falseLabel: translate('No'),
+                      trueLabel: i18n.t('Yes'),
+                      falseLabel: i18n.t('No'),
                   })
                 : undefined,
-        [locale, systemInfo, translate]
+        [locale, systemInfo]
     )
     const parsingContext = valueTransformers?.parsingContext
     const serializationContext = valueTransformers?.serializationContext
@@ -226,7 +226,6 @@ export const useWorkingListLifecycle = ({
 
     return {
         online,
-        translate,
         locale,
         program,
         systemInfo,

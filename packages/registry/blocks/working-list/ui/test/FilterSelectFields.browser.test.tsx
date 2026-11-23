@@ -6,7 +6,6 @@ import type { WorkingListClient } from '../../api/client'
 import type { AppliedFilter, WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
 import { ComboboxField } from '../FilterControls/FilterSelectFields'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const unusedClient: WorkingListClient = {
     query: () => Promise.reject(new Error('Unexpected query')),
@@ -46,7 +45,7 @@ const ControlledCombobox = ({
 }) => {
     const [values, setValues] = useState<string[]>(initialValues)
     return (
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <ComboboxField
                 multiple={multiple}
                 label="Values"
@@ -59,15 +58,37 @@ const ControlledCombobox = ({
                 onChange={setValues}
             />
             <output data-testid="values">{values.join(',')}</output>
-        </WorkingListTextProvider>
+        </>
     )
 }
 
 describe('filter select fields', () => {
+    it('preserves special characters as plain text in option removal labels', async () => {
+        const label = 'Result <b>A&B</b> "North"'
+        const onChange = vi.fn()
+        const screen = await render(
+            <ComboboxField
+                multiple
+                label="Values"
+                values={['POS']}
+                options={[{ value: 'POS', label }]}
+                noMatchText="No values match"
+                onChange={onChange}
+            />
+        )
+        const remove = screen
+            .getByRole('button', { name: `Remove ${label}`, exact: true })
+            .first()
+        await expect.element(remove).toBeVisible()
+        expect(screen.container.querySelector('b')).toBeNull()
+        await remove.click()
+        expect(onChange).toHaveBeenCalledWith([])
+    })
+
     it('picks and removes option values inside a filter editor without closing it', async () => {
         const onApply = vi.fn<(filter: AppliedFilter) => void>()
         await render(
-            <WorkingListTextProvider translate={(message) => message}>
+            <>
                 <FilterButton
                     client={unusedClient}
                     field={resultField}
@@ -83,7 +104,7 @@ describe('filter select fields', () => {
                     onApply={onApply}
                     onReset={() => undefined}
                 />
-            </WorkingListTextProvider>
+            </>
         )
         await page.getByTestId('filter-result').getByRole('combobox').click()
         const editor = page.getByTestId('filter-editor-result')
@@ -101,7 +122,7 @@ describe('filter select fields', () => {
         await expect.element(editor).toHaveTextContent(/Positive.*Negative/)
 
         await editor
-            .getByRole('button', { name: 'Remove {{label}}' })
+            .getByRole('button', { name: 'Remove Positive' })
             .first()
             .click()
         await expect.element(editor).not.toHaveTextContent('Positive')

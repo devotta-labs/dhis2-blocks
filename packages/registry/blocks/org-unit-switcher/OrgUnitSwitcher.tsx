@@ -39,7 +39,7 @@ import React, {
 import type { OrgUnit } from './api/schemas'
 import { useOrgUnitContext } from './provider/context'
 import { useOrgUnitSearch } from './search'
-import { defaultTexts, triggerLabel, type OrgUnitSwitcherTexts } from './texts'
+import type { OrgUnitSwitcherTexts } from './texts'
 import { tileClass, tileInitial } from './tile'
 
 export interface OrgUnitSwitcherProps {
@@ -205,17 +205,26 @@ export function OrgUnitSwitcher({
     const { state, actions, source } = useOrgUnitContext()
     const { status, orgUnit, assigned, recent } = state
     const { setOrgUnit, retry } = actions
-    const t = { ...defaultTexts(), ...texts }
+    const unitName = orgUnit?.displayName
+    const changedMessage =
+        unitName === undefined
+            ? undefined
+            : (texts?.changed?.(unitName) ??
+              i18n.t('Organisation unit changed to {{name}}', {
+                  name: unitName,
+                  interpolation: { escapeValue: false },
+              }))
     useChangeAnnouncement(
         status === 'ready',
         orgUnit?.id,
         source.userId,
-        orgUnit && t.changed(orgUnit.displayName)
+        changedMessage
     )
     const search = useOrgUnitSearch()
     const { query, setQuery, browse, searchable } = search
 
-    const fullName = orgUnit?.displayName ?? t.choose
+    const fullName =
+        unitName ?? texts?.choose ?? i18n.t('Choose an organisation unit')
     const shownName = orgUnit?.displayShortName ?? fullName
     const [nameRef, cutOff] = useCutOff(shownName)
     const partHidden = cutOff || shownName !== fullName
@@ -252,7 +261,9 @@ export function OrgUnitSwitcher({
         )
     }
     if (status === 'failed') {
-        const message = t.loadFailed
+        const message =
+            texts?.loadFailed ??
+            i18n.t('Organisation units could not be loaded')
         return (
             <div className={cn(box, 'flex-wrap')}>
                 <span className={cn('contents', wide)}>
@@ -280,7 +291,8 @@ export function OrgUnitSwitcher({
         )
     }
     if (status === 'none') {
-        const message = t.noneAssigned
+        const message =
+            texts?.noneAssigned ?? i18n.t('No organisation unit assigned')
         return (
             <div className={box}>
                 <p className={cn('m-0', wide)}>{message}</p>
@@ -297,7 +309,12 @@ export function OrgUnitSwitcher({
         )
     }
 
-    const fullLabel = triggerLabel(t.label, fullName)
+    const label = texts?.label ?? i18n.t('Organisation unit')
+    const fullLabel = i18n.t('{{label}}: {{name}}', {
+        label,
+        name: fullName,
+        interpolation: { escapeValue: false },
+    })
 
     const tip = {
         show: collapsed || partHidden,
@@ -396,7 +413,8 @@ export function OrgUnitSwitcher({
                   },
                   {
                       key: 'all',
-                      label: t.allUnits,
+                      label:
+                          texts?.allUnits ?? i18n.t('All organisation units'),
 
                       items: search.orgUnits.filter((c) => !above.has(c.id)),
                   },
@@ -417,7 +435,8 @@ export function OrgUnitSwitcher({
     } else if (search.status === 'failed') {
         searchStatus = (
             <>
-                {t.loadFailed}
+                {texts?.loadFailed ??
+                    i18n.t('Organisation units could not be loaded')}
                 <Button size="sm" variant="outline" onClick={search.retry}>
                     {i18n.t('Retry')}
                 </Button>
@@ -426,9 +445,12 @@ export function OrgUnitSwitcher({
     }
     let moreLabel = i18n.t('Show more')
     if (search.loadingMore) {
-        moreLabel = t.loadingMore
+        moreLabel =
+            texts?.loadingMore ?? i18n.t('Loading more organisation units')
     } else if (search.moreFailed) {
-        moreLabel = t.moreFailed
+        moreLabel =
+            texts?.moreFailed ??
+            i18n.t('More organisation units could not be loaded. Try again')
     }
 
     const keepOpen = (event: BaseUIEvent<MouseEvent>) =>
@@ -439,6 +461,9 @@ export function OrgUnitSwitcher({
             search.loadMore()
         }
     }
+
+    const searchPlaceholder =
+        texts?.searchPlaceholder ?? i18n.t('Search organisation units')
 
     return (
         <Combobox
@@ -465,11 +490,13 @@ export function OrgUnitSwitcher({
                 <ComboboxInput
                     showTrigger={false}
                     className="[&_input]:ps-2"
-                    placeholder={t.searchPlaceholder}
-                    aria-label={t.searchPlaceholder}
+                    placeholder={searchPlaceholder}
+                    aria-label={searchPlaceholder}
                 />
                 <ComboboxEmpty className="flex-col items-center gap-2">
-                    {searchStatus ?? t.noResults}
+                    {searchStatus ??
+                        texts?.noResults ??
+                        i18n.t('No organisation units found')}
                 </ComboboxEmpty>
                 <ComboboxList className="max-h-[min(300px,calc(var(--available-height)---spacing(11)))]">
                     {(group: OrgUnitGroup) => (

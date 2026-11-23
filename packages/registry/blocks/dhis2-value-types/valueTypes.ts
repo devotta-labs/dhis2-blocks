@@ -399,12 +399,6 @@ const BOOLEAN_WORDS = new Map([
     ['0', 'false'],
 ])
 
-const yesNo = () =>
-    new Map([
-        ['true', i18n.t('Yes')],
-        ['false', i18n.t('No')],
-    ])
-
 const languageTags = () => {
     try {
         return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))
@@ -416,10 +410,13 @@ const languageTags = () => {
 const booleanOf = (text: string) => {
     const tags = languageTags()
     const word = text.toLocaleLowerCase(tags)
-    const labelled = [...yesNo()].find(
-        ([, label]) => label.toLocaleLowerCase(tags) === word
-    )
-    return labelled?.[0] ?? BOOLEAN_WORDS.get(text.toLowerCase())
+    if (i18n.t('Yes').toLocaleLowerCase(tags) === word) {
+        return 'true'
+    }
+    if (i18n.t('No').toLocaleLowerCase(tags) === word) {
+        return 'false'
+    }
+    return BOOLEAN_WORDS.get(text.toLowerCase())
 }
 
 const DATE_TIME_TEXT = /^(?<day>\S+?)(?:\s+|T)(?<time>\d{1,2}:\d{2})$/
@@ -535,7 +532,13 @@ export const typedText: (
         }
         case 'boolean':
         case 'trueOnly':
-            return yesNo().get(value) ?? value
+            if (value === 'true') {
+                return i18n.t('Yes')
+            }
+            if (value === 'false') {
+                return i18n.t('No')
+            }
+            return value
         case 'option':
             return (
                 (field.options && lookupOf(field.options).texts.get(value)) ??

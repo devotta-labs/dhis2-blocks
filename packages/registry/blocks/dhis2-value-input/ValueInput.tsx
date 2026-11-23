@@ -71,23 +71,33 @@ export interface ValueInputProps {
 /** Why a value type no control edits is read-only, as the data entry grid says it too. */
 export const editedElsewhere = () => i18n.t('Edit this field in its own form')
 
-const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
-
 const TONES = {
     error: {
         border: 'border-dhis2-destructive-indicator',
         say: (message: string) =>
-            i18n.t('Error: {{message}}', { ...AS_IS, message }),
+            i18n.t('Error: {{message}}', {
+                nsSeparator: '::',
+                interpolation: { escapeValue: false },
+                message,
+            }),
     },
     warning: {
         border: 'border-dhis2-warning-indicator',
         say: (message: string) =>
-            i18n.t('Warning: {{message}}', { ...AS_IS, message }),
+            i18n.t('Warning: {{message}}', {
+                nsSeparator: '::',
+                interpolation: { escapeValue: false },
+                message,
+            }),
     },
     info: {
         border: 'border-dhis2-neutral-indicator',
         say: (message: string) =>
-            i18n.t('Information: {{message}}', { ...AS_IS, message }),
+            i18n.t('Information: {{message}}', {
+                nsSeparator: '::',
+                interpolation: { escapeValue: false },
+                message,
+            }),
     },
 } satisfies Record<Tone, { border: string; say: (message: string) => string }>
 

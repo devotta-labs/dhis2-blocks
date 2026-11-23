@@ -3,7 +3,6 @@ import { page } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { WorkingListSavedView } from '../../provider/contracts'
 import { SavedListBar } from '../SavedListBar'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const generatedList: WorkingListSavedView = {
     id: 'active',
@@ -49,15 +48,7 @@ const renderBar = async (options: RenderBarOptions = {}) => {
         onDelete: vi.fn(),
     }
     const screen = await render(
-        <WorkingListTextProvider
-            translate={(message, values) =>
-                Object.entries(values ?? {}).reduce(
-                    (translated, [key, value]) =>
-                        translated.replace(`{{${key}}}`, String(value)),
-                    message
-                )
-            }
-        >
+        <>
             <SavedListBar
                 lists={lists}
                 selectedId={options.selectedId}
@@ -66,7 +57,7 @@ const renderBar = async (options: RenderBarOptions = {}) => {
                 busy={options.busy ?? false}
                 {...callbacks}
             />
-        </WorkingListTextProvider>
+        </>
     )
 
     return { callbacks, screen }
@@ -167,10 +158,21 @@ describe('SavedListBar', () => {
         expect(callbacks.onShare).toHaveBeenCalledWith(ownedList)
     })
 
-    it('requires confirmation before deleting a view', async () => {
-        const { callbacks, screen } = await renderBar({ lists: [ownedList] })
+    it('preserves special characters as plain text when confirming deletion', async () => {
+        const list = { ...ownedList, name: 'QA <b>A&B</b> "North"' }
+        const { callbacks, screen } = await renderBar({ lists: [list] })
 
-        await openOwnedListMenu(screen)
+        await expect
+            .element(
+                screen.getByRole('button', { name: list.name, exact: true })
+            )
+            .toBeVisible()
+        await screen
+            .getByRole('button', {
+                name: `Actions for ${list.name}`,
+                exact: true,
+            })
+            .click()
         await page.getByRole('menuitem', { name: 'Delete view' }).click()
         expect(callbacks.onDelete).not.toHaveBeenCalled()
         await expect
@@ -178,12 +180,15 @@ describe('SavedListBar', () => {
             .toBeVisible()
         await expect
             .element(
-                page.getByText('“My working list” will be permanently deleted.')
+                page.getByText(`“${list.name}” will be permanently deleted.`, {
+                    exact: true,
+                })
             )
             .toBeVisible()
+        expect(document.querySelector('[role="alertdialog"] b')).toBeNull()
 
         await page.getByRole('button', { name: 'Delete', exact: true }).click()
-        expect(callbacks.onDelete).toHaveBeenCalledWith(ownedList)
+        expect(callbacks.onDelete).toHaveBeenCalledWith(list)
     })
 
     it('does not expose mutation menus for generated or read-only views', async () => {

@@ -11,7 +11,6 @@ import { WorkingListViewSwitcher } from '../WorkingList'
 import { WorkingListContainer } from '../Container'
 import { WorkingListTable } from '../Results'
 import { WorkingListToolbar } from '../Toolbar'
-import { WorkingListTextProvider } from '../WorkingListText'
 import { WorkingListTableSkeleton } from '../WorkingListTable'
 
 const controlledProps = {
@@ -23,11 +22,7 @@ const controlledProps = {
 
 describe('WorkingList structural components', () => {
     it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
-        const screen = await render(
-            <WorkingListTextProvider translate={(message) => message}>
-                <WorkingListTableSkeleton pageSize={15} />
-            </WorkingListTextProvider>
-        )
+        const screen = await render(<WorkingListTableSkeleton pageSize={15} />)
 
         expect(
             screen.container.querySelectorAll(

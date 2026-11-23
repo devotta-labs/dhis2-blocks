@@ -17,7 +17,7 @@ import {
 } from '../api/savedLists'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
 import { workingListQueryKeys } from '../query/keys'
-import { WorkingListTextProvider } from '../ui/WorkingListText'
+
 import {
     publicConfigurationFingerprint,
     resolveSelectedSavedListId,
@@ -142,7 +142,6 @@ const WorkingListProviderInstance = ({
 
     const {
         online,
-        translate,
         locale,
         program,
         systemInfo,
@@ -319,7 +318,6 @@ const WorkingListProviderInstance = ({
         serializationContext,
         systemInfo,
         locale,
-        translate,
         online,
         stagePagination,
         store,
@@ -454,7 +452,6 @@ const WorkingListProviderInstance = ({
                 setMutation,
                 stagePagination,
                 store,
-                translate,
                 updateStore,
                 validateAndCommit,
             }),
@@ -467,7 +464,6 @@ const WorkingListProviderInstance = ({
             setMutation,
             stagePagination,
             store,
-            translate,
             updateStore,
             validateAndCommit,
         ]
@@ -515,7 +511,6 @@ const WorkingListProviderInstance = ({
             orgUnitId,
             online,
             locale,
-            translate,
             program,
             systemInfo,
             capabilities,
@@ -575,7 +570,6 @@ const WorkingListProviderInstance = ({
             serializationContext,
             store,
             systemInfo,
-            translate,
             usingGeneratedLists,
         ]
     )
@@ -590,7 +584,5 @@ const WorkingListProviderInstance = ({
 }
 
 export const WorkingListProvider = (props: WorkingListProviderProps) => (
-    <WorkingListTextProvider>
-        <WorkingListProviderInstance key={props.programId} {...props} />
-    </WorkingListTextProvider>
+    <WorkingListProviderInstance key={props.programId} {...props} />
 )

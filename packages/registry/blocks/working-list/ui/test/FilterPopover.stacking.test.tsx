@@ -5,7 +5,6 @@ import { resolveWorkingListCapabilities } from '../../api/capabilities'
 import type { WorkingListClient } from '../../api/client'
 import type { WorkingListField } from '../../domain/model'
 import { FilterButton } from '../FilterControls'
-import { WorkingListTextProvider } from '../WorkingListText'
 
 const unusedClient: WorkingListClient = {
     query: () => Promise.reject(new Error('Unexpected query')),
@@ -32,7 +31,7 @@ const dateField: WorkingListField = {
 
 const renderFilter = (field: WorkingListField) =>
     render(
-        <WorkingListTextProvider translate={(message) => message}>
+        <>
             <div className="p-4">
                 <FilterButton
                     client={unusedClient}
@@ -53,7 +52,7 @@ const renderFilter = (field: WorkingListField) =>
                     Elsewhere
                 </button>
             </div>
-        </WorkingListTextProvider>
+        </>
     )
 
 const editor = (field: WorkingListField) =>

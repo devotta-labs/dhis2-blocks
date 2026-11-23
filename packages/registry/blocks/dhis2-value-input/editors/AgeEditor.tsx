@@ -235,15 +235,22 @@ const useAge = ({
 
 type AgeState = ReturnType<typeof useAge>
 
-const AgeLabel = ({ editor, part }: { editor: AgeState; part: Part }) => {
-    const labels = {
-        birth: i18n.t('Date of birth'),
-        years: i18n.t('Years'),
-        months: i18n.t('Months'),
-        days: i18n.t('Days'),
+const partLabel = (part: Part) => {
+    switch (part) {
+        case 'birth':
+            return i18n.t('Date of birth')
+        case 'years':
+            return i18n.t('Years')
+        case 'months':
+            return i18n.t('Months')
+        case 'days':
+            return i18n.t('Days')
     }
-    return <Label htmlFor={`${editor.id}-${part}`}>{labels[part]}</Label>
 }
+
+const AgeLabel = ({ editor, part }: { editor: AgeState; part: Part }) => (
+    <Label htmlFor={`${editor.id}-${part}`}>{partLabel(part)}</Label>
+)
 
 const AgeProblem = ({
     editor: { shown, problemId },

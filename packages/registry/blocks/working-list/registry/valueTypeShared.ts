@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { z } from 'zod'
 import type { WorkingListCapabilities } from '../api/capabilities'
 import type { SavedValueFilter } from '../api/schemas'
@@ -266,10 +267,9 @@ const parseText = (value: WorkingListRawValue) => {
     const result = z.string().safeParse(value)
     if (!result.success) {
         throw new ValueParseError(
-            'Expected a string value, received {{type}}',
-            {
+            i18n.t('Expected a string value, received {{type}}', {
                 type: rawValueType(value),
-            }
+            })
         )
     }
     return result.data
@@ -283,9 +283,11 @@ export const parseDhis2Uid = (
 ) => {
     const parsed = parseText(value)
     if (!UID_PATTERN.test(parsed)) {
-        throw new ValueParseError('{{valueType}} requires a DHIS2 UID', {
-            valueType,
-        })
+        throw new ValueParseError(
+            i18n.t('{{valueType}} requires a DHIS2 UID', {
+                valueType,
+            })
+        )
     }
     return parsed
 }
@@ -347,14 +349,17 @@ export const parseDateValue = (
             !(valueType === 'DATE' && isValidIsoDateTime(parsed))
         ) {
             throw new ValueParseError(
-                '{{valueType}} requires a valid YYYY-MM-DD date',
-                { valueType }
+                i18n.t('{{valueType}} requires a valid YYYY-MM-DD date', {
+                    valueType,
+                })
             )
         }
         return parsed
     }
     if (!isValidIsoDateTime(parsed)) {
-        throw new ValueParseError('DATETIME requires a valid ISO date and time')
+        throw new ValueParseError(
+            i18n.t('DATETIME requires a valid ISO date and time')
+        )
     }
     return parsed
 }
@@ -363,7 +368,7 @@ export const parseTimeValue = (value: WorkingListRawValue) => {
     const parsed = parseText(value)
     if (!isValidTime(parsed)) {
         throw new ValueParseError(
-            'TIME requires a 24-hour time, optionally with seconds'
+            i18n.t('TIME requires a 24-hour time, optionally with seconds')
         )
     }
     return parsed
@@ -378,14 +383,14 @@ export const parseTextValue = (
         case 'LETTER':
             if ([...parsed].length !== 1) {
                 throw new ValueParseError(
-                    'LETTER requires exactly one character'
+                    i18n.t('LETTER requires exactly one character')
                 )
             }
             break
         case 'EMAIL':
             if (!z.email().safeParse(parsed).success) {
                 throw new ValueParseError(
-                    'EMAIL contains an invalid email address'
+                    i18n.t('EMAIL contains an invalid email address')
                 )
             }
             break
@@ -396,7 +401,9 @@ export const parseTextValue = (
                     throw new Error('Unsupported URL protocol')
                 }
             } catch {
-                throw new ValueParseError('URL contains an invalid HTTP(S) URL')
+                throw new ValueParseError(
+                    i18n.t('URL contains an invalid HTTP(S) URL')
+                )
             }
             break
         }
@@ -405,7 +412,9 @@ export const parseTextValue = (
             try {
                 coordinateInput = JSON.parse(parsed)
             } catch {
-                throw new ValueParseError('COORDINATE is not valid JSON')
+                throw new ValueParseError(
+                    i18n.t('COORDINATE is not valid JSON')
+                )
             }
             const coordinate = z
                 .tuple([z.number().finite(), z.number().finite()])
@@ -416,7 +425,7 @@ export const parseTextValue = (
                 Math.abs(coordinate.data[1]) > 90
             ) {
                 throw new ValueParseError(
-                    'COORDINATE requires [longitude, latitude]'
+                    i18n.t('COORDINATE requires [longitude, latitude]')
                 )
             }
             break
@@ -434,7 +443,7 @@ export const parseTextValue = (
                 parsed.split(',').some((entry) => entry.length === 0)
             ) {
                 throw new ValueParseError(
-                    'MULTI_TEXT contains an empty option code'
+                    i18n.t('MULTI_TEXT contains an empty option code')
                 )
             }
             break
@@ -443,10 +452,10 @@ export const parseTextValue = (
             try {
                 geoJson = JSON.parse(parsed)
             } catch {
-                throw new ValueParseError('GEOJSON is not valid JSON')
+                throw new ValueParseError(i18n.t('GEOJSON is not valid JSON'))
             }
             if (!z.record(z.string(), z.json()).safeParse(geoJson).success) {
-                throw new ValueParseError('GEOJSON requires an object')
+                throw new ValueParseError(i18n.t('GEOJSON requires an object'))
             }
             break
         }

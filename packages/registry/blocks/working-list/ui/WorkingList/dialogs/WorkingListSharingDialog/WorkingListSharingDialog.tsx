@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { ErrorAlert } from '@/components/dhis2/ui/alert'
 import { SharingDialog } from '@dhis2/ui'
 import React, { type ComponentProps, type ComponentType } from 'react'
@@ -5,7 +6,6 @@ import {
     getSharingType,
     type NormalizedSavedWorkingList,
 } from '../../../../api/savedLists'
-import { useWorkingListText } from '../../../WorkingListText'
 
 type SharingDialogCompatProps = Omit<
     ComponentProps<typeof SharingDialog>,
@@ -33,9 +33,6 @@ export const WorkingListSharingDialog = ({
     onError,
     onSave,
 }: WorkingListSharingDialogProps) => {
-    const t = useWorkingListText()
-    const i18n = { t }
-
     return (
         <>
             {error && (

@@ -1,3 +1,4 @@
+import i18n from '@dhis2/d2-i18n'
 import { IconChevronLeft16, IconChevronRight16 } from '@dhis2/ui-icons'
 import React from 'react'
 import {
@@ -12,7 +13,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/dhis2/ui/select'
-import { useWorkingListText } from '../WorkingListText'
 
 const pageSizeItems = WORKING_LIST_PAGE_SIZES.map((size) => ({
     value: size,
@@ -39,8 +39,6 @@ export const WorkingListPagination = ({
     onPageChange: (page: number) => void
     onPageSizeChange: (pageSize: WorkingListPageSize) => void
 }) => {
-    const t = useWorkingListText()
-    const i18n = { t }
     const pageSizeLabel = i18n.t('Items per page')
 
     return (

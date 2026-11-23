@@ -142,7 +142,6 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
         metadata,
         resolvedConfiguration,
         serializationContext,
-        translate,
     } = useWorkingListPrivateUi()
     return useMemo(() => {
         const toApiDate = serializationContext?.toApiDate
@@ -155,7 +154,6 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
             capabilities,
             fields: fieldsForConfiguration(metadata, resolvedConfiguration),
             serializationContext,
-            translate,
         }
         return {
             input,
@@ -174,7 +172,6 @@ const useDateFieldRequest = (fieldId: WorkingListDateFieldId) => {
         programId,
         resolvedConfiguration,
         serializationContext,
-        translate,
     ])
 }
 
@@ -209,7 +206,7 @@ export const useWorkingListDateBounds: (
 export const useWorkingListDateRange: (
     options: WorkingListDateRangeOptions
 ) => WorkingListDateRangeResults = ({ fieldId, start, end, limit = 1000 }) => {
-    const { client, programId, systemInfo, locale, translate, parsingContext } =
+    const { client, programId, systemInfo, locale, parsingContext } =
         useWorkingListPrivateUi()
     const configuration = useWorkingListState((state) => state.configuration)
     const request = useDateFieldRequest(fieldId)
@@ -265,7 +262,6 @@ export const useWorkingListDateRange: (
         fields,
         systemInfo,
         locale,
-        translate,
     })
     const { formattingContext } = references
     const formatCell = useCallback(

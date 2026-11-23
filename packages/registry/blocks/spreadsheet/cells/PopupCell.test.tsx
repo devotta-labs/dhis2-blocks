@@ -315,8 +315,10 @@ test('text from a dead key, AltGr or an input method opens the editor with that 
     inputOf(cell).focus()
     await devtools().send('Input.insertText', { text: 'é' })
     await expect.element(draft).toHaveValue('é')
+    await expect.element(draft).toHaveFocus()
     await userEvent.keyboard('{Escape}')
     await expect.element(cell).toHaveValue('Some notes')
+    await expect.element(cell).toHaveFocus()
     await devtools().send('Input.imeSetComposition', {
         text: 'にほ',
         selectionStart: 2,
@@ -324,6 +326,7 @@ test('text from a dead key, AltGr or an input method opens the editor with that 
     })
     await devtools().send('Input.insertText', { text: '日本' })
     await expect.element(draft).toHaveValue('日本')
+    await expect.element(draft).toHaveFocus()
     await userEvent.keyboard('{Escape}')
     await expect.element(cell).toHaveValue('Some notes')
 })

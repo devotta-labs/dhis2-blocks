@@ -16,8 +16,6 @@ test.describe('preview authentication bootstrap', () => {
             }
         })
 
-        // Observe every mount, including dialogs that disappear before the
-        // previews finish loading. Run against dev to exercise Strict Mode.
         await page.addInitScript(() => {
             const selector = '[data-test="dhis2-adapter-loginmodal"]'
 

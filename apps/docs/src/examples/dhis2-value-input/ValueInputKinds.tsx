@@ -3,11 +3,6 @@ import { ValueInput } from '@/components/dhis2-value-input'
 import type { Field, ValueSettings } from '@/components/dhis2-value-types'
 import { FieldGroup } from '@/components/dhis2/ui/field'
 
-/**
- * An example: one field of each kind that needs no server. Each field is a value type (and, for a choice, its
- * options); `ValueInput` picks the control. Search and file fields fetch from DHIS2, so they are not shown here.
- */
-
 const SETTINGS: ValueSettings = {
     calendar: 'iso8601',
     dateFormat: 'YYYY-MM-DD',
@@ -107,7 +102,6 @@ const ValueInputKinds = () => {
                     label={label}
                     value={values[id]}
                     onChange={(value, problem) => {
-                        // A problem means what was typed is not a value yet: keep the last good value.
                         if (problem === undefined)
                             setValues((all) => ({
                                 ...all,
@@ -120,4 +114,8 @@ const ValueInputKinds = () => {
     )
 }
 
+/**
+ * An example: one field of each kind that needs no server. Each field is a value type (and, for a choice, its
+ * options); `ValueInput` picks the control. Search and file fields fetch from DHIS2, so they are not shown here.
+ */
 export default ValueInputKinds

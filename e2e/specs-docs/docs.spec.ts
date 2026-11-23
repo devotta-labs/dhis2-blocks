@@ -1,10 +1,6 @@
 import type { Page } from '@playwright/test'
-import { expect, test } from './fixtures'
+import { expect, test } from './docs.fixture'
 
-/**
- * Catalog browsing works without a backend: prose, navigation, and code tabs
- * are static, and controlled (non-live) examples render without DHIS2.
- */
 test.describe('documentation catalog', () => {
     test('renders the introduction and sidebar navigation', async ({
         page,
@@ -39,7 +35,6 @@ test.describe('documentation catalog', () => {
             page.getByText('pnpm dlx shadcn@latest add').first()
         ).toBeVisible()
 
-        // The Code tab renders the same example source the preview executes.
         await page.getByRole('tab', { name: 'code' }).first().click()
 
         const codePanel = page
@@ -66,8 +61,6 @@ test.describe('documentation catalog', () => {
             page.getByRole('heading', { name: 'Context Selector' })
         ).toBeVisible()
 
-        // The registration-context example is controlled sample data, so it
-        // renders inline in the page even while signed out or offline.
         await expect(
             page.getByRole('toolbar', { name: 'Registration context' })
         ).toBeVisible({
@@ -94,10 +87,6 @@ test.describe('documentation catalog', () => {
     })
 })
 
-/**
- * The OS contrast setting reaches a built docs example: more contrast swaps the
- * theme roles, and forced colours outlines the sidebar's current page.
- */
 test.describe('contrast', () => {
     const PREVIEW = '/preview/sidebar/app'
     const current = (page: Page) =>

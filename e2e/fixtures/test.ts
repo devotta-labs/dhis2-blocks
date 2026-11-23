@@ -71,8 +71,6 @@ const isKnownBenignDiagnostic = (
         ) &&
         diagnostic.location?.url.includes('/node_modules/.vite/deps/')
     ) {
-        // The DHIS2 app shell logs the separately allowlisted missing banner.
-        // Any other 404 is still caught by its HTTP response diagnostic.
         return true
     }
 
@@ -90,8 +88,6 @@ const isKnownBenignDiagnostic = (
         diagnostic.method === 'GET' &&
         /\/api(?:\/\d+)?\/tracker\/(trackedEntities|events)$/.test(path ?? '')
     ) {
-        // React Query aborts obsolete Tracker reads when the result level or
-        // selected list changes.
         return true
     }
 

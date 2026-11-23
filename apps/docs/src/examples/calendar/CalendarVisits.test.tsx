@@ -1,4 +1,5 @@
-import { expect, it, vi } from 'vitest'
+import type { FormEvent } from 'react'
+import { expect, it } from 'vitest'
 import { render } from 'vitest-browser-react'
 import CalendarVisits from './CalendarVisits'
 
@@ -34,16 +35,21 @@ it('shows ANC names by default and lets readers explore another day', async () =
 })
 
 it('keeps Schedule illustrative without submitting or changing visits', async () => {
-    const submit = vi.fn((event: React.FormEvent) => event.preventDefault())
+    const submissions: FormEvent[] = []
     const view = await render(
-        <form onSubmit={submit}>
+        <form
+            onSubmit={(event) => {
+                event.preventDefault()
+                submissions.push(event)
+            }}
+        >
             <CalendarVisits />
         </form>
     )
     const schedule = view.getByRole('button', { name: 'Schedule', exact: true })
     await expect.element(schedule).toBeEnabled()
     await schedule.click()
-    expect(submit).not.toHaveBeenCalled()
+    expect(submissions).toHaveLength(0)
     await expect
         .element(
             view.getByRole('button', { name: '10 November 2026, 3 records' })

@@ -25,7 +25,7 @@ export const buildProgramOptions = ({
     preservedProgramId?: string
     baseUrl: string
     apiVersion: number
-}): Option[] => {
+}) => {
     const compatiblePrograms = selectedOrganisationUnitPath
         ? programs.filter((program) =>
               (program.organisationUnits ?? []).some((unit) =>

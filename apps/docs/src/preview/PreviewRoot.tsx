@@ -33,10 +33,8 @@ export const PreviewRoot = () => {
     }
 
     const Placeholder = example.Placeholder ?? PreviewSpinner
-    // The page's heading names the example; the design shows only the example itself.
     const heading = <h1 className="sr-only">{example.title}</h1>
 
-    // The shell sits inside the adapter so the adapter keeps the full viewport.
     const placeholder = (
         <PreviewShell>
             {heading}

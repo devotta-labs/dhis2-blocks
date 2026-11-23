@@ -17,10 +17,6 @@ import {
     type FinderPerson,
 } from '@/components/tracked-entity-finder'
 
-/*
- * WHO RMNCH Tracker in the Sierra Leone demo database. Replace with your
- * program's uids.
- */
 const PROGRAM = 'WSGAb5XwJ3Y'
 const FIRST_NAME = 'w75KJ2mc4zz'
 const LAST_NAME = 'zDhUuAYrxNC'
@@ -29,6 +25,9 @@ const BIRTH_DATE = 'gHGyrwKPzej'
 /**
  * Composed results: your own empty text and your own row content. Only the
  * parts you place render.
+ *
+ * WHO RMNCH Tracker in the Sierra Leone demo database. Replace with your
+ * program's uids.
  */
 export default function CustomRows() {
     const [person, setPerson] = useState<FinderPerson>()

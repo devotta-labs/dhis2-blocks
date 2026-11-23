@@ -163,9 +163,6 @@ test.describe('Capture context and generated tracker views', () => {
 
         await openWorkingList(page)
 
-        // The seed script corrupts WlE2eTei002's date attribute behind the
-        // tracker importer's back; field users still see the row, raw value
-        // included, with no data-quality visuals.
         const dirtyRow = page.getByTestId('working-list-row-WlE2eTei002')
         await expect(dirtyRow).toBeVisible()
         await expect(dirtyRow).not.toHaveAttribute('data-invalid')

@@ -1,7 +1,7 @@
 import { OrganisationUnitSelector } from '@/components/context-selector'
 import React, { useState } from 'react'
 import { render } from 'vitest-browser-react'
-import { OrganisationUnitSelectorContent } from '../OrganisationUnitSelectorContent'
+import { OrganisationUnitSelectorContent } from './OrganisationUnitSelectorContent'
 
 const ROOT_ID = 'RootUnit001'
 const CHILD_ID = 'ChildUnit01'

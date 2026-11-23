@@ -37,8 +37,7 @@ const DocsLink = ({
     )
 }
 
-// Children.toArray drops null and booleans, leaving strings, numbers, and elements.
-const textOf = (node: ReactNode): string =>
+const textOf: (node: ReactNode) => string = (node) =>
     Children.toArray(node)
         .map((child) =>
             isValidElement<{ children?: ReactNode }>(child)
@@ -53,7 +52,6 @@ const slugify = (node: ReactNode) =>
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
 
-// Headings get stable ids so sections can be linked, e.g. /installation#add-a-block.
 const H2 = ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
     <h2 id={slugify(children)} {...props}>
         {children}
@@ -66,7 +64,6 @@ const H3 = ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => (
     </h3>
 )
 
-// Fenced code arrives as <pre><code className="language-tsx">…</code></pre>.
 const Pre = ({ children, ...props }: HTMLAttributes<HTMLPreElement>) => {
     const [code] = Children.toArray(children)
 

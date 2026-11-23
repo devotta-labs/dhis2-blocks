@@ -7,19 +7,11 @@ import {
     type GridTable,
 } from '@/components/spreadsheet'
 
-/**
- * An example: yearly targets for a few organisation units, in a grid with no rules.
- *
- * The organisation units and years are placeholders. Replace the rows and columns with your own, and send the
- * changes from `enqueue` to wherever your app saves them: this example only lists them under the grid.
- */
-
 const YEARS = ['2026', '2027', '2028']
 
 const TARGETS: GridTable = {
     id: 'targets',
     title: 'Yearly targets',
-    // Row ids are placeholder organisation unit ids.
     rows: [
         { id: 'OrgUnitA01', label: 'Hospital A' },
         { id: 'OrgUnitB02', label: 'Clinic B' },
@@ -30,12 +22,10 @@ const TARGETS: GridTable = {
     closed: new Map(),
 }
 
-// Every cell is a positive whole number, whatever its key, so one field serves the whole grid.
 const FIELDS = new Map([['target', { valueType: 'INTEGER_POSITIVE' }]])
 
 const SETTINGS = { calendar: 'iso8601', dateFormat: 'YYYY-MM-DD' } as const
 
-// A store that never changes: nothing here has a rule to say anything about a cell.
 const NO_ANNOTATIONS: AnnotationsState = {
     cells: {},
     rowMessages: new Map(),
@@ -57,7 +47,6 @@ const TargetsGrid = () => {
                 values: new Map(),
                 settings: SETTINGS,
                 annotations,
-                // Where a committed value goes: save it to your backend here.
                 enqueue: (key, value) =>
                     setLog((lines) => [
                         ...lines,
@@ -84,4 +73,10 @@ const TargetsGrid = () => {
     )
 }
 
+/**
+ * An example: yearly targets for a few organisation units, in a grid with no rules.
+ *
+ * The organisation units and years are placeholders. Replace the rows and columns with your own, and send the
+ * changes from `enqueue` to wherever your app saves them: this example only lists them under the grid.
+ */
 export default TargetsGrid

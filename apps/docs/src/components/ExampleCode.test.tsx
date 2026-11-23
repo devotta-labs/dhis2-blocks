@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { render } from 'vitest-browser-react'
 import calendarSource from '../examples/working-list/WorkingListCalendarTabs.tsx?raw'
 import compositionSource from '../examples/working-list/ListCalendar.tsx?raw'
@@ -16,13 +16,16 @@ const renderCode = async (slug: string) => {
     )
 }
 
-afterEach(() => vi.restoreAllMocks())
+const copyText = async (view: Awaited<ReturnType<typeof renderCode>>) => {
+    await view.getByRole('button', { name: 'Copy', exact: true }).click()
+    await expect
+        .element(view.getByRole('button', { name: 'Copied', exact: true }))
+        .toBeVisible()
+    return navigator.clipboard.readText()
+}
 
 describe('example source code', () => {
     it('shows and copies both calendar files inside the Code tab', async () => {
-        const copy = vi
-            .spyOn(navigator.clipboard, 'writeText')
-            .mockResolvedValue()
         const view = await renderCode('working-list/calendar')
         await expect
             .element(view.getByRole('group', { name: 'Source files' }))
@@ -38,8 +41,7 @@ describe('example source code', () => {
         await expect
             .element(view.getByRole('tabpanel'))
             .toHaveTextContent('const WorkingListCalendarTabs =')
-        await view.getByRole('button', { name: 'Copy', exact: true }).click()
-        expect(copy).toHaveBeenLastCalledWith(calendarSource.trimEnd())
+        expect(await copyText(view)).toBe(calendarSource.trimEnd())
 
         await view
             .getByRole('button', { name: 'ListCalendar.tsx', exact: true })
@@ -58,8 +60,7 @@ describe('example source code', () => {
         await expect
             .element(view.getByRole('tabpanel'))
             .toHaveTextContent('export const ListCalendar =')
-        await view.getByRole('button', { name: 'Copy', exact: true }).click()
-        expect(copy).toHaveBeenLastCalledWith(compositionSource.trimEnd())
+        expect(await copyText(view)).toBe(compositionSource.trimEnd())
 
         await view
             .getByRole('button', {
@@ -73,9 +74,6 @@ describe('example source code', () => {
     })
 
     it('keeps single-file examples directly copyable without a file picker', async () => {
-        const copy = vi
-            .spyOn(navigator.clipboard, 'writeText')
-            .mockResolvedValue()
         const view = await renderCode('working-list/default')
         await expect
             .element(view.getByRole('group', { name: 'Source files' }))
@@ -83,7 +81,6 @@ describe('example source code', () => {
         await expect
             .element(view.getByRole('tabpanel'))
             .toHaveTextContent('const WorkingListDefault =')
-        await view.getByRole('button', { name: 'Copy', exact: true }).click()
-        expect(copy).toHaveBeenLastCalledWith(listSource.trimEnd())
+        expect(await copyText(view)).toBe(listSource.trimEnd())
     })
 })

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
-/* The DHIS2 Global Shell tracks the app URL by listening for "popstate"
-   events, but react-router@6+ inlined the history library and no longer
-   emits "popstate" on pushState/replaceState. Re-dispatch a "popstate"
-   event on every router location change so the shell stays in sync. */
+/**
+ * Keeps the DHIS2 Global Shell in sync with the router. The shell listens for
+ * popstate, which React Router does not dispatch for pushState or replaceState.
+ */
 export const SyncUrlWithGlobalShell = ({
     children,
 }: {

@@ -56,7 +56,7 @@ describe('fetchEvents', () => {
             '3',
         ])
         for (const url of requests) {
-            expect(url.pathname).toBe('/api/tracker/events')
+            expect(url.pathname).toBe('/api/42/tracker/events')
             expect(Object.fromEntries(url.searchParams)).toMatchObject({
                 trackedEntity: 'te1',
                 program: 'p1',
@@ -235,7 +235,7 @@ describe('fetchEnrollment', () => {
         )
 
         expect(requests.map((url) => url.pathname)).toEqual([
-            '/api/tracker/enrollments',
+            '/api/42/tracker/enrollments',
         ])
         expect(
             requests.map((url) => Object.fromEntries(url.searchParams))

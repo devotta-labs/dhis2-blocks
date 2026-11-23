@@ -1,8 +1,9 @@
 import { once } from 'node:events'
 import { createServer } from 'node:http'
 import type { IncomingMessage } from 'node:http'
-import { DataProvider, useDataEngine } from '@dhis2/app-runtime'
+import { Provider, useDataEngine } from '@dhis2/app-runtime'
 import { createElement } from 'react'
+import type { ComponentProps } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, onTestFinished } from 'vitest'
 
@@ -13,7 +14,8 @@ type Dhis2Route = (
 
 export const openDhis2TestServer = async (
     route: Dhis2Route,
-    apiVersion = 42
+    apiVersion = 42,
+    serverVersion?: ComponentProps<typeof Provider>['config']['serverVersion']
 ) => {
     const unexpectedRequests: string[] = []
     const errors: Error[] = []
@@ -70,9 +72,12 @@ export const openDhis2TestServer = async (
         return null
     }
     renderToStaticMarkup(
-        createElement(DataProvider, {
-            baseUrl,
-            apiVersion,
+        createElement(Provider, {
+            config: { baseUrl, apiVersion, serverVersion },
+            userInfo: undefined,
+            plugin: false,
+            parentAlertsAdd: undefined,
+            showAlertsInPlugin: false,
             children: createElement(CaptureEngine),
         })
     )

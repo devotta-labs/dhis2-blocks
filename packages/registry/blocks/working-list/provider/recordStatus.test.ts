@@ -1,7 +1,9 @@
 import type { WorkingListDisplayRow } from '@/components/working-list'
 import { getWorkingListRecordStatus } from './recordStatus'
 
-const row = (values: Record<string, string>): WorkingListDisplayRow => ({
+const row: (values: Record<string, string>) => WorkingListDisplayRow = (
+    values
+) => ({
     id: 'Record00001',
     values: Object.fromEntries(
         Object.entries(values).map(([id, value]) => [

@@ -68,9 +68,11 @@ const assertPagination = (pagination: WorkingListPagination) => {
     }
 }
 
-const idleMutation = (): WorkingListMutationStatus => ({ status: 'idle' })
+const idleMutation: () => WorkingListMutationStatus = () => ({ status: 'idle' })
 
-const initialMeta = (pagination: WorkingListPagination): WorkingListMeta => ({
+const initialMeta: (pagination: WorkingListPagination) => WorkingListMeta = (
+    pagination
+) => ({
     lifecycle: { status: 'pending' },
     selection: { status: 'pending' },
     activeConfiguration: { status: 'unavailable' },
@@ -87,10 +89,10 @@ const initialMeta = (pagination: WorkingListPagination): WorkingListMeta => ({
     fields: [],
 })
 
-const asSavedView = (
+const asSavedView: (
     list: NormalizedSavedWorkingList,
     generated: boolean
-): WorkingListSavedView => ({
+) => WorkingListSavedView = (list, generated) => ({
     id: list.id,
     name: list.name,
     generated,

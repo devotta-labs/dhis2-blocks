@@ -20,7 +20,6 @@ import { WorkingListPagination } from './WorkingListPagination'
 export const SORT_BUTTON_CLASS =
     'group/sort flex min-h-6 w-full cursor-pointer items-center border-0 bg-transparent p-0 text-left text-[inherit] [font-weight:inherit] outline-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-solid focus-visible:outline-dhis2-ring disabled:cursor-default'
 
-// Reserve the native scrollbar gutter before the columns are known.
 const tableScrollClassName =
     'w-full min-w-0 max-w-full overflow-x-scroll [contain:layout] [overscroll-behavior-inline:contain]'
 
@@ -86,7 +85,6 @@ const isInteractiveTarget = (target: EventTarget | null) =>
         )
     )
 
-/** The sort indicator @dhis2/ui DataTableColumnHeader draws. */
 const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
     <span
         aria-hidden="true"
@@ -95,8 +93,7 @@ const SortIndicator = ({ sorted }: { sorted: false | 'asc' | 'desc' }) => (
         className="ms-0.5 flex size-6 shrink-0 items-center justify-center rounded-dhis2-md group-hover/sort:bg-dhis2-accent-strong group-focus-visible/sort:bg-dhis2-accent-strong group-disabled/sort:bg-transparent"
     >
         <svg viewBox="0 0 16 16" className="size-4">
-            {/* DHIS2 names these "top" and "bottom" by stacking order, not
-                by direction: ascending highlights the down-pointing one. */}
+            {}
             <polygon
                 points="4 9 12 9 8 14"
                 className={
@@ -128,8 +125,6 @@ const skeletonCellWidths = [
 const skeletonCellWidth = (row: number, column: number) =>
     skeletonCellWidths[(row * 3 + column) % skeletonCellWidths.length]
 
-// One placeholder row per expected record, built from the same table cells
-// as real rows so the body keeps its final height while results load.
 const SkeletonRows = ({
     columnCount,
     rowCount,
@@ -337,8 +332,7 @@ export const WorkingListTableView = ({
                                         key={row.id}
                                         className={
                                             interactive
-                                                ? // The open button is hidden, so its row shows where focus is.
-                                                  'cursor-pointer has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-dhis2-ring has-[button:focus-visible]:outline-solid'
+                                                ? 'cursor-pointer has-[button:focus-visible]:outline-2 has-[button:focus-visible]:-outline-offset-2 has-[button:focus-visible]:outline-dhis2-ring has-[button:focus-visible]:outline-solid'
                                                 : undefined
                                         }
                                         data-test={`working-list-row-${row.id}`}
@@ -354,10 +348,6 @@ export const WorkingListTableView = ({
                                                     cell.isDataQuality
                                                         ? 'w-px min-w-0 text-center whitespace-nowrap'
                                                         : 'min-w-[140px]',
-                                                    // A fixed background
-                                                    // turns off the hover and
-                                                    // press states, as in
-                                                    // DataTable.
                                                     highlightIssues &&
                                                         'bg-dhis2-destructive-subtle group-hover/table-row:bg-dhis2-destructive-subtle group-active/table-row:bg-dhis2-destructive-subtle'
                                                 )}

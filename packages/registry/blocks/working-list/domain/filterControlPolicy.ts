@@ -63,10 +63,10 @@ export const optionDisplayName = (
     }
 }
 
-export const localizedField = (
+export const localizedField: (
     field: WorkingListField,
-    translate: FilterPolicyTranslate = identityTranslate
-): WorkingListField => ({
+    translate?: FilterPolicyTranslate
+) => WorkingListField = (field, translate = identityTranslate) => ({
     ...field,
     displayName: fieldDisplayName(field, translate),
     options: field.options?.map((option) => ({

@@ -16,13 +16,13 @@ export interface SavedListRepairPlan {
     replacedSort: boolean
 }
 
-export const createSavedListRepairPlan = (
+export const createSavedListRepairPlan: (
     list: Extract<
         NormalizedSavedWorkingList,
         { compatibility: 'incompatible' }
     >,
     metadata: ProgramFieldCatalog
-): SavedListRepairPlan => {
+) => SavedListRepairPlan = (list, metadata) => {
     const candidate = list.candidateConfiguration
     const invalidColumnPaths = new Set(
         list.issues

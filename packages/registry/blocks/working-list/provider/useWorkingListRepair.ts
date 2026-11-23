@@ -19,7 +19,6 @@ import {
     NoSelectedSavedListError,
     OfflineMutationError,
     SavedListPermissionError,
-    type UpdateSelectedViewError,
 } from './errors'
 import { persistSavedList } from './persistSavedList'
 import { createSavedListRepairPlan } from './repair'
@@ -123,9 +122,7 @@ export const useWorkingListRepair = ({
             async sharingSaved() {
                 await refreshSavedLists()
             },
-            async repairSelectedSavedList(): Promise<
-                Result<void, UpdateSelectedViewError>
-            > {
+            async repairSelectedSavedList() {
                 if (!online) {
                     return Result.err(
                         new OfflineMutationError({

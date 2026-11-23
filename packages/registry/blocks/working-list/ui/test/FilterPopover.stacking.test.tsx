@@ -134,7 +134,6 @@ describe('filter editor popover stacking', () => {
         expect(startInput).not.toBeNull()
         await userEvent.click(startInput!)
 
-        // The calendar popup has no data-test; find its day in the DHIS2 layer.
         const findDay = () =>
             [
                 ...document.querySelectorAll<HTMLElement>(

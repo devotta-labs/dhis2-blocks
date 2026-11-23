@@ -28,10 +28,10 @@ const RuntimeConfigSchema = z
     .object({ apiVersion: z.coerce.number().int().positive() })
     .passthrough()
 
-const getLifecycleMeta = (
+const getLifecycleMeta: (
     error: WorkingListInitializationError | undefined,
     ready: boolean
-): WorkingListMeta['lifecycle'] => {
+) => WorkingListMeta['lifecycle'] = (error, ready) => {
     if (error) return { status: 'error', error }
     return { status: ready ? 'ready' : 'pending' }
 }

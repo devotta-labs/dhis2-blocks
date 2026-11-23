@@ -26,7 +26,7 @@ const DateFormatSchema = z
         'yyyy-mm-dd',
         'dd-mm-yyyy',
     ])
-    .transform((value): WorkingListDateFormat =>
+    .transform<WorkingListDateFormat>((value) =>
         value.toLowerCase().startsWith('dd') ? 'DD-MM-YYYY' : 'YYYY-MM-DD'
     )
 

@@ -1,5 +1,5 @@
 import { resolveWorkingListCapabilities } from './capabilities'
-import { createWorkingListClient, type DataEngineLike } from './client'
+import { openWorkingListServer } from '../test/workingListServer'
 import {
     PROGRAM_SUMMARY_FIELDS,
     buildProgramFieldCatalog,
@@ -76,18 +76,20 @@ const program: TrackerProgram = {
 
 describe('version-aware Tracker metadata catalog', () => {
     it('loads lightweight program summaries before one selected program', async () => {
-        const query = vi
-            .fn()
-            .mockResolvedValueOnce({
-                workingListResource: { programs: [] },
-            })
-            .mockResolvedValueOnce({ workingListResource: program })
-        const engine: DataEngineLike = {
-            // SAFETY: The mock returns the same query envelopes as DataEngineLike in call order.
-            query: query as DataEngineLike['query'],
-            mutate: vi.fn().mockResolvedValue(undefined),
-        }
-        const client = createWorkingListClient(engine)
+        const requests: URL[] = []
+        const { client } = await openWorkingListServer((url, { method }) => {
+            if (method !== 'GET') {
+                return undefined
+            }
+            if (url.pathname.endsWith('/programs')) {
+                requests.push(url)
+                return Response.json({ programs: [] })
+            }
+            if (url.pathname.endsWith(`/programs/${program.id}`)) {
+                requests.push(url)
+                return Response.json(program)
+            }
+        })
 
         await fetchTrackerPrograms(client)
         await fetchTrackerProgram(client, {
@@ -95,34 +97,25 @@ describe('version-aware Tracker metadata catalog', () => {
             programId: program.id,
         })
 
-        expect(query.mock.calls[0][0]).toEqual({
-            workingListResource: {
-                resource: 'programs',
-                params: {
-                    fields: PROGRAM_SUMMARY_FIELDS,
-                    filter: 'programType:eq:WITH_REGISTRATION',
-                    paging: false,
-                },
-            },
+        expect(requests).toHaveLength(2)
+        expect(requests[0].pathname).toMatch(/\/programs$/)
+        expect(requests[1].pathname.endsWith(`/programs/${program.id}`)).toBe(
+            true
+        )
+        expect(Object.fromEntries(requests[0].searchParams)).toEqual({
+            fields: PROGRAM_SUMMARY_FIELDS,
+            filter: 'programType:eq:WITH_REGISTRATION',
+            paging: 'false',
         })
-        expect(
-            query.mock.calls[0][0].workingListResource.params?.fields
-        ).not.toContain('programStages')
-        expect(
-            query.mock.calls[0][0].workingListResource.params?.fields
-        ).toContain('style[color,icon]')
-        expect(
-            query.mock.calls[0][0].workingListResource.params?.fields
-        ).toContain('organisationUnits[id,displayName,path]')
-        expect(query.mock.calls[1][0]).toMatchObject({
-            workingListResource: {
-                id: program.id,
-                resource: 'programs',
-            },
-        })
-        expect(
-            query.mock.calls[1][0].workingListResource.params?.fields
-        ).toContain('programStages[')
+        const summaryFields = requests[0].searchParams.get('fields')
+        expect(summaryFields).not.toContain('programStages')
+        expect(summaryFields).toContain('style[color,icon]')
+        expect(summaryFields).toContain(
+            'organisationUnits[id,displayName,path]'
+        )
+        expect(requests[1].searchParams.get('fields')).toContain(
+            'programStages['
+        )
     })
 
     it('does not request newer search fields from v41/v42', () => {

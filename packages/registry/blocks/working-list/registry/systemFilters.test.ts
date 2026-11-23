@@ -7,11 +7,11 @@ import {
     validateSystemFilter,
 } from './systemFilters'
 
-const filter = (
+const filter: (
     id: string,
     operator: AppliedFilter['operator'],
     value: FilterValue
-): AppliedFilter => {
+) => AppliedFilter = (id, operator, value) => {
     const definition = getSystemFilterDefinition(id)
     if (!definition) {
         throw new Error(`Missing ${id}`)

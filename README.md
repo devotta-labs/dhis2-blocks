@@ -362,7 +362,7 @@ derives every item from source:
   `@components/dhis2/ui/`, and `theme.css` becomes the `dhis2-theme` item;
 - each `packages/registry/blocks/<name>/` folder is a `registry:block` item installed to
   `@components/<name>/`, with its title, description and docs from
-  `block.json`; tests and `__tests__/` are never shipped;
+  `block.json`; tests, fixtures, test utilities and `test/` are never shipped;
 - npm `dependencies` come from each item's imports, versioned by
   `packages/registry/package.json`, and `registryDependencies` from its
   `@/components/dhis2/ui/*` and `@/components/<block>` imports.
@@ -496,6 +496,9 @@ tasks to retain dependency-aware caching without serializing package checks.
 `pnpm build` builds the web app; `pnpm build:docs` builds the docs site.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
+The Ultracite Landmines preset checks test reliability, layout and naming.
+Use `.test.ts(x)`, `.fixture.ts(x)`, `.test-utils.ts(x)` and singular `test/`
+directories; Playwright specs under `e2e/` keep their `.spec.ts` suffix.
 
 `anti-slop/require-standalone-hook-calls` keeps hook calls out of conditions,
 JSX, arguments and other composed expressions, and bans reading a property or
@@ -551,7 +554,9 @@ don't announce changes such as result counts and rule effects. Three checks
 hold what is in place:
 
 - `pnpm lint` runs the `jsx-a11y` rules. A rule turned off for one line says
-  why beside it.
+  why beside it. The workspace permits `role="status"` instead of requiring
+  `<output>` for screen-reader compatibility and permits spacer cells without
+  labels in data grids.
 - `pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts` scans every docs
   example with axe, in the default and the more-contrast theme, and presses Tab
   through each one to check every stop shows where focus is. CI runs it in the

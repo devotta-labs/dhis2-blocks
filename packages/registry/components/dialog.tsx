@@ -8,19 +8,10 @@ import { Button } from './button'
 import { cn } from './cn'
 import { dhis2PortalRoot } from './portal-root'
 
-/*
- * shadcn Dialog (Base UI) restyled to match @dhis2/ui Modal: a white card on
- * a translucent backdrop, 64px clear of the viewport edges, with body text
- * inheriting the page font size as Modal's does. `size` maps to
- * Modal's small (400px) / default (600px) / large (800px) / fluid widths and
- * `position` to its top / middle placement.
- */
-
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
     return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const DialogTrigger = React.forwardRef<
     HTMLButtonElement,
     DialogPrimitive.Trigger.Props
@@ -83,6 +74,13 @@ const dialogContentVariants = cva(
     }
 )
 
+/**
+ * shadcn Dialog (Base UI) restyled to match @dhis2/ui Modal: a white card on
+ * a translucent backdrop, 64px clear of the viewport edges, with body text
+ * inheriting the page font size as Modal's does. `size` maps to
+ * Modal's small (400px) / default (600px) / large (800px) / fluid widths and
+ * `position` to its top / middle placement.
+ */
 function DialogContent({
     className,
     children,

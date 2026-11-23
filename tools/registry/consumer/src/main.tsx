@@ -18,7 +18,6 @@ import './index.css'
 
 const events = eventSource({ programId: 'program', orgUnitId: 'orgUnit' })
 
-// Type-level use only: the check compiles and bundles this file, never runs it.
 const root = document.getElementById('root')
 if (root !== null) {
     createRoot(root).render(

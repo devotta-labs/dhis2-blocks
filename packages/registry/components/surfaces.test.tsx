@@ -9,7 +9,7 @@ import {
     WarningAlert,
     slot,
     style,
-} from './surfaces.fixtures'
+} from './surfaces.fixture'
 import { roleColour } from '../test/roleColour'
 
 describe('surfaces in the default theme', () => {

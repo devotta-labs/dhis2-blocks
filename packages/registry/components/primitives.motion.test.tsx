@@ -5,7 +5,6 @@ import { Skeleton } from './skeleton'
 import { Spinner } from './spinner'
 import { Switch } from './switch'
 
-// Runs with the system asking for reduced motion (the browser-motion project).
 test('animations stop for reduced motion', async () => {
     await render(
         <>

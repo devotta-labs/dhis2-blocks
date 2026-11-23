@@ -39,6 +39,7 @@ const PRODUCTION_TESTS = '{components,blocks}/**/*.production.test.tsx'
 const CONTRAST_TESTS = '{components,blocks}/**/*.contrast.test.tsx'
 const FORCED_TESTS = '{components,blocks}/**/*.forced.test.tsx'
 const MOTION_TESTS = '{components,blocks}/**/*.motion.test.tsx'
+const THEME_TEST = 'components/theme.test.ts'
 
 type BrowserContextOptions = NonNullable<
     NonNullable<Parameters<typeof playwright>[0]>['contextOptions']
@@ -123,7 +124,17 @@ export default defineConfig({
                     name: 'node',
                     environment: 'node',
                     include: ['{components,blocks}/**/*.test.ts'],
+                    exclude: [...configDefaults.exclude, THEME_TEST],
                     setupFiles: ['./test/node.ts'],
+                },
+            },
+            {
+                resolve,
+                test: {
+                    ...sharedProjectOptions,
+                    name: 'node-dom',
+                    environment: 'jsdom',
+                    include: [THEME_TEST],
                 },
             },
             {

@@ -12,7 +12,6 @@ const assertive = () =>
         '[role="alert"][aria-live="assertive"]'
     )
 
-/** Every non-empty text the region shows, in order. */
 const record = (region: HTMLElement) => {
     const said: string[] = []
     new MutationObserver(() => {
@@ -25,13 +24,11 @@ const record = (region: HTMLElement) => {
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 400))
 
-/** Makes sure both regions exist and have finished speaking. */
 const quiet = async () => {
     announce('Ready')
     await settle()
 }
 
-/** Lets the text still being said finish, so each test starts quiet. */
 afterEach(settle)
 
 test('creates both regions with aria-live, once', async () => {

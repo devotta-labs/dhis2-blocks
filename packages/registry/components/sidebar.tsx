@@ -11,14 +11,6 @@ import { Separator } from './separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './sheet'
 import { useIsMobile } from './use-mobile'
 
-/*
- * shadcn Sidebar (Base UI) on the DHIS2 theme roles: a light surface with a
- * hairline edge. It fills its SidebarProvider instead of the window, so it
- * sits below the DHIS2 header bar; give the provider a height. `side` follows
- * the text direction: left is where a line starts. The menu parts are in
- * sidebar-menu.
- */
-
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b'
 
 type SidebarContextProps = {
@@ -29,7 +21,6 @@ type SidebarContextProps = {
     setOpenMobile: (open: boolean) => void
     isMobile: boolean
     toggleSidebar: () => void
-    /** The provider's text direction, for the sheet, which renders in a portal outside it. */
     dir: 'ltr' | 'rtl'
 }
 
@@ -72,7 +63,6 @@ function SidebarProvider({
 
     const wrapper = React.useRef<HTMLDivElement>(null)
     const [dir, setDir] = React.useState<'ltr' | 'rtl'>('ltr')
-    // Read as the sheet opens, before it paints.
     React.useLayoutEffect(() => {
         if (openMobile && wrapper.current !== null) {
             setDir(
@@ -106,7 +96,6 @@ function SidebarProvider({
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [toggleSidebar])
 
-    // `data-state="expanded" | "collapsed"` lets the parts style themselves.
     const state = open ? 'expanded' : 'collapsed'
 
     const contextValue = React.useMemo<SidebarContextProps>(
@@ -140,6 +129,13 @@ function SidebarProvider({
     )
 }
 
+/**
+ * shadcn Sidebar (Base UI) on the DHIS2 theme roles: a light surface with a
+ * hairline edge. It fills its SidebarProvider instead of the window, so it
+ * sits below the DHIS2 header bar; give the provider a height. `side` follows
+ * the text direction: left is where a line starts. The menu parts are in
+ * sidebar-menu.
+ */
 function Sidebar({
     side = 'left',
     variant = 'sidebar',
@@ -173,10 +169,6 @@ function Sidebar({
     }
 
     if (isMobile) {
-        // A link followed from the sheet leads to a new page, so the sheet
-        // gets out of the way. A link that opens elsewhere (a new tab or
-        // window, or a download) leaves it open. A router's link prevents the
-        // default to navigate itself, so that is not a reason to stay open.
         const closeOnLink = (event: React.MouseEvent<HTMLDivElement>) => {
             props.onClick?.(event)
             const link =
@@ -229,7 +221,7 @@ function Sidebar({
             data-side={side}
             data-slot="sidebar"
         >
-            {/* Holds the sidebar's width in the layout. */}
+            {}
             <div
                 data-slot="sidebar-gap"
                 className={cn(
@@ -318,7 +310,6 @@ function SidebarRail({
             title={label}
             className={cn(
                 'absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 border-0 bg-transparent p-0 transition-all ease-linear group-data-[side=left]:-end-4 group-data-[side=right]:start-0 rtl:translate-x-1/2 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-dhis2-border-strong motion-reduce:transition-none sm:flex',
-                // The cursor points the way the sidebar will move: in when open, out when folded.
                 'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize rtl:in-data-[side=left]:cursor-e-resize rtl:in-data-[side=right]:cursor-w-resize',
                 '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize rtl:[[data-side=left][data-state=collapsed]_&]:cursor-w-resize rtl:[[data-side=right][data-state=collapsed]_&]:cursor-e-resize',
                 'group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:start-full hover:group-data-[collapsible=offcanvas]:bg-dhis2-background-subtle',
@@ -408,7 +399,6 @@ function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
     )
 }
 
-// A Collapsible renders as a group, and passes it a ref.
 const SidebarGroup = React.forwardRef<
     HTMLDivElement,
     React.ComponentPropsWithoutRef<'div'>

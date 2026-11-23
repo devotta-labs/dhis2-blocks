@@ -10,9 +10,10 @@ const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8')
 const hasComponents = (dir: string): boolean =>
     readdirSync(dir, { withFileTypes: true }).some((entry) =>
         entry.isDirectory()
-            ? entry.name !== '__tests__' &&
+            ? !['test', '__tests__'].includes(entry.name) &&
               hasComponents(`${dir}/${entry.name}`)
-            : entry.name.endsWith('.tsx') && !entry.name.endsWith('.test.tsx')
+            : entry.name.endsWith('.tsx') &&
+              !/\.(?:fixtures?|test|test-utils)\.tsx$/.test(entry.name)
     )
 
 test('Tailwind scans every block with components, so its classes exist in the docs', () => {

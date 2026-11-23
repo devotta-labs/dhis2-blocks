@@ -7,18 +7,10 @@ import { cn } from './cn'
 import { dialogContentVariants } from './dialog'
 import { dhis2PortalRoot } from './portal-root'
 
-/*
- * shadcn Alert Dialog (Base UI) restyled to match a small @dhis2/ui Modal.
- * Unlike Dialog it has no corner close button and ignores backdrop presses,
- * so the person answers it with one of its actions (or Escape).
- * size `sm` = Modal small (400px), `default` = Modal default (600px).
- */
-
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
     return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const AlertDialogTrigger = React.forwardRef<
     HTMLButtonElement,
     AlertDialogPrimitive.Trigger.Props
@@ -54,6 +46,12 @@ function AlertDialogOverlay({
     )
 }
 
+/**
+ * shadcn Alert Dialog (Base UI) restyled to match a small @dhis2/ui Modal.
+ * Unlike Dialog it has no corner close button and ignores backdrop presses,
+ * so the person answers it with one of its actions (or Escape).
+ * size `sm` = Modal small (400px), `default` = Modal default (600px).
+ */
 function AlertDialogContent({
     className,
     size = 'sm',

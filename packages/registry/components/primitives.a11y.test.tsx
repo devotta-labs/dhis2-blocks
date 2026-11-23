@@ -74,7 +74,6 @@ test('chip remove and dialog close are at least 24 by 24', async () => {
             </Dialog>
         </>
     )
-    // The open dialog hides the chip from the accessibility tree, so it is found by its slot.
     for (const target of [
         document.querySelector('[data-slot="combobox-chip-remove"]'),
         page.getByRole('button', { name: 'Close' }).element(),

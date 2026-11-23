@@ -117,7 +117,6 @@ export function TrackedEntityBanner({
                                       "You don't have access to this record"
                                   )}
                         </Message>
-                        {}
                         <div hidden>{children}</div>
                     </>
                 )
@@ -162,7 +161,6 @@ export function TrackedEntityBanner({
                         </LabelledRegionContext.Provider>
                     </InFrameContext.Provider>
                 </div>
-                {}
                 <div
                     ref={setActionsColumn}
                     className="flex shrink-0 empty:hidden"

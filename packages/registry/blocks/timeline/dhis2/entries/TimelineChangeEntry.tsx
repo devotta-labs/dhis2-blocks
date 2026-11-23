@@ -132,7 +132,6 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
             >
                 {change.name}
             </dt>{' '}
-            {}
             <dd className="m-0 inline font-medium text-dhis2-foreground">
                 {change.type === 'CREATE' ? null : (
                     <>

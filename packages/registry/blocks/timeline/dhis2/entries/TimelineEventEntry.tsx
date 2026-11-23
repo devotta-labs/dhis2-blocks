@@ -288,7 +288,6 @@ export const TimelineEventValues = ({
                 id={listId}
                 className="m-0 flex flex-col gap-0.5 text-sm wrap-break-word"
             >
-                {}
                 {(open ? values : values.slice(0, MAX_VALUES)).map(
                     ({ id, name, text }) => (
                         <div key={id}>
@@ -560,7 +559,6 @@ export const TimelineEventEntry = ({
                                 <TimelineEventStatus />
                             </span>
                             <TimelineEventMeta>
-                                {}
                                 {storedTime(entry.at) === '00:00' ? null : (
                                     <TimelineTime entry={entry} />
                                 )}

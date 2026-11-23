@@ -70,7 +70,6 @@ export default function FindPerson() {
 
                 <FinderResults />
 
-                {}
                 <p
                     className="text-sm text-dhis2-muted-foreground"
                     aria-live="polite"

@@ -21,9 +21,7 @@ export const AddRowButton = ({
         onClick={onClick}
     >
         {label}
-        {}
         <Kbd aria-hidden>
-            {}
             {/Mac|iPhone|iPad/.test(navigator.platform)
                 ? '⌘↵'
                 : i18n.t('Ctrl ↵')}

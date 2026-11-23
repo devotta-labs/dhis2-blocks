@@ -104,7 +104,6 @@ export const ValueInputLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    {}
                     <PresetControls
                         presets={PRESETS}
                         selected={state.preset}

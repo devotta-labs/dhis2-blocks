@@ -514,7 +514,6 @@ export function OrgUnitSwitcher({
                         </ComboboxGroup>
                     )}
                 </ComboboxList>
-                {}
                 {blank && searchStatus && (
                     <div className="flex flex-col items-center gap-2 px-3 py-2 text-sm">
                         {searchStatus}

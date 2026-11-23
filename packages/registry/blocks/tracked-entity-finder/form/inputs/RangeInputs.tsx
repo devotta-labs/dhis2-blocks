@@ -43,7 +43,6 @@ const RangeFrame = ({
         )}
     >
         <legend className="mb-1 p-0 text-sm leading-snug">{label}</legend>
-        {}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-3">
             {children}
         </div>

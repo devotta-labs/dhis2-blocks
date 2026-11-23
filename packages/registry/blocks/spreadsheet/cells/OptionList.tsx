@@ -46,7 +46,6 @@ export const OptionList = ({
                 'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover supports-[anchor-name:--a]:min-w-[anchor-size(width)]'
             )}
         >
-            {}
             {codes.length === 0 ? null : (
                 <div
                     ref={list}

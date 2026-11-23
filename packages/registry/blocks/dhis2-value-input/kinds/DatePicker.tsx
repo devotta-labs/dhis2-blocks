@@ -166,7 +166,6 @@ export const DatePicker = ({
                         <IconChevronLeft16 />
                     </span>
                 </Button>
-                {}
                 <PopoverTitle id={titleId} className="text-sm">
                     {title}
                 </PopoverTitle>

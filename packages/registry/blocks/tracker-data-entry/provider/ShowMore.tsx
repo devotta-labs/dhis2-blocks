@@ -40,7 +40,6 @@ const MoreButton = ({
             >
                 {label}
             </Button>
-            {}
             {error === undefined ? null : (
                 <p id={errorId} className="text-sm text-dhis2-destructive">
                     {error}

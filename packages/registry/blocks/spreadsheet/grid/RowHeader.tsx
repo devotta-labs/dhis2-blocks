@@ -84,7 +84,6 @@ export const RowHeader = memo(function RowHeader({
                 'sticky start-0 z-10 bg-dhis2-background px-2 py-1 text-start align-middle font-normal text-dhis2-foreground [overflow-wrap:anywhere]'
             )}
         >
-            {}
             <span id={rowHeader} dir="auto">
                 <RowLabel row={row} />
             </span>
@@ -95,7 +94,6 @@ export const RowHeader = memo(function RowHeader({
                 notes={notes}
                 onOpen={openNotes}
             />
-            {}
             {messages.length > 0 ? (
                 <ul className="mt-0.5 flex flex-col gap-0.5">
                     {messages.map(({ tone, text }, i) => (

@@ -33,7 +33,6 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
                 data-slot="observation-value"
                 className={cn('flex min-w-0', className)}
             >
-                {}
                 <MetadataBadge
                     name={text}
                     color={color}

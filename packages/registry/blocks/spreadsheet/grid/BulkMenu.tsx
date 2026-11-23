@@ -174,7 +174,6 @@ export const useBulkConfirm: () => BulkConfirm = () => {
                         }
                     }}
                 >
-                    {}
                     <AlertDialogContent finalFocus={() => pending.anchor}>
                         <AlertDialogHeader>
                             <AlertDialogTitle>

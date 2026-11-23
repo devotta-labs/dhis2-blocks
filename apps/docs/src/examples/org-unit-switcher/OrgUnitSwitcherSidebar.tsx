@@ -28,7 +28,6 @@ export default function OrgUnitSwitcherSidebar() {
                 <aside
                     className={`flex shrink-0 flex-col gap-2 border-b border-border p-3 md:border-e md:border-b-0 ${collapsed ? 'md:w-12' : 'md:w-60'}`}
                 >
-                    {}
                     <OrgUnitSwitcher collapsed={collapsed} />
                     <nav
                         aria-label="Workspace navigation"

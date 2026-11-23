@@ -116,7 +116,6 @@ const TableView = memo(function TableView({
                 aria-labelledby={titleId}
                 className="isolate w-fit max-w-full max-h-[70vh] scroll-ps-[min(12rem,30vw)] scroll-pe-9 overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-border bg-dhis2-background"
             >
-                {}
                 <table
                     aria-labelledby={titleId}
                     aria-rowcount={table.headerRows.length + table.rows.length}
@@ -161,7 +160,6 @@ const TableView = memo(function TableView({
                                                     LAST_CLASS
                                             )}
                                         >
-                                            {}
                                             {span > 1 ? (
                                                 <span
                                                     id={labelId}

@@ -102,7 +102,6 @@ function LoadingContent({
             {trend ? (
                 <>
                     <Skeleton className="my-0.5 h-4 w-40 max-w-full" />
-                    {}
                     <div className="@container mt-auto w-full">
                         <Skeleton className="hidden h-10 w-full @[13rem]:block" />
                     </div>
@@ -123,7 +122,6 @@ function DefaultArrangement({ series }: { series: ObservationSeries }) {
     return (
         <>
             <ObservationLabel />
-            {}
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <ObservationValue />
                 <ObservationLegend />
@@ -165,7 +163,6 @@ function ReadyContent({
     return (
         <>
             {children ?? <DefaultArrangement series={series} />}
-            {}
             {recordedPlaced ? null : <RecordedFooter />}
         </>
     )
@@ -218,7 +215,6 @@ export function ObservationCard({
             return (
                 <Frame name={earlyName} className={className}>
                     {heading}
-                    {}
                     <p
                         role="alert"
                         data-slot="observation-config-error"

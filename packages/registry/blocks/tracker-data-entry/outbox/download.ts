@@ -12,7 +12,6 @@ const COLUMNS = ['form', 'row', 'field', 'value', 'state', 'reason'] as const
 const quote = (text: string) =>
     /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 
-// A spreadsheet runs a cell that starts with one of these as a formula; plain numbers stay as typed.
 const defuse = (text: string) =>
     /^[=+\-@\t\r]/.test(text) && !/^-?\d+(\.\d+)?$/.test(text)
         ? `'${text}`

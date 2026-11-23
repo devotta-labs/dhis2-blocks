@@ -1,3 +1,4 @@
+import { recording } from '../../test/recording'
 import type { PendingChange } from '../../model/types'
 import { openOutbox, outboxName } from '../outbox'
 import type { Outbox, OutboxRecord } from '../outbox'
@@ -34,14 +35,12 @@ export const open = async (server: string) => {
 
 /** Run after each test: stops the loops, restores spies, closes and deletes the databases. */
 export const cleanUp = async () => {
-    // Awaited, so a round in flight settles before its database is deleted.
     await Promise.all(handles.splice(0).map((handle) => handle.stop()))
     vi.restoreAllMocks()
     opened.splice(0).forEach((outbox) => outbox.close())
     await Promise.all(names.splice(0).map(deleteDatabase))
 }
 
-// A fresh server and lock name per test, so no test sees another's database or loop.
 export const setup = async () => {
     const server = `https://${crypto.randomUUID()}.example.org`
     return {
@@ -51,9 +50,9 @@ export const setup = async () => {
     }
 }
 
-export const change = (
-    overrides: Partial<PendingChange> = {}
-): PendingChange => ({
+export const change: (overrides?: Partial<PendingChange>) => PendingChange = (
+    overrides = {}
+) => ({
     sourceKey: SOURCE,
     key: 'r1.c1',
     value: '5',
@@ -62,11 +61,11 @@ export const change = (
     ...overrides,
 })
 
-export const answer = (
+export const answer: (
     record: OutboxRecord,
     result: SaveOutcome['result'],
     reason?: string
-): SaveOutcome => ({
+) => SaveOutcome = (record, result, reason) => ({
     sourceKey: record.sourceKey,
     key: record.key,
     result,
@@ -75,33 +74,41 @@ export const answer = (
 
 /** A `save` that records what it was sent and gives every record the same answer. */
 export const answering = (result: SaveOutcome['result'], reason?: string) => {
-    const calls: Array<{ sourceKey: string; records: OutboxRecord[] }> = []
+    const requests = recording<{ sourceKey: string; records: OutboxRecord[] }>()
     const save: SyncOptions['save'] = async (sourceKey, records) => {
-        calls.push({ sourceKey, records: [...records] })
+        requests.add({ sourceKey, records: [...records] })
         return records.map((record) => answer(record, result, reason))
     }
-    return { save, calls }
+    return { save, calls: requests.values, callCount: requests.reached }
 }
 
 /** Starts a loop whose `sleep` answers at once and records the delay it was asked for. */
 export const begin = (
     outbox: Outbox,
     lockName: string,
-    save: SyncOptions['save']
+    save: SyncOptions['save'],
+    locks?: SyncOptions['locks']
 ) => {
-    const outcomes: SyncOutcome[] = []
+    const outcomes = recording<SyncOutcome>()
     const statuses: SyncStatus[] = []
     const sleeps: number[] = []
     const sync = startSync({
         outbox,
         lockName,
+        locks,
         save,
-        onOutcomes: (reported) => outcomes.push(...reported),
+        onOutcomes: (reported) => outcomes.add(...reported),
         onStatus: (status) => statuses.push(status),
         sleep: async (ms) => {
             sleeps.push(ms)
         },
     })
     handles.push(sync)
-    return { sync, outcomes, statuses, sleeps }
+    return {
+        sync,
+        outcomes: outcomes.values,
+        outcomeCount: outcomes.reached,
+        statuses,
+        sleeps,
+    }
 }

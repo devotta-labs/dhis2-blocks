@@ -3,12 +3,11 @@ import { createStore } from 'zustand/vanilla'
 import { cellKey, createCellStore } from '@/components/spreadsheet'
 import type { CellKey } from '@/components/spreadsheet'
 import type { OutboxRecord } from '../outbox/outbox'
-import { change, HIDDEN_FIELD, visit, visitForm } from './__tests__/rig'
+import { change, HIDDEN_FIELD, visit, visitForm } from './test/rig'
 import { appendPage, withPage } from './appendPage'
 import type { TrackerEffectsState } from '../logic/effects'
 import type { FormTables } from './openForm'
 
-/** `visitForm`'s open stores, as `openForm` makes them. */
 const opened = () => {
     const form = visitForm()
     const effects = createStore<TrackerEffectsState>()(() => ({
@@ -35,7 +34,11 @@ const opened = () => {
     }
 }
 
-const queued = (key: CellKey, value: string, at: number): OutboxRecord => ({
+const queued: (key: CellKey, value: string, at: number) => OutboxRecord = (
+    key,
+    value,
+    at
+) => ({
     ...change(key, value, { at }),
     state: 'queued',
 })
@@ -55,8 +58,6 @@ test('a change the outbox no longer holds once the page is in is not left unsent
         queued(cellKey('r4', 'c1'), '8', 2),
         queued(cellKey('r5', 'c1'), '7', 3),
     ]
-    // Between the read and the restore the sync loop saved one change and refused another; their outcomes came
-    // before their cells existed.
     const reads = [
         [sent, refused, waiting],
         [{ ...refused, state: 'failed' as const, reason: 'Too high' }, waiting],
@@ -78,7 +79,6 @@ test('a change the outbox no longer holds once the page is in is not left unsent
         value: '7',
         sync: 'queued',
     })
-    // What the outbox holds once the page is in, for counting what other grids could not save.
     expect(held).toHaveLength(2)
 })
 
@@ -88,7 +88,6 @@ test('a newer change typed in the cell before the outbox is read again keeps it 
     const reads = [
         () => [queued(key, '9', 1)],
         () => {
-            // The person types in the restored cell; the outbox now holds that change instead.
             open.store.getState().commit(key, '10')
             return [queued(key, '10', 5)]
         },
@@ -96,7 +95,6 @@ test('a newer change typed in the cell before the outbox is read again keeps it 
     await appendPage(open, PAGE, async () => reads.shift()?.() ?? [])
     expect(open.store.getState().cells[key]).toMatchObject({
         value: '10',
-        // What the page loaded for the cell.
         base: '1',
         sync: 'queued',
     })
@@ -150,7 +148,6 @@ test('a page naming a record the form holds restores its changes once', async ()
         orgUnitId: 'o1',
     } as const
     const name = cellKey('pA', 'name')
-    // The form holds the person, whose name no column shows, and has put back its unsent change.
     open.form = {
         ...open.form,
         records: new Map([...open.form.records, ['pA', person]]),
@@ -163,7 +160,6 @@ test('a page naming a record the form holds restores its changes once', async ()
     const restore = vi.spyOn(open.store.getState(), 'restore')
     open.store.getState().restore([{ ...queued(name, '5', 1), sync: 'queued' }])
 
-    // The page's new row names the person again, with the value DHIS2 has.
     const page = {
         ...visitForm({
             rows: [visit('r3', 'r3')],

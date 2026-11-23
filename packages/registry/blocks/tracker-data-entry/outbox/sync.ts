@@ -48,6 +48,8 @@ export interface SyncOptions {
     /** Names the browser-wide lock; every tab of one user and server uses the same name. */
     lockName: string
     sleep?(ms: number): Promise<void>
+    /** Defaults to the browser's Web Locks capability; null runs without cross-tab locking. */
+    locks?: LockManager | null
 }
 
 export interface SyncHandle {
@@ -71,14 +73,15 @@ const LONGEST_DELAY = 60_000
 const wait = (ms: number) =>
     new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-export const startSync = ({
+export const startSync: (options: SyncOptions) => SyncHandle = ({
     outbox,
     save,
     onOutcomes,
     onStatus,
     lockName,
     sleep = wait,
-}: SyncOptions): SyncHandle => {
+    locks = navigator.locks,
+}) => {
     const lockRequest = new AbortController()
     let stopped = false
     let running = false
@@ -95,7 +98,6 @@ export const startSync = ({
         }
     }
 
-    /** Saved records leave the outbox and the rest are marked; a cell changed since is left alone (by `at`). */
     const settle = async (
         sent: ReadonlyArray<OutboxRecord>,
         outcomes: ReadonlyArray<SaveOutcome>
@@ -140,7 +142,6 @@ export const startSync = ({
     const sendAll = async () => {
         again = false
         const bySource = new Map<string, OutboxRecord[]>()
-        // Failed records wait for the person to enter the value again.
         for (const record of await outbox.list()) {
             if (record.state !== 'failed') {
                 const records = bySource.get(record.sourceKey) ?? []
@@ -148,7 +149,6 @@ export const startSync = ({
                 bySource.set(record.sourceKey, records)
             }
         }
-        // A source that must be retried does not hold back the others; the round fails after them.
         let retryError: Error | undefined
         for (const [sourceKey, records] of bySource) {
             if (stopped) {
@@ -160,7 +160,6 @@ export const startSync = ({
             try {
                 outcomes = await save(sourceKey, sent)
             } catch (thrown) {
-                // What the save finished is kept, so a retry sends only the rest.
                 const done =
                     thrown instanceof PartlySaved ? thrown.outcomes : []
                 await settle(sent, done)
@@ -178,7 +177,6 @@ export const startSync = ({
                             : new Error(String(error))
                     continue
                 }
-                // Only what DHIS2 refused fails; what was never sent goes in the next round.
                 const unsent =
                     thrown instanceof PartlySaved ? thrown.unsent : []
                 again ||= unsent.length > 0
@@ -202,20 +200,20 @@ export const startSync = ({
         }
     }
 
-    // Without Web Locks (an insecure page) tabs may both send; the requests are safe to repeat.
-    const exclusive = async <T>(task: () => Promise<T>): Promise<T> => {
-        if (!navigator.locks) {
+    const exclusive: <T>(task: () => Promise<T>) => Promise<T> = async (
+        task
+    ) => {
+        if (!locks) {
             return task()
         }
-        // Awaited: the DOM types give the task's promise as the lock's result, though the lock resolves to its value.
-        return await navigator.locks.request(
+        return await locks.request(
             lockName,
             { signal: lockRequest.signal },
             task
         )
     }
 
-    const attempt = async (): Promise<'done' | 'retry' | 'signIn'> => {
+    const attempt: () => Promise<'done' | 'retry' | 'signIn'> = async () => {
         try {
             await exclusive(sendAll)
             return 'done'
@@ -249,8 +247,6 @@ export const startSync = ({
                 }
                 if (outcome === 'retry') {
                     report('retrying')
-                    // `stop` and a nudge wake it, so neither stopping nor a new change waits out the delay. A failed sleep is
-                    // a finished wait.
                     await new Promise<void>((resolve) => {
                         wake = resolve
                         void sleep(delay).then(resolve, resolve)
@@ -266,7 +262,6 @@ export const startSync = ({
                 }
             }
         } finally {
-            // Cleared here, in the same tick as the last check of `again`, so no nudge falls between.
             running = false
         }
     }

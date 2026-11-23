@@ -154,7 +154,6 @@ export function TrackedEntityRelationships({
         </div>
     )
     return (
-        // In a banner the wrapper has no box, so the host's classes go to the toggle.
         <div data-slot={slot} className={inFrame ? 'contents' : className}>
             {inFrame && (
                 <DisclosureToggle

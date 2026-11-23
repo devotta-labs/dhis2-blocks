@@ -1,17 +1,13 @@
 import { Result } from 'better-result'
-import type { z } from 'zod'
 import type { OrgUnitResourceClient, ResourceRequest } from './client'
-import { ByIdSchema, MeSchema, SearchSchema, type OrgUnit } from './schemas'
+import { ByIdSchema, MeSchema, SearchSchema } from './schemas'
 
 export const SEARCH_PAGE_SIZE = 20
-// A user's units rarely change mid-session, so returning to the tab does not ask for every loaded page again.
+
 export const FRESH_MS = 5 * 60_000
 
-type Me = z.output<typeof MeSchema>
-type SearchResult = z.output<typeof SearchSchema>
-
 /** Unwraps a Result so React Query owns the error state. */
-export const unwrap = <T>(result: Result<T, Error>): T => {
+export const unwrap = <T>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
@@ -24,7 +20,7 @@ const ORG_UNIT_FIELDS = 'id,displayName,displayShortName,path'
 export const fetchMe = async (
     client: OrgUnitResourceClient,
     signal?: AbortSignal
-): Promise<Result<Me, Error>> => {
+) => {
     const result = await client.query(
         {
             resource: 'me',
@@ -49,7 +45,7 @@ export const searchOrgUnits = (
     query: string,
     page: number,
     signal?: AbortSignal
-): Promise<Result<SearchResult, Error>> => {
+) => {
     const params: ResourceRequest['params'] = {
         withinUserHierarchy: true,
         fields: ORG_UNIT_FIELDS,
@@ -72,7 +68,7 @@ export const fetchOrgUnitsById = (
     client: OrgUnitResourceClient,
     ids: string[],
     signal?: AbortSignal
-): Promise<Result<OrgUnit[], Error>> =>
+) =>
     client.query(
         {
             resource: 'organisationUnits',

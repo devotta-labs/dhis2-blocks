@@ -11,13 +11,13 @@ export const TILE_CLASSES = [
     'bg-dhis2-neutral-fill text-dhis2-neutral-strong',
 ] as const
 
-export const tileInitial = (displayName: string): string => {
+export const tileInitial = (displayName: string) => {
     const [first] = displayName.trim()
     return first === undefined ? '?' : first.toLocaleUpperCase()
 }
 
 /** The same id always gets the same colour, on every device. */
-export const tileClass = (id: string): string => {
+export const tileClass = (id: string) => {
     let hash = 0
     for (const char of id) {
         hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0

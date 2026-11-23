@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import type { AttributeMetadata } from '../api/schemas'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import { evaluateForm } from './evaluateForm'
 import { buildProgramModel } from './programModel'
 import type { FieldValue, FormField } from './types'
 
 const model = buildProgramModel(hivProgram)
 
-const exact = (...ids: string[]): FormField[] =>
-    ids.map((attribute) => ({ attribute, match: 'exact' }))
-const range = (attribute: string): FormField => ({ attribute, match: 'range' })
-const text = (value: string): FieldValue => ({ kind: 'text', text: value })
-const date = (value: string): FieldValue => ({ kind: 'date', date: value })
+const exact = (...ids: string[]) =>
+    ids.map<FormField>((attribute) => ({ attribute, match: 'exact' }))
+const range = (attribute: string) =>
+    ({ attribute, match: 'range' }) satisfies FormField
+const text = (value: string) =>
+    ({ kind: 'text', text: value }) satisfies FieldValue
+const date = (value: string) =>
+    ({ kind: 'date', date: value }) satisfies FieldValue
 
 const withAttributes = (...extra: AttributeMetadata[]) =>
     buildProgramModel({
@@ -413,7 +416,7 @@ describe('evaluateForm', () => {
             { kind: 'operators-blocked', attribute: 'enrolled' },
             { kind: 'operators-blocked', attribute: 'height' },
         ])
-        // The other match stays usable.
+
         const otherMatches = evaluateForm(
             blocked,
             [range('enrolled'), ...exact('height')],
@@ -436,7 +439,6 @@ describe('evaluateForm', () => {
         })
         expect(onlyBad.reason).toBe('metadata-error')
 
-        // A usable ID is always enough to search.
         expect(evaluateForm(model, exact('artNumber'), {}).reason).toBe('empty')
     })
 

@@ -12,7 +12,10 @@ import type {
 } from './context'
 import { useSearchResults } from './useSearchResults'
 
-const getFinderStatus = (failed: boolean, ready: boolean): FinderStatus => {
+const getFinderStatus: (failed: boolean, ready: boolean) => FinderStatus = (
+    failed,
+    ready
+) => {
     if (failed) return 'error'
     return ready ? 'ready' : 'loading'
 }
@@ -27,10 +30,9 @@ export interface FinderControllerOptions {
  * submitted search and the page. Mount it under a
  * `key` of the program, so a new program starts from nothing.
  */
-export const useFinderController = ({
-    program,
-    onSelect,
-}: FinderControllerOptions): FinderContextValue => {
+export const useFinderController: (
+    props: FinderControllerOptions
+) => FinderContextValue = ({ program, onSelect }) => {
     const engine = useDataEngine()
     const { baseUrl } = useConfig()
     const queryClient = useQueryClient()
@@ -38,9 +40,7 @@ export const useFinderController = ({
         programMetadataQueryOptions(engine, baseUrl, program)
     )
     const systemInfo = useQuery(systemInfoQueryOptions(engine, baseUrl))
-    // Built before system info arrives, so fields show their labels; until
-    // then MULTI_TEXT counts as searchable, so an older server's error shows
-    // only once it is known. Nothing searches before system info anyway.
+
     const multiTextSearch = systemInfo.data?.multiTextSearch ?? true
     const model = useMemo(
         () =>
@@ -49,7 +49,7 @@ export const useFinderController = ({
                 : undefined,
         [metadata.data, multiTextSearch]
     )
-    // Dates need the server calendar, so the finder is ready only with both.
+
     const status = getFinderStatus(
         metadata.isError || systemInfo.isError,
         Boolean(model && systemInfo.data)
@@ -73,7 +73,6 @@ export const useFinderController = ({
     const submit = useCallback<FinderContextValue['actions']['submit']>(
         (search) => {
             if (model && status === 'ready') {
-                // A repeated key does not remount its observer. Fetch only if stale.
                 void queryClient.prefetchQuery(
                     searchQueryOptions(engine, baseUrl, model, search, 1)
                 )

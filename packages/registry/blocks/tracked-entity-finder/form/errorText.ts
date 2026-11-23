@@ -2,10 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import type { FieldErrorCode, FinderAttribute } from '../rules/types'
 
 /** What the user can do about a value that cannot be searched as is. */
-export const errorText = (
-    code: FieldErrorCode,
-    attribute: FinderAttribute
-): string => {
+export const errorText = (code: FieldErrorCode, attribute: FinderAttribute) => {
     switch (code) {
         case 'too-short':
             return i18n.t('Enter at least {{count}} characters', {

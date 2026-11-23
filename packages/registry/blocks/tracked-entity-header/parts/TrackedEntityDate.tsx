@@ -29,12 +29,11 @@ export type TrackedEntityDateProps =
           attribute?: never
       })
 
-/** The value with its age appended, when asked for and the raw date gives one. */
-const withAge = (
+const withAge: (
     state: AttributeValueState,
     raw: string | undefined,
-    { display }: HeaderContextValue
-): AttributeValueState => {
+    props: HeaderContextValue
+) => AttributeValueState = (state, raw, { display }) => {
     const ageNow = raw ? ageOf(raw, todayIso(), display.calendar) : undefined
     return state.kind === 'value' && ageNow
         ? {
@@ -48,10 +47,10 @@ const withAge = (
         : state
 }
 
-const resolveEnrollmentDate = (
+const resolveEnrollmentDate: (
     enrollmentDate: 'occurredAt' | 'enrolledAt',
-    { state, program, display }: HeaderContextValue
-): AttributeValueState => {
+    options: HeaderContextValue
+) => AttributeValueState = (enrollmentDate, { state, program, display }) => {
     if (state.status !== 'ready') {
         return { kind: 'hidden' }
     }

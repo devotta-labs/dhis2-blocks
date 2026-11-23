@@ -12,9 +12,7 @@ import type {
 type MultiCalendarIdentifier = Parameters<typeof convertFromIso8601>[1]
 
 /** DHIS2's calendar names as `@dhis2/multi-calendar-dates` and CalendarInput know them. */
-export const toMultiCalendarIdentifier = (
-    calendar: FinderCalendar
-): MultiCalendarIdentifier =>
+export const toMultiCalendarIdentifier = (calendar: FinderCalendar) =>
     (
         ({
             coptic: 'coptic',
@@ -50,10 +48,7 @@ const PATTERNS = {
     'DD-MM-YYYY': /^(?<day>\d{2})-(?<month>\d{2})-(?<year>\d{4})$/,
 } satisfies Record<FinderDateFormat, RegExp>
 
-const parseDate = (
-    value: string,
-    format: FinderDateFormat
-): DateParts | undefined => {
+const parseDate = (value: string, format: FinderDateFormat) => {
     const groups = PATTERNS[format].exec(value.trim())?.groups
     return groups
         ? {
@@ -73,9 +68,6 @@ const isRealIsoDate = ({ year, month, day }: DateParts) => {
     )
 }
 
-// The Ethiopian and Coptic calendars have twelve 30-day months and a short
-// 13th (Pagume / Nasie). Temporal's era handling for them is unreliable, so,
-// as working-list does, they convert through the Julian day number.
 const EPAGOMENAL_EPOCHS = {
     coptic: 1825030,
     ethiopian: 1724221,
@@ -112,7 +104,7 @@ const gregorianToJulianDay = ({ year, month, day }: DateParts) => {
     )
 }
 
-const julianDayToGregorian = (julianDay: number): DateParts => {
+const julianDayToGregorian = (julianDay: number) => {
     const offset = julianDay + 32044
     const century = Math.floor((4 * offset + 3) / 146097)
     const dayOfCentury = offset - Math.floor((146097 * century) / 4)
@@ -138,7 +130,7 @@ const epagomenalToJulianDay = (date: DateParts, calendar: EpagomenalCalendar) =>
 const julianDayToEpagomenal = (
     julianDay: number,
     calendar: EpagomenalCalendar
-): DateParts => {
+) => {
     const newYear = (year: number) =>
         epagomenalToJulianDay({ year, month: 1, day: 1 }, calendar)
     let year = Math.floor(
@@ -166,7 +158,7 @@ const isValidLocalDate = (parts: DateParts, calendar: FinderCalendar) =>
               strictValidation: true,
           }).valid
 
-const localToIso = (parts: DateParts, calendar: FinderCalendar): DateParts => {
+const localToIso = (parts: DateParts, calendar: FinderCalendar) => {
     if (isEpagomenal(calendar)) {
         return julianDayToGregorian(epagomenalToJulianDay(parts, calendar))
     }
@@ -177,7 +169,7 @@ const localToIso = (parts: DateParts, calendar: FinderCalendar): DateParts => {
     return { year, month, day }
 }
 
-const isoToLocal = (parts: DateParts, calendar: FinderCalendar): DateParts => {
+const isoToLocal = (parts: DateParts, calendar: FinderCalendar) => {
     if (calendar === 'gregorian' || calendar === 'iso8601') {
         return parts
     }
@@ -204,7 +196,7 @@ const isoToLocal = (parts: DateParts, calendar: FinderCalendar): DateParts => {
 export const calendarDateToIso = (
     value: string,
     { calendar, dateFormat }: FinderSystemInfo
-): string | undefined => {
+) => {
     const parts = parseDate(value, dateFormat)
     if (!parts) {
         return undefined
@@ -236,7 +228,7 @@ export const isIsoDate = (value: string) => {
 export const isoToCalendarDate = (
     iso: string,
     { calendar, dateFormat }: FinderSystemInfo
-): string => {
+) => {
     const parts = parseDate(iso, 'YYYY-MM-DD')
     if (!parts || !isRealIsoDate(parts)) {
         return iso

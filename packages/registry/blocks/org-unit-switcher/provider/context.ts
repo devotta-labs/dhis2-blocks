@@ -33,7 +33,7 @@ export interface OrgUnitContextValue {
 /** Internal: never exported from the block, so it cannot be swapped out. */
 export const OrgUnitContext = createContext<OrgUnitContextValue | null>(null)
 
-export const useOrgUnitContext = (): OrgUnitContextValue => {
+export const useOrgUnitContext = () => {
     const context = useContext(OrgUnitContext)
     if (!context) {
         throw new Error(

@@ -3,10 +3,9 @@ import { useMemo } from 'react'
 import {
     createRuntimeTrackedEntityHeaderClient,
     type DataEngineLike,
-    type TrackedEntityHeaderClient,
 } from './client'
 
-export const useTrackedEntityHeaderClient = (): TrackedEntityHeaderClient => {
+export const useTrackedEntityHeaderClient = () => {
     const engine = useDataEngine()
     return useMemo(
         () =>

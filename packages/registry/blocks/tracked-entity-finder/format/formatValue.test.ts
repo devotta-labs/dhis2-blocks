@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hivProgram } from '../__tests__/fixtures/program'
-import type { AttributeMetadata } from '../api/schemas'
+import { hivProgram } from '../test/fixtures/program'
 import type { FinderSystemInfo } from '../api/systemInfo'
 import { attributeOf, buildProgramModel } from '../rules/programModel'
 import { formatValue } from './formatValue'
@@ -14,7 +13,7 @@ const ethiopian: FinderSystemInfo = {
     dateFormat: 'DD-MM-YYYY',
 }
 
-const extra = (id: string, valueType: string): AttributeMetadata => ({
+const extra = (id: string, valueType: string) => ({
     id,
     label: id,
     valueType,

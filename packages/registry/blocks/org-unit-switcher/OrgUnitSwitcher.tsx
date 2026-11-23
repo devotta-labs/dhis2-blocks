@@ -59,7 +59,6 @@ interface OrgUnitGroup {
     items: OrgUnit[]
 }
 
-/** Stands in the list for the row that loads the next page; no unit has an empty id. */
 const MORE: OrgUnit = { id: '', displayName: '', path: '' }
 
 const triggerClassName =
@@ -68,10 +67,6 @@ const triggerClassName =
 const tileOnly =
     'hidden size-6 shrink-0 items-center justify-center rounded-dhis2-md bg-dhis2-accent text-dhis2-foreground md:flex'
 
-/**
- * The full text beside a tile or a shortened name, on hover and focus. A
- * collapsed tile only needs it from `md` up, where the text is hidden.
- */
 function Tip({
     show,
     text,
@@ -99,7 +94,6 @@ function Tip({
     )
 }
 
-/** Whether an element's text is cut off, checked again as it resizes or the text changes. */
 function useCutOff(text: string) {
     const [element, setElement] = useState<HTMLElement | null>(null)
     const [cutOff, setCutOff] = useState(false)
@@ -130,11 +124,6 @@ function Tile({ orgUnit }: { orgUnit?: OrgUnit }) {
     )
 }
 
-/**
- * Announces every change of unit once the units are ready, whoever made it.
- * What is current when they become ready, a unit or none, is said by the
- * trigger, so only later changes are announced.
- */
 function useChangeAnnouncement(
     ready: boolean,
     id: string | undefined,
@@ -159,7 +148,6 @@ function useChangeAnnouncement(
     }, [ready, id, userId, message])
 }
 
-/** Tile and name, the same in the trigger and every menu row. */
 function Row({
     orgUnit,
     name,
@@ -174,9 +162,9 @@ function Row({
     nameClassName?: string
     nameRef?: (element: HTMLElement | null) => void
     title?: string
-    /** Hidden from assistive technology, which reads the full name elsewhere. */
+
     decorative?: boolean
-    /** From `md` up only the tile shows, centred by its container. */
+
     collapsed?: boolean
 }) {
     return (
@@ -196,7 +184,6 @@ function Row({
     )
 }
 
-/** A menu row: the full name over two lines, and on hover when longer still. */
 function MenuRow({ orgUnit }: { orgUnit: OrgUnit }) {
     return (
         <Row
@@ -227,12 +214,12 @@ export function OrgUnitSwitcher({
     )
     const search = useOrgUnitSearch()
     const { query, setQuery, browse, searchable } = search
-    // The trigger shows the short name; the full one is its label and tooltip.
+
     const fullName = orgUnit?.displayName ?? t.choose
     const shownName = orgUnit?.displayShortName ?? fullName
     const [nameRef, cutOff] = useCutOff(shownName)
     const partHidden = cutOff || shownName !== fullName
-    // A host that holds the menu open has opened it.
+
     useEffect(() => {
         if (open) {
             browse()
@@ -249,7 +236,7 @@ export function OrgUnitSwitcher({
         collapsed && 'md:justify-center',
         className
     )
-    // From `md` up a collapsed switcher has a narrow column, so text there gives way to a tile centred in it, in line with the navigation's icons.
+
     const wide = collapsed ? 'md:hidden' : undefined
 
     if (status === 'pending') {
@@ -311,7 +298,7 @@ export function OrgUnitSwitcher({
     }
 
     const fullLabel = triggerLabel(t.label, fullName)
-    // Collapsed, the tile needs its name from `md` up; a shortened name needs the full one everywhere.
+
     const tip = {
         show: collapsed || partHidden,
         text: fullName,
@@ -360,7 +347,7 @@ export function OrgUnitSwitcher({
     }
     const popup = {
         side: collapsed ? ('right' as const) : ('bottom' as const),
-        // Wide enough for unit names whatever the sidebar's width, and never wider than the screen.
+
         className: 'w-90 max-w-[calc(100vw-1rem)]',
     }
 
@@ -410,20 +397,20 @@ export function OrgUnitSwitcher({
                   {
                       key: 'all',
                       label: t.allUnits,
-                      // Once is enough for a unit already listed above.
+
                       items: search.orgUnits.filter((c) => !above.has(c.id)),
                   },
               ]
             : [{ key: 'results', label: '', items: search.orgUnits }]
     ).filter((group) => group.items.length > 0)
-    // Headings only tell lists apart, so one list goes without.
+
     const headed = lists.length > 1
-    // The row that loads the next page is an item, so the arrow keys reach it.
+
     const groups =
         search.hasMore && lists.length > 0
             ? [...lists, { key: 'more', label: '', items: [MORE] }]
             : lists
-    // Where the search stands: shown in place of an empty list, or below the assigned units.
+
     let searchStatus: ReactElement | undefined
     if (search.status === 'pending') {
         searchStatus = <Spinner label={i18n.t('Loading')} />
@@ -443,7 +430,7 @@ export function OrgUnitSwitcher({
     } else if (search.moreFailed) {
         moreLabel = t.moreFailed
     }
-    // Stops the list's own handler, which would choose the row and close the menu.
+
     const keepOpen = (event: BaseUIEvent<MouseEvent>) =>
         event.preventBaseUIHandler()
     const loadMore = (event: BaseUIEvent<MouseEvent>) => {
@@ -458,7 +445,7 @@ export function OrgUnitSwitcher({
             open={open}
             onOpenChange={changeOpen}
             items={groups}
-            // The provider filters, on the server or over the assigned list.
+
             filter={null}
             inputValue={query}
             onInputValueChange={setQuery}
@@ -498,10 +485,10 @@ export function OrgUnitSwitcher({
                                         <ComboboxItem
                                             key="more"
                                             value={c}
-                                            // Busy, it stays in place and says so, and a press does nothing.
+
                                             aria-busy={search.loadingMore}
                                             onClick={loadMore}
-                                            // A click follows the release and loads the page, once.
+
                                             onMouseUp={keepOpen}
                                             className="justify-center px-3 text-[13px] font-medium text-dhis2-primary *:first:hidden"
                                         >
@@ -511,7 +498,7 @@ export function OrgUnitSwitcher({
                                         <ComboboxItem
                                             key={c.id}
                                             value={c}
-                                            // Its own leading check and selected tint give way to the menu's trailing check.
+
                                             className="gap-2 ps-3 pe-8 *:first:hidden data-selected:bg-dhis2-popover data-selected:data-highlighted:bg-dhis2-accent"
                                         >
                                             <MenuRow orgUnit={c} />
@@ -527,7 +514,7 @@ export function OrgUnitSwitcher({
                         </ComboboxGroup>
                     )}
                 </ComboboxList>
-                {/* With no query the assigned units always show, so the rest of the hierarchy reports below them. */}
+                {}
                 {blank && searchStatus && (
                     <div className="flex flex-col items-center gap-2 px-3 py-2 text-sm">
                         {searchStatus}

@@ -1,3 +1,4 @@
+import { exhaustLocalStorage } from '../test/storage.test-utils'
 import {
     MAX_RECENT,
     readRemembered,
@@ -8,7 +9,6 @@ import {
 const KEY = 'dhis2-blocks:org-unit-switcher:u1'
 
 afterEach(() => {
-    vi.restoreAllMocks()
     localStorage.clear()
 })
 
@@ -35,20 +35,34 @@ describe('remembered choice', () => {
         }
     )
 
-    it('swallows a failing read', () => {
-        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-            throw new Error('blocked')
-        })
+    it('swallows a failing read from an opaque origin', async () => {
+        const iframe = document.createElement('iframe')
+        iframe.sandbox.add('allow-scripts')
+        iframe.srcdoc = '<!doctype html>'
+        const loaded = Promise.withResolvers<void>()
+        iframe.addEventListener('load', () => loaded.resolve(), { once: true })
+        document.body.append(iframe)
 
-        expect(readRemembered('u1')).toEqual({ recent: [] })
+        try {
+            await loaded.promise
+            const browserWindow = iframe.contentWindow
+            if (!browserWindow) {
+                throw new Error('Expected a sandboxed browser window')
+            }
+            expect(() => browserWindow.localStorage).toThrow(
+                expect.objectContaining({ name: 'SecurityError' })
+            )
+            expect(readRemembered('u1', browserWindow)).toEqual({ recent: [] })
+        } finally {
+            iframe.remove()
+        }
     })
 
     it('swallows a failing write', () => {
-        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-            throw new Error('full')
-        })
-
+        exhaustLocalStorage()
+        expect(() => localStorage.setItem(KEY, 'will not fit')).toThrow()
         expect(() => writeRemembered('u1', { recent: [] })).not.toThrow()
+        expect(localStorage.getItem(KEY)).toBeNull()
     })
 })
 

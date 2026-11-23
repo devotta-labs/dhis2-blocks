@@ -43,22 +43,19 @@ export interface TrackedEntityHeaderProviderProps {
     children?: ReactNode
 }
 
-/** Unwraps a Result so React Query owns the error state. */
-const unwrap = <T,>(result: Result<T, Error>): T => {
+const unwrap = <T,>(result: Result<T, Error>) => {
     if (Result.isError(result)) {
         throw result.error
     }
     return result.value
 }
 
-/** A blank program is no program. */
 const normaliseProgram = (program: string | undefined) =>
     program?.trim() || undefined
 
-/** The system calendar and the user's locale, for every date and number shown. */
-const useDisplayOptions = (): HeaderContextValue['display'] => {
+const useDisplayOptions = () => {
     const { systemInfo } = useConfig()
-    // `calendar` is in every server's systemInfo, though app-runtime's type leaves it out.
+
     const calendar = parseDhis2Calendar(
         systemInfo && 'calendar' in systemInfo ? systemInfo.calendar : undefined
     )
@@ -100,7 +97,7 @@ const HeaderScope = ({
         enabled: teId !== '',
         retry: shouldRetryTrackedEntityHeaderRequest,
     })
-    // Without a program, the tracked entity type says which attributes there are.
+
     const type = entity.data?.type
     const metadata = useQuery({
         queryKey: trackedEntityHeaderQueryKeys.attributeMetadata(
@@ -137,20 +134,20 @@ const HeaderScope = ({
 
     const entityData = entity.data
     const metadataData = metadata.data
-    // A refetch that fails keeps what loaded, unless access was withdrawn.
+
     const blocking = (error: Error | null, loaded: boolean) =>
         error && (!loaded || isForbidden(error)) ? error : null
     const entityError = blocking(entity.error, entityData !== undefined)
     const metadataError = blocking(metadata.error, metadataData !== undefined)
-    const state = useMemo((): TrackedEntityHeaderState => {
+    const state = useMemo<TrackedEntityHeaderState>(() => {
         const errors = [entityError, metadataError].filter(
             (error): error is Error => error !== null
         )
-        // Restricted outranks failed: the record can't be shown however the other request went.
+
         if (errors.some(isForbidden)) {
             return { status: 'restricted', retry }
         }
-        // Asked for again without the program and still missing: there is no such record.
+
         if (entityError && isNotFound(entityError)) {
             return { status: 'not-found', retry }
         }
@@ -238,7 +235,6 @@ const HeaderScope = ({
     )
 }
 
-/** A placement function over a counted map: each call adds one for `uid`, its undo takes it away. */
 const countedPlacement =
     (set: Dispatch<SetStateAction<ReadonlyMap<string, number>>>) =>
     (uid: string) => {
@@ -264,8 +260,6 @@ const countedPlacement =
 export function TrackedEntityHeaderProvider(
     props: TrackedEntityHeaderProviderProps
 ) {
-    // Another tracked entity or program starts from nothing, so a part never shows
-    // the previous record's values while the new ones load.
     return (
         <HeaderScope
             key={`${props.trackedEntity}:${normaliseProgram(props.program) ?? ''}`}

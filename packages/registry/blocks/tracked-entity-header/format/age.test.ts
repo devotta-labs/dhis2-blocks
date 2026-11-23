@@ -50,7 +50,6 @@ describe('ageOf', () => {
     })
 
     it('counts in the Ethiopian calendar, which has a 13th month', () => {
-        // 2016-05-22 Ethiopian; one Ethiopian month later is 2024-03-01 ISO.
         expect(ageOf('2024-01-31', '2024-02-29', 'ethiopian')).toEqual({
             unit: 'days',
             count: 29,
@@ -59,7 +58,7 @@ describe('ageOf', () => {
             unit: 'months',
             count: 1,
         })
-        // 13 months make a year, so 26 Ethiopian months are two years.
+
         expect(ageOf('2024-01-31', '2026-01-31', 'ethiopian')).toEqual({
             unit: 'years',
             count: 2,
@@ -67,7 +66,6 @@ describe('ageOf', () => {
     })
 
     it('counts in the Nepali calendar, whose month lengths vary', () => {
-        // 2024-01-15 is 2080-10-01 Nepali, and month 10 of 2080 has 29 days.
         expect(ageOf('2024-01-15', '2024-02-12', 'nepali')).toEqual({
             unit: 'days',
             count: 28,

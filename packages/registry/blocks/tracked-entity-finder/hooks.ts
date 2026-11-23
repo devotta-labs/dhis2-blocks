@@ -8,11 +8,7 @@ import {
     useMemo,
 } from 'react'
 import type { FinderPerson } from './api/search'
-import {
-    useFinderFieldApi,
-    type FinderFieldApi,
-    type FinderFormApi,
-} from './form/finderFormApi'
+import { useFinderFieldApi, type FinderFieldApi } from './form/finderFormApi'
 import {
     FinderPersonContext,
     useFinderContext,
@@ -25,7 +21,6 @@ import { describeMetadataError } from './rules/describeMetadataError'
 import { attributeOf, searchableAttributes } from './rules/programModel'
 import type {
     FieldKind,
-    FinderAttribute,
     FormField,
     FormVerdict,
     MetadataError,
@@ -74,9 +69,7 @@ export interface FinderFieldState {
  * The text to show for a metadata error: the full message in development, a
  * short one in production, where the full message is logged instead.
  */
-export const useMetadataErrorMessage = (
-    error: MetadataError | undefined
-): string | undefined => {
+export const useMetadataErrorMessage = (error: MetadataError | undefined) => {
     const { state, actions } = useFinderContext()
     const full =
         error && state.model
@@ -95,10 +88,7 @@ export const useMetadataErrorMessage = (
 }
 
 /** Internal: a field registered in the current form, with its attribute. */
-export const useComposedField = (
-    id: string,
-    match: FormField['match']
-): FinderFieldState & { found?: FinderAttribute } => {
+export const useComposedField = (id: string, match: FormField['match']) => {
     const { state } = useFinderContext()
     const { form, register, submitted, verdict } = useFinderFormContext()
     const key = useId()
@@ -142,19 +132,18 @@ export const useComposedField = (
     }
 }
 
-const publicField = ({
-    found: _found,
-    ...field
-}: ReturnType<typeof useComposedField>): FinderFieldState => field
+const publicField: (
+    props: ReturnType<typeof useComposedField>
+) => FinderFieldState = ({ found: _found, ...field }) => field
 
 /** A field searched by exact value. Use inside `FinderForm`. */
-export const useFinderField = (attribute: string): FinderFieldState => {
+export const useFinderField = (attribute: string) => {
     const field = useComposedField(attribute, 'exact')
     return publicField(field)
 }
 
 /** A From–To field for a number or date attribute. Use inside `FinderForm`. */
-export const useFinderRangeField = (attribute: string): FinderFieldState => {
+export const useFinderRangeField = (attribute: string) => {
     const field = useComposedField(attribute, 'range')
     return publicField(field)
 }
@@ -172,11 +161,11 @@ export interface FinderSearchState {
 }
 
 /** The current form's search: whether it can run, and running it. */
-export const useFinderSearch = (): FinderSearchState => {
+export const useFinderSearch: () => FinderSearchState = () => {
     const { state } = useFinderContext()
     const { form, verdict } = useFinderFormContext()
     const search = state.status === 'ready' ? verdict?.search : undefined
-    // Through TanStack, so a search with field errors shows them instead.
+
     const submit = useCallback(() => {
         void form.handleSubmit()
     }, [form])
@@ -209,7 +198,7 @@ export interface FinderProgramState {
 }
 
 /** The program's name and searchable attributes, read-only. */
-export const useFinderProgram = (): FinderProgramState => {
+export const useFinderProgram: () => FinderProgramState = () => {
     const { state } = useFinderContext()
     const { status, model } = state
     return useMemo(
@@ -243,14 +232,14 @@ export interface FinderResultsState {
 }
 
 /** The last submitted search's results, and paging through them. */
-export const useFinderResults = (): FinderResultsState => {
+export const useFinderResults: () => FinderResultsState = () => {
     const { state, actions } = useFinderContext()
     const { page } = state
     const { status, people, hasNext, refreshing } = state.results
     const { setPage, select } = actions
-    // Also after a failed or empty later page, so the user can go back.
+
     const hasPrevious = page > 1 && status !== 'searching'
-    // No-ops without a page to go to, as the disabled buttons are.
+
     const next = useCallback(() => {
         if (hasNext) {
             setPage(page + 1)
@@ -279,13 +268,13 @@ export const useFinderResults = (): FinderResultsState => {
  * `Subscribe` and `reset`. A field counts toward the search only through
  * `useFinderField`, `useFinderRangeField` or the field parts.
  */
-export const useFinderForm = (): FinderFormApi => {
+export const useFinderForm = () => {
     const { form } = useFinderFormContext()
     return form
 }
 
 /** The person of the current `FinderList` item, for custom row content. */
-export const useFinderPerson = (): FinderPerson => {
+export const useFinderPerson = () => {
     const person = useContext(FinderPersonContext)
     if (!person) {
         throw new Error('useFinderPerson must be used inside FinderList')

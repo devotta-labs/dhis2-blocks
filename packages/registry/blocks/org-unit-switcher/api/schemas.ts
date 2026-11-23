@@ -12,7 +12,6 @@ export interface AssignedOrgUnit extends OrgUnit {
     hasChildren: boolean
 }
 
-/** Unknown fields are dropped, so a unit is only these. */
 const OrgUnitSchema = z.object({
     id: z.string(),
     displayName: z.string(),
@@ -22,7 +21,7 @@ const OrgUnitSchema = z.object({
 
 const AssignedOrgUnitSchema = OrgUnitSchema.extend({
     children: z.boolean().optional(),
-}).transform(({ children, ...orgUnit }): AssignedOrgUnit => ({
+}).transform<AssignedOrgUnit>(({ children, ...orgUnit }) => ({
     ...orgUnit,
     hasChildren: children ?? false,
 }))

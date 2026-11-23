@@ -36,7 +36,10 @@ export const isTooManyConflict = (cause: unknown) =>
         text?.toLowerCase().includes(TOO_MANY_MARKER)
     )
 
-const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
+const toPerson: (row: RawTrackedEntity, program: string) => FinderPerson = (
+    row,
+    program
+) => {
     const person: FinderPerson = {
         trackedEntity: row.trackedEntity,
         trackedEntityType: row.trackedEntityType,
@@ -55,14 +58,13 @@ const toPerson = (row: RawTrackedEntity, program: string): FinderPerson => {
 }
 
 /** Going over the result cap is an answer, with no people exposed. */
-export const toSearchOutcome = (
+export const toSearchOutcome: (
     response: z.infer<typeof TrackedEntitiesResponseSchema>,
     model: ProgramModel,
     page: number
-): SearchOutcome => {
+) => SearchOutcome = (response, model, page) => {
     const { rows, total } = normaliseTrackedEntities(response)
-    // Without a total, only a short first page proves the search is below
-    // the cap. Never expose rows when the total could exceed it.
+
     const count =
         total ??
         (page === 1 && rows.length < PAGE_SIZE

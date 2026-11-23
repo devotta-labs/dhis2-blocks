@@ -15,7 +15,7 @@ export type FinderErrorProps = ComponentPropsWithoutRef<'div'>
 
 const STATE_TEXT = 'flex items-center gap-2 text-sm text-dhis2-muted-foreground'
 
-const announcementText = (node: Node): string => {
+const announcementText: (node: Node) => string = (node) => {
     if (node instanceof Element) {
         if (
             node.getAttribute('aria-hidden') === 'true' ||
@@ -48,7 +48,7 @@ const useStatusAnnouncement = (active: boolean) => {
             }
         }
         say()
-        // Custom children can update without re-rendering this part.
+
         const observer = new MutationObserver(say)
         observer.observe(element, {
             childList: true,

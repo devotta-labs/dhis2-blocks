@@ -89,7 +89,6 @@ test('an option a rule hides is refused, a held one is kept', () => {
     expect(store.getState().commit(ONE, 'A')).toBe('queued')
 
     say(MANY, { hiddenOptions: new Set(['B', 'C']) })
-    // Dropping A keeps the held C; adding B is refused.
     expect(store.getState().commit(MANY, 'C')).toBe('queued')
     expect(store.getState().commit(MANY, 'B,C')).toBe('invalid')
     expect(cell(MANY).error).toBe('Choose one of the options')

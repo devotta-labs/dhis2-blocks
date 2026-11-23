@@ -96,10 +96,6 @@ export const AppShell = () => {
     )
     const [urlState, setUrlState] = useAppUrlState()
 
-    // Guard browser back/forward (and manual hash edits, which the router
-    // also receives as POP) against discarding unsaved working-list changes.
-    // In-app navigations confirm before writing the URL, so PUSH/REPLACE
-    // must pass through unblocked to avoid a double confirmation.
     const externalTransitionBlocker = useBlocker(
         ({ currentLocation, nextLocation, historyAction }) => {
             if (historyAction !== 'POP' || !dirty) {
@@ -121,8 +117,7 @@ export const AppShell = () => {
         if (externalTransitionBlocker.state !== 'blocked') {
             return
         }
-        // The latest guarded navigation wins; its reset must always be wired
-        // so canceling the dialog restores the popped history entry.
+
         setPendingTransition({
             proceed: () => {
                 setDirty(false)

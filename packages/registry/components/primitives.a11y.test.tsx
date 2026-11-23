@@ -8,6 +8,7 @@ import {
     ComboboxChip,
     ComboboxChips,
     ComboboxChipsInput,
+    ComboboxInput,
     ComboboxValue,
 } from './combobox'
 import { Dialog, DialogContent, DialogTitle } from './dialog'
@@ -45,6 +46,23 @@ test('combobox chip shows focus', async () => {
     expect(getComputedStyle(chip).outlineStyle).not.toBe('none')
 })
 
+test('Tab leaves a combobox input for the next field, past its open button', async () => {
+    await render(
+        <>
+            <Combobox items={['Bo', 'Kenema']}>
+                <ComboboxInput aria-label="District" />
+            </Combobox>
+            <input aria-label="Next" />
+        </>
+    )
+    await userEvent.click(page.getByRole('combobox', { name: 'District' }))
+    await userEvent.keyboard('{Escape}')
+    await userEvent.tab()
+    await expect
+        .element(page.getByRole('textbox', { name: 'Next' }))
+        .toHaveFocus()
+})
+
 test('chip remove and dialog close are at least 24 by 24', async () => {
     await render(
         <>
@@ -56,7 +74,6 @@ test('chip remove and dialog close are at least 24 by 24', async () => {
             </Dialog>
         </>
     )
-    // The open dialog hides the chip from the accessibility tree, so it is found by its slot.
     for (const target of [
         document.querySelector('[data-slot="combobox-chip-remove"]'),
         page.getByRole('button', { name: 'Close' }).element(),

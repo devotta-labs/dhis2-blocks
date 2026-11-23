@@ -7,7 +7,7 @@ import {
     renderEntries,
     stageOf,
     type ProgramMetadata,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import {
     TimelineEventEntry,
     TimelineEventStage,
@@ -21,9 +21,7 @@ const renderEvent = (
     event: ReturnType<typeof recordedEvent>,
     parts: React.ReactNode,
     options: {
-        /** Edits the program metadata the entry is resolved with. */
         metadata?: (metadata: ProgramMetadata) => void
-        /** The program's metadata couldn't be read. */
         withoutMetadata?: boolean
     } = {}
 ) => {
@@ -74,7 +72,6 @@ describe('TimelineEventValues', () => {
         )
         expect(items).toContain('Outcome')
         expect(items).toContain('Live birth')
-        // Data elements the stage does not flag are not shown.
         expect(container.textContent).not.toContain('39')
     })
 
@@ -99,7 +96,7 @@ describe('TimelineEventValues', () => {
         const ids = Array.from({ length: 7 }, (_, index) => `extra${index}`)
         const event = withValues(
             recordedEvent('TlE2eEvt004'),
-            ids.map((id): [string, string] => [id, `value ${id}`])
+            ids.map((id) => [id, `value ${id}`])
         )
         const { container } = await renderEvent(
             event,

@@ -52,7 +52,6 @@ export const saveUnsentFile = (
             const table = row === undefined ? undefined : tableOf.get(row)
             return {
                 form: table?.title ?? '',
-                // As the grid names it.
                 row:
                     row === undefined
                         ? rowId
@@ -70,7 +69,6 @@ export const saveUnsentFile = (
             }
         })
     )
-    // A byte order mark first, so Excel reads the file as UTF-8.
     const url = URL.createObjectURL(
         new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' })
     )
@@ -78,6 +76,5 @@ export const saveUnsentFile = (
     link.href = url
     link.download = 'unsent-changes.csv'
     link.click()
-    // Some browsers read the file after `click` returns.
     setTimeout(() => URL.revokeObjectURL(url), 40_000)
 }

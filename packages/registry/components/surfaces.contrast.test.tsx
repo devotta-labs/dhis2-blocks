@@ -8,14 +8,13 @@ import {
     WarningAlert,
     slot,
     style,
-} from './surfaces.fixtures'
+} from './surfaces.fixture'
 import { roleColour } from '../test/roleColour'
 
 describe('surfaces with more contrast', () => {
     it('edge a popover', async () => {
         await render(<OpenPopover />)
         expect(style(await slot('popover-content')).boxShadow).toContain(
-            // The high-contrast edge is the border-strong grey.
             `${roleColour('border-strong')} 0px 0px 0px 1px`
         )
     })

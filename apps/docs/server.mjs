@@ -8,15 +8,6 @@ import {
     resolveDocsBackend,
 } from './server/dhis2-proxy.mjs'
 
-/**
- * Production docs server.
- *
- * `vite build` emits a fully static bundle, so it cannot contain the
- * development proxy. This small Node server is the documented production
- * setup: it serves `dist/` and forwards the same-origin `/dhis2` prefix to
- * the configured backend. A standard reverse proxy (nginx, Caddy) can serve
- * the same role — see apps/docs/README.md for an equivalent configuration.
- */
 const distDir = fileURLToPath(new URL('./dist', import.meta.url))
 
 const distDirReal = realpathSync(distDir, { throwIfNoEntry: false })
@@ -52,8 +43,7 @@ const resolveStaticFile = (pathname) => {
         return undefined
     }
 
-    // The string-prefix check above stops `..` escapes; the real path check
-    // also refuses symlinks inside the build that point outside of it.
+    // SAFETY: A symlink inside the build could otherwise expose files outside it.
     const candidateReal = realpathSync(candidate, { throwIfNoEntry: false })
 
     if (

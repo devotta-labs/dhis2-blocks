@@ -26,15 +26,13 @@ const describeMisconfigured = (
  * A data element no stage of the program captures is `misconfigured`, never
  * an empty series.
  */
-export const useObservation = (dataElement: string): ObservationState => {
+export const useObservation = (dataElement: string) => {
     const { program, metadata, events, error, logProblem } =
         useObservationsContext()
 
-    const state = useMemo((): ObservationState => {
-        // A wrong id is wrong for every person, so it outranks their errors.
+    const state = useMemo<ObservationState>(() => {
         const element = metadata?.dataElements.get(dataElement)
         const invalid = metadata?.invalidDataElements.get(dataElement)
-        // Captured, but its metadata can't be read: only this card fails.
         if (invalid && !element) {
             return { status: 'error', error: invalid.error }
         }
@@ -62,7 +60,6 @@ export const useObservation = (dataElement: string): ObservationState => {
 
     const problem = state.status === 'misconfigured' ? state.message : undefined
     useEffect(() => {
-        // Development shows the full message on the card; production logs it.
         if (problem !== undefined && isProduction()) {
             logProblem(problem)
         }

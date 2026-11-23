@@ -80,7 +80,6 @@ export const UserFilterSelect = ({
                 ? `${user.displayName} (${user.username})`
                 : user.displayName,
         })),
-        // Keep selections that the current search no longer returns.
         ...selected
             .filter((id) => !knownIds.has(id))
             .map((id) => ({ value: id, label: id })),

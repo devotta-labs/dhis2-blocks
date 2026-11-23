@@ -49,11 +49,6 @@ export interface CellFormattingContext {
     formatNumber?: (value: number, valueType: Dhis2ValueType) => string
 }
 
-/**
- * Client-side value for FILE_RESOURCE and IMAGE cells, mirroring the Capture
- * app: the fileResource UID plus tracker-scoped download URLs. Display names
- * are resolved separately via resolveFileResourceName.
- */
 const WorkingListFileValueSchema = z.object({
     id: z.string(),
     url: z.string(),
@@ -62,7 +57,6 @@ const WorkingListFileValueSchema = z.object({
 
 export type WorkingListFileValue = z.infer<typeof WorkingListFileValueSchema>
 
-/** Client-side value for the assigned-user column, mirroring the Capture app. */
 const WorkingListUserValueSchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -73,7 +67,6 @@ const WorkingListUserValueSchema = z.object({
 
 export type WorkingListUserValue = z.infer<typeof WorkingListUserValueSchema>
 
-/** Parses the raw tracker values accepted by registry formatting and decoding. */
 const WorkingListRawValueSchema = z.union([
     z.string(),
     z.number().finite(),

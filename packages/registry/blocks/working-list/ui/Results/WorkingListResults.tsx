@@ -29,9 +29,7 @@ import {
 const visuallyHiddenClassName =
     'absolute! m-[-1px]! h-px! w-px! overflow-hidden! whitespace-nowrap! border-0! p-0! [clip:rect(0,0,0,0)]!'
 
-const getResultsAnnouncement = (
-    results: WorkingListMeta['results']
-): string => {
+const getResultsAnnouncement = (results: WorkingListMeta['results']) => {
     if (results.status === 'pending') {
         return i18n.t('Loading working list results…')
     }
@@ -97,7 +95,6 @@ const tableFieldsFor = (
 const SelectionLoading = () => {
     const pageSize = useWorkingListMeta((meta) => meta.pagination.pageSize)
 
-    // While the list initializes, the container already announces loading.
     const initializing = useWorkingListMeta(
         (meta) => meta.lifecycle.status === 'pending'
     )

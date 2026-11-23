@@ -10,8 +10,6 @@ import { nameFrom, rowHeaderDomId } from './headers'
 import { NotesMarker, notesDomId, useRowNotes } from './RowNotes'
 import type { NotesTarget } from './RowNotes'
 
-// The row header column's width, at most 30% of the screen so the page reflows when zoomed; sticky group labels and
-// scroll padding keep clear of it.
 export const ROW_HEADER_CLASS =
     'w-[min(12rem,30vw)] min-w-[min(12rem,30vw)] max-w-[min(12rem,30vw)]'
 export const BORDER_CLASS = 'border-b border-e border-dhis2-border'
@@ -19,13 +17,11 @@ export const BORDER_CLASS = 'border-b border-e border-dhis2-border'
 const NO_KEYS: ReadonlyArray<CellKey> = []
 const NO_MESSAGES: ReadonlyArray<CellMessage> = []
 
-// Marked as a cell's notes are, on the header's light background.
 const MESSAGE_TONES = {
     error: 'border-dhis2-destructive-indicator',
     warning: 'border-dhis2-warning-indicator',
 } satisfies Record<Tone, string>
 
-/** A row's name as it changes: its label cells' values (`labelFrom`), each as its field shows it, else its label. */
 const CellsLabel = ({ row }: { row: GridRow }) => {
     const { store, settings } = useSpreadsheetContext()
     const labelFrom = row.labelFrom ?? NO_KEYS
@@ -64,7 +60,6 @@ export const RowHeader = memo(function RowHeader({
     } = useSpreadsheetContext()
     const rowHeader = rowHeaderDomId(idScope, tableId, row.id)
     const notes = useRowNotes(row)
-    // Every key the row's messages are under, as for its notes.
     const selectMessages = useShallow((state: AnnotationsState) =>
         rowKeysOf(row)
             .flatMap((id) => state.rowMessages.get(id) ?? NO_MESSAGES)
@@ -89,8 +84,6 @@ export const RowHeader = memo(function RowHeader({
                 'sticky start-0 z-10 bg-dhis2-background px-2 py-1 text-start align-middle font-normal text-dhis2-foreground [overflow-wrap:anywhere]'
             )}
         >
-            {/* Cells are named by the label alone; the badge is said once, with the row. The label sets its own
-                direction, so the header keeps the table's and stays at its start. */}
             <span id={rowHeader} dir="auto">
                 <RowLabel row={row} />
             </span>
@@ -101,7 +94,6 @@ export const RowHeader = memo(function RowHeader({
                 notes={notes}
                 onOpen={openNotes}
             />
-            {/* What the row's rules, or their failure, say without a field. */}
             {messages.length > 0 ? (
                 <ul className="mt-0.5 flex flex-col gap-0.5">
                     {messages.map(({ tone, text }, i) => (

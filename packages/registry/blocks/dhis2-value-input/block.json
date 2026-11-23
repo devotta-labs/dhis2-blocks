@@ -1,0 +1,4 @@
+{
+    "title": "DHIS2 Value Input",
+    "description": "A form control for each DHIS2 value type, accepting what the grid accepts, in the system calendar."
+}

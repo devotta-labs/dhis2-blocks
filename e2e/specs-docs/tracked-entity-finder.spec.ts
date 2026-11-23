@@ -1,16 +1,9 @@
 import AxeBuilder from '@axe-core/playwright'
 import type { Page } from '@playwright/test'
-import { expect, openLivePreview, test } from './fixtures'
+import { expect, openLivePreview, test } from './docs.fixture'
 
-/**
- * Live Tracked Entity Finder preview coverage, against the WHO RMNCH Tracker
- * in the Sierra Leone demo database through the docs app's `/dhis2` proxy.
- * The program's rule edge cases (minimum, cap, too many matches) are covered
- * by the block's browser tests with fixtures.
- */
 const SLUG = 'tracked-entity-finder/find-person'
 
-/** Fields render disabled until the program's metadata has loaded. */
 const finderReady = async (page: Page) => {
     await expect(page.getByLabel('Unique ID')).toBeEnabled({
         timeout: 30_000,
@@ -43,7 +36,6 @@ test.describe('live Tracked Entity Finder preview', () => {
         )
         const url = new URL(request.url())
 
-        // An ID is matched exactly, and the search never names org units.
         expect(url.searchParams.getAll('filter')).toEqual([
             'lZGmxYbs97q:eq:9411202',
         ])
@@ -64,16 +56,11 @@ test.describe('live Tracked Entity Finder preview', () => {
         await expect(page.getByLabel('Unique ID')).toHaveCount(0)
         await expect(page.getByLabel('First name')).toBeEnabled()
 
-        // Nothing entered yet: there is nothing to search with.
         await expect(search(page)).toBeDisabled()
-        // An empty form has no hint. With this program's minimum of 1, one
-        // filled detail is enough, so "Add 1 more detail" never shows here;
-        // the block's browser tests cover the minimum.
         await expect(page.locator('[data-slot="finder-hint"]')).toHaveCount(0)
 
         await page.getByLabel('First name').fill('Rose')
         await page.getByLabel('Birth date').fill('1989-07-04')
-        // The calendar input reports a typed date when it loses focus.
         await page.getByLabel('Birth date').press('Tab')
 
         const request = await trackedEntitySearch(page, () =>

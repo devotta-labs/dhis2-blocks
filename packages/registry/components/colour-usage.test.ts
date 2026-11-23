@@ -2,9 +2,6 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// Blocks, primitives, the docs and the demo app colour themselves with the
-// semantic roles in theme.css only, so a theme can remap them.
-
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
 const ROOTS = [
     'packages/registry/components',
@@ -15,13 +12,11 @@ const ROOTS = [
     'apps/web/src',
 ]
 const SOURCE = /\.(?:tsx?|css|mdx?)$/
-// theme.css defines the roles, and the installation page shows fixed colours
-// as what not to write.
 const SKIPPED =
-    /\.test\.tsx?$|(?:^|\/)(?:__tests__|type-tests|fixtures)\/|components\/theme\.css$|pages\/installation\.mdx$/
+    /\.(?:test|test-utils|fixtures?)\.tsx?$|(?:^|\/)(?:test|__tests__|type-tests|fixtures)\/|components\/theme\.css$|pages\/installation\.mdx$/
 
 // prettier-ignore
-const NAMED = 'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.replaceAll(' ', '|');
+const NAMED = 'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'.replaceAll(' ', '|')
 const TAILWIND_HUES =
     'slate|gray|zinc|neutral|stone|mauve|olive|mist|taupe|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose'
 
@@ -54,7 +49,6 @@ const RAW_COLOURS: [string, RegExp][] = [
     [
         'named colour',
         new RegExp(
-            // quoted alone, a Tailwind arbitrary value, or inside a colour declaration
             `['"\`](?:${NAMED})['"\`]|\\[(?:${NAMED})\\]|(?:color|background|fill|stroke|border|outline|shadow|decoration)[\\w-]*\\s*:[^;]*\\b(?:${NAMED})\\b`,
             'i'
         ),
@@ -79,17 +73,17 @@ const runtimeVariables = new Set(
     [...theme.matchAll(/--dhis2-([a-z0-9-]+)\s*:/g)].map((match) => match[1])
 )
 
-const listSources = (directory: string): string[] =>
+const listSources = (directory: string) =>
     readdirSync(join(REPO_ROOT, directory), { recursive: true })
         .map((entry) => join(directory, String(entry)))
         .filter((path) => SOURCE.test(path) && !SKIPPED.test(path))
 
 const files = ROOTS.flatMap(listSources).sort()
 
-const linesOf = (path: string): string[] =>
+const linesOf = (path: string) =>
     readFileSync(join(REPO_ROOT, path), 'utf8').split('\n')
 
-const rawColoursIn = (lines: string[]): string[] =>
+const rawColoursIn = (lines: string[]) =>
     lines.flatMap((line, index) => {
         if (line.includes(EXEMPTION) || lines[index - 1]?.includes(EXEMPTION)) {
             return []
@@ -99,10 +93,10 @@ const rawColoursIn = (lines: string[]): string[] =>
         )
     })
 
-const rawColours = (path: string): string[] =>
+const rawColours = (path: string) =>
     rawColoursIn(linesOf(path)).map((finding) => `${path}:${finding}`)
 
-const unknownTokens = (path: string): string[] =>
+const unknownTokens = (path: string) =>
     linesOf(path).flatMap((line, index) => [
         ...[...line.matchAll(TOKEN_USE)]
             .filter((match) => !utilityTokens.has(match[1]))

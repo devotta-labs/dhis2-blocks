@@ -19,7 +19,6 @@ export class PartlySaved extends Error {
     }
 }
 
-// DHIS2's error body carries the status and the reason; a field that is not there as a number or text counts as absent.
 export const bodySchema = z
     .object({
         httpStatusCode: z.number().optional().catch(undefined),
@@ -41,17 +40,15 @@ const RETRYABLE_CLIENT_ERRORS = new Set([408, 429])
  * the records. Any other client error (400 to 499) is a refusal too, except a timeout (408) or too many requests
  * (429); those, a server error or no status may pass on a retry.
  */
-export const classify = (
+export const classify: (
     error: Pick<FetchError, 'type' | 'message' | 'details'>
-): Failure => {
+) => Failure = (error) => {
     const body = bodySchema.parse(error.details)
-    // A page that is not JSON (an nginx 413, say) has its status only at the end of the message.
     const [, code] = /\((\d{3})\)$/.exec(error.message) ?? []
     const status =
         body.httpStatusCode ?? (code === undefined ? undefined : Number(code))
     const reason = body.message ?? error.message
     if (error.type === 'access') {
-        // A 401 with no JSON message arrives as 'Unauthorized', a 403 as 'Forbidden'.
         const lapsed =
             status === undefined
                 ? error.message === 'Unauthorized'

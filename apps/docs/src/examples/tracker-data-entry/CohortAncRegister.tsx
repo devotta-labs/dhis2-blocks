@@ -13,22 +13,9 @@ import {
 import type { Option } from '@/components/context-selector'
 import { useMemo, useState } from 'react'
 
-/**
- * A cohort register of antenatal care over the WHO RMNCH Tracker: one woman a row.
- *
- * `WSGAb5XwJ3Y` is the program in the DHIS2 Sierra Leone demo database. Her
- * first visit is the one event of stage `WZbXY0S00lP`; her later visits are
- * the events of the repeatable stage `edqlbukwRfQ` in date order, as the
- * register's 1st, 2nd and 3rd. Replace the ids with ones from your own
- * instance. "Add person" (Ctrl+Enter) enrols a new woman at the organisation
- * unit, with the first visit the program schedules for her. The demo database
- * has five women enrolled at Ngelehun CHC in January 2027.
- */
-
 const FIRST = 'WZbXY0S00lP'
 const SECOND = 'edqlbukwRfQ'
 
-// Gestational age, blood pressure, haemoglobin, HIV and RPR tests.
 const SECOND_VISIT_ELEMENTS = [
     'roKuXYfw1BW',
     'M4HEOoEFTAT',
@@ -38,7 +25,6 @@ const SECOND_VISIT_ELEMENTS = [
     'AAaJGnWR5js',
 ]
 
-// The first visit adds to them the haematocrit, dates, proteinuria, presentation, plurality and supplements.
 const FIRST_VISIT_ELEMENTS = [
     ...SECOND_VISIT_ELEMENTS,
     'X8HbdaoS9LN',
@@ -52,7 +38,6 @@ const FIRST_VISIT_ELEMENTS = [
     'PKZPVfAJfHD',
 ]
 
-// A woman's visit as the paper has it: its date, then what was measured.
 const firstVisit = (dataElement: string) => ({
     field: { stage: FIRST, dataElement },
 })
@@ -89,7 +74,6 @@ export const layout: RegisterLayout = {
     ],
 }
 
-// Whole months written out, so the example does no calendar maths of its own.
 const months = [
     {
         value: '2026-01',
@@ -243,7 +227,6 @@ const orgUnits: readonly Option[] = [
     { value: 'm7fBMpmVpSM', label: 'Kolisokor MCHP' },
 ]
 
-// Replace with your app's loading and error states.
 const Status = () => {
     const status = useTrackerDataEntry((view) => view.status)
     const error = useTrackerDataEntry((view) => view.error)
@@ -264,7 +247,6 @@ const CohortAncRegister = () => {
     const month = months.find(({ value }) => value === monthValue) ?? months[0]
     const orgUnit = orgUnits.find(({ value }) => value === orgUnitId)
 
-    // A new source, with new keys, loads the register again: make one per choice, not per render.
     const source = useMemo(
         () =>
             registerSource({
@@ -327,4 +309,15 @@ const CohortAncRegister = () => {
     )
 }
 
+/**
+ * A cohort register of antenatal care over the WHO RMNCH Tracker: one woman a row.
+ *
+ * `WSGAb5XwJ3Y` is the program in the DHIS2 Sierra Leone demo database. Her
+ * first visit is the one event of stage `WZbXY0S00lP`; her later visits are
+ * the events of the repeatable stage `edqlbukwRfQ` in date order, as the
+ * register's 1st, 2nd and 3rd. Replace the ids with ones from your own
+ * instance. "Add person" (Ctrl+Enter) enrols a new woman at the organisation
+ * unit, with the first visit the program schedules for her. The demo database
+ * has five women enrolled at Ngelehun CHC in January 2027.
+ */
 export default CohortAncRegister

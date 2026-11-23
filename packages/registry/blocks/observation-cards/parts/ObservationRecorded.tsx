@@ -22,10 +22,7 @@ import {
     type DisplayOptions,
 } from '../format/display'
 
-/**
- * Keep the existing English-form keys for translation compatibility.
- */
-const staleNote = (days: number): string =>
+const staleNote: (days: number) => string = (days) =>
     days === 1
         ? i18n.t('Out of date: last recorded over {{count}} day ago', {
               count: days,
@@ -36,10 +33,6 @@ const staleNote = (days: number): string =>
               interpolation: NO_ESCAPE,
           })
 
-/**
- * A tooltip that opens at once on click or tap, as well as on hover after the
- * usual delay, so the full text is one click away and reachable on touch.
- */
 const useClickableTooltip = () => {
     const [open, setOpen] = useState(false)
     return {
@@ -53,7 +46,7 @@ const useClickableTooltip = () => {
  * it is. Clicking, focusing or hovering it shows the date and program stage;
  * a screen reader hears those in full instead of the short form.
  */
-function RecordedNote({
+export function RecordedNote({
     point,
     staleAfterDays,
     stale,
@@ -86,7 +79,6 @@ function RecordedNote({
                     />
                 }
             >
-                {/* A dotted underline says there is more on hover or focus. */}
                 <span
                     aria-hidden="true"
                     className="underline decoration-current/40 decoration-dotted underline-offset-2"
@@ -125,9 +117,9 @@ function RecordedNote({
 /**
  * The note shown when the user can't read some stages that capture the value:
  * "Restricted access", with the full reason on click, focus or hover. A screen reader
- * hears the full reason instead.
+ * hears the full reason instead. Internal: the card's footer and the inline reading use it.
  */
-function PartialNote() {
+export function PartialNote({ className }: { className?: string }) {
     const reason = i18n.t('Some visits are hidden by your access')
     const tooltip = useClickableTooltip()
     return (
@@ -139,7 +131,10 @@ function PartialNote() {
                         // oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a tooltip trigger: focus shows the detail to keyboard users
                         tabIndex={0}
                         data-slot="partial-note"
-                        className="ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring"
+                        className={cn(
+                            'ms-auto inline-flex cursor-default rounded-dhis2-sm outline-offset-2 focus-visible:outline-2 focus-visible:outline-dhis2-ring',
+                            className
+                        )}
                     />
                 }
             >
@@ -170,7 +165,6 @@ export function RecordedFooter({
     if (latest === undefined && !partial) {
         return null
     }
-    // Read per render so tests can stub the clock.
     const now = new Date()
     const stale = latest !== undefined && isStale(latest, staleAfterDays, now)
     return (
@@ -200,7 +194,6 @@ export function RecordedFooter({
  */
 export function ObservationRecorded(props: ObservationRecordedProps) {
     const { registerRecorded } = useObservationCard()
-    // Before paint, so the card's own band never flashes in beside this one.
     useLayoutEffect(() => registerRecorded(), [registerRecorded])
     return <RecordedFooter {...props} />
 }

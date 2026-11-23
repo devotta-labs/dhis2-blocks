@@ -201,8 +201,7 @@ const OrganisationUnitSearchResults = ({
 
     const TreeComponent = treeComponent ?? Dhis2OrganisationUnitTree
     const visibleRoots = searchRoots ?? roots
-    // Keep the key stable while search pages append so expanded branches
-    // survive; remount only when the term or the browse-mode root set changes.
+
     const stableTreeKey = searchRoots
         ? treeKey
         : `${treeKey}-${visibleRoots.map((root) => root.id).join('-')}`

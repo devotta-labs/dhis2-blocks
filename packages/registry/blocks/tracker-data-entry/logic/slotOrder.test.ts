@@ -3,7 +3,7 @@ import type { TrackerRow } from '../model/types'
 import type { SlotDef } from '../register/compileLayout'
 import { slotOrderWarnings } from './slotOrder'
 
-const visit = (occurrence: number): SlotDef => ({
+const visit: (occurrence: number) => SlotDef = (occurrence) => ({
     name: `visit#${occurrence}`,
     stageId: 'visit',
     kind: 'occurrence',
@@ -17,9 +17,9 @@ const ROW: TrackerRow = {
     label: 'Amina',
     slots: { 'visit#1': 'v1', 'visit#2': 'v2', 'visit#3': 'v3' },
 }
-const dated = (
+const dated: (
     dates: Record<string, string>
-): Partial<Record<CellKey, CellState>> =>
+) => Partial<Record<CellKey, CellState>> = (dates) =>
     Object.fromEntries(
         Object.entries(dates).map(([record, value]) => [
             `${record}.occurredAt`,

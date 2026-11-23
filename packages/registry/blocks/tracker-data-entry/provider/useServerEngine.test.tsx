@@ -7,7 +7,6 @@ const ME = { me: { resource: 'me' } }
 
 test('one engine per server, which asks the latest provider engine', async () => {
     let id = 'first'
-    // A new provider engine every render, answering what `id` was then.
     const wrapper = ({ children }: { children: ReactNode }) => (
         <CustomDataProvider data={{ me: { id } }}>
             {children}

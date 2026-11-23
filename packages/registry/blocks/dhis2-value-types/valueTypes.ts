@@ -12,14 +12,16 @@ import type {
     ValueSettings,
 } from './types'
 
-const problem = (code: string, message: string): ValueProblem => ({
+const problem: (code: string, message: string) => ValueProblem = (
+    code,
+    message
+) => ({
     code,
     message,
 })
 
 type Check = (value: string) => ValueProblem | undefined
 
-// Each problem is made when a value is refused, so its message is in the language set then.
 const notAnOption = () => problem('option', i18n.t('Choose one of the options'))
 const notANumber = () => problem('number', i18n.t('Enter a number'))
 const decimalComma = () =>
@@ -35,21 +37,17 @@ const outOfIntegerRange = () =>
 const notInMask = () =>
     problem('fieldMask', i18n.t('Enter a value in the required format'))
 
-// What DHIS2's server accepts for numbers: no leading zeros, no exponent.
 const STORED_INTEGER = /^(?:0|-?[1-9]\d*)$/
 const STORED_INTEGER_POSITIVE = /^[1-9]\d*$/
 const STORED_INTEGER_NEGATIVE = /^-[1-9]\d*$/
 const STORED_INTEGER_ZERO_OR_POSITIVE = /^(?:0|[1-9]\d*)$/
 const STORED_NUMBER = /^(?:-?0|-?[1-9]\d*)(?:\.\d+)?$/
-// A number as a person types it: `.5`, `5.` and `007` are all read.
 const TYPED_NUMBER = /^(?<sign>-?)(?<whole>\d*)(?:\.(?<fraction>\d*))?$/
-// The server may add a UTC or offset suffix to the time.
 const DATE_TIME =
     /^(?<day>\d{4}-\d{2}-\d{2})T(?<hours>\d{2}):(?<minutes>\d{2})(?::(?<seconds>\d{2})(?:\.\d{1,3})?)?(?:Z|[+-](?<offsetHours>\d{2}):?(?<offsetMinutes>\d{2}))?$/
 const TIME = /^(?<hours>\d{2}):(?<minutes>\d{2})$/
 const COORDINATE = /^\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]$/
 const EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/
-// The server's own character set, which allows extensions such as "555 ext 12".
 const PHONE = /^[\d\s+()#./ext-]{6,50}$/
 const UID = /^[A-Za-z][A-Za-z0-9]{10}$/
 const URL_PROTOCOLS = new Set(['http:', 'https:', 'ftp:'])
@@ -60,12 +58,7 @@ const isClockTime = (hours: string, minutes: string, seconds = '0') =>
 const isNumber = (text: string) =>
     STORED_NUMBER.test(text) && Number.isFinite(Number(text))
 
-/**
- * A typed number in the form DHIS2 stores: no leading zeros, `-0` as `0`, a
- * digit before the point and none after a bare one. The fraction's digits stay
- * as typed. Text that is not a plain number comes back as `undefined`.
- */
-const canonicalNumber = (text: string): string | undefined => {
+const canonicalNumber = (text: string) => {
     const groups = TYPED_NUMBER.exec(text)?.groups
     if (groups === undefined || !/\d/.test(text)) {
         return undefined
@@ -86,7 +79,7 @@ const COORDINATE_LIMITS = { latitude: 90, longitude: 180 }
 export const coordinateNumber = (
     axis: keyof typeof COORDINATE_LIMITS,
     text: string
-): string | undefined => {
+) => {
     const number = canonicalNumber(text.trim())
     return number !== undefined &&
         Math.abs(Number(number)) <= COORDINATE_LIMITS[axis]
@@ -94,13 +87,11 @@ export const coordinateNumber = (
         : undefined
 }
 
-// The range of the Java `int` DHIS2 stores whole numbers in.
 const INTEGER_MIN = -2147483648
 const INTEGER_MAX = 2147483647
 
-const whole =
-    (pattern: RegExp, bad: () => ValueProblem): Check =>
-    (value) => {
+const whole: (pattern: RegExp, bad: () => ValueProblem) => Check =
+    (pattern, bad) => (value) => {
         if (!pattern.test(value)) {
             return bad()
         }
@@ -110,30 +101,28 @@ const whole =
             : outOfIntegerRange()
     }
 
-const decimal =
-    (accepts: (n: number) => boolean, bad: () => ValueProblem): Check =>
-    (value) => {
-        if (isNumber(value)) {
-            return accepts(Number(value)) ? undefined : bad()
-        }
-        return value.includes(',') &&
-            canonicalNumber(value.replace(',', '.')) !== undefined
-            ? decimalComma()
-            : bad()
+const decimal: (
+    accepts: (n: number) => boolean,
+    bad: () => ValueProblem
+) => Check = (accepts, bad) => (value) => {
+    if (isNumber(value)) {
+        return accepts(Number(value)) ? undefined : bad()
     }
+    return value.includes(',') &&
+        canonicalNumber(value.replace(',', '.')) !== undefined
+        ? decimalComma()
+        : bad()
+}
 
-const matches =
-    (pattern: RegExp, bad: () => ValueProblem): Check =>
-    (value) =>
+const matches: (pattern: RegExp, bad: () => ValueProblem) => Check =
+    (pattern, bad) => (value) =>
         pattern.test(value) ? undefined : bad()
 
 const notACoordinate = () =>
     problem('coordinate', i18n.t('Enter a valid coordinate'))
 
 /** A stored `[lng,lat]` as its numbers, or `undefined` when it is not one or is past a limit. */
-export const parseCoordinate = (
-    value: string
-): { longitude: string; latitude: string } | undefined => {
+export const parseCoordinate = (value: string) => {
     const match = COORDINATE.exec(value)
     return match !== null &&
         Math.abs(Number(match[1])) <= COORDINATE_LIMITS.longitude &&
@@ -142,7 +131,6 @@ export const parseCoordinate = (
         : undefined
 }
 
-// What each value type accepts in its stored form.
 const CHECKS = new Map(
     Object.entries({
         INTEGER: whole(STORED_INTEGER, () =>
@@ -197,9 +185,7 @@ const CHECKS = new Map(
                 if (URL_PROTOCOLS.has(new URL(value).protocol)) {
                     return undefined
                 }
-            } catch {
-                // Not a URL at all.
-            }
+            } catch {}
             return problem('url', i18n.t('Enter a valid URL'))
         },
         DATE: (value) => (isIsoDate(value) ? undefined : notADate()),
@@ -239,7 +225,6 @@ const CHECKS = new Map(
     } satisfies Record<string, Check>)
 )
 
-// A value type not listed is read-only: nothing here can say what it takes.
 const KINDS = new Map(
     Object.entries({
         TEXT: 'text',
@@ -270,8 +255,6 @@ const KINDS = new Map(
     } satisfies Record<string, CellKind>)
 )
 
-// A value that can be negative has none: phone keypads for numeric and
-// decimal input have no minus key.
 const INPUT_MODES = new Map(
     Object.entries({
         TEXT: 'text',
@@ -286,7 +269,10 @@ const INPUT_MODES = new Map(
     } satisfies Record<string, InputMode>)
 )
 
-export const cellKind = ({ valueType, options }: Field): CellKind => {
+export const cellKind: (field: Field) => CellKind = ({
+    valueType,
+    options,
+}) => {
     const kind = KINDS.get(valueType) ?? 'readOnly'
     return options !== undefined &&
         kind !== 'popup' &&
@@ -296,7 +282,36 @@ export const cellKind = ({ valueType, options }: Field): CellKind => {
         : kind
 }
 
-export const inputModeFor = (field: Field): InputMode | undefined => {
+const LEFT_TO_RIGHT: ReadonlySet<string> = new Set([
+    'INTEGER',
+    'INTEGER_POSITIVE',
+    'INTEGER_NEGATIVE',
+    'INTEGER_ZERO_OR_POSITIVE',
+    'NUMBER',
+    'PERCENTAGE',
+    'UNIT_INTERVAL',
+    'DATE',
+    'DATETIME',
+    'TIME',
+    'AGE',
+    'PHONE_NUMBER',
+    'EMAIL',
+    'URL',
+    'COORDINATE',
+])
+
+/**
+ * The `dir` for a field's text: `ltr` for a value that reads left to right in any script, so a right-to-left page
+ * keeps `+232 76…` and `-3` in order; `auto` for words, such as free text and option names, which follow their script.
+ */
+export const textDirectionFor: (field: Field) => 'ltr' | 'auto' = ({
+    valueType,
+    options,
+}) => (options === undefined && LEFT_TO_RIGHT.has(valueType) ? 'ltr' : 'auto')
+
+export const inputModeFor: (field: Field) => InputMode | undefined = (
+    field
+) => {
     const kind = cellKind(field)
     return kind === 'text' || kind === 'number'
         ? INPUT_MODES.get(field.valueType)
@@ -304,26 +319,19 @@ export const inputModeFor = (field: Field): InputMode | undefined => {
 }
 
 interface OptionLookup {
-    /**
-     * Each code with the text a person types for it: its name when that name
-     * finds it again, else the code.
-     */
     texts: ReadonlyMap<string, string>
-    /** The code a typed code or name means, or the text itself when no option matches. */
     resolve: (text: string) => string
 }
 
-// An option set can hold thousands of options and every cell using it asks.
 const lookups = new WeakMap<ReadonlyArray<Option>, OptionLookup>()
 
-const lookupOf = (options: ReadonlyArray<Option>): OptionLookup => {
+const lookupOf = (options: ReadonlyArray<Option>) => {
     const known = lookups.get(options)
     if (known !== undefined) {
         return known
     }
     const texts = new Map(options.map(({ code }) => [code, code]))
     const codeOf = new Map<string, string>()
-    // Codes first, so a code wins over another option's name.
     for (const { code } of options) {
         codeOf.set(code.toLowerCase(), code)
     }
@@ -335,7 +343,6 @@ const lookupOf = (options: ReadonlyArray<Option>): OptionLookup => {
     }
     const resolve = (text: string) =>
         texts.has(text) ? text : (codeOf.get(text.toLowerCase()) ?? text)
-    // A duplicate name, or one that is another option's code, cannot be typed back.
     for (const { code, name } of options) {
         texts.set(code, resolve(name.trim()) === code ? name.trim() : code)
     }
@@ -344,7 +351,6 @@ const lookupOf = (options: ReadonlyArray<Option>): OptionLookup => {
     return lookup
 }
 
-// Masks apply to what is typed into a text box, not to dates or pick lists.
 const MASKABLE_VALUE_TYPES = new Set([
     'TEXT',
     'LONG_TEXT',
@@ -365,7 +371,7 @@ const MASKABLE_VALUE_TYPES = new Set([
 export const checkStored = (
     { valueType, options, fieldMask }: Field,
     value: string
-): ValueProblem | undefined => {
+) => {
     if (options !== undefined) {
         const { texts } = lookupOf(options)
         const codes = valueType === 'MULTI_TEXT' ? value.split(',') : [value]
@@ -393,7 +399,6 @@ const BOOLEAN_WORDS = new Map([
     ['0', 'false'],
 ])
 
-/** The language set as tags `Intl` reads (DHIS2 writes `pt_BR`); none when it reads none, for the default casing. */
 const languageTags = () => {
     try {
         return Intl.getCanonicalLocales(i18n.language?.replace(/_/g, '-'))
@@ -402,11 +407,7 @@ const languageTags = () => {
     }
 }
 
-/**
- * Typed Yes/No text as `true` or `false`: the labels a cell shows first, in the casing of their language (Turkish
- * `HAYIR` is `hayır`), then the words read in any language.
- */
-const booleanOf = (text: string): string | undefined => {
+const booleanOf = (text: string) => {
     const tags = languageTags()
     const word = text.toLocaleLowerCase(tags)
     if (i18n.t('Yes').toLocaleLowerCase(tags) === word) {
@@ -420,14 +421,10 @@ const booleanOf = (text: string): string | undefined => {
 
 const DATE_TIME_TEXT = /^(?<day>\S+?)(?:\s+|T)(?<time>\d{1,2}:\d{2})$/
 
-/** `9:30` as `09:30`; anything else as typed. */
 const paddedTime = (text: string) =>
     /^\d:\d{2}$/.test(text) ? `0${text}` : text
 
-const dateTimeToStored = (
-    text: string,
-    settings: ValueSettings
-): string | undefined => {
+const dateTimeToStored = (text: string, settings: ValueSettings) => {
     const groups = DATE_TIME_TEXT.exec(text)?.groups
     if (groups === undefined) {
         return undefined
@@ -436,12 +433,7 @@ const dateTimeToStored = (
     return day === undefined ? undefined : `${day}T${paddedTime(groups.time)}`
 }
 
-/**
- * A coordinate typed as `lat, lng`, or in the stored `[lng,lat]` order with brackets, as `[lng,lat]`; text that is
- * neither, or has a number outside its limit, as typed, for `checkStored` to refuse. Which number is which is never
- * guessed from its size.
- */
-const coordinateToStored = (text: string): string => {
+const coordinateToStored = (text: string) => {
     const bracketed = text.startsWith('[') && text.endsWith(']')
     const parts = (bracketed ? text.slice(1, -1) : text).split(',')
     if (parts.length !== 2) {
@@ -455,17 +447,12 @@ const coordinateToStored = (text: string): string => {
         : `[${longitude},${latitude}]`
 }
 
-/**
- * What a person typed or pasted as the stored text, or `undefined` for a date
- * the calendar does not have. Text that does not fit is returned as typed, for
- * `checkStored` to refuse.
- */
 const toStored = (
     field: Field,
     kind: CellKind,
     text: string,
     settings: ValueSettings
-): string | undefined => {
+) => {
     const { options } = field
     if (options !== undefined && field.valueType === 'MULTI_TEXT') {
         const codes = text
@@ -497,23 +484,21 @@ const toStored = (
     }
 }
 
-/** How a field's text is read and shown: an age is its date of birth, typed as any date is. */
-const textKind = (field: Field): CellKind =>
+const textKind = (field: Field) =>
     field.valueType === 'AGE' ? 'date' : cellKind(field)
 
 /** What a person typed or pasted → the stored value (`undefined` = no value), or a problem. */
-export const parseTyped = (
+export const parseTyped: (
     field: Field,
     text: string,
     settings: ValueSettings
-): TypedValue => {
+) => TypedValue = (field, text, settings) => {
     const trimmed = text.trim()
     if (trimmed === '') {
         return { ok: true, value: undefined }
     }
     const kind = textKind(field)
     const stored = toStored(field, kind, trimmed, settings)
-    // A yes-only field has no "no": the value is just absent.
     if (kind === 'trueOnly' && stored === 'false') {
         return { ok: true, value: undefined }
     }
@@ -530,11 +515,11 @@ export const parseTyped = (
 }
 
 /** A stored value → the text an editable cell shows (what the person would type). */
-export const typedText = (
+export const typedText: (
     field: Field,
     value: string,
     settings: ValueSettings
-): string => {
+) => string = (field, value, settings) => {
     switch (textKind(field)) {
         case 'date':
             return isoToCalendarDate(storedDay(value) ?? value, settings)

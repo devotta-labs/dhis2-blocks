@@ -6,7 +6,7 @@ import {
     control,
     focused,
     paste,
-} from '@/components/spreadsheet/grid/__tests__/gridRig'
+} from '@/components/spreadsheet/grid/test/gridRig'
 import type { DataRecord, TrackerColumn, TrackerRow } from '../model/types'
 import {
     BLOCKED,
@@ -19,14 +19,14 @@ import {
     notesOf,
     records,
     withOutbox,
-} from './__tests__/rig'
+} from './test/rig'
 import type { SlotDef } from '../register/compileLayout'
 import {
     BCG,
     engineFor,
     FIRST_NAME,
     immunisationRegister,
-} from '../register/__tests__/registerRig'
+} from '../register/test/registerRig'
 import type { FormPage, LoadedForm, NewRow } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 
@@ -39,7 +39,6 @@ const PROGRAM = 'program'
 const VISIT = 'visit'
 const FIRST = 'first'
 const LAST = 'last'
-/** A generated attribute no column shows: a new person gets a reserved value for it. */
 const CHILD_ID = 'childId'
 const VISIT_1 = `${VISIT}#1` as const
 const VISIT_2 = `${VISIT}#2` as const
@@ -83,7 +82,7 @@ const COLUMNS: TrackerColumn[] = [
     },
 ]
 
-const occurrence = (n: number): SlotDef => ({
+const occurrence: (n: number) => SlotDef = (n) => ({
     name: `${VISIT}#${n}`,
     stageId: VISIT,
     kind: 'occurrence',
@@ -92,7 +91,6 @@ const occurrence = (n: number): SlotDef => ({
     label: `Visit ${n}`,
 })
 
-/** A person's row and records, by the ids' prefix: `<p>p` the person, `<p>e` the enrolment, `<p>1`/`<p>2` visits. */
 const person = (prefix: string, isNew?: true) => {
     const ids = {
         person: `${prefix}p`,
@@ -123,16 +121,19 @@ const person = (prefix: string, isNew?: true) => {
             status: 'ACTIVE',
             isNew,
         },
-        ...([VISIT_1, VISIT_2] as const).map((slot): DataRecord => ({
-            kind: 'event',
-            id: ids[slot],
-            programStageId: VISIT,
-            orgUnitId: 'o1',
-            enrollmentId: ids.enrollment,
-            status: 'ACTIVE',
-            isNew: true,
-            slot,
-        })),
+        ...([VISIT_1, VISIT_2] as const).map(
+            (slot) =>
+                ({
+                    kind: 'event',
+                    id: ids[slot],
+                    programStageId: VISIT,
+                    orgUnitId: 'o1',
+                    enrollmentId: ids.enrollment,
+                    status: 'ACTIVE',
+                    isNew: true,
+                    slot,
+                }) satisfies DataRecord
+        ),
     ]
     return { row, records }
 }
@@ -149,14 +150,10 @@ const table = (rows: TrackerRow[]) => ({
 const AMINA = person('a')
 const JOSEPH = person('j')
 
-/**
- * Two people: Amina Bangura and Joseph Kamara, each with two visit slots of one stage; a note on Joseph's row, and
- * Joseph's enrolment cancelled when `cancelled`.
- */
-const register = ({
-    cancelled = false,
-    hasMore = false,
-}: { cancelled?: boolean; hasMore?: boolean } = {}): LoadedForm => ({
+const register: (options?: {
+    cancelled?: boolean
+    hasMore?: boolean
+}) => LoadedForm = ({ cancelled = false, hasMore = false } = {}) => ({
     tables: [table([AMINA.row, JOSEPH.row])],
     values: new Map([
         [cellKey('ap', FIRST), 'Amina'],
@@ -194,7 +191,9 @@ const register = ({
     sections: new Map(),
     readOnlyRecords: new Map(
         cancelled
-            ? JOSEPH.records.map(({ id }): [string, string] => [id, CANCELLED])
+            ? JOSEPH.records.map(
+                  ({ id }) => [id, CANCELLED] satisfies [string, string]
+              )
             : []
     ),
     canReopen: new Set(),
@@ -214,8 +213,7 @@ const register = ({
 })
 
 let count = 0
-/** A new person, as a register source makes one: new records, and a reserved child id. */
-const newRow = (): NewRow => {
+const newRow: () => NewRow = () => {
     count += 1
     return {
         ...person(`n${count}`, true),
@@ -223,7 +221,6 @@ const newRow = (): NewRow => {
     }
 }
 
-/** The register over a source that keeps its saves waiting, so the outbox holds every change. */
 const mountHeld = async (server = freshServer()) => {
     const memory = memorySource(register())
     memory.hold()
@@ -253,7 +250,6 @@ const header = (n: number) => page.getByRole('rowheader').nth(n)
 test('the row header names the person from the cells and follows typing', async () => {
     await mountHeld()
     await expect.element(header(0)).toHaveTextContent('Amina Bangura')
-    // The source's note on a row is behind its marker, and the header's description.
     await expect.element(header(1)).toHaveTextContent(/^Joseph KamaraNote/)
     await expect
         .element(header(1))
@@ -261,7 +257,6 @@ test('the row header names the person from the cells and follows typing', async 
     control(cellKey('ap', LAST)).focus()
     await userEvent.keyboard('Conteh{Enter}')
     await expect.element(header(0)).toHaveTextContent('Amina Conteh')
-    // Its cells are named by it.
     await expect
         .element(page.getByRole('textbox', { name: '1st visit Amina Conteh' }))
         .toBeInTheDocument()
@@ -281,7 +276,6 @@ test('Ctrl+Enter adds a person whose cells save to its own new records', async (
     await expect.element(header(2)).toHaveTextContent('New person')
     const added: TrackerRow = context().tables[0].rows[2]
     const { person: personId = '', [VISIT_2]: visitId = '' } = added.slots ?? {}
-    // Focus is on the new person's first open cell.
     expect(focused()).toBe(
         cellDomId(context().idScope, cellKey(personId, FIRST))
     )
@@ -328,7 +322,6 @@ test('a new person’s reserved values are saved, and undo leaves them', async (
         .toEqual([reserved])
     await userEvent.keyboard('Fatmata{Enter}')
     control(cellKey(personId, FIRST)).focus()
-    // Twice: the second would undo the reserved value, were it the person's own.
     await userEvent.keyboard('{Control>}z{/Control}{Control>}z{/Control}')
     const { cells } = context().store.getState()
     expect(cells[cellKey(personId, FIRST)]?.value).toBeUndefined()
@@ -360,7 +353,6 @@ test('the buttons speak of people', async () => {
     await expect
         .element(page.getByRole('status'))
         .toHaveTextContent('People shown: 3')
-    // A page's notes show on its rows.
     await expect.element(header(2)).toHaveTextContent(/^KadiatuNote/)
     await expect
         .element(header(2))
@@ -389,7 +381,6 @@ test('a visit dated before the one before it warns on its date, without blocking
         'Later than the 2nd visit'
     )
     await expect.poll(async () => (await queued(server)).length).toBe(2)
-    // Put in order, the warnings go.
     control(cellKey('a2', 'occurredAt')).focus()
     await userEvent.keyboard('2026-10-25{Enter}')
     await expect
@@ -403,18 +394,15 @@ test('a visit dated before the one before it warns on its date, without blocking
 test('nothing reaches the outbox for a read-only person: not a paste, an undo or a rule’s value', async () => {
     const memory = memorySource(register({ cancelled: true }))
     const { server, context, view } = await mount({ ...memory.source, newRow })
-    // A block pasted down over Joseph's row fills only Amina's.
     control(cellKey('ap', LAST)).focus()
     expect(paste(control(cellKey('ap', LAST)), 'Conteh\nSesay')).toBe(true)
     const { store } = context()
     expect(store.getState().cells[cellKey('jp', LAST)]?.value).toBe('Kamara')
-    // A rule's value for the read-only person is not taken.
     expect(
         store
             .getState()
             .commitMany([{ key: cellKey('jp', FIRST), text: 'Joe' }], 'rule')
     ).toEqual(['unchanged'])
-    // A visit typed, then completed in a stage that blocks entry: undo cannot change it any more.
     control(cellKey('a1', 'occurredAt')).focus()
     await userEvent.keyboard('2026-10-05{Enter}')
     expect(await view().complete('a1')).toMatchObject([{ result: 'saved' }])
@@ -447,7 +435,6 @@ test('a change that waits for a person on no row shown is counted as not sent', 
     await expect
         .element(page.getByText('Not yet sent to DHIS2: 1'))
         .toBeInTheDocument()
-    // Counted, with no cell to link to.
     expect(view().summary.items).toEqual([])
 })
 
@@ -472,7 +459,6 @@ test('a new person’s visit in a stage the user may not enter data in is read-o
     expect(control(cellKey(other, 'occurredAt'))).not.toHaveAttribute(
         'readonly'
     )
-    // Nothing typed into it is kept.
     cell.focus()
     await userEvent.keyboard('2026-10-05{Enter}')
     expect(

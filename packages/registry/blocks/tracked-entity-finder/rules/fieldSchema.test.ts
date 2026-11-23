@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hivProgram } from '../__tests__/fixtures/program'
+import { hivProgram } from '../test/fixtures/program'
 import { fieldSchema, errorCodeOf } from './fieldSchema'
 import { attributeOf, buildProgramModel } from './programModel'
 import type { FieldValue, FormField } from './types'
@@ -46,7 +46,7 @@ describe('fieldSchema', () => {
             throw new Error('No allergies in the test program')
         }
         const schema = fieldSchema(allergies, 'exact')
-        // In option-set order; codes the option set lacks are dropped.
+
         expect(
             schema.parse({
                 kind: 'multiText',

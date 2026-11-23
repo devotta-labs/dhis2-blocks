@@ -24,9 +24,18 @@ describe('formatDhis2Value', () => {
         ['DATETIME', '2026-10-14T23:30:00.000', 'Oct 14, 2026 23:30'],
         ['TIME', '08:05', '08:05'],
         ['COORDINATE', '[13.2,8.4]', '8.4, 13.2'],
-    ])('formats %s', (valueType, value, expected) =>
+        ['LETTER', 'A', 'A'],
+        ['EMAIL', 'nurse@example.org', 'nurse@example.org'],
+        ['PHONE_NUMBER', '+232 76 123456', '+232 76 123456'],
+        ['URL', 'https://example.org/a', 'https://example.org/a'],
+        ['FILE_RESOURCE', 'aB3dE5gH7jK', 'File'],
+        ['IMAGE', 'aB3dE5gH7jK', 'Image'],
+    ])('formats %s', (valueType, value, expected) => {
+        const warn = vi.spyOn(console, 'warn')
         expect(formatDhis2Value(value, { valueType }, opts)).toBe(expected)
-    )
+        expect(warn).not.toHaveBeenCalled()
+        warn.mockRestore()
+    })
 
     it('keeps every stored decimal', () => {
         expect(formatDhis2Value('3.14159', { valueType: 'NUMBER' }, opts)).toBe(
@@ -83,7 +92,7 @@ describe('formatDhis2Value', () => {
         ).toBe('ou2')
     })
     it('shows a username as stored, without a warning', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         expect(formatDhis2Value('admin', { valueType: 'USERNAME' }, opts)).toBe(
             'admin'
         )
@@ -91,7 +100,7 @@ describe('formatDhis2Value', () => {
         warn.mockRestore()
     })
     it('returns the raw string for an unknown value type', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const warn = vi.spyOn(console, 'warn')
         expect(
             formatDhis2Value('{"a":1}', { valueType: 'GEOJSON' }, opts)
         ).toBe('{"a":1}')

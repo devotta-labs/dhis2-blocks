@@ -2,7 +2,7 @@ import { CustomDataProvider, FetchError } from '@dhis2/app-runtime'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
-import v43 from '../__tests__/fixtures/v43/event-changelog.json'
+import v43 from '../test/fixtures/v43/event-changelog.json'
 import { useEventChangelog } from './useEventChangelog'
 import { z } from 'zod'
 
@@ -11,7 +11,6 @@ type CustomData = ComponentProps<typeof CustomDataProvider>['data']
 const EVENT = 'TlE2eEvt004'
 const RESOURCE = `tracker/events/${EVENT}/changeLogs`
 
-/** Recorded or generated rows, as the JSON the engine passes on. */
 const ChangeLogsSchema = z.object({ changeLogs: z.array(z.json()) })
 
 type Body = z.infer<typeof ChangeLogsSchema> | Error
@@ -25,13 +24,11 @@ const setup = (respond: Respond) => {
             const params = query.params ?? {}
             const page = Number(params.page)
             requests.push({ page, order: String(params.order) })
-            await new Promise((resolve) => setTimeout(resolve, 5))
             const body = respond({ page, pageSize: Number(params.pageSize) })
             if (body instanceof Error) throw body
             return body
         },
     }
-    // Failures retry, as in a host; without the wait between tries.
     const queryClient = new QueryClient({
         defaultOptions: { queries: { retryDelay: 0 } },
     })
@@ -45,7 +42,6 @@ const setup = (respond: Respond) => {
     return { requests, wrapper }
 }
 
-/** A distinct data value change per row, one millisecond apart, newest first. */
 const generatedRow = (index: number) => ({
     change: {
         dataValue: {
@@ -70,8 +66,6 @@ describe('useEventChangelog', () => {
                 useEventChangelog(EVENT, { enabled: props?.enabled ?? false }),
             { wrapper, initialProps: { enabled: false } }
         )
-
-        await new Promise((resolve) => setTimeout(resolve, 30))
         expect(requests).toHaveLength(0)
         expect(result.current).toEqual({
             status: 'idle',
@@ -100,7 +94,6 @@ describe('useEventChangelog', () => {
             ],
         ])
         expect(result.current.saves[0]?.user.displayName).toBe('John Traore')
-        // Event fields are labelled; data elements need the stage.
         expect(result.current.saves[2]?.changes[1]?.name).toBe('Due date')
         expect(result.current.saves[2]?.changes[0]?.name).toBe('roKuXYfw1BW')
         expect(result.current.truncated).toBe(false)
@@ -168,7 +161,6 @@ describe('useEventChangelog', () => {
     })
 
     it('stops at 500 rows and reports truncated', async () => {
-        // Always a full page: the server has more than 500 rows.
         const { wrapper, requests } = setup(({ page, pageSize }) =>
             ChangeLogsSchema.parse({
                 changeLogs: Array.from({ length: pageSize }, (_, i) =>

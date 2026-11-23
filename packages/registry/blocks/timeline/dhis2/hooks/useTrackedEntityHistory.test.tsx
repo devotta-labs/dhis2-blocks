@@ -3,13 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React, { type ComponentProps, type ReactNode } from 'react'
 import { renderHook } from 'vitest-browser-react'
 import { z } from 'zod'
-import { NOW, notFound } from '../__tests__/fixtures/renderEntries'
-import changelog from '../__tests__/fixtures/v43/tracked-entity-changelog.json'
-import page1 from '../__tests__/fixtures/v43/events-page-1.json'
-import page2 from '../__tests__/fixtures/v43/events-page-2.json'
-import orgUnitNames from '../__tests__/fixtures/v43/org-unit-names.json'
-import programMetadata from '../__tests__/fixtures/v43/program-metadata.json'
-import trackedEntity from '../__tests__/fixtures/v43/tracked-entity.json'
+import { NOW, notFound } from '../test/fixtures/renderEntries'
+import changelog from '../test/fixtures/v43/tracked-entity-changelog.json'
+import page1 from '../test/fixtures/v43/events-page-1.json'
+import page2 from '../test/fixtures/v43/events-page-2.json'
+import orgUnitNames from '../test/fixtures/v43/org-unit-names.json'
+import programMetadata from '../test/fixtures/v43/program-metadata.json'
+import trackedEntity from '../test/fixtures/v43/tracked-entity.json'
 import { timelineKeys } from '../timelineKeys'
 import { useTrackedEntityHistory } from './useTrackedEntityHistory'
 
@@ -53,7 +53,6 @@ const tbMetadata = {
 }
 
 const ancChanges = ChangeLogs.parse(changelog).changeLogs
-// The type's attributes come back in every program's changelog.
 const tbChanges = [
     ancChanges[0],
     {
@@ -82,16 +81,12 @@ const entityWithTb = {
 
 interface Server {
     entity?: Error
-    /** Called on each events request; a thrown error fails it. */
-    onEvents?: (program: string) => void
-    /** Enrollments added to the record. */
+    onEntity?: () => void
+    onEvents?: (program: string) => void | Promise<void>
     extraEnrollments?: Json[]
-    /** Events per program, or an error to throw. */
     events?: Record<string, Json[] | Error>
     changelogs?: Record<string, Json[] | Error>
-    /** Holds every changelog request until it settles. */
     changesGate?: Promise<void>
-    /** Org unit names added to the recorded ones. */
     extraOrgUnits?: Json[]
 }
 
@@ -109,6 +104,7 @@ const setup = (server: Server = {}) => {
     const data: CustomData = {
         'tracker/trackedEntities': async () => {
             requests.push('trackedEntity')
+            server.onEntity?.()
             if (server.entity !== undefined) {
                 throw server.entity
             }
@@ -123,9 +119,7 @@ const setup = (server: Server = {}) => {
         'tracker/events': async (_type, query) => {
             const program = String(query.params?.program)
             requests.push(`events:${program}`)
-            // A moment on the wire, so a test can see the state in between.
-            await new Promise((resolve) => setTimeout(resolve, 30))
-            server.onEvents?.(program)
+            await server.onEvents?.(program)
             const pageSize = Number(query.params?.pageSize)
             const events =
                 server.events?.[program] ??
@@ -181,7 +175,6 @@ const renderHistory = (
     options: { programs?: string[]; cap?: number } = {}
 ) => {
     const { wrapper, requests, queryClient } = setup(server)
-    /** Every render's status and entry count, to catch states in between. */
     const renders: Array<{ status: string; count: number }> = []
     return renderHook(
         () => {
@@ -226,7 +219,6 @@ describe('useTrackedEntityHistory', () => {
                 (entry) => entry.id === 'milestone:TlE2eTbEnr1:enrolled'
             )
         ).toBe(true)
-        // 2.43 requires program on events: one request per program.
         expect(requests.filter((r) => r.startsWith('events:')).sort()).toEqual(
             [`events:${TB}`, `events:${ANC}`].sort()
         )
@@ -312,11 +304,12 @@ describe('useTrackedEntityHistory', () => {
 
     it('keeps the history on show while a failed program is retried', async () => {
         let tbFails = true
+        const retry = Promise.withResolvers<void>()
         const { result, renders } = await renderHistory({
             onEvents: (program) => {
-                if (program === TB && tbFails) {
-                    throw new Error('boom')
-                }
+                if (program !== TB) return
+                if (tbFails) throw new Error('boom')
+                return retry.promise
             },
         })
         await expect.poll(() => result.current.status).toBe('success')
@@ -328,6 +321,9 @@ describe('useTrackedEntityHistory', () => {
 
         tbFails = false
         notice?.retry?.()
+        await expect.poll(() => result.current.isFetching).toBe(true)
+        expect(result.current.entries).toHaveLength(shown)
+        retry.resolve()
         await expect
             .poll(() =>
                 result.current.entries.some(
@@ -336,7 +332,6 @@ describe('useTrackedEntityHistory', () => {
             )
             .toBe(true)
 
-        // Never back to pending or to fewer entries while the retry ran.
         const during = renders.slice(from)
         expect(during.length).toBeGreaterThan(1)
         expect(during.every((render) => render.status === 'success')).toBe(true)
@@ -379,14 +374,12 @@ describe('useTrackedEntityHistory', () => {
         const added = result.current.entries.find(
             (entry) => entry.id === 'milestone:TlE2eNewEnr:enrolled'
         )
-        // Shown only once its program's metadata has answered.
         expect(added?.data).toMatchObject({ program: { id: 'TlE2eNewPrg' } })
     })
 
     it("waits for the next person's org unit names instead of showing their ids", async () => {
         const server: Server = {}
         const { wrapper } = setup(server)
-        /** The TB event's org unit on every render that shows it. */
         const shown: string[] = []
         const { rerender } = await renderHook(
             (props?: { trackedEntity: string }) => {
@@ -412,7 +405,6 @@ describe('useTrackedEntityHistory', () => {
         )
         await expect.poll(() => shown.at(-1)).toBe(`${TE}:Ngelehun CHC`)
 
-        // The next person's TB visit was in an org unit not named yet.
         const next = 'TlE2eTei002'
         server.events = { [TB]: [{ ...tbEvent, orgUnit: 'TlE2eOrgU99' }] }
         server.extraOrgUnits = [
@@ -472,15 +464,18 @@ describe('useTrackedEntityHistory', () => {
     })
 
     it('refreshes on refetch and on invalidating timelineKeys.root, keeping entries meanwhile', async () => {
-        const { result, requests, queryClient } = await renderHistory()
+        let fetchedEntity = Promise.withResolvers<void>()
+        const { result, requests, queryClient } = await renderHistory({
+            onEntity: () => fetchedEntity.resolve(),
+        })
         await expect.poll(() => result.current.status).toBe('success')
         const before = requests.length
 
+        fetchedEntity = Promise.withResolvers<void>()
         result.current.refetch()
         expect(result.current.entries.length).toBeGreaterThan(0)
-        await expect.poll(() => requests.length).toBeGreaterThan(before)
+        await fetchedEntity.promise
         await expect.poll(() => result.current.isFetching).toBe(false)
-        // Three hooks share the tracked entity: one request, none cancelled.
         expect(
             requests.slice(before).filter((r) => r === 'trackedEntity')
         ).toHaveLength(1)

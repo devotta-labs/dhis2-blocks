@@ -20,11 +20,7 @@ import { Input } from '@/components/dhis2/ui/input'
 import { Label } from '@/components/dhis2/ui/label'
 
 import { CalendarRangeFields } from './CalendarRangeFields'
-import {
-    ComboboxField,
-    SelectField,
-    type SelectFieldOption,
-} from './FilterSelectFields'
+import { ComboboxField, SelectField } from './FilterSelectFields'
 import {
     type FilterCalendarContext,
     optionDisplayName,
@@ -34,7 +30,7 @@ import {
     UserFilterSelect,
 } from './ReferenceFilterSelects'
 
-const relativePeriodLabel = (period: RelativeDatePeriod): string => {
+const relativePeriodLabel = (period: RelativeDatePeriod) => {
     switch (period) {
         case 'TODAY':
             return i18n.t('Today')
@@ -53,7 +49,7 @@ const relativePeriodLabel = (period: RelativeDatePeriod): string => {
     }
 }
 
-const relativePeriodOptions = (): SelectFieldOption<RelativeDatePeriod>[] =>
+const relativePeriodOptions = () =>
     RELATIVE_DATE_PERIODS.map((value) => ({
         value,
         label: relativePeriodLabel(value),
@@ -117,8 +113,6 @@ export const EditorValue = ({
             value: option.code,
             label: optionDisplayName(field, option),
         }))
-        // Tracker supports multiple option-set values on capable servers, but
-        // Capture's system status filters are intentionally single-valued.
         if (usesMultipleOptionSelection(field, capabilities)) {
             return (
                 <ComboboxField
@@ -384,7 +378,6 @@ export const EditorValue = ({
     )
 }
 
-/** A labelled dense Input, with an optional description read with it. */
 const ValueInput = ({
     label,
     description,

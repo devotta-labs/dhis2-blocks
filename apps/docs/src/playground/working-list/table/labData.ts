@@ -99,7 +99,6 @@ const EVERYDAY = [
     ['Zainab', 'Kanu'],
 ]
 
-// Matches EVERYDAY, so a sex filter reads sensibly.
 const SEXES = ['F', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F', 'M', 'F']
 
 const LONG = [
@@ -149,7 +148,6 @@ const ENROLLMENT_STATUSES = [
 
 const pad = (value: number, length = 2) => String(value).padStart(length, '0')
 
-/** ISO date `offset` days from `today`. */
 const addDays = (today: string, offset: number) => {
     const date = new Date(`${today}T12:00:00Z`)
     date.setUTCDate(date.getUTCDate() + offset)
@@ -161,7 +159,6 @@ const isoToday = () => {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
-/** Deterministic noise, so a preset always shows the same rows. */
 const noise = (index: number, salt = 0) => {
     const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
     return x - Math.floor(x)
@@ -182,7 +179,6 @@ const nameFor = (data: LabData, index: number) => {
 
 const timestamp = (date: string) => `${date}T00:00:00.000`
 
-/** One value per record the block cannot read, by field, as a real server might hold it. */
 const BAD_VALUES: ReadonlyArray<readonly [string, string]> = [
     [ATTRIBUTES.birthDate, '31/12/1990'],
     [ATTRIBUTES.sex, 'X'],
@@ -192,9 +188,12 @@ const BAD_VALUES: ReadonlyArray<readonly [string, string]> = [
 ]
 
 /** The made-up program's people: enrolled over the past two years, each with one visit around today. */
-export const generateWorld = (data: LabData, today = isoToday()): World => {
+export const generateWorld: (data: LabData, today?: string) => World = (
+    data,
+    today = isoToday()
+) => {
     const count = Math.max(0, Math.min(5000, Math.round(data.records)))
-    const people = Array.from({ length: count }, (_, index): LabPerson => {
+    const people = Array.from({ length: count }, (_, index) => {
         const [firstName, lastName] = nameFor(data, index) ?? []
         const optional = (salt: number, value: string) =>
             noise(index, salt) * 100 < data.emptyValues ? undefined : value
@@ -248,20 +247,18 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
             id,
             attributes,
             createdAt: `${enrolled}T09:${pad(index % 60)}:00.000`,
-            // Mostly active, some completed, a few cancelled.
             enrollmentStatus: ENROLLMENT_STATUSES[index % 10] ?? 'ACTIVE',
             enrolledAt: timestamp(enrolled),
             occurredAt: timestamp(addDays(enrolled, -2)),
             followUp: index % 6 === 0,
             visit: {
                 id: `labEv${pad(index, 6)}`,
-                // One past visit in four was never done, so it is overdue.
                 status: done ? 'COMPLETED' : 'SCHEDULE',
                 occurredAt: done ? timestamp(visitDay) : undefined,
                 scheduledAt: timestamp(visitDay),
                 dataValues,
             },
-        }
+        } satisfies LabPerson
     })
     return { today, people }
 }

@@ -50,7 +50,6 @@ const PropTooltip = ({
     )
 }
 
-/** Slice highlighted text without discarding its syntax colors. */
 const sliceLine = (line: ReactNode, start: number, end: number) => {
     let offset = 0
     return Children.toArray(line).flatMap((token, index) => {
@@ -65,7 +64,7 @@ const sliceLine = (line: ReactNode, start: number, end: number) => {
         if (!text) return []
         return [
             isValidElement(token)
-                ? cloneElement(token, { key: index }, text)
+                ? cloneElement(token, { key: `${start}:${index}` }, text)
                 : text,
         ]
     })

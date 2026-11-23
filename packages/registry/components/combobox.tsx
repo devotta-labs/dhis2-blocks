@@ -1,7 +1,8 @@
 'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
-import { IconChevronDown16 } from '@dhis2/ui-icons'
+import { IconChevronDown16, IconCross16 } from '@dhis2/ui-icons'
+import { cva, type VariantProps } from 'class-variance-authority'
 import * as React from 'react'
 import { CheckboxCheckmark, checkboxBoxVariants } from './checkbox'
 import { cn } from './cn'
@@ -11,21 +12,19 @@ import {
     InputGroupButton,
     InputGroupInput,
 } from './input-group'
-import { SelectCheckmark, SelectClearIcon } from './select'
+import { SelectCheckmark } from './select'
 
-/*
+/**
  * shadcn Combobox (Base UI) restyled to match @dhis2/ui's filterable
  * SingleSelect and MultiSelect: a select-style trigger (see
  * `selectTriggerVariants`), with the filter input at the top of the popup.
  */
-
 const Combobox = ComboboxPrimitive.Root
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
     return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />
 }
 
-// React 18 drops `ref` from function component props; shadcn targets React 19.
 const ComboboxTrigger = React.forwardRef<
     HTMLButtonElement,
     ComboboxPrimitive.Trigger.Props
@@ -40,7 +39,7 @@ const ComboboxTrigger = React.forwardRef<
         {...props}
     >
         {children}
-        <span className="ms-auto flex shrink-0 ps-0.5 text-dhis2-foreground">
+        <span className="flex shrink-0 text-dhis2-muted-foreground not-first:ms-auto not-first:ps-0.5">
             <IconChevronDown16 />
         </span>
     </ComboboxPrimitive.Trigger>
@@ -56,12 +55,12 @@ const ComboboxClear = React.forwardRef<
         data-slot="combobox-clear"
         render={<InputGroupButton variant="ghost" size="icon-xs" />}
         className={cn(
-            'text-dhis2-subtle-foreground hover:text-dhis2-foreground',
+            'text-dhis2-muted-foreground hover:text-dhis2-foreground',
             className
         )}
         {...props}
     >
-        <SelectClearIcon />
+        <IconCross16 />
     </ComboboxPrimitive.Clear>
 ))
 ComboboxClear.displayName = 'ComboboxClear'
@@ -72,11 +71,14 @@ function ComboboxInput({
     disabled = false,
     showTrigger = true,
     showClear = false,
+    clearLabel = 'Clear',
     'aria-labelledby': labelledBy,
     ...props
 }: ComboboxPrimitive.Input.Props & {
     showTrigger?: boolean
     showClear?: boolean
+    /** Accessible name of the clear button. */
+    clearLabel?: string
 }) {
     return (
         <InputGroup className={cn('w-auto', className)}>
@@ -84,8 +86,6 @@ function ComboboxInput({
                 render={<InputGroupInput disabled={disabled} />}
                 disabled={disabled}
                 {...props}
-                // Only the caller's: inside a Field, the field's label names the trigger, and a search input in the
-                // popup keeps its own aria-label. An input that is the control is named by the label's `for`.
                 aria-labelledby={labelledBy}
             />
             <InputGroupAddon align="inline-end">
@@ -95,11 +95,17 @@ function ComboboxInput({
                         variant="ghost"
                         render={<ComboboxTrigger />}
                         data-slot="input-group-button"
-                        className="group-has-data-[slot=combobox-clear]/input-group:hidden"
+                        className="group-has-data-[slot=combobox-clear]/input-group:hidden data-popup-open:bg-transparent data-pressed:bg-transparent"
                         disabled={disabled}
+                        tabIndex={-1}
                     />
                 )}
-                {showClear && <ComboboxClear disabled={disabled} />}
+                {showClear && (
+                    <ComboboxClear
+                        disabled={disabled}
+                        aria-label={clearLabel}
+                    />
+                )}
             </InputGroupAddon>
             {children}
         </InputGroup>
@@ -133,7 +139,7 @@ function ComboboxContent({
                     data-slot="combobox-content"
                     data-chips={!!anchor}
                     className={cn(
-                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-32 origin-(--transform-origin) overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--dhis2-field-height-dense)',
+                        'group/combobox-content relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) overflow-hidden data-[chips=false]:not-has-[>[data-slot=input-group]]:min-w-[calc(var(--anchor-width)+--spacing(7))] rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover *:data-[slot=input-group]:m-2 *:data-[slot=input-group]:mb-1 *:data-[slot=input-group]:h-(--dhis2-field-height-dense)',
                         className
                     )}
                     {...props}
@@ -181,9 +187,6 @@ const ComboboxItem = React.forwardRef<
                 </ComboboxPrimitive.ItemIndicator>
             </span>
         ) : (
-            // Kept mounted so the empty box shows on unselected options; the
-            // indicator has no data-checked/data-disabled of its own, so map
-            // them from the item's state and props.
             <ComboboxPrimitive.ItemIndicator
                 keepMounted
                 className={cn(checkboxBoxVariants({ size: 'dense' }), 'me-1.5')}
@@ -265,19 +268,38 @@ function ComboboxSeparator({
     )
 }
 
-function ComboboxChips({
-    className,
-    ...props
-}: React.ComponentPropsWithRef<typeof ComboboxPrimitive.Chips> &
-    ComboboxPrimitive.Chips.Props) {
-    return (
-        <ComboboxPrimitive.Chips
-            data-slot="combobox-chips"
-            className={cn('flex flex-wrap items-center gap-1', className)}
-            {...props}
-        />
-    )
-}
+const comboboxChipsVariants = cva(
+    'relative flex w-full min-w-0 cursor-text flex-wrap items-center gap-1 rounded-dhis2-sm border border-dhis2-input bg-dhis2-background text-sm leading-4 text-dhis2-foreground shadow-[inset_0_0_1px_0_color-mix(in_srgb,var(--dhis2-foreground)_10%,transparent)] outline-none has-focus-visible:border-dhis2-ring has-focus-visible:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-2 forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:outline-solid forced-colors:has-[[data-slot=combobox-chip-input]:focus-visible]:-outline-offset-2 has-data-popup-open:border-dhis2-ring has-data-popup-open:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-disabled:cursor-not-allowed has-disabled:bg-dhis2-muted has-disabled:text-dhis2-disabled-foreground has-aria-invalid:border-dhis2-destructive-border',
+    {
+        variants: {
+            size: {
+                default:
+                    'min-h-(--dhis2-control-height) py-[calc((var(--dhis2-control-height)-28px)/2)] ps-3 pe-1.5',
+                sm: 'min-h-(--dhis2-field-height-dense) py-0.5 ps-2 pe-1',
+            },
+        },
+        defaultVariants: {
+            size: 'default',
+        },
+    }
+)
+
+/**
+ * The box holding the chips and the chips input, framed like the house input
+ * and select trigger; `size="sm"` matches the dense select trigger.
+ */
+const ComboboxChips = React.forwardRef<
+    HTMLDivElement,
+    ComboboxPrimitive.Chips.Props & VariantProps<typeof comboboxChipsVariants>
+>(({ className, size = 'default', ...props }, ref) => (
+    <ComboboxPrimitive.Chips
+        ref={ref}
+        data-slot="combobox-chips"
+        className={cn(comboboxChipsVariants({ size }), className)}
+        {...props}
+    />
+))
+ComboboxChips.displayName = 'ComboboxChips'
 
 /** Matches the dense @dhis2/ui Chip that MultiSelect shows per selection. */
 function ComboboxChip({

@@ -79,7 +79,7 @@ export interface WorkingListPrivateUiContextValue {
 export const WorkingListPrivateUiContext =
     createContext<WorkingListPrivateUiContextValue | null>(null)
 
-export const useWorkingListPrivateUi = (): WorkingListPrivateUiContextValue => {
+export const useWorkingListPrivateUi = () => {
     const context = useContext(WorkingListPrivateUiContext)
     if (!context) {
         throw new Error(

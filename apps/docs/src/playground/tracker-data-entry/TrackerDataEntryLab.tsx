@@ -30,14 +30,12 @@ export const TrackerDataEntryLab = () => {
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []
     )
 
     const { example, rules, refuse, network } = settings
-    // Fresh data each run, so what one run saves is gone in the next.
     const data = useMemo(() => generateLabData({ example }), [example, run])
     const respond = useMemo(
         () => answer({ example, rules, refuse }, data),
@@ -100,7 +98,6 @@ export const TrackerDataEntryLab = () => {
                             dispatch({ type: 'switchMode', mode: next })
                         }
                     />
-                    {/* The examples use the docs' DHIS2 ids, so they open there too. */}
                     <PresetControls
                         presets={PRESETS}
                         selected={state.preset}

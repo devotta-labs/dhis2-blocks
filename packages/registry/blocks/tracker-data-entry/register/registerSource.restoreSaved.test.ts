@@ -3,9 +3,9 @@ import type { DataEngine } from '@/components/spreadsheet'
 import type { EventRecord } from '../model/types'
 import type { OutboxRecord } from '../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
-import { trackerEngine } from '../sources/__tests__/trackerRig'
-import enrollments from './__tests__/fixtures/immunisation-enrollments.json'
-import immunisation from './__tests__/fixtures/immunisation-program.json'
+import { trackerEngine } from '../sources/test/trackerRig'
+import enrollments from './test/fixtures/immunisation-enrollments.json'
+import immunisation from './test/fixtures/immunisation-program.json'
 import {
     BCG,
     DOSE,
@@ -19,14 +19,11 @@ import {
     engineFor,
     enrolledAs,
     immunisationRegister,
-} from './__tests__/registerRig'
-import { OPV, PERSON, restoredDose, restoring } from './__tests__/restoreRig'
-
-/** What a reload restores of saved events DHIS2 ranks anew, of stages the user may not write, and when DHIS2 is slow. */
+} from './test/registerRig'
+import { OPV, PERSON, restoredDose, restoring } from './test/restoreRig'
 
 type Request = Parameters<DataEngine['query']>[0]
 
-/** Fatmata's BCG dose, ImmEvt00006, as typed into the DPT 1 column before Capture changed its values to BCG 0. */
 const RANKED_ELSEWHERE: EventRecord = {
     ...restoredDose('ImmEnr00030', DPT_1),
     id: 'ImmEvt00006',
@@ -48,7 +45,6 @@ const FATMATA_HELD = {
     ],
 }
 
-/** `outbox`'s one change to `event`, which DHIS2 holds, is saved as an update of it: nothing refuses it. */
 const expectUpdated = async (
     source: ReturnType<typeof immunisationRegister>,
     outbox: OutboxRecord[],
@@ -89,7 +85,6 @@ test('a saved dose DHIS2 ranks in another slot, on a page not loaded yet, is an 
         enrollments: { enrollments: enrollments.enrollments.slice(0, 2) },
     }
     await source.load(engineFor(firstTwo).engine)
-    // DHIS2 fills Fatmata's DPT 1 with another event: the change is still not refused for its slot.
     const held = {
         enrollments: [
             {
@@ -132,7 +127,6 @@ test('a saved dose its page shows in another slot is never placed twice or refus
         outbox,
         form
     )
-    // Her page loads: the dose shows where DHIS2 ranks it, and her DPT 1 stays her own empty slot.
     const again = await source.load(engineFor().engine)
     const fatmata = again.tables[0].rows.find(({ id }) => id === 'ImmEnr00030')
     expect(fatmata?.slots?.[BCG]).toBe(RANKED_ELSEWHERE.id)
@@ -141,7 +135,6 @@ test('a saved dose its page shows in another slot is never placed twice or refus
 })
 
 test('a saved event of a loaded person that no column shows is not restored into a slot', async () => {
-    // Amara's measles dose, which the layout has no column for, was typed as her DPT 1 before Capture changed it.
     const measles = { ...restoredDose('ImmEnr00010', DPT_1), id: 'ImmEvt00098' }
     const outbox = [edit(measles, EVENT_DATE_COLUMN, '2026-10-30')]
     const { source, form, rows } = await restoring(outbox, {
@@ -198,7 +191,6 @@ test('a reload waits 15 seconds for DHIS2 before its unsent changes wait uncheck
         const form = await source.load(engineFor().engine)
         const { engine } = engineFor()
         // SAFETY: the source calls only `query` and `mutate`. DHIS2 never answers the lookup; the platform rejects an
-        // aborted request so.
         const silent = {
             query: (request: Request, options?: { signal?: AbortSignal }) =>
                 'held' in request

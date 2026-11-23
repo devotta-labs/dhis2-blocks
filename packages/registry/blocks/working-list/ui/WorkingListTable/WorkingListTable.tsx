@@ -54,17 +54,8 @@ const columnHelper = createColumnHelper<
 
 const EMPTY_ROWS: WorkingListDisplayRow[] = []
 
-/**
- * Trailing display column holding the per-row data-quality marker. The `__`
- * prefix keeps it clear of DHIS2 field ids, and it is filtered out before
- * column configuration changes are reported.
- */
 const DATA_QUALITY_COLUMN_ID = '__dataQuality'
 
-/**
- * Best-effort rendering for a value that failed validation: the raw scalar
- * verbatim, an empty cell for a missing value, a dash when unrenderable.
- */
 const InvalidCellScalarSchema = z.union([z.string(), z.number(), z.boolean()])
 
 const invalidCellText = (

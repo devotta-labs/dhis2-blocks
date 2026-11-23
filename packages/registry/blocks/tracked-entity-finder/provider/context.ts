@@ -1,5 +1,4 @@
 import { createContext, useContext } from 'react'
-import type { FinderResourceClient } from '../api/client'
 import type { FinderPerson } from '../api/search'
 import type { FinderSystemInfo } from '../api/systemInfo'
 import type { FinderFormApi } from '../form/finderFormApi'
@@ -31,7 +30,7 @@ export interface FinderResultsView {
 
 export interface FinderSubmission {
     search: ValidatedSearch
-    /** Grows with every Search, so the same search can run again. */
+    /** Grows with every Search, so each submission can be announced once. */
     id: number
 }
 
@@ -54,7 +53,6 @@ interface FinderActions {
 
 interface FinderMeta {
     program: string
-    client: FinderResourceClient
     info?: FinderSystemInfo
 }
 
@@ -67,7 +65,7 @@ export interface FinderContextValue {
 /** Internal: never exported from the block, so it cannot be swapped out. */
 export const FinderContext = createContext<FinderContextValue | null>(null)
 
-export const useFinderContext = (): FinderContextValue => {
+export const useFinderContext = () => {
     const context = useContext(FinderContext)
     if (!context) {
         throw new Error(
@@ -92,7 +90,7 @@ export const FinderFormContext = createContext<FinderFormContextValue | null>(
     null
 )
 
-export const useFinderFormContext = (): FinderFormContextValue => {
+export const useFinderFormContext = () => {
     const context = useContext(FinderFormContext)
     if (!context) {
         throw new Error(

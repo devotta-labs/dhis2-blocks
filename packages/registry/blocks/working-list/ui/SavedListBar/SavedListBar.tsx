@@ -48,7 +48,6 @@ export const SavedListBar = ({
     onShare,
     onDelete,
 }: SavedListBarProps) => {
-    // The actions menu lines up with the whole pill, not just its trigger.
     const pillElements = useRef(new Map<string, HTMLElement>())
     const [deleteList, setDeleteList] = useState<WorkingListSavedView>()
     const generatedListName = (list: WorkingListSavedView) => {
@@ -142,7 +141,6 @@ export const SavedListBar = ({
                                 {hasMenu && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger
-                                            // Mirrors the toggle's pressed look so the pill reads as one.
                                             data-pressed={
                                                 selected ? '' : undefined
                                             }

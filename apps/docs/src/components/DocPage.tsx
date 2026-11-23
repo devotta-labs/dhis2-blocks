@@ -7,8 +7,6 @@ interface DocPageProps {
     children: ReactNode
 }
 
-// Pages load lazily, so the browser cannot jump to a #section on navigation;
-// scroll once the page content exists.
 const useScrollToHash = () => {
     const { hash } = useLocation()
 
@@ -17,8 +15,6 @@ const useScrollToHash = () => {
             return
         }
 
-        // A malformed percent escape makes decodeURIComponent throw; leave the
-        // page up instead of failing it.
         let id: string
 
         try {

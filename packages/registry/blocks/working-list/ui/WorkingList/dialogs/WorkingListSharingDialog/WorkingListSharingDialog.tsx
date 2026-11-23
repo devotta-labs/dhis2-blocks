@@ -15,7 +15,6 @@ type SharingDialogCompatProps = Omit<
 }
 
 // SAFETY: DHIS2 servers require trackedEntityInstanceFilter for this metadata
-// type, while @dhis2/ui 10.17 exposes the narrower trackedEntityFilter union.
 const SharingDialogCompat =
     SharingDialog as ComponentType<SharingDialogCompatProps>
 

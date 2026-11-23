@@ -1,0 +1,22 @@
+{
+    "pager": {
+        "page": 1,
+        "total": 2,
+        "pageSize": 50,
+        "pageCount": 1
+    },
+    "organisationUnits": [
+        {
+            "path": "/ImspTQPwCqd/O6uvpzGd5pu/YuQRtpLP10I/DiszpKrYNg8",
+            "displayName": "Ngelehun CHC",
+            "displayShortName": "Ngelehun CHC",
+            "id": "DiszpKrYNg8"
+        },
+        {
+            "path": "/ImspTQPwCqd/kJq2mPyFEHo/KIUCimTXf8Q/FwKJ7gYEv8U",
+            "displayName": "Ngelehun MCHP",
+            "displayShortName": "Ngelehun MCHP",
+            "id": "FwKJ7gYEv8U"
+        }
+    ]
+}

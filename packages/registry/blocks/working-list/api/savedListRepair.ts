@@ -112,21 +112,21 @@ const cloneSavedResource = (
     }
 }
 
-const repairRawFilter = ({
-    savedFilter,
-    decision,
-    expectedSource,
-    metadata,
-    fields,
-    serializationContext,
-}: {
+const repairRawFilter: (options: {
     savedFilter: SavedValueFilter
     decision: StaleReferenceRepairDecision
     expectedSource: 'trackedEntityAttribute' | 'eventDataElement'
     metadata: ProgramFieldCatalog
     fields: FieldCatalog
     serializationContext?: FilterSerializationContext
-}): SavedValueFilter | undefined => {
+}) => SavedValueFilter | undefined = ({
+    savedFilter,
+    decision,
+    expectedSource,
+    metadata,
+    fields,
+    serializationContext,
+}) => {
     if (decision.action === 'remove') {
         return undefined
     }
@@ -172,29 +172,32 @@ const repairRawFilter = ({
         : { ...additionalFields, ...serialized, dataItem: currentField.id }
 }
 
-const blockedRepair = (
+const blockedRepair: (
     issue: StaleReferenceIssue
-): SavedWorkingListRepairResult => ({ status: 'blocked', issues: [issue] })
+) => SavedWorkingListRepairResult = (issue) => ({
+    status: 'blocked',
+    issues: [issue],
+})
 
 /**
  * Repairs a saved resource only from explicit, path-addressed choices. The
  * returned payload is replacement-ready and retains writable sharing.
  */
-export const repairSavedWorkingList = ({
-    list,
-    decisions,
-    programId,
-    metadata,
-    parsingContext,
-    serializationContext,
-}: {
+export const repairSavedWorkingList: (options: {
     list: Extract<NormalizedSavedWorkingList, { compatibility: 'incompatible' }>
     decisions: StaleReferenceRepairDecision[]
     programId: string
     metadata: ProgramFieldCatalog
     parsingContext?: FilterParsingContext
     serializationContext?: FilterSerializationContext
-}): SavedWorkingListRepairResult => {
+}) => SavedWorkingListRepairResult = ({
+    list,
+    decisions,
+    programId,
+    metadata,
+    parsingContext,
+    serializationContext,
+}) => {
     if (list.candidateConfiguration) {
         const candidateFields = fieldsForConfiguration(
             metadata,

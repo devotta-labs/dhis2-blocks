@@ -18,7 +18,7 @@ import { ConfigureMenu } from '../ConfigureMenu'
 
 type SaveError = CreateViewError | UpdateSelectedViewError
 
-const saveErrorCopy = (error: SaveError): string => {
+const saveErrorCopy = (error: SaveError) => {
     switch (error._tag) {
         case 'OfflineMutationError':
             return i18n.t('This action is unavailable while offline.')

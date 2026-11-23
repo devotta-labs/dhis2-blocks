@@ -12,7 +12,6 @@ import { dateDefinition, timeDefinition } from './dateTimeValueTypes'
 import { getSystemFilterOperators, validateSystemFilter } from './systemFilters'
 import { numericDefinition, textDefinition } from './textAndNumericValueTypes'
 import type {
-    CellDisplayValue,
     CellFormattingContext,
     FilterEditorKind,
     FilterSerializationContext,
@@ -207,9 +206,9 @@ const organisationUnitDefinition: ValueTypeDefinition = {
     },
 }
 
-const displayOnlyDefinition = (
+const displayOnlyDefinition: (
     valueType: Dhis2ValueType
-): ValueTypeDefinition => ({
+) => ValueTypeDefinition = (valueType) => ({
     ...textDefinition(valueType),
     editor: 'displayOnly',
     operators: () => [],
@@ -265,9 +264,7 @@ definitions.set('TRACKER_ASSOCIATE', displayOnlyDefinition('TRACKER_ASSOCIATE'))
 const valueTypeRegistry: ReadonlyMap<Dhis2ValueType, ValueTypeDefinition> =
     definitions
 
-export const getValueTypeDefinition = (
-    valueType: Dhis2ValueType
-): ValueTypeDefinition => {
+export const getValueTypeDefinition = (valueType: Dhis2ValueType) => {
     const definition = valueTypeRegistry.get(valueType)
     if (!definition) {
         throw new Error(`No value-type definition registered for ${valueType}`)
@@ -275,15 +272,15 @@ export const getValueTypeDefinition = (
     return definition
 }
 
-const getFilterEditorKind = (field: WorkingListField): FilterEditorKind =>
+const getFilterEditorKind = (field: WorkingListField) =>
     field.optionSetId || field.options?.length
         ? 'options'
         : getValueTypeDefinition(field.valueType).editor
 
-export const getAllowedFilterOperators = (
+export const getAllowedFilterOperators: (
     field: WorkingListField,
     capabilities: WorkingListCapabilities
-): FilterOperator[] =>
+) => FilterOperator[] = (field, capabilities) =>
     field.source === 'system'
         ? [...(getSystemFilterOperators(field.id) ?? [])]
         : getValueTypeDefinition(field.valueType).operators(field, capabilities)
@@ -292,8 +289,7 @@ export const getCellDisplayValue = (
     value: WorkingListRawValue,
     field: WorkingListField,
     context?: CellFormattingContext
-): CellDisplayValue =>
-    getValueTypeDefinition(field.valueType).display(value, field, context)
+) => getValueTypeDefinition(field.valueType).display(value, field, context)
 
 const validateOperatorValuePair = (
     filter: AppliedFilter,
@@ -329,11 +325,11 @@ const validateOperatorValuePair = (
     }
 }
 
-export const validateAppliedFilter = (
+export const validateAppliedFilter: (
     input: AppliedFilter,
     capabilities: WorkingListCapabilities,
     context?: FilterSerializationContext
-): AppliedFilter => {
+) => AppliedFilter = (input, capabilities, context) => {
     const filter = AppliedFilterSchema.parse(input)
     if (
         !filter.field.filterable ||

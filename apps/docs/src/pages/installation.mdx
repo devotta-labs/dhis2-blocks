@@ -84,9 +84,19 @@ its own command.
 
 ### Use the block
 
-Import the block from your components folder:
+A block needs two providers above it. The DHIS2 app shell already supplies the
+first, the app-runtime provider. The second is a TanStack Query
+`QueryClientProvider`, which you add yourself. The install put
+`@tanstack/react-query` in your `package.json`; without the provider the page
+shows "Something went wrong" and the console says `No QueryClient set`.
+
+Replace `src/App.tsx` with the provider and the Working List inside it:
 
 ```tsx
+// src/App.tsx
+import './index.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
 import {
     WorkingList,
     WorkingListTable,
@@ -95,16 +105,31 @@ import {
     WorkingListViewSwitcher,
 } from '@/components/working-list'
 
-export const ChildProgrammeList = () => (
-    <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
-        <WorkingListViewSwitcher />
-        <WorkingListToolbar>
-            <WorkingListFilterControls />
-        </WorkingListToolbar>
-        <WorkingListTable />
-    </WorkingList>
+// Made once, outside the component, so re-renders keep the cache.
+const queryClient = new QueryClient()
+
+const App = () => (
+    <QueryClientProvider client={queryClient}>
+        <WorkingList programId="IpHINAT79UW" orgUnitId="y77LiPqLMoq">
+            <WorkingListViewSwitcher />
+            <WorkingListToolbar>
+                <WorkingListFilterControls />
+            </WorkingListToolbar>
+            <WorkingListTable />
+        </WorkingList>
+    </QueryClientProvider>
 )
+
+export default App
 ```
+
+Start the app and sign in. You should see the people enrolled in the Child
+Programme at Gbenikoro MCHP, listed by first and last name. Above the table
+are the program's saved views, such as "Active enrollments", and a Filter
+button.
+
+One `QueryClientProvider` near the root of your app serves every block you
+add later.
 
 Program `IpHINAT79UW` and organisation unit `y77LiPqLMoq` exist on the DHIS2
 demo database; use IDs from your own instance otherwise. Each
@@ -166,3 +191,10 @@ The roles:
 Parts that blocks take from `@dhis2/ui`, such as the context selector's bar and
 menus, the calendar date inputs, the org unit tree and the column transfer,
 keep their own colours and do not change with the contrast setting.
+
+## Density
+
+Controls and fields are as tall and as spaced as `@dhis2/ui`'s regular
+fields. Put `data-density="compact"` on any element, such as a form or a
+side panel, to make what is inside it compact, as `@dhis2/ui`'s dense fields
+are. The [Field](/blocks/field#density) page shows both.

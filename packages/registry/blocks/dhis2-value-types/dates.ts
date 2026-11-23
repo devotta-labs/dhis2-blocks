@@ -16,7 +16,9 @@ interface DateParts {
 }
 
 /** The date format from `systemInfo.dateFormat`; anything but day first is year first. */
-export const parseDateFormat = (systemInfoDateFormat: string): DateFormat =>
+export const parseDateFormat: (systemInfoDateFormat: string) => DateFormat = (
+    systemInfoDateFormat
+) =>
     systemInfoDateFormat.toLowerCase() === 'dd-mm-yyyy'
         ? 'DD-MM-YYYY'
         : 'YYYY-MM-DD'
@@ -32,7 +34,7 @@ const PATTERNS = {
     'DD-MM-YYYY': /^(?<day>\d{2})-(?<month>\d{2})-(?<year>\d{4})$/,
 } satisfies Record<DateFormat, RegExp>
 
-const partsOf = (text: string, format: DateFormat): DateParts | undefined => {
+const partsOf = (text: string, format: DateFormat) => {
     const groups = PATTERNS[format].exec(text)?.groups
     return groups
         ? {
@@ -44,7 +46,7 @@ const partsOf = (text: string, format: DateFormat): DateParts | undefined => {
 }
 
 /** Whether the text is a real ISO `yyyy-mm-dd` date. */
-export const isIsoDate = (text: string): boolean => {
+export const isIsoDate = (text: string) => {
     const parts = partsOf(text, 'YYYY-MM-DD')
     if (parts === undefined) {
         return false
@@ -57,19 +59,16 @@ export const isIsoDate = (text: string): boolean => {
     )
 }
 
-/** A date on the system calendar as the ISO `yyyy-mm-dd`. */
-const localToIso = (parts: DateParts, calendar: Dhis2Calendar): string => {
+const localToIso = (parts: DateParts, calendar: Dhis2Calendar) => {
     if (calendar === 'gregorian' || calendar === 'iso8601') {
         return yearFirst(parts)
     }
-    // shortcut: the library cannot convert Coptic and throws, so a typed Coptic date is refused; upgrade when it can.
     // SAFETY: the library maps DHIS2's calendar names itself; its types list only the names it maps them to.
     const library = calendar as Parameters<typeof convertToIso8601>[1]
     return yearFirst(convertToIso8601(yearFirst(parts), library))
 }
 
-/** An ISO day as the `YYYY-MM-DD` of the system calendar. */
-const isoToLocal = (iso: string, calendar: Dhis2Calendar): string =>
+const isoToLocal = (iso: string, calendar: Dhis2Calendar) =>
     calendar === 'gregorian' || calendar === 'iso8601'
         ? iso
         : formatCalendarDate(iso, calendar)
@@ -82,7 +81,7 @@ const isoToLocal = (iso: string, calendar: Dhis2Calendar): string =>
 export const calendarDateToIso = (
     text: string,
     { calendar, dateFormat }: ValueSettings
-): string | undefined => {
+) => {
     const parts = partsOf(text, dateFormat)
     if (parts === undefined) {
         return undefined
@@ -101,7 +100,7 @@ export const calendarDateToIso = (
 export const isoToCalendarDate = (
     iso: string,
     { calendar, dateFormat }: ValueSettings
-): string => {
+) => {
     if (!isIsoDate(iso)) {
         return iso
     }

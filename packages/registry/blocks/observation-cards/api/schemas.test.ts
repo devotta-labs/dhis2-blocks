@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import { fixture, programMetadataResponse } from '../__tests__/fixtures'
+import { fixture, programMetadataResponse } from '../test/observations.fixture'
 import {
     EnrollmentsResponseSchema,
     EventsResponseSchema,
@@ -24,9 +24,6 @@ describe('EventsResponseSchema', () => {
         })
     })
 
-    // events.v41.json is NOT a 2.41 recording: no reachable 2.41 instance was
-    // available, so it is the dev recording with the envelope key renamed from
-    // `events` to `instances` (the legacy shape Working List also accepts).
     it('parses the legacy 2.41 `instances` envelope to the same records', () => {
         expect(EventsResponseSchema.parse(fixture('events.v41.json'))).toEqual(
             EventsResponseSchema.parse(fixture('events.dev.json'))
@@ -283,7 +280,6 @@ describe('ProgramMetadataResponseSchema', () => {
             id: 'bad',
             displayName: 'Bad',
             valueType: 'TEXT',
-            // A broken option set is never dropped: it would show raw codes.
             optionSet: { options: [{ code: 'A' }] },
         })
 
@@ -296,7 +292,6 @@ describe('ProgramMetadataResponseSchema', () => {
                 ),
             }),
         })
-        // Still captured, so its card is an error rather than misconfigured.
         expect(metadata.stages[0]?.dataElementIds).toEqual(['ok', 'bad'])
     })
 
@@ -311,18 +306,15 @@ describe('ProgramMetadataResponseSchema', () => {
                     displayName: 'Good',
                     programStageDataElements: [element('a')],
                 },
-                // No name, and an access block that can't be read.
                 {
                     id: 'odd',
                     access: { data: { read: 'yes' } },
                     programStageDataElements: [element('b')],
                 },
-                // No id: left out of the stages, but its data element is still read.
                 {
                     displayName: 'No id',
                     programStageDataElements: [element('c')],
                 },
-                // Not a stage at all.
                 'nonsense',
                 { id: 'broken', programStageDataElements: 'nonsense' },
             ],
@@ -335,7 +327,6 @@ describe('ProgramMetadataResponseSchema', () => {
                 canReadData: true,
                 dataElementIds: ['a'],
             },
-            // Unreadable access never claims the stage is readable.
             {
                 id: 'odd',
                 displayName: 'odd',

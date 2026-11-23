@@ -7,16 +7,9 @@ import {
     control,
     focused,
     paste,
-} from '@/components/spreadsheet/grid/__tests__/gridRig'
+} from '@/components/spreadsheet/grid/test/gridRig'
 import type { TrackerColumn } from '../model/types'
-import {
-    cleanUp,
-    KEY,
-    memorySource,
-    mount,
-    notesOf,
-    records,
-} from './__tests__/rig'
+import { cleanUp, KEY, memorySource, mount, notesOf, records } from './test/rig'
 import type { LoadedForm } from '../sources/types'
 import { TrackerDataEntrySummary } from '../summary/TrackerDataEntrySummary'
 
@@ -53,8 +46,9 @@ const event = (id: string, programStageId: string) =>
         },
     ] as const
 
-/** One person, Amina, whose row shows field `a` of two events: `e1` of stage `s1` and `e2` of stage `s2`. */
-const register = (values: Array<[CellKey, string]> = []): LoadedForm => ({
+const register: (values?: Array<[CellKey, string]>) => LoadedForm = (
+    values = []
+) => ({
     tables: [
         {
             id: 't1',
@@ -93,14 +87,12 @@ const register = (values: Array<[CellKey, string]> = []): LoadedForm => ({
     fieldNames: new Map(),
 })
 
-/** The register over a source that keeps its saves waiting, so the outbox holds every change. */
 const mountHeld = async () => {
     const memory = memorySource(register())
     memory.hold()
     return mount(memory.source)
 }
 
-/** The outbox's changes as key, value and the record each saves to. */
 const queued = async (server: string) =>
     (await records(server, KEY))
         .map(({ key, value, record }) => [key, value, record?.id])
@@ -191,7 +183,6 @@ test('what the rules say alike of several slots shows once in the row’s header
             ['e2', [message]],
         ]),
     })
-    // One note, so one "Note" marker, and the header's description says it once.
     const header = page.getByRole('rowheader')
     await expect
         .element(header.getByRole('button', { name: 'Note', exact: true }))

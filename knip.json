@@ -56,8 +56,7 @@
             "entry": [
                 "d2.config.js",
                 "src/AppWrapper.tsx",
-                "src/**/*.{test,spec}.{ts,tsx}",
-                "src/**/__tests__/**/*.{ts,tsx}"
+                "src/**/*.test.{ts,tsx}"
             ],
             "project": ["src/**/*.{ts,tsx,css}"],
             "includeEntryExports": true,
@@ -102,8 +101,8 @@
                 "components/*.{ts,tsx}",
                 "blocks/*/index.ts",
                 "blocks/timeline/dhis2/index.ts",
-                "**/*.{test,spec}.{ts,tsx}",
-                "**/__tests__/**/*.{ts,tsx}"
+                "**/*.test.{ts,tsx}",
+                "**/test/public-surface.ts"
             ],
             "project": [
                 "components/**/*.{ts,tsx,css}",

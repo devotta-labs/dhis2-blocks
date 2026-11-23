@@ -1,4 +1,3 @@
-// The package intentionally exposes the builder as both its default and named export.
 // eslint-disable-next-line import/no-named-as-default
 import AxeBuilder from '@axe-core/playwright'
 import type {
@@ -46,8 +45,6 @@ export const PHONE_ATTRIBUTE = 'WlAtPhon001'
 export const GEOJSON_ATTRIBUTE = 'WlAtGeoj001'
 export const TEXT_DATA_ELEMENT = 'WlDeText001'
 export const INTEGER_DATA_ELEMENT = 'WlDeIntg001'
-// scripts/e2e/seed-metadata.sh writes this invalid date through SQL because
-// the tracker importer would reject it.
 export const CORRUPTED_DATE_VALUE = '2025-13-45'
 const TEST_PASSWORD = 'WorkingList123!'
 
@@ -140,7 +137,6 @@ export const isTrackerResource = (
     resource: 'trackedEntities' | 'events'
 ) => requestUrl(request).pathname.endsWith(`/tracker/${resource}`)
 
-// Keeping the action and URL predicate separate makes network assertions readable.
 /* eslint-disable max-params -- test DSL helpers trade a compact call site for explicit network assertions */
 export const waitForTrackerResponse = async (
     page: Page,
@@ -225,14 +221,12 @@ export const openWorkingList = async (
 export const resultRows = (page: Page) =>
     page.locator('[data-testid^="working-list-row-"]')
 
-// Menu items carry their own data-test; there is no wrapper around them.
 export const menuItem = (scope: Page | Locator, dataTest: string) =>
     scope.locator(`[role="menuitem"][data-test="${dataTest}"]`)
 
 const selectTriggers =
     '[data-slot="select-trigger"], [data-slot="combobox-trigger"]'
 
-// The root is either the trigger itself or a field that contains it.
 export const selectTrigger = (page: Page, rootSelector: string) =>
     page
         .locator(
@@ -347,7 +341,6 @@ export const addFilter = async (
         await menuItem(page, `add-filter-${fieldId}`).click()
     }
     await expect(page.getByTestId(`filter-${fieldId}`)).toBeVisible()
-    // Newly added filters open their editor right away.
     await expect(page.getByTestId(`filter-editor-${fieldId}`)).toBeVisible()
 }
 
@@ -362,7 +355,6 @@ export const openFilterEditor = async (page: Page, fieldId: string) => {
     await expect(editor).toBeVisible()
 }
 
-// This is a small UI DSL used across both tracked-entity and event endpoints.
 export const applyTextFilter = async (
     page: Page,
     fieldId: string,

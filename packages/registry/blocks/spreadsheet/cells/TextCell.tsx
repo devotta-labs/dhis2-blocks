@@ -11,8 +11,6 @@ import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
 import { READY_CLASS, useCellMode } from './useCellMode'
 
-// Borderless until it has focus, then a box. Invalid looks red only while it does not have focus, so the focus ring
-// always shows.
 export const CONTROL_CLASS =
     'block h-full min-h-9 w-full min-w-0 truncate bg-transparent px-2 text-sm text-dhis2-foreground outline-none focus:bg-dhis2-background focus:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] aria-invalid:not-focus:bg-dhis2-destructive-subtle aria-invalid:not-focus:shadow-[inset_0_0_0_2px_var(--dhis2-destructive-indicator)] forced-colors:focus:outline-2 forced-colors:focus:outline-solid forced-colors:focus:-outline-offset-2 forced-colors:aria-invalid:not-focus:outline-1 forced-colors:aria-invalid:not-focus:outline-dashed forced-colors:aria-invalid:not-focus:-outline-offset-2'
 export const LOCKED_CLASS = 'bg-dhis2-muted text-dhis2-muted-foreground'
@@ -34,7 +32,6 @@ export const TextCell = memo(function TextCell({
 }: ControlProps) {
     const { store, settings } = useSpreadsheetContext()
     const { view } = useCellContext()
-    // What has been typed and not yet saved; `null` shows the cell's own text.
     const [draft, setDraft] = useState<string | null>(null)
     const locked = readOnly !== undefined
     const commit = () => {
@@ -42,8 +39,6 @@ export const TextCell = memo(function TextCell({
             return undefined
         }
         setDraft(null)
-        // A rule can lock the cell while its text is being typed: the lock wins. Text in a cell a rule only hid goes to
-        // `commit`, whose gate writes nothing to a hidden cell.
         return locked && !hidden ? undefined : view.commit(draft)
     }
     const revert = () => {

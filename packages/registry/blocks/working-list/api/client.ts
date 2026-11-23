@@ -122,13 +122,13 @@ export const shouldRetryWorkingListRequest = (
 
 const RESULT_KEY = 'workingListResource'
 
-const QueryEnvelopeSchema = z
+export const QueryEnvelopeSchema = z
     .object({ [RESULT_KEY]: z.unknown() })
     .passthrough()
 
-export const createWorkingListClient = (
+export const createWorkingListClient: (
     engine: DataEngineLike
-): WorkingListClient => ({
+) => WorkingListClient = (engine) => ({
     async query<T>(
         request: ResourceRequest,
         schema: ZodType<T>,

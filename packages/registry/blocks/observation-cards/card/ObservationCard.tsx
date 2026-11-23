@@ -1,19 +1,16 @@
 import { Card } from '@/components/dhis2/ui/card'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
-import { parseDhis2Calendar } from '@/components/dhis2-value-display'
-import { useConfig } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
-import React, { useCallback, useMemo, useState, type ReactNode } from 'react'
+import React, { useCallback, useState, type ReactNode } from 'react'
 import type { ObservationSeries } from '../api/types'
 import {
-    displayLocale,
     elementShowsTrend,
     isStale,
     isSupportedValueType,
     showsTrend,
-    type DisplayOptions,
 } from '../format/display'
+import { useDisplayOptions } from '../format/useDisplayOptions'
 import { useObservation } from '../hooks'
 import { ObservationChange } from '../parts/ObservationChange'
 import { ObservationLabel } from '../parts/ObservationLabel'
@@ -47,17 +44,6 @@ export interface ObservationCardProps {
     children?: ReactNode
 }
 
-/** The system calendar and the user's locale, for every date and number shown. */
-const useDisplayOptions = (): DisplayOptions => {
-    const { systemInfo } = useConfig()
-    // `calendar` is in every server's systemInfo, though app-runtime's type leaves it out.
-    const calendar = parseDhis2Calendar(
-        systemInfo && 'calendar' in systemInfo ? systemInfo.calendar : undefined
-    )
-    const locale = displayLocale()
-    return useMemo(() => ({ calendar, locale }), [calendar, locale])
-}
-
 function Frame({
     name,
     stale = false,
@@ -75,7 +61,6 @@ function Frame({
         <Card
             data-slot="observation-card"
             role="group"
-            // Until the metadata names the card, a generic name, so a screen reader never meets an unnamed group.
             aria-label={name || i18n.t('Observation')}
             aria-busy={busy || undefined}
             data-tone={stale ? 'stale' : 'default'}
@@ -90,12 +75,6 @@ function Frame({
     )
 }
 
-/**
- * What the program's metadata already says about the card's data element:
- * its name, for cards that never get a series, and whether the loaded card
- * will show a trend, so its skeleton takes the same shape. Until the metadata
- * says, a trend, the taller of the two.
- */
 const useElementMetadata = (dataElement: string) => {
     const { metadata } = useObservationsContext()
     const element = metadata?.dataElements.get(dataElement)
@@ -108,7 +87,6 @@ const useElementMetadata = (dataElement: string) => {
     }
 }
 
-/** The loading card, in the shape of the arrangement it will become. */
 function LoadingContent({
     heading,
     trend,
@@ -124,7 +102,6 @@ function LoadingContent({
             {trend ? (
                 <>
                     <Skeleton className="my-0.5 h-4 w-40 max-w-full" />
-                    {/* Dropped below 13rem, as the sparkline is. */}
                     <div className="@container mt-auto w-full">
                         <Skeleton className="hidden h-10 w-full @[13rem]:block" />
                     </div>
@@ -141,12 +118,10 @@ const Notice = ({ children }: { children: ReactNode }) => (
     <p className="text-sm text-dhis2-muted-foreground">{children}</p>
 )
 
-/** No children: numeric readings get the trend, everything else the last recorded value. */
 function DefaultArrangement({ series }: { series: ObservationSeries }) {
     return (
         <>
             <ObservationLabel />
-            {/* The legend wraps under the value, so values in a row stay level. */}
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <ObservationValue />
                 <ObservationLegend />
@@ -188,7 +163,6 @@ function ReadyContent({
     return (
         <>
             {children ?? <DefaultArrangement series={series} />}
-            {/* The date can be placed, never dropped: an old value must not pass as current. */}
             {recordedPlaced ? null : <RecordedFooter />}
         </>
     )
@@ -215,9 +189,7 @@ export function ObservationCard({
         setRecordedNotes((count) => count + 1)
         return () => setRecordedNotes((count) => count - 1)
     }, [])
-    // An empty label is no label.
     const hostLabel = label || undefined
-    // Before there is a series, the element's name from the metadata, once known.
     const earlyName = hostLabel ?? name
     const heading = earlyName ? <CardHeading>{earlyName}</CardHeading> : null
 
@@ -243,7 +215,6 @@ export function ObservationCard({
             return (
                 <Frame name={earlyName} className={className}>
                     {heading}
-                    {/* The provider logs the full message in production. */}
                     <p
                         role="alert"
                         data-slot="observation-config-error"

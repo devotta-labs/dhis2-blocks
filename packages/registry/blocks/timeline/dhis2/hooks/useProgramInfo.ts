@@ -27,9 +27,9 @@ const NO_PROGRAMS: ReadonlyMap<string, ProgramInfo> = new Map()
  * refetched behind the user's back. A program that can't be read leaves ids
  * on show and adds a notice.
  */
-export const useProgramInfo = (
+export const useProgramInfo: (
     ids: ReadonlyArray<string> | undefined
-): ProgramInfoResult => {
+) => ProgramInfoResult = (ids) => {
     const client = useTimelineClient()
     const queries = useQueries({
         queries: (ids ?? []).map((program) => ({
@@ -48,7 +48,6 @@ export const useProgramInfo = (
         })),
         combine: summarize<ProgramInfo>,
     })
-    // Rebuilt only when an answer changes, so entries keep their references.
     const programs = useMemo(() => {
         const found = queries.data.flatMap((info) =>
             info === undefined ? [] : [info]

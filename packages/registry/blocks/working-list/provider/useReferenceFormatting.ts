@@ -88,7 +88,6 @@ export const useReferenceFormatting = ({
     return {
         formattingContext,
         organisationUnitLabelsQuery,
-        // Missing file names fall back to ids; missing unit names are an error.
         ready:
             (organisationUnitIds.length === 0 ||
                 organisationUnitLabelsQuery.data !== undefined ||

@@ -8,6 +8,10 @@ export {
     ObservationCard,
     type ObservationCardProps,
 } from './card/ObservationCard'
+export {
+    ObservationInline,
+    type ObservationInlineProps,
+} from './inline/ObservationInline'
 export { type ObservationState, useObservation } from './hooks'
 export {
     ObservationChange,

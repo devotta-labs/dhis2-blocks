@@ -15,7 +15,6 @@ interface Choice {
     label: string
 }
 
-/** A single choice; "Any" clears it. */
 const ChoiceSelect = ({
     label,
     description,

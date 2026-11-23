@@ -63,29 +63,28 @@ const toRuntimeMutation = (mutation: DataEngineMutation) => {
     }
 }
 
-export const useRuntimeWorkingListClient = (): WorkingListClient => {
+export const createRuntimeWorkingListClient = (
+    engine: ReturnType<typeof useDataEngine>
+) =>
+    createWorkingListClient({
+        query: async (query, options) =>
+            EngineResultSchema.parse(
+                await engine.query(
+                    // SAFETY: the adapter maps the structural Working List query contract to app-runtime's equivalent data-query shape.
+                    toRuntimeQuery(query) as Parameters<typeof engine.query>[0],
+                    options
+                )
+            ),
+        mutate: (mutation) =>
+            engine.mutate(
+                // SAFETY: the adapter validates mutation data and required IDs before constructing an app-runtime mutation.
+                toRuntimeMutation(mutation) as Parameters<
+                    typeof engine.mutate
+                >[0]
+            ),
+    })
+
+export const useRuntimeWorkingListClient: () => WorkingListClient = () => {
     const engine = useDataEngine()
-    return useMemo(
-        () =>
-            createWorkingListClient({
-                query: async (query, options) =>
-                    EngineResultSchema.parse(
-                        await engine.query(
-                            // SAFETY: the adapter maps the structural Working List query contract to app-runtime's equivalent data-query shape.
-                            toRuntimeQuery(query) as Parameters<
-                                typeof engine.query
-                            >[0],
-                            options
-                        )
-                    ),
-                mutate: (mutation) =>
-                    engine.mutate(
-                        // SAFETY: the adapter validates mutation data and required IDs before constructing an app-runtime mutation.
-                        toRuntimeMutation(mutation) as Parameters<
-                            typeof engine.mutate
-                        >[0]
-                    ),
-            }),
-        [engine]
-    )
+    return useMemo(() => createRuntimeWorkingListClient(engine), [engine])
 }

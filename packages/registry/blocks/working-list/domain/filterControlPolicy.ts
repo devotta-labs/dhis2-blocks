@@ -69,7 +69,9 @@ export const optionDisplayName = (
     }
 }
 
-export const localizedField = (field: WorkingListField): WorkingListField => ({
+export const localizedField: (field: WorkingListField) => WorkingListField = (
+    field
+) => ({
     ...field,
     displayName: fieldDisplayName(field),
     options: field.options?.map((option) => ({

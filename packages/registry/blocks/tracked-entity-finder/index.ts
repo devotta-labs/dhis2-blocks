@@ -1,8 +1,3 @@
-export {
-    createTrackedEntityFinderClient,
-    type DataEngineLike,
-    type TrackedEntityFinderClient,
-} from './api/client'
 export type { FinderPerson } from './api/search'
 export { FinderField, type FinderFieldProps } from './form/FinderField'
 export { FinderForm, type FinderFormProps } from './form/FinderForm'

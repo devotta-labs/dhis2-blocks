@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { cellKey } from '@/components/spreadsheet'
 import { recordsOf, trackerKeyOf } from '../model/types'
-import immunisation from './__tests__/fixtures/immunisation-program.json'
-import rmnch from './__tests__/fixtures/rmnch-register-program.json'
+import immunisation from './test/fixtures/immunisation-program.json'
+import rmnch from './test/fixtures/rmnch-register-program.json'
 import {
     BCG,
     BIRTH_DATE,
@@ -22,7 +22,7 @@ import {
     engineFor,
     enrolledAs,
     immunisationRegister,
-} from './__tests__/registerRig'
+} from './test/registerRig'
 import type { OutboxRecord } from '../outbox/outbox'
 import { EVENT_DATE_COLUMN } from '../sources/eventSchemas'
 import type { NewRow } from '../sources/types'
@@ -52,7 +52,6 @@ describe('loading', () => {
                 [OPV_1]: 'ImmEvt00002',
             },
         })
-        // Musa's events come in no set order; each fills the slot whose values it holds.
         expect(musa.slots).toMatchObject({
             [BCG]: 'ImmEvt00003',
             [OPV_1]: 'ImmEvt00004',
@@ -98,7 +97,6 @@ describe('loading', () => {
             status: 'COMPLETED',
             slot: BCG,
         })
-        // The person's form holds every program attribute; the enrolment's its date.
         expect(form.fieldsByForm.get(PERSON_TYPE)).toEqual(
             new Set([FIRST_NAME, LAST_NAME, BIRTH_DATE, 'cejWyOfXge6'])
         )
@@ -260,7 +258,6 @@ describe('read-only', () => {
     })
 })
 
-// The RMNCH program: its Unique ID is generated, and its first visit is scheduled on enrolment.
 const RMNCH = 'WSGAb5XwJ3Y'
 const UNIQUE_ID = 'lZGmxYbs97q'
 const FIRST_VISIT = 'WZbXY0S00lP'
@@ -338,7 +335,6 @@ describe('new rows', () => {
         expect(made?.values).toEqual(
             new Map([[cellKey(slots.person, UNIQUE_ID), '8350217746']])
         )
-        // Each new person takes the next reserved value.
         const second = source.newRow?.(RMNCH)
         expect([...(second?.values.values() ?? [])]).toEqual(['8350217747'])
     })
@@ -383,7 +379,6 @@ describe('new rows', () => {
         })
     })
 
-    /** A new row of `source`, typed in full and saved by `saving` (the same tab, or another); what was imported. */
     const savedRow = async (
         source = ancRegister(),
         saving = source,
@@ -419,7 +414,6 @@ describe('new rows', () => {
 
     test('a new person’s save brings the events Capture schedules, in their slots, waiting for the slot’s date', async () => {
         const { made, events } = await savedRow()
-        // Its slot has a date column: it is scheduled, undated, until the clerk types the date the paper has.
         expect(events).toEqual([
             {
                 event: made.row.slots?.[FIRST_VISIT],

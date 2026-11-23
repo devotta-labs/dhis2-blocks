@@ -2,10 +2,10 @@
 import type { CustomDataProvider } from '@dhis2/app-runtime'
 import type { ComponentProps } from 'react'
 import { userEvent } from 'vitest/browser'
-import { control } from '@/components/spreadsheet/grid/__tests__/gridRig'
+import { control } from '@/components/spreadsheet/grid/test/gridRig'
 import { cellKey } from '@/components/spreadsheet'
-import enrollments from '../register/__tests__/fixtures/immunisation-enrollments.json'
-import immunisation from '../register/__tests__/fixtures/immunisation-program.json'
+import enrollments from '../register/test/fixtures/immunisation-enrollments.json'
+import immunisation from '../register/test/fixtures/immunisation-program.json'
 import {
     DOSE,
     DPT_1,
@@ -18,8 +18,8 @@ import {
     LAYOUT,
     PROGRAM,
     VACCINATION,
-} from '../register/__tests__/registerRig'
-import { cleanUp, later, memorySource, mount } from './__tests__/rig'
+} from '../register/test/registerRig'
+import { cleanUp, later, memorySource, mount } from './test/rig'
 
 afterEach(cleanUp)
 beforeEach(() => {
@@ -44,7 +44,6 @@ const attribute = (name: string, id: string) => ({
     trackedEntityAttribute: { id, valueType: 'TEXT' },
 })
 
-/** A rule action as DHIS2 sends it. */
 interface RuleAction {
     programRuleActionType: string
     content?: string
@@ -53,7 +52,6 @@ interface RuleAction {
     dataElement?: { id: string }
 }
 
-/** A rule of the register's program, on its vaccination stage when `stage` is set. */
 const programRule = (
     id: string,
     name: string,
@@ -133,7 +131,6 @@ const RULES = [
     ),
 ]
 
-/** The rules above, and the people the server holds, as the fixture has them. */
 const RULES_DATA = {
     programRules: async () => ({ programRules: RULES }),
     programRuleVariables: async () => ({
@@ -169,7 +166,6 @@ const rulesRan = () =>
         )
         .not.toHaveLength(0)
 
-/** The register loaded as DHIS2 answers it (`answers`), kept in memory, with its rules. */
 const mountRegister = async (
     answers: Parameters<typeof engineFor>[0] = {},
     layout = LAYOUT,
@@ -261,7 +257,6 @@ test('a person’s image stays to be edited in their own form once the rules hav
 test('a slot nobody typed in is not another event to the rules', async () => {
     const { effects } = await mountRegister()
     const doses = 'More than two doses'
-    // Bangura has three doses, so the rule runs; Amara has two, and two empty slots that are no events.
     await expect
         .poll(() => effects().rowMessages.get(BANGURA_BCG))
         .toEqual([{ tone: 'warning', text: doses, source: 'rule' }])
@@ -279,7 +274,6 @@ test('a slot’s first value makes it an event to the rules of the person’s ot
     for (const event of AMARA.events) {
         expect(effects().rowMessages.get(event) ?? []).toEqual([])
     }
-    // A value no rule reads across events: the slot is a third dose all the same.
     context().store.getState().commit(cellKey(slot, DOSE), '1')
     for (const event of AMARA.events) {
         await expect
@@ -328,7 +322,6 @@ test('a new person’s reserved value feeds their enrolment’s rules', async ()
 })
 
 test('the rules’ notes on a person join the register’s own', async () => {
-    // Amara's BCG is recorded twice: the register shows the first and notes the other on her row.
     const twice = enrolledAs((enrollment) =>
         enrollment.enrollment === AMARA.enrollment
             ? {
@@ -372,7 +365,6 @@ test('a slot cleared back to empty loses what the rules said while it had a date
     expect(warned()).toBe(false)
 })
 
-/** The fixture with Amara's last name the one the assigning rule looks for. */
 const assigned = enrolledAs((enrollment) =>
     enrollment.enrollment === AMARA.enrollment
         ? {
@@ -391,7 +383,6 @@ test('an enrolment rule’s value lands on the person’s attribute once the per
     const touchPerson = await mountRegister({ enrollments: assigned })
     const gender = () =>
         touchPerson.context().store.getState().cells[AMARA_GENDER]
-    // Shown, not saved: nobody changed the row.
     expect(touchPerson.effects().cells[AMARA_GENDER]?.readOnly).toBe(
         'Assigned by rule: Assign the gender'
     )
@@ -446,7 +437,6 @@ test('a new person’s rules run at once, without asking DHIS2 for them: offline
     const known = new Set(enrollments.enrollments.map((e) => e.enrollment))
     const { effects, view, tracker } = await mountRegister({}, LAYOUT, {
         ...RULES_DATA,
-        // Offline for anyone the register did not load.
         'tracker/enrollments': async (type, query) => {
             const ids = String(query.params?.enrollments).split(',')
             asked.push(...ids)

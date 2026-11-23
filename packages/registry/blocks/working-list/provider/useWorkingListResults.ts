@@ -8,10 +8,7 @@ import {
 } from '../api/metadata'
 import type { WorkingListSystemInfo } from '../api/systemInfo'
 import type { WorkingListConfiguration as InternalConfiguration } from '../domain/model'
-import {
-    workingListPageQueryOptions,
-    type WorkingListPage,
-} from '../query/fetchers'
+import { workingListPageQueryOptions } from '../query/fetchers'
 import { workingListQueryKeys } from '../query/keys'
 import type { FilterSerializationContext } from '../registry/valueTypes'
 
@@ -92,7 +89,7 @@ export const useWorkingListResults = ({
               })
             : {
                   queryKey: [...workingListQueryKeys.all, 'records', 'idle'],
-                  queryFn: (): Promise<WorkingListPage> =>
+                  queryFn: () =>
                       Promise.reject(new Error('Results are not ready')),
               }),
         enabled: Boolean(resolvedConfiguration && fields),

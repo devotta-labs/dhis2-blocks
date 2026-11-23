@@ -40,6 +40,7 @@ export const docsNavigation: readonly NavigationSection[] = [
                     },
                     { title: 'Dialog', href: '/blocks/dialog' },
                     { title: 'Dropdown Menu', href: '/blocks/dropdown-menu' },
+                    { title: 'Field', href: '/blocks/field' },
                     { title: 'Input', href: '/blocks/input' },
                     { title: 'Input Group', href: '/blocks/input-group' },
                     { title: 'Popover', href: '/blocks/popover' },
@@ -60,6 +61,10 @@ export const docsNavigation: readonly NavigationSection[] = [
                     { title: 'Working List', href: '/blocks/working-list' },
                     { title: 'Calendar', href: '/blocks/calendar' },
                     {
+                        title: 'Organisation Unit Switcher',
+                        href: '/blocks/org-unit-switcher',
+                    },
+                    {
                         title: 'Observation Cards',
                         href: '/blocks/observation-cards',
                     },
@@ -68,12 +73,17 @@ export const docsNavigation: readonly NavigationSection[] = [
                         title: 'Tracked Entity Finder',
                         href: '/blocks/tracked-entity-finder',
                     },
+                    {
+                        title: 'Tracked Entity Header',
+                        href: '/blocks/tracked-entity-header',
+                    },
                 ],
             },
             {
                 title: 'Data entry',
                 links: [
                     { title: 'Spreadsheet', href: '/blocks/spreadsheet' },
+                    { title: 'Value input', href: '/blocks/dhis2-value-input' },
                     {
                         title: 'Tracker Data Entry',
                         href: '/blocks/tracker-data-entry',

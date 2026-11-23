@@ -30,8 +30,6 @@ export const useOrgUnitNames = (ids: ReadonlyArray<string> | undefined) => {
     const status = statusOf(query)
     return {
         names: query.data ?? NO_NAMES,
-        // The last set's names stand in only once a history is on show: a
-        // new person's first answer waits for their own names.
         pending:
             ids === undefined ||
             (ids.length > 0 &&

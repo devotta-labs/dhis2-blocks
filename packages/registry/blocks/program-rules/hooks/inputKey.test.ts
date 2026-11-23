@@ -1,7 +1,9 @@
 import type { RuleEventInput } from '../lib'
 import { eventContentKey, supplementContentKey } from './inputKey'
 
-const event = (dataValues: Record<string, string>): RuleEventInput => ({
+const event: (dataValues: Record<string, string>) => RuleEventInput = (
+    dataValues
+) => ({
     id: 'e',
     programStageId: 's',
     orgUnitId: 'ou',

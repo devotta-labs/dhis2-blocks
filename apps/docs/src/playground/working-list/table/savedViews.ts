@@ -40,7 +40,7 @@ const trackedEntityView = (
     displayName: string,
     sortOrder: number,
     entityQueryCriteria: TrackedEntityView['entityQueryCriteria']
-): TrackedEntityView => ({
+) => ({
     id,
     displayName,
     sortOrder,
@@ -48,10 +48,8 @@ const trackedEntityView = (
     entityQueryCriteria,
 })
 
-/** The saved views a fresh server holds for this config. */
 const seedViews = ({ data, server }: Pick<LabConfig, 'data' | 'server'>) => {
     const access = server.viewAccess === 'owner' ? owned : readOnly
-    // A list of events needs a stage's saved view to open on.
     const visits: StageView = {
         id: EVENT_VIEW,
         displayName: 'Follow-up visits',
@@ -156,14 +154,12 @@ const ok = (uid?: string) => ({
 const notFound = () =>
     Object.assign(new Error('Not found'), { details: { httpStatusCode: 404 } })
 
-/** A mutation's body read through the block's own schema, so the store keeps only what DHIS2 would. */
 const TrackedEntityBody = TrackedEntityInstanceFilterSchema.omit({
     id: true,
     access: true,
 })
 const StageBody = ProgramStageWorkingListSchema.omit({ id: true, access: true })
 
-/** A write names the view `name`; DHIS2 answers reads with it as `displayName`. */
 const bodyOf = ({ data }: SavedViewRequest) => {
     const named = z
         .object({ name: z.string().optional() })
@@ -172,10 +168,8 @@ const bodyOf = ({ data }: SavedViewRequest) => {
     return { displayName: named.name, ...named }
 }
 
-/** One resource's saved views, answering the block's reads and writes. */
 const store = <View extends { id: string }>(
     seeded: View[],
-    /** The view a write makes: a new one with `id`, or `existing` changed. */
     parse: (request: SavedViewRequest, id: string, existing?: View) => View,
     resource: SavedViewResource,
     nextId: () => string

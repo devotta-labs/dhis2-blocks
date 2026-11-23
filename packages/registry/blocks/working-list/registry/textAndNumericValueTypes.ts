@@ -21,9 +21,9 @@ import {
     textOperators,
 } from './valueTypeShared'
 
-export const textDefinition = (
+export const textDefinition: (
     valueType: Dhis2ValueType
-): ValueTypeDefinition => ({
+) => ValueTypeDefinition = (valueType) => ({
     valueType,
     editor: 'text',
     parseServerValue(value) {
@@ -206,9 +206,9 @@ const parseNumericEditorValue = (
     return parsed
 }
 
-export const numericDefinition = (
+export const numericDefinition: (
     valueType: Dhis2ValueType
-): ValueTypeDefinition => ({
+) => ValueTypeDefinition = (valueType) => ({
     valueType,
     editor: 'numberRange',
     parseServerValue(value) {

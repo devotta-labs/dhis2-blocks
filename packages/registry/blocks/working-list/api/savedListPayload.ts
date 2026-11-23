@@ -47,9 +47,9 @@ const dateContents = (
     return DateFilterContentsSchema.parse(serialized.dateFilter)
 }
 
-const followUpContents = (
+const followUpContents: (
     value: AppliedFilter['value']
-): WritableSavedCriteria['followUp'] => {
+) => WritableSavedCriteria['followUp'] = (value) => {
     if (value.kind !== 'boolean') return undefined
     return value.values[0] ? 'true' : 'false'
 }
@@ -152,7 +152,7 @@ const commonCriteriaPayload = (
     return criteria
 }
 
-const writableSharing = (sharing?: SavedListSharing): SavedListSharing => {
+const writableSharing = (sharing?: SavedListSharing) => {
     if (!sharing) {
         return {
             publicAccess: '--------',
@@ -321,13 +321,13 @@ const mergeCriteriaExtensions = (
     return merged
 }
 
-const getExistingCriteria = (
+const getExistingCriteria: (
     existingResource:
         | TrackedEntityInstanceFilter
         | ProgramStageWorkingList
         | undefined,
     resource: SavedListResource
-): WritableSavedCriteria | undefined => {
+) => WritableSavedCriteria | undefined = (existingResource, resource) => {
     if (!existingResource) return undefined
     return resource === 'programStageWorkingLists'
         ? ProgramStageWorkingListSchema.parse(existingResource)

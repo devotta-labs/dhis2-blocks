@@ -4,7 +4,10 @@ export const PLAYGROUND_BLOCKS = [
     { slug: 'observation-cards', title: 'Observation Cards' },
     { slug: 'timeline', title: 'Timeline' },
     { slug: 'tracked-entity-finder', title: 'Tracked Entity Finder' },
+    { slug: 'tracked-entity-header', title: 'Tracked Entity Header' },
+    { slug: 'dhis2-value-input', title: 'Value Input' },
     { slug: 'tracker-data-entry', title: 'Tracker Data Entry' },
+    { slug: 'org-unit-switcher', title: 'Organisation Unit Switcher' },
 ] as const
 
 export type PlaygroundSlug = (typeof PLAYGROUND_BLOCKS)[number]['slug']

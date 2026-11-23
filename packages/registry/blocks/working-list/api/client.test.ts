@@ -1,8 +1,8 @@
 import { z, ZodError } from 'zod'
+import { openWorkingListServer } from '../test/workingListServer'
 import {
-    createWorkingListClient,
+    QueryEnvelopeSchema,
     shouldRetryWorkingListRequest,
-    type DataEngineLike,
     WorkingListBoundaryError,
 } from './client'
 
@@ -12,22 +12,18 @@ const ResponseSchema = z
 
 describe('validated DataEngine-like client', () => {
     it('accepts unknown additional fields while validating known fields', async () => {
-        const engine: DataEngineLike = {
-            query: vi.fn().mockResolvedValue({
-                workingListResource: {
+        const { client } = await openWorkingListServer(({ pathname }) => {
+            if (pathname.endsWith('/anything')) {
+                return Response.json({
                     id: 'Result00001',
                     required: 1,
                     futureField: 'kept',
-                },
-            }),
-            mutate: vi.fn(),
-        }
+                })
+            }
+        })
 
         await expect(
-            createWorkingListClient(engine).query(
-                { resource: 'anything' },
-                ResponseSchema
-            )
+            client.query({ resource: 'anything' }, ResponseSchema)
         ).resolves.toEqual({
             id: 'Result00001',
             required: 1,
@@ -36,28 +32,16 @@ describe('validated DataEngine-like client', () => {
     })
 
     it('fails hard for malformed envelopes and resources', async () => {
-        const missingEnvelope: DataEngineLike = {
-            query: vi.fn().mockResolvedValue({ wrongKey: {} }),
-            mutate: vi.fn(),
-        }
-        const malformedResource: DataEngineLike = {
-            query: vi.fn().mockResolvedValue({
-                workingListResource: { id: 'Result00001' },
-            }),
-            mutate: vi.fn(),
-        }
-
+        expect(() => QueryEnvelopeSchema.parse({ wrongKey: {} })).toThrow(
+            ZodError
+        )
+        const { client } = await openWorkingListServer(({ pathname }) => {
+            if (pathname.endsWith('/anything')) {
+                return Response.json({ id: 'Result00001' })
+            }
+        })
         await expect(
-            createWorkingListClient(missingEnvelope).query(
-                { resource: 'anything' },
-                ResponseSchema
-            )
-        ).rejects.toBeInstanceOf(ZodError)
-        await expect(
-            createWorkingListClient(malformedResource).query(
-                { resource: 'anything' },
-                ResponseSchema
-            )
+            client.query({ resource: 'anything' }, ResponseSchema)
         ).rejects.toBeInstanceOf(ZodError)
     })
 

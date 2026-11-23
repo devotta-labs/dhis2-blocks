@@ -1,12 +1,17 @@
 import { colors } from '@dhis2/ui-constants'
 import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const css = readFileSync(new URL('./theme.css', import.meta.url), 'utf8')
+const css = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), 'theme.css'),
+    'utf8'
+)
 
 const CONTRAST_BLOCK =
     /@media \(prefers-contrast: more\)\s*\{\s*:root\s*\{([^}]*)\}\s*\}/
 
-const declarations = (block: string): Map<string, string> =>
+const declarations = (block: string) =>
     new Map(
         [...block.matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)].map((match) => [
             match[1],
@@ -18,7 +23,7 @@ const declarations = (block: string): Map<string, string> =>
         ])
     )
 
-const blockOf = (source: string, pattern: RegExp): string =>
+const blockOf = (source: string, pattern: RegExp) =>
     source.match(pattern)?.[1] ?? ''
 
 const contrastLayer = declarations(blockOf(css, CONTRAST_BLOCK))
@@ -31,15 +36,13 @@ const PALETTE_STEP =
 
 const PALETTE = new Map<string, string>(Object.entries(colors))
 
-/** A palette step's colour, from @dhis2/ui-constants: `grey-050` is `colors.grey050`. */
-const paletteColour = (step: string): string => {
+const paletteColour = (step: string) => {
     const colour = PALETTE.get(step.replace('-', ''))
     if (colour === undefined) throw new Error(`no palette step ${step}`)
     return colour.toLowerCase()
 }
 
-/** The palette step each role names in its comment, `--dhis2-x: #hex; /* grey-100 *\/`. */
-const namedSteps = (block: string): Map<string, string> =>
+const namedSteps = (block: string) =>
     new Map(
         [
             ...block.matchAll(
@@ -52,7 +55,6 @@ const defaultSteps = namedSteps(
 )
 const contrastSteps = namedSteps(blockOf(css, CONTRAST_BLOCK))
 
-// The spec's token map: each role's palette step by default and with more contrast.
 const SPEC = {
     background: ['white', 'white'],
     foreground: ['grey-900', 'grey-900'],
@@ -111,18 +113,18 @@ const SPEC = {
     'destructive-fill': ['red-100', 'red-100'],
     'destructive-indicator': ['red-600', 'red-800'],
     'destructive-strong': ['red-900', 'red-900'],
-    sidebar: ['grey-900', 'grey-900'],
-    'sidebar-foreground': ['grey-300', 'grey-050'],
-    'sidebar-accent': ['grey-800', 'grey-800'],
-    'sidebar-accent-foreground': ['grey-050', 'white'],
-    'sidebar-border': ['grey-700', 'grey-500'],
-    'sidebar-primary': ['teal-400', 'teal-200'],
-    'sidebar-ring': ['grey-050', 'white'],
 } satisfies Record<string, [string, string]>
-// Not palette steps: the overlay is a translucent grey and the shadows are lists.
-const NOT_IN_PALETTE = ['overlay', 'shadow-card', 'shadow-popover']
+const NOT_IN_PALETTE = [
+    'overlay',
+    'shadow-card',
+    'shadow-popover',
+    'control-height',
+    'button-height',
+    'field-gap',
+    'field-group-gap',
+]
 
-const luminance = (hex: string): number => {
+const luminance = (hex: string) => {
     const channels = [1, 3, 5].map((start) => {
         const value = parseInt(hex.slice(start, start + 2), 16) / 255
         return value <= 0.03928
@@ -132,20 +134,20 @@ const luminance = (hex: string): number => {
     return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
 }
 
-const contrast = (first: string, second: string): number => {
+const contrast = (first: string, second: string) => {
     const [lighter, darker] = [luminance(first), luminance(second)].sort(
         (a, b) => b - a
     )
     return (lighter + 0.05) / (darker + 0.05)
 }
 
-const defaultValue = (role: string): string => {
+const defaultValue = (role: string) => {
     const value = defaultLayer.get(`dhis2-${role}`)
     if (value === undefined) throw new Error(`--dhis2-${role} is not defined`)
     return value
 }
 
-const contrastValue = (role: string): string =>
+const contrastValue = (role: string) =>
     contrastLayer.get(`dhis2-${role}`) ?? defaultValue(role)
 
 describe('theme.css', () => {
@@ -221,7 +223,6 @@ describe('theme.css', () => {
         ['ring', 'background', 3],
         ['selected-strong', 'background', 3],
         ['foreground', 'selected', 7],
-        ['sidebar-foreground', 'sidebar', 7],
     ])(
         'default theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {
@@ -245,15 +246,12 @@ describe('theme.css', () => {
         ['info', 'info-subtle', 7],
         ['foreground', 'selected', 7],
         ['foreground', 'accent-strong', 7],
-        ['sidebar-foreground', 'sidebar', 7],
         ['input', 'background', 4.5],
         ['control', 'background', 4.5],
         ['border-strong', 'background', 4.5],
         ['ring', 'background', 4.5],
         ['selected-strong', 'background', 4.5],
         ['selected-foreground', 'background', 4.5],
-        ['sidebar-border', 'sidebar', 4.5],
-        ['sidebar-primary', 'sidebar-accent', 4.5],
         ['border', 'background', 3],
     ])(
         'high-contrast theme: %s on %s is at least %s:1',
@@ -283,9 +281,9 @@ describe('theme.css', () => {
     })
 
     it.each([
-        ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 3]),
-        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-fill`, 7]),
-        ...TONES.map((tone): Floor => [tone, `${tone}-subtle`, 4.5]),
+        ...TONES.map<Floor>((tone) => [`${tone}-indicator`, 'background', 3]),
+        ...TONES.map<Floor>((tone) => [`${tone}-strong`, `${tone}-fill`, 7]),
+        ...TONES.map<Floor>((tone) => [tone, `${tone}-subtle`, 4.5]),
         ['muted-foreground', 'background-subtle', 7],
     ] satisfies Floor[])(
         'default theme: %s on %s is at least %s:1',
@@ -297,9 +295,9 @@ describe('theme.css', () => {
     )
 
     it.each([
-        ...TONES.map((tone): Floor => [`${tone}-indicator`, 'background', 4.5]),
-        ...TONES.map((tone): Floor => [`${tone}-strong`, `${tone}-fill`, 7]),
-        ...TONES.map((tone): Floor => [tone, `${tone}-subtle`, 4.5]),
+        ...TONES.map<Floor>((tone) => [`${tone}-indicator`, 'background', 4.5]),
+        ...TONES.map<Floor>((tone) => [`${tone}-strong`, `${tone}-fill`, 7]),
+        ...TONES.map<Floor>((tone) => [tone, `${tone}-subtle`, 4.5]),
     ] satisfies Floor[])(
         'high-contrast theme: %s on %s is at least %s:1',
         (foreground, background, floor) => {
@@ -308,4 +306,29 @@ describe('theme.css', () => {
             ).toBeGreaterThanOrEqual(floor)
         }
     )
+})
+
+describe('density', () => {
+    const compact = declarations(
+        blockOf(css, /\[data-density='compact'\]\s*\{([^}]*)\}/)
+    )
+
+    it("is @dhis2/ui's regular field height by default, and its dense one when compact", () => {
+        expect(defaultLayer.get('dhis2-control-height')).toBe('40px')
+        expect(compact.get('dhis2-control-height')).toBe('32px')
+    })
+
+    it('compact only overrides density variables', () => {
+        expect([...compact.keys()].toSorted()).toEqual(
+            [
+                'dhis2-button-height',
+                'dhis2-control-height',
+                'dhis2-field-gap',
+                'dhis2-field-group-gap',
+            ].toSorted()
+        )
+        for (const name of compact.keys()) {
+            expect(defaultLayer.has(name)).toBe(true)
+        }
+    })
 })

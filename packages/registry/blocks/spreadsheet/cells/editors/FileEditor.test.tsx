@@ -3,21 +3,19 @@ import { FetchError } from '@dhis2/app-runtime'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import type { Field } from '@/components/dhis2-value-types'
-import refused from '../__tests__/fixtures/file-upload-refused.json'
-import uploaded from '../__tests__/fixtures/file-upload.json'
-import { CELL, HEADER, inputOf, rig } from '../__tests__/harness'
-import type { ServerRequest } from '../__tests__/harness'
+import refused from '../test/fixtures/file-upload-refused.json'
+import uploaded from '../test/fixtures/file-upload.json'
+import { CELL, HEADER, inputOf, rig } from '../test/harness'
+import type { ServerRequest } from '../test/harness'
 import { Cell } from '../Cell'
 
 const FILE: Field = { valueType: 'FILE_RESOURCE' }
 const IMAGE: Field = { valueType: 'IMAGE' }
-// A file the server holds for the cell, with the name the form loaded for it, and one uploaded for it.
 const STORED = 'Yqp5K9rz3I2'
 const STORED_NAME = 'doc.pdf'
 const NAMES = new Map([[STORED, STORED_NAME]])
 const UPLOADED = uploaded.response.fileResource.id
 const NAME = uploaded.response.fileResource.name
-// Another upload, chosen after the first.
 const LATER = 'LaTeRfIlE01'
 const LATER_NAME = 'later.txt'
 const uploadedLater = {
@@ -33,7 +31,6 @@ const uploadedLater = {
 }
 const OFFLINE = 'Connect to the internet to upload files'
 const LOCKED = 'Assigned by rule: Copy the scan'
-// Where the consumer says the server serves the harness's cell's stored file and image.
 const STORED_FILE = '../files/r1.c1/file'
 const STORED_IMAGE = '../files/r1.c1/image'
 const fileUrl = (key: string, image: boolean) =>
@@ -46,12 +43,9 @@ interface Upload {
     signal?: AbortSignal
 }
 
-/**
- * A file or image cell over a fake server, with the names the form loaded for its files: the server answers each
- * upload with `answer` (the uploaded file unless a test says otherwise) and keeps any read, which no test expects.
- */
 const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
     const uploads: Upload[] = []
+    const uploadSignals = new Map<number, PromiseWithResolvers<void>>()
     const reads: ServerRequest[] = []
     let answer: Answer = async () => uploaded
     const setup = rig(field, {
@@ -64,6 +58,8 @@ const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
                     return { name: 'Asked for' }
                 }
                 uploads.push({ request, signal: execute?.signal })
+                uploadSignals.get(uploads.length)?.resolve()
+                uploadSignals.delete(uploads.length)
                 return answer()
             },
         },
@@ -80,13 +76,20 @@ const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
     return {
         ...setup,
         uploads,
+        uploadStarted(number: number) {
+            if (uploads.length >= number) {
+                return Promise.resolve()
+            }
+            const started = Promise.withResolvers<void>()
+            uploadSignals.set(number, started)
+            return started.promise
+        },
         reads,
         screen,
         cell: page.getByRole('textbox', { name: 'Age (years)' }),
         answerWith(next: Answer) {
             answer = next
         },
-        /** Keeps the next upload waiting; returns what lets it finish with `answered`. */
         hold(answered: { status: string } = uploaded) {
             let release = () => {}
             answer = () =>
@@ -95,7 +98,6 @@ const mount = async (field: Field, options: Parameters<typeof rig>[1] = {}) => {
                 })
             return () => release()
         },
-        /** Takes the cell off the page, as a row the grid drops. */
         async drop() {
             await screen.rerender(setup.ui(null))
         },
@@ -108,7 +110,6 @@ const chosen = new File(['x'], NAME, { type: 'text/plain' })
 const chosenLater = new File(['y'], LATER_NAME, { type: 'text/plain' })
 const chosenImage = new File(['x'], 'scan.png', { type: 'image/png' })
 
-/** The editor's file input, which its "Choose" button opens. */
 const picker = () => {
     const input = dialog.element().querySelector('input[type="file"]')
     if (input === null) {
@@ -117,11 +118,9 @@ const picker = () => {
     return input
 }
 
-/** The small preview drawn in the cell, beside its name. */
 const thumbnail = (cell: ReturnType<typeof page.getByRole>) =>
     inputOf(cell).parentElement?.querySelector(':scope > img') ?? null
 
-/** Whether the page asked for a URL ending in `path`, whatever the answer. */
 const requested = (path: string) =>
     performance
         .getEntriesByType('resource')
@@ -129,7 +128,6 @@ const requested = (path: string) =>
 
 const open = async (cell: ReturnType<typeof page.getByRole>) => {
     inputOf(cell).focus()
-    // Not Enter, which moves on right after a save.
     await userEvent.keyboard('{F2}')
     await expect.element(dialog).toBeVisible()
 }
@@ -147,7 +145,6 @@ const later = (ms: number) =>
 test('the editor takes focus on "Choose a file", and Tab and Shift+Tab loop over its buttons', async () => {
     const { cell } = await mount(FILE)
     await open(cell)
-    // Not the file input the button opens, which is hidden.
     await expect.element(button('Choose a file')).toHaveFocus()
     await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
     await expect.element(button('Cancel')).toHaveFocus()
@@ -161,7 +158,6 @@ test('choosing a file uploads it and saves its id', async () => {
     const release = hold()
     await open(cell)
     await userEvent.upload(picker(), chosen)
-    // While it uploads, the editor says so.
     await expect.element(dialog.getByText(`Uploading ${NAME}`)).toBeVisible()
     expect(announced).toEqual([`Uploading ${NAME}`])
     expect(uploads).toHaveLength(1)
@@ -178,15 +174,13 @@ test('choosing a file uploads it and saves its id', async () => {
     expect(enqueued).toEqual([[CELL, UPLOADED, null]])
     await expect.element(dialog).not.toBeInTheDocument()
     await expect.element(cell).toHaveFocus()
-    // The cell shows the file's name, from the upload's own answer: nothing more is asked.
     await expect.element(cell).toHaveValue(NAME)
     expect(reads).toEqual([])
-    // The person saw it finish in the editor: nothing more is said.
     expect(announced).toEqual([`Uploading ${NAME}`])
 })
 
 test('an image cell does not upload a file that is not an image, and says so at once as it does a failed upload', async () => {
-    const { cell, stored, enqueued, uploads, announced, hold } =
+    const { cell, stored, enqueued, uploads, uploadStarted, announced, hold } =
         await mount(IMAGE)
     await open(cell)
     await userEvent.upload(picker(), chosen)
@@ -196,8 +190,6 @@ test('an image cell does not upload a file that is not an image, and says so at 
     expect(stored()?.value).toBeUndefined()
     expect(enqueued).toEqual([])
 
-    // An image goes up, and the refusal goes with the choice that caused it. Some systems give a HEIC image no type;
-    // set by hand, as an upload through the test driver would type it by its name.
     const untyped = new DataTransfer()
     untyped.items.add(new File(['x'], 'photo.heic'))
     Object.assign(picker(), { files: untyped.files })
@@ -205,7 +197,6 @@ test('an image cell does not upload a file that is not an image, and says so at 
     await expect.poll(() => stored()?.value).toBe(UPLOADED)
     expect(uploads).toHaveLength(1)
 
-    // Chosen while an image uploads, a file that is not one is refused in place of "Uploading".
     const release = hold()
     await open(cell)
     await userEvent.upload(picker(), chosenImage)
@@ -213,7 +204,8 @@ test('an image cell does not upload a file that is not an image, and says so at 
     await userEvent.upload(picker(), chosen)
     await expect.element(dialog.getByText('Choose an image file')).toBeVisible()
     release()
-    await expect.poll(() => uploads).toHaveLength(2)
+    await uploadStarted(2)
+    expect(uploads).toHaveLength(2)
 })
 
 test('offline, the editor says uploads wait', async () => {
@@ -224,7 +216,6 @@ test('offline, the editor says uploads wait', async () => {
     await open(cell)
     await expect.element(dialog.getByText(OFFLINE)).toBeVisible()
     expect(announced).toEqual([OFFLINE])
-    // Still reachable, so the reason is found with it, and looking disabled.
     await expect
         .element(button('Choose a file'))
         .toHaveAttribute('aria-disabled', 'true')
@@ -243,7 +234,6 @@ test('an upload that finishes after leaving the cell still saves to that cell', 
     await open(cell)
     await userEvent.upload(picker(), chosen)
     await expect.element(dialog.getByText(`Uploading ${NAME}`)).toBeVisible()
-    // A press outside leaves the editor, and the upload goes on.
     await leave()
     expect(uploads[0].signal?.aborted).toBe(false)
     expect(stored()?.value).toBe(STORED)
@@ -252,7 +242,6 @@ test('an upload that finishes after leaving the cell still saves to that cell', 
     release()
     await expect.poll(() => stored()?.value).toBe(UPLOADED)
     expect(enqueued).toEqual([[CELL, UPLOADED, STORED]])
-    // No editor shows it finish, so it is said.
     expect(announced.at(-1)).toBe(`Uploaded ${NAME}`)
 })
 
@@ -266,7 +255,6 @@ test('an upload the cell refuses once it finishes says why', async () => {
     await userEvent.upload(picker(), chosen)
     await expect.element(dialog.getByText(`Uploading ${NAME}`)).toBeVisible()
     await leave()
-    // A rule locks the cell while the upload runs.
     effects.setState({
         cells: { [CELL]: { required: false, messages: [], readOnly: LOCKED } },
     })
@@ -289,8 +277,6 @@ test('Cancel or Escape during an upload stops it and keeps the old value', async
     await expect.element(dialog).not.toBeInTheDocument()
     expect(uploads[0].signal?.aborted).toBe(true)
 
-    // Escape, wherever focus is in the editor: its own background, where a click leaves it, or the button that is
-    // disabled while the upload runs, which takes every key but Tab.
     const focusIn = [
         () => dialog.element(),
         () => button('Choose a file').element(),
@@ -313,7 +299,6 @@ test('Cancel or Escape during an upload stops it and keeps the old value', async
         expect(uploads[at + 1].signal?.aborted).toBe(true)
     }
 
-    // Answers that come anyway save nothing.
     for (const release of releases) {
         release()
     }
@@ -355,7 +340,6 @@ test('a file chosen while an earlier one still uploads wins, whichever finishes 
     await userEvent.upload(picker(), chosenLater)
     expect(uploads[0].signal?.aborted).toBe(true)
 
-    // The later one finishes first; the earlier one, finishing after, does not replace it.
     releaseLater()
     await expect.poll(() => stored()?.value).toBe(LATER)
     await expect.element(cell).toHaveValue(LATER_NAME)
@@ -384,13 +368,11 @@ test('a failed upload keeps the old value and shows "Could not upload the file: 
     expect(announced).toEqual([`Uploading ${NAME}`, reason])
     expect(stored()?.value).toBe(STORED)
 
-    // The same file again: an answer without the file's id.
     answerWith(async () => ({ status: 'OK' }))
     await userEvent.upload(picker(), chosen)
     const again = 'Could not upload the file. Try again.'
     await expect.element(dialog.getByText(again)).toBeVisible()
 
-    // A dropped connection.
     answerWith(async () => {
         throw new FetchError({
             type: 'network',
@@ -401,7 +383,6 @@ test('a failed upload keeps the old value and shows "Could not upload the file: 
     await userEvent.upload(picker(), chosen)
     await expect.element(dialog.getByText(OFFLINE)).toBeVisible()
     expect(announced.at(-1)).toBe(OFFLINE)
-    // Only what DHIS2 said reaches the person, never the platform's or the parser's own text.
     expect(announced.join(' ')).not.toMatch(/unknown|expected|invalid/i)
     expect(stored()?.value).toBe(STORED)
     expect(enqueued).toEqual([])
@@ -415,7 +396,6 @@ test('"Remove" saves no value', async () => {
     expect(enqueued).toEqual([[CELL, null, STORED]])
     await expect.element(dialog).not.toBeInTheDocument()
     await expect.element(cell).toHaveValue('')
-    // Nothing left to remove.
     await open(cell)
     await expect.element(button('Remove')).not.toBeInTheDocument()
 })
@@ -443,14 +423,11 @@ test('without `fileUrl`, a stored image or file shows its name only: no preview,
 test('a stored image shows a preview from `fileUrl`; a file shows its name and "Download" from it', async () => {
     const image = await mount(IMAGE, { value: STORED, fileUrl })
     await expect.element(image.cell).toHaveValue(STORED_NAME)
-    // The cell asks for a small image. The test server has none to give, and a preview that fails to load leaves the
-    // name alone, never a broken image.
     await expect
         .poll(() => requested(`${STORED_IMAGE.slice(2)}?dimension=SMALL`))
         .toBe(true)
     await expect.poll(() => thumbnail(image.cell)).toBeNull()
     expect(inputOf(image.cell).className).not.toContain('ps-10')
-    // The editor asks for a larger image, and one that does not load leaves the name, as in the cell.
     await open(image.cell)
     await expect
         .poll(() => requested(`${STORED_IMAGE.slice(2)}?dimension=MEDIUM`))
@@ -459,7 +436,6 @@ test('a stored image shows a preview from `fileUrl`; a file shows its name and "
     await expect.element(dialog.getByRole('img')).not.toBeInTheDocument()
     await expect.element(button('Choose an image')).toBeVisible()
     expect(picker().getAttribute('accept')).toBe('image/*')
-    // A new image the server does not hold for the cell yet shows its name.
     await userEvent.upload(picker(), chosenImage)
     await expect.poll(() => image.stored()?.value).toBe(UPLOADED)
     expect(thumbnail(image.cell)).toBeNull()
@@ -476,7 +452,6 @@ test('a stored image shows a preview from `fileUrl`; a file shows its name and "
     await expect.element(dialog.getByText(STORED_NAME)).toBeVisible()
     const download = dialog.getByRole('link', { name: 'Download' })
     await expect.element(download).toHaveAttribute('href', STORED_FILE)
-    // In a new tab: across origins the browser ignores `download`, and the link would take the grid away.
     await expect.element(download).toHaveAttribute('target', '_blank')
     await expect.element(download).toHaveAttribute('rel', 'noopener')
     expect(picker().hasAttribute('accept')).toBe(false)

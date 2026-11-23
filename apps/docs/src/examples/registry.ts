@@ -1,9 +1,18 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import calendarVisitsSource from './calendar/CalendarVisits.tsx?raw'
+import orgUnitSelectorSidebarSource from './org-unit-switcher/OrgUnitSwitcherSidebar.tsx?raw'
+import orgUnitSelectorStatesSource from './org-unit-switcher/OrgUnitSwitcherStates.tsx?raw'
+import orgUnitSelectorStubSource from './org-unit-switcher/stubClient.ts?raw'
+import { OrgUnitSwitcherSidebarPlaceholder } from './org-unit-switcher/OrgUnitSwitcherPlaceholders'
 import contextSelectorBasicSource from './context-selector/ContextSelectorBasic.tsx?raw'
 import contextSelectorStatesSource from './context-selector/ContextSelectorStates.tsx?raw'
+import valueInputFormSource from './dhis2-value-input/ValueInputForm.tsx?raw'
+import valueInputKindsSource from './dhis2-value-input/ValueInputKinds.tsx?raw'
+import { fieldExamples } from './fieldExamples'
 import { PersonVitalsPlaceholder } from './observation-cards/ObservationCardsPlaceholders'
 import personVitalsSource from './observation-cards/PersonVitals.tsx?raw'
+import personBannerSource from './tracked-entity-header/PersonBanner.tsx?raw'
+import { PersonBannerPlaceholder } from './tracked-entity-header/TrackedEntityHeaderPlaceholders'
 import {
     WorkingListDefaultPlaceholder,
     WorkingListProgramPickerPlaceholder,
@@ -21,25 +30,26 @@ import chartTrendSource from './ui/ChartTrend.tsx?raw'
 import chartVisitsSource from './ui/ChartVisits.tsx?raw'
 import checkboxOptionsSource from './ui/CheckboxOptions.tsx?raw'
 import comboboxOrgUnitsSource from './ui/ComboboxOrgUnits.tsx?raw'
+import comboboxMultipleSource from './ui/ComboboxMultiple.tsx?raw'
 import dialogConfirmSource from './ui/DialogConfirm.tsx?raw'
 import dropdownMenuActionsSource from './ui/DropdownMenuActions.tsx?raw'
 import inputFieldSource from './ui/InputField.tsx?raw'
 import inputGroupSearchSource from './ui/InputGroupSearch.tsx?raw'
 import popoverDetailsSource from './ui/PopoverDetails.tsx?raw'
+import radioGroupDescriptionSource from './ui/RadioGroupDescription.tsx?raw'
 import radioGroupOutcomeSource from './ui/RadioGroupOutcome.tsx?raw'
 import selectPeriodSource from './ui/SelectPeriod.tsx?raw'
+import sidebarAppSource from './ui/SidebarApp.tsx?raw'
 import spinnerSizesSource from './ui/SpinnerSizes.tsx?raw'
 import switchSettingsSource from './ui/SwitchSettings.tsx?raw'
 import tableRecordsSource from './ui/TableRecords.tsx?raw'
 import textareaNotesSource from './ui/TextareaNotes.tsx?raw'
 import toggleGroupViewSource from './ui/ToggleGroupView.tsx?raw'
 import tooltipHintSource from './ui/TooltipHint.tsx?raw'
-import sidebarBasicSource from './sidebar/SidebarBasic.tsx?raw'
 import { TimelinePlaceholder } from './timeline/TimelinePlaceholder'
 import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
 import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
 import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
-import sidebarControlledSource from './sidebar/SidebarControlled.tsx?raw'
 import spreadsheetTargetsSource from './spreadsheet/TargetsGrid.tsx?raw'
 import trackerDataEntryCohortAncSource from './tracker-data-entry/CohortAncRegister.tsx?raw'
 import trackerDataEntryEventProgramSource from './tracker-data-entry/EventProgramGrid.tsx?raw'
@@ -90,20 +100,12 @@ const examples = [
         minHeight: 640,
     },
     {
-        slug: 'sidebar/basic',
-        title: 'Sidebar navigation',
+        slug: 'sidebar/app',
+        title: 'App navigation',
         live: false,
-        Component: lazy(() => import('./sidebar/SidebarBasic')),
-        source: sidebarBasicSource,
-        minHeight: 680,
-    },
-    {
-        slug: 'sidebar/controlled',
-        title: 'Controlled sidebar',
-        live: false,
-        Component: lazy(() => import('./sidebar/SidebarControlled')),
-        source: sidebarControlledSource,
-        minHeight: 360,
+        Component: lazy(() => import('./ui/SidebarApp')),
+        source: sidebarAppSource,
+        minHeight: 600,
     },
     {
         slug: 'working-list/default',
@@ -151,6 +153,15 @@ const examples = [
         Placeholder: PersonVitalsPlaceholder,
     },
     {
+        slug: 'tracked-entity-header/person-banner',
+        title: 'Person banner',
+        live: true,
+        Component: lazy(() => import('./tracked-entity-header/PersonBanner')),
+        source: personBannerSource,
+        minHeight: 200,
+        Placeholder: PersonBannerPlaceholder,
+    },
+    {
         slug: 'timeline/case-history',
         title: 'Case history',
         live: true,
@@ -174,6 +185,34 @@ const examples = [
         Component: lazy(() => import('./timeline/TimelineEntryParts')),
         source: timelineEntryPartsSource,
         minHeight: 260,
+    },
+    {
+        slug: 'org-unit-switcher/sidebar',
+        title: 'Organisation unit switcher in a sidebar',
+        live: true,
+        Component: lazy(
+            () => import('./org-unit-switcher/OrgUnitSwitcherSidebar')
+        ),
+        source: orgUnitSelectorSidebarSource,
+        minHeight: 320,
+        Placeholder: OrgUnitSwitcherSidebarPlaceholder,
+    },
+    {
+        slug: 'org-unit-switcher/states',
+        title: 'One clinic and a few clinics, named by the app',
+        live: false,
+        Component: lazy(
+            () => import('./org-unit-switcher/OrgUnitSwitcherStates')
+        ),
+        source: orgUnitSelectorStatesSource,
+        sourceFiles: [
+            {
+                name: 'OrgUnitSwitcherStates.tsx',
+                code: orgUnitSelectorStatesSource,
+            },
+            { name: 'stubClient.ts', code: orgUnitSelectorStubSource },
+        ],
+        minHeight: 220,
     },
     {
         slug: 'context-selector/basic',
@@ -202,6 +241,22 @@ const examples = [
         Component: lazy(() => import('./spreadsheet/TargetsGrid')),
         source: spreadsheetTargetsSource,
         minHeight: 300,
+    },
+    {
+        slug: 'dhis2-value-input/kinds',
+        title: 'Fields that need no server',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputKinds')),
+        source: valueInputKindsSource,
+        minHeight: 520,
+    },
+    {
+        slug: 'dhis2-value-input/form',
+        title: 'A form with rule effects',
+        live: false,
+        Component: lazy(() => import('./dhis2-value-input/ValueInputForm')),
+        source: valueInputFormSource,
+        minHeight: 520,
     },
     {
         slug: 'tracker-data-entry/event-program',
@@ -336,6 +391,14 @@ const examples = [
         minHeight: 420,
     },
     {
+        slug: 'combobox/multiple',
+        title: 'Programs as chips',
+        live: false,
+        Component: lazy(() => import('./ui/ComboboxMultiple')),
+        source: comboboxMultipleSource,
+        minHeight: 320,
+    },
+    {
         slug: 'dialog/confirm',
         title: 'Dialogs',
         live: false,
@@ -351,6 +414,7 @@ const examples = [
         source: dropdownMenuActionsSource,
         minHeight: 300,
     },
+    ...fieldExamples,
     {
         slug: 'input/field',
         title: 'Text fields',
@@ -424,6 +488,14 @@ const examples = [
         minHeight: 160,
     },
     {
+        slug: 'radio-group/description',
+        title: 'Referral',
+        live: false,
+        Component: lazy(() => import('./ui/RadioGroupDescription')),
+        source: radioGroupDescriptionSource,
+        minHeight: 200,
+    },
+    {
         slug: 'spinner/sizes',
         title: 'Spinners',
         live: false,
@@ -459,5 +531,6 @@ const examples = [
 
 export type ExampleSlug = (typeof examples)[number]['slug']
 
-export const getExample = (slug: string): ExampleDefinition | undefined =>
-    examples.find((example) => example.slug === slug)
+export const getExample: (slug: string) => ExampleDefinition | undefined = (
+    slug
+) => examples.find((example) => example.slug === slug)

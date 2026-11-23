@@ -1,11 +1,12 @@
 import { revealPast } from './reveal'
 import type { TimelineEntry } from './types'
 
-const entry = (
-    id: string,
-    at: string,
-    extra: Partial<TimelineEntry> = {}
-): TimelineEntry => ({ id, at, data: null, ...extra })
+const entry = (id: string, at: string, extra: Partial<TimelineEntry> = {}) => ({
+    id,
+    at,
+    data: null,
+    ...extra,
+})
 
 const TODAY = '2026-10-22'
 

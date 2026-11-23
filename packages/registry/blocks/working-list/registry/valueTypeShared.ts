@@ -12,7 +12,6 @@ import type {
 import type {
     CellDisplayValue,
     CellFormattingContext,
-    WorkingListFileValue,
     WorkingListRawValue,
 } from './valueTypeContracts'
 import {
@@ -55,9 +54,9 @@ export type SavedScalarApiOperator =
     | 'le'
     | 'in'
 
-export const apiToOperator = (
+export const apiToOperator: (
     operator: SavedScalarApiOperator
-): FilterOperator => {
+) => FilterOperator = (operator) => {
     const operators = {
         like: 'like',
         sw: 'startsWith',
@@ -74,9 +73,9 @@ export const apiToOperator = (
     return result
 }
 
-export const emptyOperators = (
+export const emptyOperators: (
     capabilities: WorkingListCapabilities
-): FilterOperator[] =>
+) => FilterOperator[] = (capabilities) =>
     capabilities.emptyValueFilters ? ['empty', 'notEmpty'] : []
 
 export const ensureEmptyValue = (filter: AppliedFilter) => {
@@ -93,17 +92,17 @@ export const serializeEmptySaved = (filter: AppliedFilter) => {
     return { null: filter.value.isEmpty }
 }
 
-export const parseEmptySaved = (
+export const parseEmptySaved: (
     filter: SavedValueFilter
-): FilterValue | undefined =>
+) => FilterValue | undefined = (filter) =>
     filter.null === true || filter.null === false
         ? { kind: 'empty', isEmpty: filter.null }
         : undefined
 
-export const textOperators = (
+export const textOperators: (
     field: WorkingListField,
     capabilities: WorkingListCapabilities
-): FilterOperator[] => {
+) => FilterOperator[] = (field, capabilities) => {
     if (field.optionSetId || field.options?.length) {
         return ['in', ...emptyOperators(capabilities)]
     }
@@ -167,21 +166,20 @@ export const formatText = (
     return option?.displayName ?? context?.resolveDisplayName?.(raw) ?? raw
 }
 
-/** Direct-download fallback for values that never got tracker-scoped URLs. */
 const fileResourceFallbackUrl = (id: string) =>
     `/api/fileResources/${encodeURIComponent(id)}/data`
 
-const toFileValue = (value: WorkingListRawValue): WorkingListFileValue =>
+const toFileValue = (value: WorkingListRawValue) =>
     isWorkingListFileValue(value)
         ? value
         : { id: String(value), url: fileResourceFallbackUrl(String(value)) }
 
-export const textDisplay = (input: {
+export const textDisplay: (input: {
     valueType: Dhis2ValueType
     value: WorkingListRawValue
     field: WorkingListField
     context?: CellFormattingContext
-}): CellDisplayValue => {
+}) => CellDisplayValue = (input) => {
     const { valueType, value, field, context } = input
     if (value === undefined || value === null || value === '') {
         return { kind: 'empty', text: '' }
@@ -189,8 +187,6 @@ export const textDisplay = (input: {
     if (valueType === 'FILE_RESOURCE') {
         const file = toFileValue(value)
         const name = context?.resolveFileResourceName?.(file.id)
-        // Capture parity: a file whose resource name cannot be resolved
-        // renders as an empty cell instead of a dead link.
         return name
             ? { kind: 'file', text: name, href: file.url }
             : { kind: 'empty', text: '' }
@@ -371,7 +367,6 @@ export const parseDateValue = (
 export const parseTimeValue = (value: WorkingListRawValue) => {
     const parsed = parseText(value)
     if (!isValidTime(parsed)) {
-        // No colon in the message: i18next treats ':' as a namespace separator.
         throw new ValueParseError(
             i18n.t('TIME requires a 24-hour time, optionally with seconds')
         )

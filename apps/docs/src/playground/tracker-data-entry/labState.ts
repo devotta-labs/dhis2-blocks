@@ -23,14 +23,16 @@ export type LabAction =
       }
     | { type: 'clearRequests' }
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -42,7 +44,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -58,7 +63,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                 preset: undefined,
                 settings: { ...state.settings, ...action.changes },
             }
-            // The network changes in place, so what was typed is still there to send once it is back.
             const networkOnly = Object.keys(action.changes).every(
                 (key) => key === 'network'
             )

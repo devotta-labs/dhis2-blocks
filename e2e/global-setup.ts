@@ -9,7 +9,6 @@ export default async function globalSetup(config: FullConfig) {
         Number(process.env.E2E_APP_STARTUP_TIMEOUT_SECONDS ?? 300) * 1000
 
     try {
-        // The d2 app root responds before both generated entry modules are ready.
         for (const path of ['/src/D2App/AppWrapper.tsx', '/src/App.jsx']) {
             await expect
                 .poll(async () => (await context.get(path)).status(), {

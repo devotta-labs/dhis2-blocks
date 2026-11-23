@@ -37,11 +37,12 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    the block asks for, and `answer` with the server.
 4. Give it presets, shown as Examples: named settings for the handful of
    cases worth showing, grouped. Keep the sidebar small: the examples, a few
-   plain options, the network and the canvas.
+   plain options, the network and the canvas. Mark the cases kept for
+   checking the block, rather than for showing it, `folded`.
    `usePresetParam` keeps the chosen one in the URL (`?preset=`), so a link
    opens the same case.
 5. Keep the lab's state in its own reducer, `labState.ts`, tested in
-   `__tests__/labState.test.ts`: the mode, preset, settings, live ids, run
+   `test/labState.test.ts`: the mode, preset, settings, live ids, run
    count and logs, and which changes restart the block. The lab component only
    dispatches, so nothing about the state needs a browser to test. A reload
    opens on the URL's preset or the first; nothing else is kept.
@@ -51,7 +52,7 @@ evaluated to inspect a value. Playground server/provider setup is not included.
    Use the same props object for inspection and for the rendered composition so
    they stay in sync.
 
-Tests live in a `__tests__/` folder beside the code they test. Vitest already
+Tests live in a `test/` folder beside the code they test. Vitest already
 runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
 
 ## Shared parts
@@ -65,7 +66,7 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
 | `LogPanel`                   | The bottom panel: the block's callbacks when it has any, then each request and their `RequestWaterfall`. Feed it the log that `LabServerScope` writes.                                              |
 | `usePresetParam`             | The lab's preset in the URL: read once to open on it, written whenever the preset changes.                                                                                                          |
 | `throughNetwork` (`network`) | What `LabServerScope` uses: waits, fails or hangs as the endpoint says, then answers and logs. Use it directly only for requests outside app-runtime.                                               |
-| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples.                                                                           |
+| `controls`                   | The sidebar's rows: `Section`, `Check`, `NumberRow`, `SelectRow`, `Segmented`, and `PresetControls` for a lab's examples, with any marked `folded` under a closed Edge cases group.                 |
 | `lab.css`                    | The lab's own look (`--lab-*` tokens), dark with the docs' theme. `LabLayout` loads it; it never styles the block under test.                                                                       |
 
 ## Writing the server
@@ -74,7 +75,7 @@ runs `src/playground/**/*.test.ts`, so a new lab needs no other config.
   version. Blocks parse responses at their boundary, so a wrong shape shows up
   as the block's own error, which is worth seeing too.
 - Keep the server a plain function of the lab's settings and the request, in
-  its own file, so it can have a Vitest test (`<block>/__tests__/labServer.test.ts`).
+  its own file, so it can have a Vitest test (`<block>/test/labServer.test.ts`).
 - Generate data from settings (counts, spread, bad values, dates around
   today) rather than writing fixtures, and keep named presets of those
   settings for the cases worth showing; each lab's `labData.ts` and

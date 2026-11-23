@@ -17,7 +17,6 @@ const MoreButton = ({
     const error = useTrackerDataEntry((view) => view.loadMoreError)
     const errorId = useId()
     const button = useRef<HTMLButtonElement>(null)
-    // Gone while focused (nothing more to load), it leaves focus past the grid rather than on nothing.
     useLayoutEffect(() => {
         const node = button.current
         return () => {
@@ -33,7 +32,6 @@ const MoreButton = ({
                 type="button"
                 variant="secondary"
                 size="sm"
-                // Busy, it keeps focus and says so, and a press does nothing.
                 aria-busy={loading}
                 aria-describedby={error === undefined ? undefined : errorId}
                 disabled={loading}
@@ -42,7 +40,6 @@ const MoreButton = ({
             >
                 {label}
             </Button>
-            {/* Said once when the page fails; shown until the next try. */}
             {error === undefined ? null : (
                 <p id={errorId} className="text-sm text-dhis2-destructive">
                     {error}
@@ -52,7 +49,6 @@ const MoreButton = ({
     )
 }
 
-/** The button while the source may have more, with why the last page could not load beside it. */
 const ShowMore = ({ skipTargetId, label }: FooterProps & { label: string }) => {
     const hasMore = useTrackerDataEntry((view) => view.hasMore)
     return hasMore ? (

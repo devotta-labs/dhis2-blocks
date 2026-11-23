@@ -52,8 +52,6 @@ export const FilterChip = ({
     children: React.ReactNode
 }) => {
     const anchor = useRef<HTMLDivElement>(null)
-    // Disabling closes the editor for good, so it doesn't reappear by itself
-    // once the chip is enabled again.
     useEffect(() => {
         if (disabled && open) {
             onOpenChange(false)
@@ -80,7 +78,6 @@ export const FilterChip = ({
                 data-test={`${dataTest}-select`}
                 data-testid={testId}
             >
-                {/* A combobox doesn't take its name from its contents. */}
                 <PopoverTrigger
                     // oxlint-disable-next-line jsx-a11y/role-has-required-aria-props -- PopoverTrigger sets aria-expanded and aria-controls at runtime
                     role="combobox"
@@ -96,7 +93,6 @@ export const FilterChip = ({
                         {prefix}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{value}</span>
-                    {/* Room for the clear button laid over the trigger. */}
                     <span aria-hidden="true" className="w-7 shrink-0" />
                     <span className="ms-0.5 flex text-dhis2-foreground">
                         <IconChevronDown16 />
@@ -124,8 +120,6 @@ export const FilterChip = ({
     )
 }
 
-// Opening "More filters" lands on the first field rather than the stage
-// submenus above it.
 export const focusFirstAvailableFilter = (element: HTMLElement | null) => {
     if (!element) {
         return

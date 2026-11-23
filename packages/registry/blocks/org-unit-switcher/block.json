@@ -1,0 +1,5 @@
+{
+    "title": "DHIS2 Organisation Unit Switcher",
+    "description": "A switcher for the organisation unit a user is working in, such as their clinic or school: a short list of their own units, with search when they have more.",
+    "docs": "Wrap the app in OrgUnitProvider and put OrgUnitSwitcher at the top of the app's navigation, on a light surface. The block brings no navigation of its own, so pass collapsed yourself when yours is narrowed to icons. Read useOrgUnit() on any page to scope its data to the current unit. Pass texts to OrgUnitSwitcher to name the units as your users do, such as clinics or schools, with translated sentences. Pass value and onValueChange to OrgUnitProvider to control the choice, for example from the URL. For a tree picker of any organisation unit, use context-selector instead."
+}

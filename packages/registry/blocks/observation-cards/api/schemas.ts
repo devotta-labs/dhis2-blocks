@@ -18,7 +18,6 @@ const LegendSchema = z
     })
     .passthrough()
 
-/** A malformed legend is dropped on its own, so the rest of its set still applies. */
 const LegendsSchema = z.array(z.unknown()).transform((legends) =>
     legends.flatMap((legend) => {
         const parsed = LegendSchema.safeParse(legend)
@@ -56,7 +55,6 @@ const DataElementSchema = z
             .array(z.object({ legends: LegendsSchema }).passthrough())
             .nullish()
             .transform((sets) => sets ?? undefined),
-        // Never dropped when malformed: the card would show raw option codes.
         optionSet: z
             .object({ options: z.array(OptionSchema) })
             .passthrough()
@@ -65,7 +63,6 @@ const DataElementSchema = z
     })
     .passthrough()
 
-/** Only the id, so one element's bad metadata errors its own card, not the program. */
 const DataElementRefSchema = z
     .object({
         id: z.string().min(1),
@@ -77,9 +74,9 @@ type ReadDataElement =
     | { id: string; metadata: DataElementMetadata }
     | { id: string; invalid: InvalidDataElement }
 
-const readDataElement = (
+const readDataElement: (
     dataElement: z.output<typeof DataElementRefSchema>
-): ReadDataElement => {
+) => ReadDataElement = (dataElement) => {
     const { id, displayName } = dataElement
     const parsed = DataElementSchema.safeParse(dataElement)
     return parsed.success
@@ -95,18 +92,10 @@ const readDataElement = (
           }
 }
 
-/**
- * Each field falls back on its own, so one odd stage never fails the program:
- * every card would say it couldn't load.
- */
 const ProgramStageSchema = z
     .object({
-        // A stage without an id is left out of the stages, since no event can
-        // name it; its data elements are still read.
         id: z.string().min(1).optional().catch(undefined),
         displayName: z.string().optional().catch(undefined),
-        // An access block that can't be read never claims the stage is
-        // readable, so a restriction is never hidden.
         access: z
             .object({
                 data: z
@@ -117,7 +106,6 @@ const ProgramStageSchema = z
             .passthrough()
             .optional()
             .catch({ data: { read: false } }),
-        // An entry without an id is dropped: no card can ask for it.
         programStageDataElements: z
             .array(z.unknown())
             .catch([])
@@ -137,7 +125,6 @@ const ProgramStageSchema = z
 /** `programs/<id>`: the stages and, nested in them, the data elements. */
 export const ProgramMetadataResponseSchema = z
     .object({
-        // A stage that isn't even an object is dropped on its own.
         programStages: z
             .array(z.unknown())
             .default([])
@@ -149,7 +136,7 @@ export const ProgramMetadataResponseSchema = z
             ),
     })
     .passthrough()
-    .transform((program): ProgramMetadata => {
+    .transform<ProgramMetadata>((program) => {
         const read = program.programStages.flatMap(
             (stage) => stage.programStageDataElements
         )
@@ -162,10 +149,6 @@ export const ProgramMetadataResponseSchema = z
                               {
                                   id,
                                   displayName: displayName ?? id,
-                                  // The request asks for access[data[read]]. A server that does
-                                  // not report it (older versions) is not denying anything, so
-                                  // an absent field means readable; only an explicit `false`
-                                  // hides data.
                                   canReadData: access?.data?.read ?? true,
                                   dataElementIds: programStageDataElements.map(
                                       (entry) => entry.id
@@ -173,14 +156,13 @@ export const ProgramMetadataResponseSchema = z
                               },
                           ]
             ),
-            // A data element several stages capture is kept once.
             dataElements: new Map(
-                read.flatMap((entry): [string, DataElementMetadata][] =>
+                read.flatMap<[string, DataElementMetadata]>((entry) =>
                     'metadata' in entry ? [[entry.id, entry.metadata]] : []
                 )
             ),
             invalidDataElements: new Map(
-                read.flatMap((entry): [string, InvalidDataElement][] =>
+                read.flatMap<[string, InvalidDataElement]>((entry) =>
                     'invalid' in entry ? [[entry.id, entry.invalid]] : []
                 )
             ),
@@ -197,11 +179,8 @@ const EventSchema = z
         trackedEntity: z.string().optional(),
         programStage: z.string(),
         status: z.string(),
-        // Kept as received; buildSeries parses them.
         occurredAt: z.string().optional(),
         createdAt: z.string().optional(),
-        // A value without a value is skipped, so one bad entry cannot fail
-        // the whole response.
         dataValues: z
             .array(DataValueSchema)
             .default([])
@@ -230,9 +209,8 @@ export const EventsResponseSchema = z
             })
         }
     })
-    .transform(
-        (response): TrackerEventRecord[] =>
-            response.events ?? response.instances ?? []
+    .transform<TrackerEventRecord[]>(
+        (response) => response.events ?? response.instances ?? []
     )
 
 const EnrollmentSchema = z
@@ -255,7 +233,6 @@ export const EnrollmentsResponseSchema = z
             })
         }
     })
-    .transform(
-        (response): { enrollment: string }[] =>
-            response.enrollments ?? response.instances ?? []
+    .transform<{ enrollment: string }[]>(
+        (response) => response.enrollments ?? response.instances ?? []
     )

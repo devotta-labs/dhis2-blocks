@@ -17,12 +17,10 @@ import { useTimelineMeta } from '../../hooks/useTimelineMeta'
 import type { ChangeSave, ChangeEntryData, ResolvedChange } from '../types'
 import { TimelineSaveContext, useTimelineSave } from './hooks/useTimelineSave'
 
-/** Names for org-unit-typed values, from the surrounding `TimelineSaves`. */
 const OrgUnitNamesContext = createContext<
     ReadonlyMap<string, string> | undefined
 >(undefined)
 
-/** A save that only filled in fields: the record being entered, not edited. */
 const isEntry = (save: ChangeSave) =>
     save.changes.every((change) => change.type === 'CREATE')
 
@@ -82,24 +80,21 @@ export const TimelineChangeSummary = ({
     )
 }
 
-/** Event fields are stored as `2026-06-12 00:00:00.000`: normalise to the `T` form the formatter reads. */
 const EVENT_DATE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}).*$/
 
 interface EventFieldValue {
     value: string | undefined
-    /** Overrides the field's value type, for a date stored with a time. */
     valueType?: string
 }
 
-const eventFieldValue = (
+const eventFieldValue: (
     id: string,
     value: string | undefined
-): EventFieldValue => {
+) => EventFieldValue = (id, value) => {
     const match = value === undefined ? null : EVENT_DATE.exec(value)
     if (value === undefined || match === null || id === 'geometry') {
         return { value }
     }
-    // A time of midnight is a date stored as a date-time: show only the day.
     return match[2] === '00:00'
         ? { value: match[1] }
         : { value: `${match[1]}T${match[2]}`, valueType: 'DATETIME' }
@@ -137,8 +132,6 @@ const ChangeRowItem = ({ change }: { change: ResolvedChange }) => {
             >
                 {change.name}
             </dt>{' '}
-            {/* Each value is isolated so its script can't reorder the row, and
-                the arrow turns: before → after in the reading direction. */}
             <dd className="m-0 inline font-medium text-dhis2-foreground">
                 {change.type === 'CREATE' ? null : (
                     <>

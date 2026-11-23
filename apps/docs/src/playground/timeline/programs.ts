@@ -68,7 +68,7 @@ export interface ElementSpec {
     value: (context: ValueContext) => string | undefined
 }
 
-export interface StageSpec {
+interface StageSpec {
     id: string
     name: string
     repeatable: boolean
@@ -223,7 +223,6 @@ const ANC: ProgramSpec = {
         ...TYPE_ATTRIBUTES,
         { id: ADDRESS, name: 'Home address', valueType: 'TEXT' },
     ],
-    // Every third visit is at the outreach post.
     orgUnitOf: (index) => (index % 3 === 2 ? NJALA : NGELEHUN),
     enrollmentNote: 'Referred by the outreach team.',
 }

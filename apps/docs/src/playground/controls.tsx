@@ -175,8 +175,7 @@ export const SegmentedRow = <T extends string>({
     </div>
 )
 
-/** A lab's named presets, grouped. */
-export const PresetControls = <P extends { group: string; name: string }>({
+const PresetGroups = <P extends { group: string; name: string }>({
     presets,
     selected,
     onPick,
@@ -185,27 +184,68 @@ export const PresetControls = <P extends { group: string; name: string }>({
     selected?: string
     onPick: (preset: P) => void
 }) => (
-    <Section title="Examples">
-        <div className="flex flex-col gap-2.5">
-            {[...new Set(presets.map(({ group }) => group))].map((group) => (
-                <div key={group} className="flex flex-wrap gap-1">
-                    <span className="w-full text-xs text-muted-foreground">
-                        {group}
-                    </span>
-                    {presets
-                        .filter((each) => each.group === group)
-                        .map((each) => (
-                            <button
-                                key={each.name}
-                                type="button"
-                                aria-pressed={selected === each.name}
-                                onClick={() => onPick(each)}
-                            >
-                                {each.name}
-                            </button>
-                        ))}
-                </div>
-            ))}
-        </div>
-    </Section>
+    <div className="flex flex-col gap-2.5">
+        {[...new Set(presets.map(({ group }) => group))].map((group) => (
+            <div key={group} className="flex flex-wrap gap-1">
+                <span className="w-full text-xs text-muted-foreground">
+                    {group}
+                </span>
+                {presets
+                    .filter((each) => each.group === group)
+                    .map((each) => (
+                        <button
+                            key={each.name}
+                            type="button"
+                            aria-pressed={selected === each.name}
+                            onClick={() => onPick(each)}
+                        >
+                            {each.name}
+                        </button>
+                    ))}
+            </div>
+        ))}
+    </div>
 )
+
+/** A lab's named presets, grouped; any marked `folded` sit under Edge cases, closed unless one is on show. */
+export const PresetControls = <
+    P extends { group: string; name: string; folded?: boolean },
+>({
+    presets,
+    selected,
+    onPick,
+}: {
+    presets: readonly P[]
+    selected?: string
+    onPick: (preset: P) => void
+}) => {
+    const folded = presets.filter((each) => each.folded)
+    const [open, setOpen] = useState(() =>
+        folded.some((each) => each.name === selected)
+    )
+    return (
+        <Section title="Examples">
+            <PresetGroups
+                presets={presets.filter((each) => !each.folded)}
+                selected={selected}
+                onPick={onPick}
+            />
+            {folded.length > 0 && (
+                <details
+                    open={open}
+                    onToggle={(event) => setOpen(event.currentTarget.open)}
+                    className="mt-2.5"
+                >
+                    <summary className="mb-2 cursor-pointer text-xs text-muted-foreground">
+                        Edge cases
+                    </summary>
+                    <PresetGroups
+                        presets={folded}
+                        selected={selected}
+                        onPick={onPick}
+                    />
+                </details>
+            )}
+        </Section>
+    )
+}

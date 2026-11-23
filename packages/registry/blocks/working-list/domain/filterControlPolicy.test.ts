@@ -8,7 +8,9 @@ import {
 
 const capabilities = resolveWorkingListCapabilities({ apiVersion: 43 })
 
-const optionField = (source: WorkingListField['source']): WorkingListField => ({
+const optionField: (source: WorkingListField['source']) => WorkingListField = (
+    source
+) => ({
     id: source === 'system' ? 'eventStatus' : 'gender',
     displayName: source === 'system' ? 'Event status' : 'Gender',
     source,

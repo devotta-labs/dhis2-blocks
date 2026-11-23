@@ -38,7 +38,6 @@ export const OptionList = ({
         list.current?.children[active]?.scrollIntoView({ block: 'nearest' })
     }, [active])
     return (
-        // Focus stays in the cell, which saves the pick, whatever part of the list is pressed.
         // oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- keeps focus in the cell when the list is pressed
         <div
             onMouseDown={(event) => event.preventDefault()}
@@ -47,7 +46,6 @@ export const OptionList = ({
                 'z-50 w-max max-w-[min(30rem,90vw)] min-w-full overflow-hidden rounded-dhis2-sm border border-dhis2-border bg-dhis2-popover text-dhis2-popover-foreground shadow-dhis2-popover supports-[anchor-name:--a]:min-w-[anchor-size(width)]'
             )}
         >
-            {/* With no matches, only the note shows: why a search found nothing. */}
             {codes.length === 0 ? null : (
                 <div
                     ref={list}

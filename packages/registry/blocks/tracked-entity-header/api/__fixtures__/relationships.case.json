@@ -1,0 +1,96 @@
+{
+    "relationships": [
+        {
+            "relationship": "hIQosyZlRqz",
+            "relationshipName": "Index case to cases",
+            "relationshipType": "m6XJSapEvOa",
+            "bidirectional": false,
+            "from": {
+                "trackedEntity": {
+                    "trackedEntity": "k8TU70vWtnP",
+                    "trackedEntityType": "Zy2SEgA61ys",
+                    "attributes": [
+                        {
+                            "attribute": "h5FuguPFF2j",
+                            "value": "audit"
+                        },
+                        {
+                            "attribute": "flGbXLXCrEo",
+                            "value": "NEL233673"
+                        },
+                        {
+                            "attribute": "aW66s2QSosT",
+                            "value": "qwerty"
+                        }
+                    ]
+                }
+            },
+            "to": {
+                "trackedEntity": {
+                    "trackedEntity": "DsSlC54GNXy",
+                    "trackedEntityType": "Zy2SEgA61ys",
+                    "attributes": [
+                        {
+                            "attribute": "h5FuguPFF2j",
+                            "value": "7hdjdj"
+                        },
+                        {
+                            "attribute": "aW66s2QSosT",
+                            "value": "Martin"
+                        },
+                        {
+                            "attribute": "flGbXLXCrEo",
+                            "value": "LBO315445"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "relationship": "oGtgtJpp6fG",
+            "relationshipName": "Focus to Case",
+            "relationshipType": "Mv8R4MPcNcX",
+            "bidirectional": false,
+            "from": {
+                "trackedEntity": {
+                    "trackedEntity": "neR4cmMY22o",
+                    "trackedEntityType": "We9I19a3vO1",
+                    "attributes": [
+                        {
+                            "attribute": "coaSpbzZiTB",
+                            "value": "WQQ003161"
+                        },
+                        {
+                            "attribute": "Kv4fmHVAzwX",
+                            "value": "Village B"
+                        },
+                        {
+                            "attribute": "QRg7SZ6VOAV",
+                            "value": "Focus Village B"
+                        }
+                    ]
+                }
+            },
+            "to": {
+                "trackedEntity": {
+                    "trackedEntity": "DsSlC54GNXy",
+                    "trackedEntityType": "Zy2SEgA61ys",
+                    "attributes": [
+                        {
+                            "attribute": "h5FuguPFF2j",
+                            "value": "7hdjdj"
+                        },
+                        {
+                            "attribute": "aW66s2QSosT",
+                            "value": "Martin"
+                        },
+                        {
+                            "attribute": "flGbXLXCrEo",
+                            "value": "LBO315445"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

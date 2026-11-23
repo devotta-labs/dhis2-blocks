@@ -3,13 +3,18 @@ import type { SlotDef } from './compileLayout'
 import { fillSlots } from './slots'
 import type { SlotEvent } from './slots'
 
-const event = (
+const event: (
     id: string,
     programStage: string,
-    rest: Partial<SlotEvent> = {}
-): SlotEvent => ({ id, programStage, values: {}, ...rest })
+    rest?: Partial<SlotEvent>
+) => SlotEvent = (id, programStage, rest = {}) => ({
+    id,
+    programStage,
+    values: {},
+    ...rest,
+})
 
-const visit = (n: number): SlotDef => ({
+const visit: (n: number) => SlotDef = (n) => ({
     name: `ANC#${n}`,
     stageId: 'ANC',
     kind: 'occurrence',
@@ -19,7 +24,7 @@ const visit = (n: number): SlotDef => ({
     stageName: 'Antenatal visit',
 })
 
-const dpt = (dose: string): SlotDef => ({
+const dpt: (dose: string) => SlotDef = (dose) => ({
     name: `VAX?dose=${dose}&vaccine=DPT`,
     stageId: 'VAX',
     kind: 'where',

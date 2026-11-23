@@ -17,13 +17,12 @@ export class ErrorBoundary extends Component<
 > {
     state: ErrorBoundaryState = {}
 
-    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    static getDerivedStateFromError(error: Error) {
         return { error }
     }
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        // Contract failures are intentionally visible during development. Avoid
-        // logging response payloads: the error and component stack are enough.
+        // WARNING: Keep DHIS2 response payloads out of logs. Log the error and component stack only.
         console.error(error, errorInfo.componentStack)
     }
 

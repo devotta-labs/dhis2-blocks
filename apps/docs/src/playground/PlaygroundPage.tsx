@@ -10,7 +10,6 @@ import {
 import { PLAYGROUND_BLOCKS, type PlaygroundSlug } from './blocks'
 import { LabPicker } from './labPicker'
 
-/** Each block's lab, loaded when its page opens, so the docs never carry a lab they do not show. */
 const LABS = {
     'working-list': lazy(() =>
         import('./working-list/WorkingListLab').then(({ WorkingListLab }) => ({
@@ -32,9 +31,26 @@ const LABS = {
             default: FinderLab,
         }))
     ),
+    'tracked-entity-header': lazy(() =>
+        import('./tracked-entity-header/TrackedEntityHeaderLab').then(
+            ({ TrackedEntityHeaderLab }) => ({
+                default: TrackedEntityHeaderLab,
+            })
+        )
+    ),
+    'dhis2-value-input': lazy(() =>
+        import('./dhis2-value-input/ValueInputLab').then(
+            ({ ValueInputLab }) => ({ default: ValueInputLab })
+        )
+    ),
     'tracker-data-entry': lazy(() =>
         import('./tracker-data-entry/TrackerDataEntryLab').then(
             ({ TrackerDataEntryLab }) => ({ default: TrackerDataEntryLab })
+        )
+    ),
+    'org-unit-switcher': lazy(() =>
+        import('./org-unit-switcher/OrgUnitSwitcherLab').then(
+            ({ OrgUnitSwitcherLab }) => ({ default: OrgUnitSwitcherLab })
         )
     ),
 } satisfies Record<PlaygroundSlug, ComponentType>
@@ -42,7 +58,6 @@ const LABS = {
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>
     PLAYGROUND_BLOCKS.some((block) => block.slug === slug)
 
-/** Picks the block on show; a new block opens on its first preset. */
 const BlockPicker = ({ slug }: { slug: PlaygroundSlug }) => {
     const navigate = useNavigate()
     return (

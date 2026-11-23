@@ -37,7 +37,6 @@ test('an expiry period starts with the period that holds today less the expiry d
 })
 
 test('an expiry period is worked out on a Gregorian server only; others leave it to the server', () => {
-    // ISO 8601 counts the Gregorian months.
     expect(expiryStart('Monthly', 0, '2026-10-30', 'iso8601')).toBe(
         '2026-10-01'
     )

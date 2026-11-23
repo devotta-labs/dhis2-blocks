@@ -2,7 +2,7 @@ import i18n from '@dhis2/d2-i18n'
 import { attributeOf, searchableAttributes } from './programModel'
 import type { MetadataError, ProgramModel } from './types'
 
-const whatWentWrong = (model: ProgramModel, error: MetadataError): string => {
+const whatWentWrong = (model: ProgramModel, error: MetadataError) => {
     const program = model.name
     if (error.kind === 'form-cannot-search') {
         return i18n.t(
@@ -84,7 +84,7 @@ const whatWentWrong = (model: ProgramModel, error: MetadataError): string => {
     }
 }
 
-const searchableList = (model: ProgramModel): string => {
+const searchableList = (model: ProgramModel) => {
     const entries = searchableAttributes(model).map(({ id, label, unique }) =>
         unique
             ? i18n.t('{{label}} (`{{id}}`, unique)', {
@@ -106,7 +106,7 @@ const searchableList = (model: ProgramModel): string => {
         : i18n.t('Nothing is searchable.')
 }
 
-const minimum = (model: ProgramModel): string => {
+const minimum = (model: ProgramModel) => {
     const count = Math.max(model.minAttributes, 1)
     return count === 1
         ? i18n.t('This program needs 1 detail unless an ID is used.')
@@ -123,7 +123,7 @@ const minimum = (model: ProgramModel): string => {
 export const describeMetadataError = (
     model: ProgramModel,
     error: MetadataError
-): string =>
+) =>
     [whatWentWrong(model, error), searchableList(model), minimum(model)].join(
         ' '
     )

@@ -1,0 +1,29 @@
+{
+    "trackedEntityTypeAttributes": [
+        {
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "displayFormName": "Unique ID",
+                "id": "lZGmxYbs97q"
+            },
+            "displayInList": false
+        },
+        {
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "displayFormName": "First name",
+                "id": "w75KJ2mc4zz"
+            },
+            "displayInList": true
+        },
+        {
+            "trackedEntityAttribute": {
+                "valueType": "TEXT",
+                "displayFormName": "Last name",
+                "id": "zDhUuAYrxNC"
+            },
+            "displayInList": true
+        }
+    ],
+    "displayName": "Person"
+}

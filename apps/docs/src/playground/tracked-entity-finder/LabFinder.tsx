@@ -29,7 +29,6 @@ import type { LabComposition, LabField } from './labData'
 const inputClass =
     'w-full rounded border border-dhis2-input px-2 py-1 text-sm aria-invalid:border-dhis2-destructive-border'
 
-/** A headless field: the finder's state and rules, the lab's own markup. */
 const HookInput = ({
     field,
     state,
@@ -42,7 +41,7 @@ const HookInput = ({
     const onBlur = state.field.handleBlur
     const label = field.label ?? attribute?.label ?? field.attribute
     const set = (next: FieldValue) => state.field.handleChange(next)
-    const input = (): ReactNode => {
+    const input = () => {
         if (!attribute) return <span className="text-sm">Loading…</span>
         if (field.range) {
             const numbers = attribute.kind === 'number'
@@ -368,7 +367,6 @@ const ComposedRows = ({ composition }: { composition: LabComposition }) => {
     )
 }
 
-/** Results from `useFinderResults` alone: no finder result parts. */
 const HookResults = ({ rowAttributes }: { rowAttributes: string[] }) => {
     const results = useFinderResults()
     const status = {
@@ -452,11 +450,6 @@ const Composed = ({ composition }: { composition: LabComposition }) => (
     </div>
 )
 
-/**
- * A live program's finder, from its own metadata: its IDs in one form, its
- * other searchable attributes in another. An empty form shows the loading
- * and failure states until the program is in.
- */
 const LiveComposed = () => {
     const { status, searchableAttributes } = useFinderProgram()
     if (status !== 'ready') {

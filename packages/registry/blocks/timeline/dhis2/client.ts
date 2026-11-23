@@ -61,7 +61,7 @@ const StatusDetailsSchema = z.object({
  * `details`, and ends its message with `(<status>)` when the body wasn't JSON.
  * Looks through `cause`, where this client keeps the engine's error.
  */
-export const httpStatusOf = (error: Error): number | undefined => {
+export const httpStatusOf = (error: Error) => {
     for (let at: unknown = error, depth = 0; at && depth < 5; depth++) {
         const parsed = StatusDetailsSchema.safeParse(at)
         if (parsed.success) {
@@ -80,9 +80,7 @@ export const httpStatusOf = (error: Error): number | undefined => {
  * Engine failures (HTTP, network, abort) and schema failures both come back
  * as error results; nothing here throws.
  */
-export const createTimelineClient = (
-    engine: DataEngineLike
-): TimelineClient => ({
+export const createTimelineClient = (engine: DataEngineLike) => ({
     async query<T>(
         request: ResourceRequest,
         schema: ZodType<T>,

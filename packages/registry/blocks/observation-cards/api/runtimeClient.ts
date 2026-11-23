@@ -1,12 +1,8 @@
 import { useDataEngine } from '@dhis2/app-runtime'
 import { useMemo } from 'react'
-import {
-    createRuntimeObservationsClient,
-    type DataEngineLike,
-    type ObservationsClient,
-} from './client'
+import { createRuntimeObservationsClient, type DataEngineLike } from './client'
 
-export const useObservationsClient = (): ObservationsClient => {
+export const useObservationsClient = () => {
     const engine = useDataEngine()
     return useMemo(
         () =>

@@ -44,6 +44,11 @@ To list the data elements a program's stages capture:
 GET /api/programs/<program>?fields=programStages[programStageDataElements[dataElement[id,displayName,valueType]]]
 ```
 
+Only stages that currently capture the element contribute readings, matching
+what DHIS2 shows. Option codes are categories, including when the codes
+look numeric. Numeric changes use the readings' precision to avoid
+displaying floating-point rounding artifacts.
+
 The block reads the literal `process.env.NODE_ENV`, which your bundler
 replaces at build time, to choose between the full development setup
 message for a data element the program doesn't capture and a short

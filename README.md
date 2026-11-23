@@ -16,7 +16,6 @@ packages/
       context-selector/ Capture-style controlled context-selector primitives
       working-list/     Working List block
       calendar/         Generic month calendar for any dated records
-      sidebar/          Composable modeling-app navigation with a collapse rail
       data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
     test/               Shared Vitest browser setup
@@ -99,22 +98,15 @@ A program-first application can initially render only
 children as its own context policy makes them relevant. All values, direct
 callbacks, and metadata-derived labels are supplied by the host.
 
-## Sidebar block
+## Value input block
 
-Build navigation with expandable groups, footer actions, and a collapsible sidebar.
+`dhis2-value-input` is a form control for each DHIS2 value type, accepting what the grid accepts, in the system calendar. It reports a value when it is committed, not on each keystroke. The grid below uses its pop-up editors.
 
 ```sh
-pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/sidebar
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-value-input
 ```
 
-Import from `@/components/sidebar`. Use `SidebarLink` with
-`render={<NavLink to="/projects" />}` to highlight the current page. Add
-`SidebarGroup` for nested links and `SidebarButton` for footer actions.
-Use `SidebarToggle` in the sidebar, or `useSidebar()` for a page-toolbar control.
-Collapsing preserves the open groups and selected page.
-
-See `/blocks/sidebar` for navigation, shared collapse controls, and right-to-left
-examples.
+See `/blocks/dhis2-value-input` in the docs.
 
 ## Spreadsheet and Tracker Data Entry blocks
 
@@ -370,7 +362,7 @@ derives every item from source:
   `@components/dhis2/ui/`, and `theme.css` becomes the `dhis2-theme` item;
 - each `packages/registry/blocks/<name>/` folder is a `registry:block` item installed to
   `@components/<name>/`, with its title, description and docs from
-  `block.json`; tests and `__tests__/` are never shipped;
+  `block.json`; tests, fixtures, test utilities and `test/` are never shipped;
 - npm `dependencies` come from each item's imports, versioned by
   `packages/registry/package.json`, and `registryDependencies` from its
   `@/components/dhis2/ui/*` and `@/components/<block>` imports.
@@ -393,11 +385,12 @@ pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/dhis2-theme
 ```
 
 Available items: `alert`, `alert-dialog`, `button`, `checkbox`, `cn`,
-`combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`, `input`,
-`input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`, `separator`,
-`spinner`, `switch`, `table`, `textarea`, `toggle`, `toggle-group`, and
-`tooltip`. Items that import siblings (for example `combobox` imports `select`
-and `input-group`) install them too.
+`collapsible`, `combobox`, `dhis2-theme`, `dialog`, `dropdown-menu`, `field`,
+`input`, `input-group`, `kbd`, `label`, `popover`, `portal-root`, `select`,
+`separator`, `sheet`, `sidebar`, `sidebar-menu`, `spinner`, `switch`, `table`,
+`textarea`, `toggle`, `toggle-group`, `tooltip`, and `use-mobile`. Items that
+import siblings (for example `combobox` imports `select` and `input-group`)
+install them too.
 
 Every design token is namespaced (`--dhis2-*`, `--color-dhis2-*`,
 `--radius-dhis2-*`, `--shadow-dhis2-*`, `--font-dhis2`), so utilities such as
@@ -503,6 +496,9 @@ tasks to retain dependency-aware caching without serializing package checks.
 `pnpm build` builds the web app; `pnpm build:docs` builds the docs site.
 
 Unit and component tests use Vitest. Real-DHIS2 browser tests use Playwright.
+The Ultracite Landmines preset checks test reliability, layout and naming.
+Use `.test.ts(x)`, `.fixture.ts(x)`, `.test-utils.ts(x)` and singular `test/`
+directories; Playwright specs under `e2e/` keep their `.spec.ts` suffix.
 
 Registry blocks, components and the web app use `dhis2/inline-translations`: import the
 default `i18n` from `@dhis2/d2-i18n` and call `i18n.t('Message')` at runtime
@@ -543,6 +539,10 @@ and TypeScript-only wrappers do not hide chained access. Hook names follow
 hooks. This is an expression-placement rule, not a replacement for React's
 Rules of Hooks control-flow checks.
 
+`anti-slop/no-empty-jsx-expression` bans empty JSX expression containers such
+as `{}`, which render nothing. A container holding a JSX comment
+(`{/* ... */}`) is left to `landmines-style/no-comments`.
+
 CI runs typechecking, tests, app/docs builds, lint, Knip, and DHIS2 dev E2E
 in parallel. Path filters skip unrelated jobs (for example, docs-only changes
 do not start the web app's E2E stack). Feature branches compare against their
@@ -577,7 +577,9 @@ don't announce changes such as result counts and rule effects. Three checks
 hold what is in place:
 
 - `pnpm lint` runs the `jsx-a11y` rules. A rule turned off for one line says
-  why beside it.
+  why beside it. The workspace permits `role="status"` instead of requiring
+  `<output>` for screen-reader compatibility and permits spacer cells without
+  labels in data grids.
 - `pnpm docs:e2e e2e/specs-docs/accessibility.spec.ts` scans every docs
   example with axe, in the default and the more-contrast theme, and presses Tab
   through each one to check every stop shows where focus is. CI runs it in the

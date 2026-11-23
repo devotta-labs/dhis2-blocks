@@ -36,7 +36,6 @@ export const LabCanvas = ({
                 </Tabs.Tab>
             ))}
         </Tabs.List>
-        {/* Keep the block and its query cache alive while inspecting its source. */}
         <Tabs.Panel
             value="canvas"
             keepMounted

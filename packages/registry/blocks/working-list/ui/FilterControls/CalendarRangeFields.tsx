@@ -54,10 +54,6 @@ export const CalendarRangeFields = ({
         )
     }
 
-    // CalendarInput's own `clearable` renders a boxed "Clear" text button;
-    // we render a compact icon inside the input instead. It clears the
-    // committed selection along with the visible text (the input syncs to
-    // the `date` prop).
     const clearButton = (position: 'start' | 'end') => {
         const validation =
             position === 'start' ? startValidation : endValidation

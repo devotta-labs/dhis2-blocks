@@ -4,8 +4,8 @@ import {
     eventInput,
     programMetadata,
     rule,
-} from '../__tests__/metadata'
-import { RMNCH, rmnchInput, rmnchMetadata } from '../__tests__/rmnch'
+} from '../test/metadata'
+import { RMNCH, rmnchInput, rmnchMetadata } from '../test/rmnch'
 import { buildRuleContext } from './buildContext'
 import {
     evaluateEnrollmentRules,
@@ -274,7 +274,6 @@ describe('evaluateEventRules on a synthetic program', () => {
 })
 
 describe('evaluateEnrollmentRules', () => {
-    // A rule on a stage never runs on an enrolment.
     const metadata = programMetadata({
         variables: [
             {

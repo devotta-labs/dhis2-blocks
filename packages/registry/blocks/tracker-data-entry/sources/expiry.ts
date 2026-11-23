@@ -4,7 +4,6 @@ import { addDaysIso } from '@/components/dhis2-value-types'
 
 type PeriodType = Parameters<typeof getFixedPeriodByDate>[0]['periodType']
 
-/** The period types DHIS2 offers for a program's expiry, by the id `@dhis2/multi-calendar-dates` gives them. */
 const PERIOD_TYPES = new Map<string, PeriodType>([
     ['Daily', 'DAILY'],
     ['Weekly', 'WEEKLY'],
@@ -38,14 +37,12 @@ export const expiryStart = (
     expiryDays: number | undefined,
     today: string,
     calendar: Dhis2Calendar
-): string | undefined => {
+) => {
     const id =
         periodType === undefined ? undefined : PERIOD_TYPES.get(periodType)
     if (id === undefined) {
         return undefined
     }
-    // shortcut: other calendars expire nothing here (the server still refuses expired events), as the calendar
-    // library's periods differ from DHIS2's for some of them; upgrade when its periods match the server's.
     if (calendar !== 'gregorian' && calendar !== 'iso8601') {
         return undefined
     }
@@ -61,7 +58,7 @@ export const completionExpired = (
     completedAt: string | undefined,
     days: number | undefined,
     today: string
-): boolean =>
+) =>
     days !== undefined &&
     days > 0 &&
     completedAt !== undefined &&

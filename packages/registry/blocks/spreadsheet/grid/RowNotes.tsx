@@ -3,7 +3,7 @@ import { useStore } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '@/components/dhis2/ui/button'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
-import { formatCount } from '../cells/OptionCell'
+import { formatCount } from '@/components/dhis2-value-input'
 import type { AnnotationsState } from '../model/annotations'
 import type { GridRow } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
@@ -74,7 +74,6 @@ export const NotesMarker = ({
         </>
     )
 
-/** A row's notes, each as plain text with its line breaks. */
 const NotesList = ({ row }: { row: GridRow }) => {
     const notes = useRowNotes(row)
     return (

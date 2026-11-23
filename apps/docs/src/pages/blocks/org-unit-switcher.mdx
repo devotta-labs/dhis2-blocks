@@ -1,0 +1,178 @@
+---
+title: Organisation Unit Switcher
+description: A switcher for the organisation unit a user is working in, such as their clinic or school, with search when they have more than a few.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+<ExampleCard slug="org-unit-switcher/sidebar" />
+
+This preview reads the organisation units of the user signed in to the preview
+host. That user can reach a whole country, so the switcher shows search. A user
+with a few units gets a menu, and a user with one gets a plain label.
+
+## Installation
+
+<InstallCommand item="org-unit-switcher" />
+
+## In your navigation
+
+Wrap the app in `OrgUnitProvider`, and put `OrgUnitSwitcher` at the top of the
+app's navigation, where it stays while the links below collapse. The block
+brings no navigation of its own, so pass `collapsed` yourself when yours is
+narrowed to icons. Collapsed, the switcher shrinks to the unit's initial,
+with the name in a tooltip.
+
+```tsx
+import {
+    OrgUnitProvider,
+    OrgUnitSwitcher,
+} from '@/components/org-unit-switcher'
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+    const [collapsed, setCollapsed] = useState(false)
+    return (
+        <OrgUnitProvider>
+            <aside>
+                <OrgUnitSwitcher collapsed={collapsed} />
+                <nav aria-label="Application navigation">
+                    {/* links, hidden or narrowed while collapsed */}
+                </nav>
+            </aside>
+            {children}
+        </OrgUnitProvider>
+    )
+}
+```
+
+The switcher needs an app-runtime `DataProvider` and a React Query
+`QueryClientProvider` above it.
+
+## Naming the units
+
+Out of the box the switcher says "organisation unit". Your users more likely
+work in a clinic, a school or a site, so pass `texts` with the sentences your
+app uses. Pass whole sentences, translated with your app's `i18n.t()`, rather
+than a single noun: many languages change the rest of a sentence to fit the
+noun. Any sentence you leave out keeps its default.
+
+```tsx
+<OrgUnitSwitcher
+    texts={{
+        label: i18n.t('School'),
+        searchPlaceholder: i18n.t('Search schools'),
+        choose: i18n.t('Choose a school'),
+        noneAssigned: i18n.t('No school assigned'),
+        loadFailed: i18n.t('Schools could not be loaded'),
+        allUnits: i18n.t('All schools'),
+        noResults: i18n.t('No schools found'),
+        loadingMore: i18n.t('Loading more schools'),
+        moreFailed: i18n.t('More schools could not be loaded. Try again'),
+        changed: (name) =>
+            i18n.t('School changed to {{name}}', {
+                name,
+                interpolation: { escapeValue: false },
+            }),
+    }}
+/>
+```
+
+`label` names the trigger for screen readers, as in "School: Bo Primary".
+`changed` is what screen readers hear when the unit changes.
+
+## Reading the unit
+
+Call `useOrgUnit()` anywhere under the provider to scope a page to the current
+unit.
+
+```tsx
+import { useOrgUnit } from '@/components/org-unit-switcher'
+
+function Visits() {
+    const { orgUnit, status } = useOrgUnit()
+    if (status !== 'ready' || !orgUnit) {
+        return null
+    }
+    return <VisitList organisationUnit={orgUnit.id} />
+}
+```
+
+`orgUnit` is `{ id, displayName, displayShortName, path }`. `status` is
+`pending` while the units load, `ready` once they are loaded and checked,
+`failed` if they could not be loaded and `none` if the user has no
+organisation units. `orgUnit` is only set when `status` is `ready`, and can
+still be unset then, when the host passed a `value` the user cannot work at.
+`useOrgUnit()` also returns `setOrgUnit` and `retry`.
+
+## Long names
+
+The trigger shows the unit's short name, which DHIS2 keeps to 50 characters,
+and the full name on hover or keyboard focus whenever part of it is out of
+sight. The menu wraps each name over two lines.
+
+## More than a few units
+
+A user assigned above facility level, or with more than eight units, gets a
+search box. Below a district, the menu also lists every unit in the user's own
+hierarchy by name, twenty at a time, with **Show more** at the end of the list,
+so a user with thousands of units can browse without typing. Search runs on
+the server over the same hierarchy and pages the same way.
+The units the user picks by search are kept as **Recent**, newest first, five
+at most, above their assigned units. A user can never pick a unit outside
+their hierarchy, and a remembered unit they lose access to drops out.
+
+## One or a few units
+
+A user with one unit sees a label and no button. A user with up to eight
+units and none above facility level sees a menu without search. This example
+runs on a made-up user with clinics, named through `texts`, because the
+preview host's user can reach every unit. The `stubClient` in the Code tab
+shows how to give the block your own data layer with `createOrgUnitClient`.
+
+<ExampleCard slug="org-unit-switcher/states" />
+
+## Controlling it
+
+With no `value`, the provider chooses the unit and remembers it, and pages
+read `useOrgUnit().orgUnit`. To keep the choice somewhere you own, such as the
+URL, pass `value`, a unit id, and `onValueChange`, which receives the picked
+unit. The host then decides: a pick changes nothing until the host passes it
+back as `value`. Whenever `value` changes to another of the user's units,
+after a pick or the back button, the provider remembers it and the switcher
+announces it.
+
+```tsx
+import { useNavigate, useParams } from 'react-router-dom'
+
+function App() {
+    const { unitId } = useParams()
+    const navigate = useNavigate()
+    return (
+        <OrgUnitProvider
+            value={unitId}
+            onValueChange={(orgUnit) => navigate(`/units/${orgUnit.id}`)}
+        >
+            <OrgUnitSwitcher />
+            <Visits />
+        </OrgUnitProvider>
+    )
+}
+```
+
+Pages still read `useOrgUnit().orgUnit`: it is the unit for `value` once it
+has been checked. A `value` the user cannot work at leaves `orgUnit` unset,
+and the switcher asks the user to choose. Pass `open` and `onOpenChange` to
+own whether the menu is open.
+
+## What it remembers
+
+The provider keeps the current unit and the recent ones in the browser's
+local storage, for each user. It is not shared across devices, and another user
+signing in on the same browser starts clean. A host that wants the choice to
+follow the user across devices controls it with `value`.
+
+## Related
+
+To pick any organisation unit from a tree, use [Context
+Selector](/blocks/context-selector).

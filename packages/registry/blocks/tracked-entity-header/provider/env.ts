@@ -1,0 +1,20 @@
+declare const process: { readonly env: { readonly NODE_ENV?: string } }
+
+const readNodeEnv = () => {
+    try {
+        return process.env.NODE_ENV
+    } catch {
+        return undefined
+    }
+}
+
+const PRODUCTION = readNodeEnv() === 'production'
+
+/**
+ * Production builds show end users a short config message, not the details.
+ * Only the bundler-replaced `process.env.NODE_ENV` says so: `import.meta`
+ * would break consumers whose tests run as CommonJS. Keep the literal
+ * expression so bundlers can replace it, and the ambient declaration so
+ * consumers without Node types can compile.
+ */
+export const isProduction = () => PRODUCTION

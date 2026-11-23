@@ -171,13 +171,14 @@ export const rewriteSetCookieHeaders = (cookies) =>
             : `${cookie}; Path=/`
     )
 
-/** Vite `server.proxy`/`preview.proxy` entry for the same-origin prefix. */
+/**
+ * Vite proxy for the same-origin prefix only, excluding static paths such as
+ * `/dhis2-symbol.svg`. DHIS2 accepts proxied requests as backend-native, so
+ * their Origin and Referer are set to the configured backend's own origin.
+ */
 export const createDhis2ViteProxy = (target, env = process.env) => {
     const docsAuth = resolveDocsAuth(env)
 
-    // The context key is prefix-matched by Vite, so `/dhis2` alone would also
-    // capture `/dhis2-symbol.svg` and friends. The `^` regex form scopes the
-    // proxy to the prefix itself and paths below it — matching server.mjs.
     return {
         [`^${DHIS2_PREFIX}(/|$)`]: {
             target,
@@ -185,10 +186,6 @@ export const createDhis2ViteProxy = (target, env = process.env) => {
             secure: false,
             rewrite: (path) => stripDhis2Prefix(path),
             configure: (proxy) => {
-                // DHIS2's CORS layer answers requests carrying a foreign Origin
-                // with an empty 200 (and no session cookie). Requests through this
-                // prefix are backend-native, so Origin/Referer are rewritten to
-                // the backend's own origin — never arbitrary third-party origins.
                 proxy.on('proxyReq', (proxyReq, req) => {
                     const backend = new URL(target)
 

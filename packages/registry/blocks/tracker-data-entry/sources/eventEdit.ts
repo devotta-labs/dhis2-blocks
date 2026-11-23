@@ -50,7 +50,6 @@ export const eventEditRules = ({
     const writable = (stageId: string) =>
         program.categoryCombo.isDefault &&
         stages.get(stageId)?.access.data.write === true
-    // DHIS2 never expires an event by its period when the program gives no expiry days.
     const opensOn = program.expiryDays
         ? expiryStart(
               program.expiryPeriodType,
@@ -78,7 +77,6 @@ export const eventEditRules = ({
     return {
         has,
         writable,
-        /** Why the event cannot be edited, if it cannot. */
         readOnlyReason(event: EditedEvent) {
             if (!program.categoryCombo.isDefault) {
                 return i18n.t(
@@ -101,7 +99,6 @@ export const eventEditRules = ({
             }
             return expiredReason(event)
         },
-        /** Whether the user may reopen the completed event (`F_UNCOMPLETE_EVENT`, stage write access, not expired). */
         mayReopen: (event: EditedEvent) =>
             event.status === 'COMPLETED' &&
             has('F_UNCOMPLETE_EVENT') &&

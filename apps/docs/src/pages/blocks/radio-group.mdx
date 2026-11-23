@@ -60,6 +60,35 @@ Users move between the options with the arrow keys.
 Short options can sit side by side with `className="flex gap-6"` on the
 group.
 
+## With descriptions
+
+<ExampleCard slug="radio-group/description" />
+
+When an option needs a line of explanation, build the group from a
+[Field](/blocks/field): render the `RadioGroup` as a `FieldSet` named by its
+`FieldLegend`, and give each radio a `FieldItem` with its label and
+description in a `FieldContent`. The label names the radio and the
+description is read with it; clicking the label picks the option.
+
+<InstallCommand item="field" />
+
+```tsx
+<Field>
+    <FieldSet render={<RadioGroup />}>
+        <FieldLegend variant="label">Referral</FieldLegend>
+        <FieldItem>
+            <RadioGroupItem value="hospital" />
+            <FieldContent>
+                <FieldLabel>Hospital</FieldLabel>
+                <FieldDescription>
+                    For danger signs: send today.
+                </FieldDescription>
+            </FieldContent>
+        </FieldItem>
+    </FieldSet>
+</Field>
+```
+
 ## API reference
 
 `RadioGroup`:

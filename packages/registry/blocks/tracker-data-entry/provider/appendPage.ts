@@ -23,10 +23,6 @@ import { reasonOf } from './hooks'
 import type { TrackerDataEntryView } from './hooks'
 import type { FormTables, OpenForm } from './openForm'
 
-/**
- * The table with the rows of `more` that `fresh` takes and the columns it lacks, at its end; their closed cells by
- * their records' stages, and those `more` closed in its own fresh rows. A row already shown keeps what is known of it.
- */
 const grow = (
     form: LoadedForm,
     table: GridTable<TrackerRow, TrackerColumn>,
@@ -57,7 +53,6 @@ const grow = (
     }
 }
 
-/** The records of `known`, then those of `page` it does not hold: a record already held keeps what is known of it. */
 const withRecords = (
     known: ReadonlyMap<string, DataRecord>,
     page: ReadonlyMap<string, DataRecord>
@@ -67,7 +62,10 @@ const withRecords = (
  * The form as DHIS2 had it, with a page: its rows and records the form does not hold yet, their values, and what is
  * known of them.
  */
-export const withPage = (form: LoadedForm, page: FormPage): LoadedForm => {
+export const withPage: (form: LoadedForm, page: FormPage) => LoadedForm = (
+    form,
+    page
+) => {
     const fresh = (recordId: string) => !form.records.has(recordId)
     const records = withRecords(form.records, page.records)
     return {
@@ -135,7 +133,6 @@ export const appendPage = async (
             reopenable.add(id)
         }
     }
-    // The records the form gets from the page: one it holds already had its changes put back.
     const fresh = new Set<string>()
     const cells = new Set<CellKey>()
     const grown = tables.getState().tables.map((table) => {
@@ -163,8 +160,6 @@ export const appendPage = async (
         return next.table
     })
 
-    // The values go in before the rows that show them, so the rules first see a row with its values.
-    // A new record's fields no column shows are the form's too: rules may have assigned them.
     const restored = held.filter(
         ({ key }) =>
             cells.has(key) ||
@@ -179,7 +174,6 @@ export const appendPage = async (
                 base: value,
                 sync: 'idle' as const,
             })),
-        // DHIS2 holds what the page just loaded, whatever it held when the change was made.
         ...restored.map((record) => ({
             ...record,
             base: page.values.get(record.key) ?? null,
@@ -194,7 +188,6 @@ export const appendPage = async (
             records,
             { ...now }
         ),
-        // The source's notes on the new rows, as the load's are.
         rowNotes: new Map([
             ...rowNotes,
             ...[...(page.rowNotes ?? [])].filter(([id]) => fresh.has(id)),
@@ -206,15 +199,12 @@ export const appendPage = async (
     if (unsent.length === 0) {
         return held
     }
-    // Read again: an outcome that came before its cell existed found no cell to say it on. Only a help: a read that
-    // fails leaves the cells as restored.
     const now = await list().catch(() => undefined)
     if (now === undefined) {
         return held
     }
     for (const record of unsent) {
         const left = now.find(({ key }) => key === record.key)
-        // Only a saved change leaves the outbox unless it failed first; a newer change in its cell is its own.
         if (left === undefined) {
             store.getState().markSync([record], 'saved')
         } else if (left.at === record.at && left.state !== record.state) {
@@ -317,7 +307,6 @@ export const usePages = ({
                                   })
                         )
                     })
-                    // Said as the form says why it could not load, and shown beside the button.
                     .catch((error: Error) => {
                         if (!stop.signal.aborted) {
                             const reason = reasonOf(error)
@@ -340,7 +329,6 @@ export const usePages = ({
                 loadMore: NOTHING_MORE,
             })
         }
-        // A source with the same keys is the same form: its keys are in the form's query key.
     }, [open, form, engine, view, announce, orgUnitNames, fileNames])
     return paged !== undefined && paged.from === form ? paged.to : form
 }

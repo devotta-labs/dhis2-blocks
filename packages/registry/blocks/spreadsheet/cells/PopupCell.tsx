@@ -1,3 +1,4 @@
+import { useDataEngine } from '@dhis2/app-runtime'
 import i18n from '@dhis2/d2-i18n'
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
@@ -8,32 +9,27 @@ import { formatDhis2Value } from '@/components/dhis2-value-display'
 import type { ValueMeta } from '@/components/dhis2-value-display'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Popover, PopoverContent } from '@/components/dhis2/ui/popover'
+import type { CellKey, CellState } from '../model/types'
 import { NO_NAMES, useSpreadsheetContext } from '../provider/context'
+import type { SpreadsheetContext } from '../provider/context'
 import type { CellComponent, ControlProps } from './cellProps'
 import { useCellContext } from './CellStatus'
-import { storedFileUrl } from './editors/FileEditor'
-import { editorFor } from './popupEditors'
-import type { EditorProblem } from './popupEditors'
+import { composing, editorFor } from '@/components/dhis2-value-input'
+import type { EditorProblem, FileUploads } from '@/components/dhis2-value-input'
+import { gridFileUploads } from './gridFileUploads'
 import { CONTROL_CLASS, HIDDEN_CLASS, LOCKED_CLASS } from './TextCell'
-import { composing, READY_CLASS, useCellMode } from './useCellMode'
+import { READY_CLASS, useCellMode } from './useCellMode'
 
-// Editors that start from the text typed to open them.
 const FIRST_KEY_TYPES = new Set(['LONG_TEXT'])
-// Values that are a file's id; the cell shows the file's name.
 const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
 
-// An editor's fields, in page order; a hidden one, such as the file editor's file input, takes no focus. Boxes, not
-// `checkVisibility`, which Safari lacks before 17.4.
 const FOCUSABLE =
     'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
 
-// The field's name is said as the page shows it, not HTML-escaped.
 const AS_IS = { escapeValue: false }
 
-// An age is stored as the date of birth, shown as dates are typed: in the system calendar and date format.
 const DATE: Field = { valueType: 'DATE' }
 
-// What `formatDhis2Value` reads, made once per field: option sets can hold thousands of options.
 const metas = new WeakMap<Field, ValueMeta>()
 const metaOf = (field: Field) => {
     const known = metas.get(field)
@@ -53,7 +49,6 @@ const metaOf = (field: Field) => {
     return meta
 }
 
-/** The text of the headers that name a cell, as the editor's name says it. */
 const headerText = (labelledBy: string) =>
     labelledBy
         .split(/\s+/)
@@ -61,12 +56,19 @@ const headerText = (labelledBy: string) =>
         .join(' ')
         .trim()
 
+const storedFileUrl = (
+    fileUrl: SpreadsheetContext['fileUrl'],
+    key: CellKey,
+    { value, base }: CellState,
+    image: boolean
+) => (value !== undefined && value === base ? fileUrl?.(key, image) : undefined)
+
 interface Opened {
     name: string
     firstKey?: string
+    uploads?: FileUploads
 }
 
-/** What the editor last said it would save. */
 interface Report {
     value: string | null
     problem?: EditorProblem
@@ -90,18 +92,16 @@ export const PopupCell = memo(function PopupCell({
     hidden = false,
     aria,
 }: ControlProps) {
-    const { store, settings, announce, fileNames, fileUrl } =
-        useSpreadsheetContext()
+    const context = useSpreadsheetContext()
+    const { store, settings, announce, fileNames, fileUrl, offline } = context
+    const engine = useDataEngine()
     const { view } = useCellContext()
     const Editor = editorFor(field.valueType)
     const locked = readOnly !== undefined || Editor === undefined
     const file = FILE_TYPES.has(field.valueType)
-    // File cells show their file's name, each reading only its own, so a new name renders no other cell.
     const name = useStore(file ? fileNames : NO_NAMES, ({ names }) =>
         view.value === undefined ? undefined : names.get(view.value)
     )
-    // A small preview of a saved image `fileUrl` gives an address for, before its name; one that does not load leaves
-    // the name.
     const image =
         field.valueType === 'IMAGE' && !hidden
             ? storedFileUrl(fileUrl, cellKey, view, true)
@@ -112,16 +112,11 @@ export const PopupCell = memo(function PopupCell({
             ? undefined
             : `${image}?dimension=SMALL`
     const [opened, setOpened] = useState<Opened | null>(null)
-    // The open session, read by saves that come late (an upload), so they close only their own.
     const session = useRef<Opened | null>(null)
     const reported = useRef<Report>()
-    // The last event the dialog's own handlers saw; React carries the events of an editor's portals through them.
     const inside = useRef<Event>()
-    // Whether the popover returns focus to the cell when it closes: not after a press or focus went elsewhere.
     const restore = useRef(false)
-    // Enter right after a save moves on, as it does after typing in any cell.
     const saved = useRef(false)
-    // The cell is never typed in: it stays in Ready, and Escape drops a pasted text the store refused.
     const { inputProps } = useCellMode({
         commit: () => undefined,
         revert: () => {
@@ -139,7 +134,6 @@ export const PopupCell = memo(function PopupCell({
         reported.current = undefined
         setOpened(null)
     }
-    /** Closes the editor unsaved; the popover returns focus to the cell if it was in the editor. Says whether it was. */
     const close = () => {
         const back =
             document.activeElement?.closest('[data-cell-editor]') != null
@@ -147,7 +141,6 @@ export const PopupCell = memo(function PopupCell({
         end()
         return back
     }
-    /** Focus left the editor for somewhere else: what it last reported is saved, or kept as the cell's draft. */
     const leave = () => {
         restore.current = false
         const last = reported.current
@@ -161,7 +154,13 @@ export const PopupCell = memo(function PopupCell({
         }
     }
     const open = (firstKey?: string) => {
-        const next = { name: headerText(labelledBy), firstKey }
+        const next = {
+            name: headerText(labelledBy),
+            firstKey,
+            uploads: file
+                ? gridFileUploads(cellKey, { ...context, engine })
+                : undefined,
+        }
         session.current = next
         reported.current = undefined
         setOpened(next)
@@ -174,14 +173,12 @@ export const PopupCell = memo(function PopupCell({
         return result
     }
 
-    // A rule that locks or hides the cell closes its editor unsaved, and says why.
     useEffect(() => {
         if (opened !== null && readOnly !== undefined) {
             close()
             announce(readOnly)
         }
     })
-    // The popover does not report focus sent elsewhere by a script or screen reader, only a press or Tab.
     useEffect(() => {
         if (opened === null) {
             return undefined
@@ -220,7 +217,6 @@ export const PopupCell = memo(function PopupCell({
         }
     }
 
-    // Tab and Shift+Tab loop over the editor's fields: the popover's own trap needs the page outside inert.
     const loop = (event: KeyboardEvent<HTMLElement>) => {
         if (event.key !== 'Tab' || composing(event)) {
             return
@@ -249,7 +245,6 @@ export const PopupCell = memo(function PopupCell({
             calendar: settings.calendar,
         })
     }
-    // One line in the input, which would drop line breaks and run the lines together.
     const shown = hidden
         ? i18n.t('Hidden')
         : ((locked ? undefined : view.draft) ?? stored).replace(/\r?\n/g, ' ')
@@ -263,15 +258,12 @@ export const PopupCell = memo(function PopupCell({
                 aria-haspopup={locked ? undefined : 'dialog'}
                 type="text"
                 readOnly={locked}
-                // No on-screen keyboard: the editor takes the typing.
                 inputMode="none"
                 autoComplete="off"
                 spellCheck={false}
                 value={shown}
-                // A cut or drop changes nothing: the cell shows its value again.
                 onChange={() => undefined}
                 onKeyDown={onKeyDown}
-                // Text, however it is typed (a key, a dead key, AltGr, an input method), goes to the editor, not the cell.
                 onBeforeInput={(event) => {
                     event.preventDefault()
                     if (!locked && FIRST_KEY_TYPES.has(field.valueType)) {
@@ -283,7 +275,6 @@ export const PopupCell = memo(function PopupCell({
                         event.currentTarget.ownerDocument.activeElement ===
                         event.currentTarget
                     inputProps.onMouseDown(event)
-                    // Clicking the selected cell edits it, as in any cell; a touch has no double-click.
                     if (selected && !locked) {
                         open()
                     }
@@ -307,7 +298,6 @@ export const PopupCell = memo(function PopupCell({
             {preview === undefined ? null : (
                 <img
                     src={preview}
-                    // The cell says the file's name.
                     alt=""
                     loading="lazy"
                     onError={() => setUnloadable(image)}
@@ -317,13 +307,9 @@ export const PopupCell = memo(function PopupCell({
             {opened === null || Editor === undefined ? null : (
                 <Popover
                     open
-                    // Escape, a press or focus elsewhere end the session. A press in an editor's own portal (a @dhis2/ui
-                    // calendar) is outside the popover's tree, so `inside` filters it. Not modal: `trap-focus` makes the page
-                    // outside inert, which a press outside to save needs live.
                     modal={false}
                     onOpenChange={(_, { reason, event }) => {
                         if (reason === 'escape-key') {
-                            // An Escape the editor handled (a calendar closing) is not the editor's.
                             if (
                                 !event.defaultPrevented &&
                                 !(
@@ -368,6 +354,7 @@ export const PopupCell = memo(function PopupCell({
                             settings={settings}
                             cellId={id}
                             cellKey={cellKey}
+                            announce={announce}
                             labelledBy={labelledBy}
                             hiddenOptions={view.effects.hiddenOptions}
                             save={save}
@@ -376,6 +363,19 @@ export const PopupCell = memo(function PopupCell({
                             }}
                             cancel={close}
                             firstKey={opened.firstKey}
+                            fileName={name}
+                            fileUrl={
+                                file
+                                    ? storedFileUrl(
+                                          fileUrl,
+                                          cellKey,
+                                          view,
+                                          field.valueType === 'IMAGE'
+                                      )
+                                    : undefined
+                            }
+                            offline={offline}
+                            uploads={opened.uploads}
                         />
                     </PopoverContent>
                 </Popover>

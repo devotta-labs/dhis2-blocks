@@ -19,7 +19,6 @@ export const RESOURCES = ['programs', 'system/info', 'tracker/trackedEntities']
 /** The resources the network's Fails and Hangs choices apply to. */
 export const RECORDS = ['tracker/trackedEntities']
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const httpError = (status: number, message: string) =>
     Object.assign(new Error(message), {
         details: { httpStatusCode: status, message },
@@ -36,7 +35,6 @@ export const answer =
                 }
                 return programJson(program)
             case 'system/info':
-                // 2.43 matches each code of a multi-select; older ones can't.
                 return {
                     calendar: server.calendar,
                     dateFormat: 'YYYY-MM-DD',

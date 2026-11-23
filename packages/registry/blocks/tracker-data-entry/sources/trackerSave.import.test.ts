@@ -1,7 +1,8 @@
-import importAllRefused from './__tests__/fixtures/import-all-refused.json'
-import importOneRefused from './__tests__/fixtures/import-one-refused.json'
-import inpatientEvents from './__tests__/fixtures/inpatient-events.json'
-import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
+import { setImmediate } from 'node:timers/promises'
+import importAllRefused from './test/fixtures/import-all-refused.json'
+import importOneRefused from './test/fixtures/import-one-refused.json'
+import inpatientEvents from './test/fixtures/inpatient-events.json'
+import rmnchEvents from './test/fixtures/rmnch-person-events.json'
 import {
     A,
     AGE,
@@ -26,7 +27,7 @@ import {
     openGrid,
     person,
     saved,
-} from './__tests__/saveRig'
+} from './test/saveRig'
 import { PartlySaved } from '../outbox/failure'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { outcomesFromReport } from './trackerReport'
@@ -77,7 +78,6 @@ test('reads what DHIS2 holds for the batch in one request, then sends one import
         },
     ])
     expect(grid.sent().map(({ event }) => event)).toEqual([A, B])
-    // The read and the import each have their own limit.
     expect(grid.signals[0]).not.toBe(grid.readSignals[0])
     expect(outcomes.map(({ result }) => result)).toEqual([
         'saved',
@@ -97,7 +97,6 @@ test('reads and imports at most 100 events at a time, one after another', async 
             change(id, EVENT_DATE_COLUMN, '2026-10-26', NEW_VISIT)
         )
     )
-    // Each request within its own limit, so a long backlog drains however slow each request is.
     expect(new Set([...grid.readSignals, ...grid.signals]).size).toBe(6)
     const chunks = [ids.slice(0, 100), ids.slice(100, 200), ids.slice(200)]
     expect(grid.reads.map(({ current }) => current.params)).toEqual(
@@ -122,7 +121,6 @@ test('reads and imports at most 100 events at a time, one after another', async 
     expect(outcomes.every(({ result }) => result === 'saved')).toBe(true)
 })
 
-/** 250 new second visits: three imports of 100, 100 and 50 events. */
 const newVisits = () =>
     Array.from({ length: 250 }, (_, at) =>
         change(
@@ -133,7 +131,6 @@ const newVisits = () =>
         )
     )
 
-/** Answers the first import with a report, and throws `failure` for the second. */
 const secondImportThrows = (failure: Error) => {
     let imports = 0
     return async () => {
@@ -152,7 +149,6 @@ test('a later import refused as a whole keeps what the earlier ones saved; the r
     })
     const grid = await person(rmnchEvents.events, secondImportThrows(refusal))
     const records = newVisits()
-    // The third import is not sent; its records are named, so the sync loop leaves them queued.
     await expect(grid.save(...records)).rejects.toMatchObject({
         outcomes: records.slice(0, 100).map(saved),
         failure: refusal,
@@ -193,7 +189,6 @@ test('a later import that may pass on a retry keeps what the earlier ones saved'
 
 test('each request has its own limit: a backlog slower than one limit drains', async () => {
     const { form } = await person()
-    // Each import takes 30 ms, and gives up when its signal aborts.
     const slowImports = fakeEngine(
         PERSON_LOAD,
         rmnchEvents.events,
@@ -249,7 +244,6 @@ test('a later request that runs out of time loses nothing the earlier ones saved
 })
 
 test('changes to an event DHIS2 no longer returns fail with the reason', async () => {
-    // Loaded, then deleted by someone else or moved out of the user's reach.
     const grid = await openGrid(
         inpatientSource(),
         INPATIENT_LOAD,
@@ -390,15 +384,21 @@ test('gives up on a save, read included, that takes longer than its limit', asyn
     ).rejects.toThrow()
     expect(slowRead.mutations).toEqual([])
 
-    // A save that finishes in time stops its clock.
-    const quick = fakeEngine(PERSON_LOAD, rmnchEvents.events)
-    await trackerSaver(SOURCE, RMNCH, { timeout: 20 }).save(
-        quick.engine,
-        NEW_VISIT_RECORDS(),
-        form
-    )
-    await new Promise((resolve) => setTimeout(resolve, 40))
-    expect(quick.signals[0]?.aborted).toBe(false)
+    vi.useFakeTimers()
+    try {
+        const quick = fakeEngine(PERSON_LOAD, rmnchEvents.events)
+        const saving = trackerSaver(SOURCE, RMNCH, { timeout: 20 }).save(
+            quick.engine,
+            NEW_VISIT_RECORDS(),
+            form
+        )
+        await vi.advanceTimersByTimeAsync(1)
+        await saving
+        await vi.advanceTimersByTimeAsync(40)
+        expect(quick.signals[0]?.aborted).toBe(false)
+    } finally {
+        vi.useRealTimers()
+    }
 })
 
 test('a status change sends the event as DHIS2 holds it, with its new status and no values', async () => {
@@ -431,14 +431,16 @@ test('a status change sends the event as DHIS2 holds it, with its new status and
 
 test('a save waits for a status change in flight', async () => {
     const gate = Promise.withResolvers<void>()
+    const importingStatus = Promise.withResolvers<void>()
     const grid = await inpatient(async () => {
+        importingStatus.resolve()
         await gate.promise
         return importOneRefused
     })
     const reopening = grid.setStatus(A, 'ACTIVE')
+    await importingStatus.promise
     const saving = grid.save(change(A, AGE, '6'))
-    await new Promise((resolve) => setTimeout(resolve, 10))
-    // The save reads only after the status change is saved.
+    await setImmediate()
     expect([grid.reads.length, grid.mutations.length]).toEqual([1, 1])
     gate.resolve()
     await Promise.all([reopening, saving])

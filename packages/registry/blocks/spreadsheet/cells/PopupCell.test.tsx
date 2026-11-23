@@ -11,14 +11,13 @@ import {
     mount as mountGrid,
     nextFrame,
     visibleBox,
-} from '../grid/__tests__/gridRig'
+} from '../grid/test/gridRig'
 import { cellKey } from '../model/types'
-import { CELL, HEADER, inputOf, rig, withEditor } from './__tests__/harness'
+import { CELL, HEADER, inputOf, rig, withEditor } from './test/harness'
 import { Cell } from './Cell'
-import type { PopupEditorProps } from './popupEditors'
+import type { PopupEditorProps } from '@/components/dhis2-value-input'
 
 // SAFETY: these tests run on the playwright provider, whose `cdp()` is this
-// session; its typing lands on only one of the workspace's two vitest installs.
 const devtools = () => cdp() as CDPSession
 
 const LONG_TEXT: Field = { valueType: 'LONG_TEXT' }
@@ -26,8 +25,6 @@ const LOCKED = 'Assigned by rule: Copy the notes'
 const HIDDEN = 'Hidden by rule: Hide the notes'
 const PROBLEM = 'Notes cannot start with !'
 
-/** An editor with a field it reports as typed (a draft starting with "!" cannot be saved) and Save, Clear and Cancel
- * buttons; Save saves two lines. */
 const Stub = ({ value, firstKey, save, report, cancel }: PopupEditorProps) => (
     <>
         <input
@@ -91,7 +88,6 @@ test('Enter, F2, double-click and Alt+↓ open the editor; Escape closes it and 
     ]) {
         await open()
         await expect.element(dialog).toBeVisible()
-        // Focus moves to the editor's first field.
         await expect.element(draft).toHaveValue('Some notes')
         await expect.element(draft).toHaveFocus()
         await userEvent.keyboard('{Escape}')
@@ -113,7 +109,6 @@ test('Tab and Shift+Tab stay inside the editor; Cancel closes it', async () => {
         .toHaveFocus()
     await userEvent.keyboard('{Tab}')
     await expect.element(draft).toHaveFocus()
-    // Cancel drops what the editor reported.
     await userEvent.fill(draft, 'Dropped')
     await userEvent.click(page.getByRole('button', { name: 'Cancel' }))
     await expect.element(dialog).not.toBeInTheDocument()
@@ -128,7 +123,6 @@ test('a press outside the editor saves what it last reported, or keeps what it c
     })
     const outside = page.getByText('Age (years)')
     inputOf(cell).focus()
-    // Nothing reported, nothing saved.
     await userEvent.keyboard('{Enter}')
     await userEvent.click(outside)
     await expect.element(dialog).not.toBeInTheDocument()
@@ -140,7 +134,6 @@ test('a press outside the editor saves what it last reported, or keeps what it c
     await userEvent.click(outside)
     await expect.element(dialog).not.toBeInTheDocument()
     expect(stored()?.value).toBe('Seen at home')
-    // Focus stays where the press put it.
     await expect.element(cell).not.toHaveFocus()
 
     inputOf(cell).focus()
@@ -148,7 +141,6 @@ test('a press outside the editor saves what it last reported, or keeps what it c
     await userEvent.fill(draft, '!Seen')
     await userEvent.click(outside)
     await expect.element(dialog).not.toBeInTheDocument()
-    // Kept as refused text is in any cell: shown, marked, its problem in the notes, nothing saved.
     expect(stored()).toMatchObject({
         value: 'Seen at home',
         draft: '!Seen',
@@ -156,17 +148,14 @@ test('a press outside the editor saves what it last reported, or keeps what it c
     })
     await expect.element(cell).toHaveValue('!Seen')
     await expect.element(cell).toHaveAttribute('aria-invalid', 'true')
-    // Beside the cell's other notes, such as whether its value is saved.
     await expect.element(cell).toHaveAccessibleDescription(new RegExp(PROBLEM))
     expect(enqueued).toHaveLength(1)
 
-    // Reopened, the editor starts from the stored value; closing it keeps the draft.
     inputOf(cell).focus()
     await userEvent.keyboard('{Enter}')
     await expect.element(draft).toHaveValue('Seen at home')
     await userEvent.keyboard('{Escape}')
     await expect.element(cell).toHaveValue('!Seen')
-    // Escape on the cell hides its notes, then drops the draft.
     await userEvent.keyboard('{Escape}{Escape}')
     expect(stored()).toMatchObject({ draft: undefined, error: undefined })
     await expect.element(cell).toHaveValue('Seen at home')
@@ -215,7 +204,6 @@ test('parts of an editor rendered in a portal are inside it', async () => {
         <>
             <input aria-label="Draft" />
             {createPortal(
-                // Clear of the dialog, as a popover would be.
                 <button
                     type="button"
                     className="fixed end-0 bottom-0"
@@ -300,13 +288,10 @@ test('saving commits the stored value through the cell and returns to Ready', as
     await expect.element(dialog).not.toBeInTheDocument()
     await expect.element(cell).toHaveFocus()
     await expect.element(cell).toHaveAttribute('data-mode', 'ready')
-    // An input shows one line: the line break reads as a space.
     await expect.element(cell).toHaveValue('two lines')
-    // The next Enter moves on, as after typing in any cell.
     await userEvent.keyboard('{Enter}')
     expect(moves).toEqual(['enter'])
     await expect.element(dialog).not.toBeInTheDocument()
-    // No value clears the cell.
     await userEvent.keyboard('{Enter}')
     await userEvent.click(page.getByRole('button', { name: 'Clear' }))
     expect(stored()?.value).toBeUndefined()
@@ -320,7 +305,6 @@ test('typing a key opens editors that take a first key, with that key', async ()
     await userEvent.keyboard('a')
     await expect.element(dialog).toBeVisible()
     await expect.element(draft).toHaveValue('a')
-    // The cell's own text is not typed into.
     await userEvent.keyboard('{Escape}')
     await expect.element(cell).toHaveValue('Some notes')
 })
@@ -329,14 +313,12 @@ test('text from a dead key, AltGr or an input method opens the editor with that 
     withEditor('LONG_TEXT', Stub)
     const { cell } = await mount(LONG_TEXT, { value: 'Some notes' })
     inputOf(cell).focus()
-    // Text that arrives without a key of its own.
     await devtools().send('Input.insertText', { text: 'é' })
     await expect.element(draft).toHaveValue('é')
     await expect.element(draft).toHaveFocus()
     await userEvent.keyboard('{Escape}')
     await expect.element(cell).toHaveValue('Some notes')
     await expect.element(cell).toHaveFocus()
-    // Several characters, composed before they are committed.
     await devtools().send('Input.imeSetComposition', {
         text: 'にほ',
         selectionStart: 2,
@@ -352,7 +334,6 @@ test('text from a dead key, AltGr or an input method opens the editor with that 
 test('typing does not open an editor that starts from no key', async () => {
     withEditor('AGE', Stub)
     const { cell } = await mount({ valueType: 'AGE' }, { value: '2020-02-29' })
-    // An age shows its date of birth as dates are typed: in the system date format.
     await expect.element(cell).toHaveValue('2020-02-29')
     inputOf(cell).focus()
     await userEvent.keyboard('a')
@@ -374,7 +355,6 @@ test('a locked or hidden cell does not open its editor and says why', async () =
     await userEvent.dblClick(cell)
     await expect.element(dialog).not.toBeInTheDocument()
     await expect.element(cell).toHaveValue('Some notes')
-    // Enter moves on, as in any read-only cell.
     await userEvent.keyboard('{Enter}')
     expect(moves).toEqual(['enter'])
 
@@ -409,7 +389,6 @@ test('a rule locking the cell closes its editor without saving', async () => {
     expect(enqueued).toEqual([])
     expect(announced).toEqual([LOCKED])
 
-    // Text in a cell a rule only hides would be saved: the editor's report is dropped instead.
     effects.setState({ cells: {} })
     await userEvent.keyboard('{Enter}')
     await userEvent.fill(draft, 'Changed')
@@ -489,7 +468,6 @@ test('a value type with no editor stays read-only with "Edit this field in its o
         { valueType: 'COORDINATE' },
         { value: '[-11.4,8.2]' }
     )
-    // Shown as DHIS2 displays it: latitude first.
     await expect.element(cell).toHaveValue('8.2, -11.4')
     await expect.element(cell).toHaveAttribute('readonly')
     await expect.element(cell).not.toHaveAttribute('aria-haspopup')
@@ -504,7 +482,6 @@ test('a value type with no editor stays read-only with "Edit this field in its o
 
 test('the editor is a dialog named "Edit <field>", above sticky cells, unclipped', async () => {
     withEditor('LONG_TEXT', Stub)
-    // The cell sits at the bottom of the screen, so the editor opens above it.
     await mountGrid([makeTable({ columns: ['Notes'], fields: [LONG_TEXT] })], {
         above: 'calc(100vh - 7rem)',
     })
@@ -521,7 +498,6 @@ test('the editor is a dialog named "Edit <field>", above sticky cells, unclipped
         throw new Error('No header')
     }
     expect(box.bottom).toBeLessThanOrEqual(cell.getBoundingClientRect().top + 1)
-    // Over the sticky header, and not cut off by the table's scrolling region.
     expect(box.top).toBeLessThan(head.top)
     const shown = document.elementFromPoint(
         box.left + 8,

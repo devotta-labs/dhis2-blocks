@@ -17,9 +17,9 @@ export interface WorkingListCapabilities {
     supportsValueTypeFilter(valueType: string): boolean
 }
 
-export const detectMetadataFeatures = (
+export const detectMetadataFeatures: (
     program: TrackerProgram
-): MetadataFeaturePresence => {
+) => MetadataFeaturePresence = (program) => {
     const bindings = program.programTrackedEntityAttributes
     return {
         preferredSearchOperator: bindings.some(
@@ -42,13 +42,10 @@ export const detectMetadataFeatures = (
     }
 }
 
-export const resolveWorkingListCapabilities = ({
-    apiVersion,
-    metadataFeatures,
-}: {
+export const resolveWorkingListCapabilities: (options: {
     apiVersion: number
     metadataFeatures?: Partial<MetadataFeaturePresence>
-}): WorkingListCapabilities => {
+}) => WorkingListCapabilities = ({ apiVersion, metadataFeatures }) => {
     if (!Number.isInteger(apiVersion) || apiVersion <= 0) {
         throw new Error(`Invalid DHIS2 apiVersion: ${apiVersion}`)
     }
@@ -68,8 +65,6 @@ export const resolveWorkingListCapabilities = ({
         emptyValueFilters,
         metadataSearchOperators,
         minimumSearchLength,
-        // Tracker has supported an `in` expression with multiple option codes
-        // throughout the supported API range (including MULTI_TEXT on v41).
         multipleOptionValues: apiVersion >= 41,
         supportsValueTypeFilter(valueType: string) {
             if (

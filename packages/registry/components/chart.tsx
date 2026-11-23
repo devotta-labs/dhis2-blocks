@@ -5,12 +5,6 @@ import { cn } from './cn'
 import * as RechartsPrimitive from 'recharts'
 import type { TooltipValueType } from 'recharts'
 
-/**
- * shadcn Chart (Recharts) restyled with the DHIS2 tokens. `ChartContainer`
- * exposes each config colour as a `--color-<key>` variable for the series.
- */
-
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: '', dark: '.dark' } as const
 
 const INITIAL_DIMENSION = { width: 320, height: 200 } as const
@@ -43,6 +37,10 @@ function useChart() {
     return context
 }
 
+/**
+ * shadcn Chart (Recharts) restyled with the DHIS2 tokens. `ChartContainer`
+ * exposes each config colour as a `--color-<key>` variable for the series.
+ */
 function ChartContainer({
     id,
     className,
@@ -72,7 +70,7 @@ function ChartContainer({
                 data-slot="chart"
                 data-chart={chartId}
                 className={cn(
-                    // colour-literal: recharts' default stroke and fill values, matched as attribute selectors, not colours
+                    // WARNING: colour-literal: Recharts uses hex stroke values in its markup. These selectors match those attributes; they do not set colours.
                     "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-dhis2-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-dhis2-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-dhis2-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-radial-bar-background-sector]:fill-dhis2-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-dhis2-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-dhis2-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent",
                     className
                 )}
@@ -92,11 +90,7 @@ function ChartContainer({
     )
 }
 
-/**
- * Characters that could end a declaration, the rule or the `<style>` element
- * itself. The style is written as raw markup, so a key, colour or id holding
- * one is left out rather than escaped.
- */
+// WARNING: Style rules are inserted as raw markup. Reject any token that could break out of a declaration, rule, or style element.
 const UNSAFE_CSS = /[<>{};\\]/
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
@@ -379,26 +373,20 @@ function ChartLegendContent({
     )
 }
 
-/** A primitive string. `String(value) === value` holds for no other kind of value. */
 const isString = <Value,>(value: Value): value is Value & string =>
     String(value) === value
 
-/** A primitive number, NaN included. */
 const isNumber = <Value,>(value: Value): value is Value & number =>
     Object.is(Number(value), value)
 
-/** A non-null object: `Object(value)` is the value itself only for objects. */
 const isObject = <Value,>(value: Value): value is Value & object =>
     Object(value) === value
 
-/** A Recharts tooltip or legend item, which may nest the data row it came from. */
 type PayloadItem = { readonly payload?: object }
 
-/** The value of an own field of a payload item or row, if it has one. */
 const fieldOf = (item: PayloadItem | undefined, field: string) =>
     Object.entries(item ?? {}).find(([name]) => name === field)?.[1]
 
-/** The config for a Recharts payload item, found by `key` on the item or its nested payload. */
 function getPayloadConfigFromPayload(
     config: ChartConfig,
     payload: PayloadItem | undefined,

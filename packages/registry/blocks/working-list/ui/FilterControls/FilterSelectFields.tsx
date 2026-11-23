@@ -1,6 +1,5 @@
 import i18n from '@dhis2/d2-i18n'
 import React, { useId, useMemo } from 'react'
-import { cn } from '@/components/dhis2/ui/cn'
 import {
     Combobox,
     ComboboxChip,
@@ -117,8 +116,6 @@ export const ComboboxField = ({
         [options]
     )
     const labelFor = (value: string) => labels.get(value) ?? value
-    // A caller that searches remotely gets the input text and does its own
-    // filtering; otherwise Base UI filters the options by label.
     const filter = onSearchChange ? null : undefined
     const content = (
         <ComboboxContent anchor={multiple ? anchor : undefined}>
@@ -134,8 +131,6 @@ export const ComboboxField = ({
                     noMatchText
                 )}
             </ComboboxEmpty>
-            {/* A new search keeps the previous results listed until it
-                resolves, so show that it is still loading above them. */}
             {loading && items.length > 0 && (
                 <div className="flex justify-center px-6 py-2">
                     <Spinner label={i18n.t('Loading')} className="size-4" />
@@ -197,42 +192,35 @@ export const ComboboxField = ({
                 value={[...values]}
                 onValueChange={(next: string[]) => onChange(next)}
             >
-                {/* The trigger covers the whole box so a press anywhere opens
-                    it; the chips sit above it and only their remove buttons
-                    take the pointer. */}
-                <div
+                <ComboboxChips
                     ref={anchor}
-                    className={cn(
-                        selectTriggerVariants({ size: 'sm' }),
-                        'relative cursor-default pe-6 has-[>[data-slot=combobox-trigger]:focus-visible]:border-dhis2-ring has-[>[data-slot=combobox-trigger]:focus-visible]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)] has-[>[data-slot=combobox-trigger][data-popup-open]]:border-dhis2-ring has-[>[data-slot=combobox-trigger][data-popup-open]]:shadow-[inset_0_0_0_2px_var(--dhis2-ring)]'
-                    )}
+                    size="sm"
+                    className="pe-6 [&_[data-slot=combobox-chip-remove]]:relative"
                 >
                     <ComboboxTrigger
                         id={triggerId}
                         className="absolute inset-0 flex cursor-pointer items-center rounded-dhis2-sm border-0 bg-transparent pe-1 outline-none forced-colors:focus-visible:outline-2 forced-colors:focus-visible:outline-solid forced-colors:focus-visible:-outline-offset-2"
                     />
                     {collapsed ? (
-                        <span className="pointer-events-none relative flex-1">
+                        <span>
                             {i18n.t('{{count}} selected', {
                                 count: values.length,
                             })}
                         </span>
                     ) : (
-                        <ComboboxChips className="pointer-events-none relative min-h-6 flex-1 [&_[data-slot=combobox-chip-remove]]:pointer-events-auto">
-                            {values.map((value) => (
-                                <ComboboxChip
-                                    key={value}
-                                    removeLabel={i18n.t('Remove {{label}}', {
-                                        label: labelFor(value),
-                                        interpolation: { escapeValue: false },
-                                    })}
-                                >
-                                    {labelFor(value)}
-                                </ComboboxChip>
-                            ))}
-                        </ComboboxChips>
+                        values.map((value) => (
+                            <ComboboxChip
+                                key={value}
+                                removeLabel={i18n.t('Remove {{label}}', {
+                                    label: labelFor(value),
+                                    interpolation: { escapeValue: false },
+                                })}
+                            >
+                                {labelFor(value)}
+                            </ComboboxChip>
+                        ))
                     )}
-                </div>
+                </ComboboxChips>
                 {content}
             </Combobox>
         </Field>

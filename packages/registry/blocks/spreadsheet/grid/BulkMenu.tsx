@@ -20,7 +20,7 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
 } from '@/components/dhis2/ui/dropdown-menu'
-import { formatCount } from '../cells/OptionCell'
+import { formatCount } from '@/components/dhis2-value-input'
 import type { CellKey, GridColumn, GridRow, GridTable } from '../model/types'
 import { useSpreadsheetContext } from '../provider/context'
 import type { SpreadsheetContext } from '../provider/context'
@@ -126,7 +126,6 @@ export const RowActions = ({
     </td>
 )
 
-/** What a bulk write says: how many cells changed and, when any were skipped, how many and the most common reason. */
 const summary = (changed: number, skipped: ReadonlyMap<string, number>) =>
     `${i18n.t('Cells changed: {{cells}}.', {
         nsSeparator: '::',
@@ -153,7 +152,7 @@ export interface BulkConfirm {
  * Asks the provider's `confirmBulk` before a bulk write: `ask` runs `run` at once when it has no answer, else opens
  * the `dialog` and runs it on Confirm. Focus goes back to `anchor` when the dialog closes.
  */
-export const useBulkConfirm = (): BulkConfirm => {
+export const useBulkConfirm: () => BulkConfirm = () => {
     const { confirmBulk } = useSpreadsheetContext()
     const [pending, setPending] = useState<Pending>()
     return {
@@ -175,7 +174,6 @@ export const useBulkConfirm = (): BulkConfirm => {
                         }
                     }}
                 >
-                    {/* Focus goes back to what opened the menu: the menu that opened the dialog is gone. */}
                     <AlertDialogContent finalFocus={() => pending.anchor}>
                         <AlertDialogHeader>
                             <AlertDialogTitle>
@@ -224,7 +222,6 @@ export const BulkMenu = ({
     const context = useSpreadsheetContext()
     const { store, effects, overrides, keyOf, settings, announce, bulkColumn } =
         context
-    // The column value popover, kept after it closes so it closes in place.
     const [valueFor, setValueFor] = useState<ColumnTarget & { open: boolean }>()
 
     const apply = ({ entries, skipped }: BulkPlan, anchor: HTMLElement) => {
@@ -239,7 +236,6 @@ export const BulkMenu = ({
             results.forEach((result, i) => {
                 const { key } = entries[i]
                 if (result === 'invalid') {
-                    // The planner skips what the store refuses; a refusal it missed leaves no draft behind.
                     skip(
                         after.cells[key]?.error ??
                             i18n.t('This cell cannot be changed')
@@ -247,7 +243,6 @@ export const BulkMenu = ({
                     after.discardDraft(key)
                     return
                 }
-                // An unchanged cell the plan left in was refused by the store, as a lock the annotations do not show.
                 if (changedBy(result, before.cells[key], after.cells[key])) {
                     changed += 1
                 } else {
@@ -269,7 +264,6 @@ export const BulkMenu = ({
             annotations: effects.getState(),
             settings,
         })
-    /** Asks about the plan's cells, then plans again and writes it. */
     const confirm = (replan: () => BulkPlan, anchor: HTMLElement) =>
         ask(
             replan().entries.map(({ key }) => key),
@@ -283,7 +277,6 @@ export const BulkMenu = ({
         overwrite: boolean
     ) => planIn(table, columnCandidates(table, column, text, keyOf), overwrite)
 
-    // The popover outlives the menu that opened it.
     const after = (
         <>
             {valueFor === undefined ? null : (

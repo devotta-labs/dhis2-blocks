@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { FocusEvent, KeyboardEvent, MouseEvent } from 'react'
+import { composing } from '@/components/dhis2-value-input'
 import type { NavKey } from '../grid/navigation'
 import type { CommitResult } from '../model/types'
 import { useCellContext } from './CellStatus'
@@ -14,12 +15,8 @@ export const READY_CLASS = 'caret-transparent selection:bg-transparent'
 export const typingIn = (control: HTMLElement) =>
     control.dataset.mode === 'enter' || control.dataset.mode === 'edit'
 
-// Safari reports the key that ends a composition as keyCode 229 with `isComposing` already false.
-export const composing = (event: KeyboardEvent) =>
-    event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229
-
 /** The move a plain arrow, Enter or Tab asks for; a key with a modifier belongs to the browser. */
-export const navKeyOf = (event: KeyboardEvent): NavKey | undefined => {
+export const navKeyOf = (event: KeyboardEvent) => {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
         return undefined
     }
@@ -68,7 +65,6 @@ export const useCellMode = ({
     const mode = readOnly ? 'ready' : state
     const notes = useCellContext()
     const ref = useRef<HTMLInputElement>(null)
-    // Back in Ready (Escape, a save that went nowhere) the text is selected again once it shows the stored value.
     useLayoutEffect(() => {
         const input = ref.current
         if (
@@ -87,13 +83,10 @@ export const useCellMode = ({
     }
     return {
         mode,
-        /** Typing in Ready starts Enter. */
         typed: () => setMode((now) => (now === 'ready' ? 'enter' : now)),
-        /** Back to Ready, the value selected: a pick from a list was saved without moving. */
         ready: () => setMode('ready'),
         inputProps: {
             ref,
-            // The grid reads it: Ready-mode paste and Ctrl+Z are the grid's, typing keeps the browser's.
             'data-mode': mode,
             onFocus(event: FocusEvent<HTMLInputElement>) {
                 setMode('ready')
@@ -102,19 +95,15 @@ export const useCellMode = ({
             onMouseDown(event: MouseEvent<HTMLInputElement>) {
                 const input = event.currentTarget
                 if (input.ownerDocument.activeElement !== input) {
-                    // A click only selects the cell: some browsers would put a cursor after the selection.
                     event.preventDefault()
                     input.focus()
                 } else if (readOnly) {
-                    // A locked cell stays selected, so copying it still copies the whole value.
                     event.preventDefault()
                 } else if (
                     mode !== 'edit' &&
                     event.button === 0 &&
                     !event.ctrlKey
                 ) {
-                    // A click inside the text edits it, as in Excel; a right click, or a Mac's Ctrl+click, opens the
-                    // grid's menu instead.
                     setMode('edit')
                 }
             },
@@ -126,7 +115,6 @@ export const useCellMode = ({
                 }
                 const key = navKeyOf(event)
                 if (key !== undefined) {
-                    // Inside the text, left and right move the cursor.
                     if (
                         mode === 'edit' &&
                         (key === 'left' || key === 'right')
@@ -137,16 +125,13 @@ export const useCellMode = ({
                         event.preventDefault()
                     }
                     if (commit() === 'invalid' && key !== 'tab') {
-                        // Nothing is lost, but the text is not a value: stay and fix it, with its error shown.
                         setMode('edit')
                         notes.show()
                     } else {
                         move(key)
-                        // At the grid's edge nothing moves; the cell is selected again.
                         setMode('ready')
                     }
                 } else if (addsRow(event)) {
-                    // The typing is saved first; text that is not a value keeps the grid from adding the row.
                     if (commit() === 'invalid') {
                         event.preventDefault()
                         setMode('edit')
@@ -158,7 +143,6 @@ export const useCellMode = ({
                     event.preventDefault()
                     edit(event.currentTarget)
                 } else if (event.key === 'Escape') {
-                    // In Ready, the first Escape is the cell's: it hides the notes. Otherwise it puts the value back.
                     if (mode !== 'ready' || !notes.shown) {
                         event.preventDefault()
                         revert()

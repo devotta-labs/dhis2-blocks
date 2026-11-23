@@ -1,5 +1,5 @@
-import rmnchEvents from './__tests__/fixtures/rmnch-person-events.json'
-import rmnchProgram from './__tests__/fixtures/rmnch-program.json'
+import rmnchEvents from './test/fixtures/rmnch-person-events.json'
+import rmnchProgram from './test/fixtures/rmnch-program.json'
 import {
     A,
     fakeEngine,
@@ -12,7 +12,7 @@ import {
     RMNCH,
     SECOND_VISIT,
     VISIT,
-} from './__tests__/saveRig'
+} from './test/saveRig'
 import { EVENT_DATE_COLUMN } from './eventSchemas'
 import { eventSource } from './eventSource'
 

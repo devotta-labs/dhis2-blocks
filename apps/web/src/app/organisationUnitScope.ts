@@ -9,9 +9,9 @@ export interface UserOrganisationUnitScope {
     teiSearchOrganisationUnits?: OrganisationUnitReference[]
 }
 
-export const resolveCaptureOrganisationUnitRoots = ({
-    organisationUnits,
-}: UserOrganisationUnitScope): OrganisationUnitReference[] => organisationUnits
+export const resolveCaptureOrganisationUnitRoots: (
+    props: UserOrganisationUnitScope
+) => OrganisationUnitReference[] = ({ organisationUnits }) => organisationUnits
 
 export const areOrganisationUnitPathsRelated = (left: string, right: string) =>
     left === right ||
@@ -23,17 +23,20 @@ export interface OrganisationUnitScopeIntersection {
     pickerRoots: OrganisationUnitReference[]
 }
 
-export const getCaptureOrganisationUnitPickerScope = (
+export const getCaptureOrganisationUnitPickerScope: (
     roots: OrganisationUnitReference[]
-): OrganisationUnitScopeIntersection => ({
+) => OrganisationUnitScopeIntersection = (roots) => ({
     allowedPaths: [],
     pickerRoots: roots,
 })
 
-export const intersectOrganisationUnitScopes = (
+export const intersectOrganisationUnitScopes: (
     searchRoots: OrganisationUnitReference[],
     programOrganisationUnits: OrganisationUnitReference[]
-): OrganisationUnitScopeIntersection => ({
+) => OrganisationUnitScopeIntersection = (
+    searchRoots,
+    programOrganisationUnits
+) => ({
     allowedPaths: programOrganisationUnits
         .filter((programUnit) =>
             searchRoots.some((searchRoot) =>

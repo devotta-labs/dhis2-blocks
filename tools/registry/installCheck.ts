@@ -18,7 +18,7 @@ const UI_INSTALL_DIR = join('src', 'components', 'dhis2', 'ui')
 
 class AssertionError extends Error {}
 
-const formatError = (error: Error): string => {
+const formatError = (error: Error) => {
     if (error instanceof AssertionError) return error.message
     return error.stack ?? error.message
 }
@@ -27,11 +27,11 @@ const fail = (assertion: number, message: string): never => {
     throw new AssertionError(`Assertion ${assertion} failed: ${message}`)
 }
 
-const step = (message: string): void => {
+const step = (message: string) => {
     console.log(`\n==> ${message}`)
 }
 
-const run = (command: string, args: string[], cwd: string): void => {
+const run = (command: string, args: string[], cwd: string) => {
     console.log(`$ ${command} ${args.join(' ')}  (cwd: ${cwd})`)
     execFileSync(command, args, {
         cwd,
@@ -40,26 +40,26 @@ const run = (command: string, args: string[], cwd: string): void => {
     })
 }
 
-const listFiles = (directory: string): string[] =>
+const listFiles: (directory: string) => string[] = (directory) =>
     readdirSync(directory, { withFileTypes: true }).flatMap((entry) =>
         entry.isDirectory()
             ? listFiles(join(directory, entry.name))
             : [join(directory, entry.name)]
     )
 
-const declarationValues = (css: string, token: string): string[] =>
+const declarationValues = (css: string, token: string) =>
     [...css.matchAll(new RegExp(`${token}:([^;}]+)`, 'g'))].map((match) =>
         match[1].trim()
     )
 
-const normalizeCssValue = (value: string): string =>
+const normalizeCssValue = (value: string) =>
     value
         .trim()
         .toLowerCase()
         .replace(/\s+/g, ' ')
         .replace(/(^|[^\d])0\./g, '$1.')
 
-const themeDefault = (appDirectory: string, token: string): string => {
+const themeDefault = (appDirectory: string, token: string) => {
     const theme = readFileSync(
         join(appDirectory, 'node_modules', 'tailwindcss', 'theme.css'),
         'utf8'
@@ -71,14 +71,12 @@ const themeDefault = (appDirectory: string, token: string): string => {
     return normalizeCssValue(match[1])
 }
 
-// A utility passes when its emitted rule carries the value directly, or when
-// it references the token and every declaration of that token has the value.
 const assertUtilityValue = (
     css: string,
     utility: string,
     token: string,
     expected: string
-): void => {
+) => {
     const rule = css.match(new RegExp(`\\.${utility}\\{([^}]*)\\}`))
     if (rule === null) {
         fail(9, `emitted CSS has no .${utility} rule`)
@@ -115,7 +113,7 @@ const FORBIDDEN_CSS: [string, RegExp][] = [
     ['un-namespaced --shadow-*', /--shadow-(?:popover|card)\s*:/g],
 ]
 
-const checkInstall = (workDirectory: string): void => {
+const checkInstall = (workDirectory: string) => {
     const registryOutput = join(workDirectory, 'r')
     const appDirectory = join(workDirectory, 'app')
 
@@ -159,9 +157,12 @@ const checkInstall = (workDirectory: string): void => {
                 'calendar',
                 'chart',
                 'checkbox',
+                'collapsible',
                 'dialog',
                 'dropdown-menu',
                 'radio-group',
+                'sidebar',
+                'sidebar-menu',
                 'skeleton',
                 'switch',
                 'toggle',
@@ -190,7 +191,6 @@ const checkInstall = (workDirectory: string): void => {
             join(registryOutput, 'working-list.json'),
             join(registryOutput, 'calendar.json'),
             join(registryOutput, 'context-selector.json'),
-            join(registryOutput, 'sidebar.json'),
             join(registryOutput, 'program-rules.json'),
             join(registryOutput, 'dhis2-value-display.json'),
             join(registryOutput, 'dhis2-value-types.json'),
@@ -288,16 +288,12 @@ const checkInstall = (workDirectory: string): void => {
         '--radius-sm',
         themeDefault(appDirectory, '--radius-sm')
     )
-    // Tailwind emits only the utilities the installed source uses, and the
-    // installed `@theme inline` block points each role at its runtime
-    // variable, so check a DHIS2 utility that the installed primitives use.
     assertUtilityValue(
         emitted,
         'text-dhis2-primary',
         '--color-dhis2-primary',
         'var(--dhis2-primary)'
     )
-    // The role's value must reach :root too, or every colour is unset.
     if (
         !declarationValues(emitted, '--dhis2-primary').some(
             (value) => normalizeCssValue(value) === '#1565c0'
@@ -305,7 +301,6 @@ const checkInstall = (workDirectory: string): void => {
     ) {
         fail(9, ':root does not set --dhis2-primary to #1565c0')
     }
-    // Only roles ship: a palette step would keep its colour in every theme.
     const palette = emitted.match(
         /--(?:color-)?dhis2-(?:grey|blue|teal|red|yellow|green|purple)-\d{3}\b/
     )
@@ -326,7 +321,7 @@ const checkInstall = (workDirectory: string): void => {
     }
 }
 
-const main = (): void => {
+const main = () => {
     const workDirectory = mkdtempSync(join(tmpdir(), 'dhis2-registry-check-'))
     const keep = process.env.KEEP_TMP === '1'
     let failed = false
@@ -335,8 +330,6 @@ const main = (): void => {
         console.log('\nregistry:check passed: all 10 assertions hold')
     } catch (error) {
         failed = true
-        // An assertion's message says it all; anything else is a bug in the
-        // check or its tooling, so keep the stack.
         console.error(
             `\n${error instanceof Error ? formatError(error) : String(error)}`
         )

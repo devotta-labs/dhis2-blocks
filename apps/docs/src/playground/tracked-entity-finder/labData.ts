@@ -83,11 +83,9 @@ const LAST_NAMES = ['Bangura', 'Kamara', 'Sesay', 'Conteh', 'Koroma', 'Turay']
 const isoDate = (index: number) =>
     `${1960 + ((index * 7) % 60)}-${String(1 + (index % 12)).padStart(2, '0')}-${String(1 + ((index * 3) % 28)).padStart(2, '0')}`
 
-/** A value for person `index` that reads like what the attribute holds. */
-const sampleValue = (attribute: LabAttribute, index: number): string => {
+const sampleValue = (attribute: LabAttribute, index: number) => {
     const options = attribute.options ?? []
     if (attribute.valueType === 'MULTI_TEXT') {
-        // One or two codes, stored comma-separated as DHIS2 does.
         return options
             .filter((_, at) => (index + at) % 3 === 0)
             .map(({ code }) => code)

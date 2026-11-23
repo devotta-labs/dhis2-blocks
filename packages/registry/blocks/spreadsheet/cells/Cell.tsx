@@ -1,4 +1,3 @@
-import i18n from '@dhis2/d2-i18n'
 import { memo, useMemo, useState } from 'react'
 import { cellKind } from '@/components/dhis2-value-types'
 import type { CellKind, Field } from '@/components/dhis2-value-types'
@@ -16,11 +15,13 @@ import { CellContext, CellStatus, describeCell } from './CellStatus'
 import { BooleanCell, TrueOnlyCell } from './ChoiceCells'
 import { OptionCell } from './OptionCell'
 import { PopupCell } from './PopupCell'
-import { editorFor } from './popupEditors'
+import {
+    dateFormatHint,
+    editedElsewhere,
+    editorFor,
+} from '@/components/dhis2-value-input'
 import { TextCell } from './TextCell'
 
-// A cell with no control: greyed, skipped by the arrows, its reason read out. Positioned, so the hidden reason stays
-// inside the grid's scroll box instead of widening the page.
 const ClosedCell = ({ reason }: { reason: string }) => (
     <div className="relative h-full min-h-9 bg-dhis2-accent">
         <span className="sr-only">{reason}</span>
@@ -49,7 +50,6 @@ export const replacementFor = (
     field: Field
 ) => overrides?.fields?.[fieldId] ?? overrides?.valueTypes?.[field.valueType]
 
-// One control whatever a rule does to the cell, so focus stays where it is.
 const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     const { hiddenBy, readOnly } = view.effects
     const { overrides, idScope, settings, store } = useSpreadsheetContext()
@@ -59,32 +59,22 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
         store.getState().fieldIdOf(props.cellKey),
         props.field
     )
-    // A value type no default control edits (unknown, or a pop-up type without an editor) is edited elsewhere; a
-    // replacement is how a host edits it here.
     const elsewhere =
         replacement === undefined &&
         (kind === 'readOnly' ||
             (kind === 'popup' &&
                 editorFor(props.field.valueType) === undefined))
-            ? i18n.t('Edit this field in its own form')
+            ? editedElsewhere()
             : undefined
     const reason = hiddenBy ?? readOnly ?? elsewhere
-    // An empty date says how to type it.
     const hint =
         replacement === undefined &&
         view.value === undefined &&
         (kind === 'date' || kind === 'dateTime')
-            ? i18n.t('Date format: {{format}}', {
-                  nsSeparator: '::',
-                  format:
-                      kind === 'date'
-                          ? settings.dateFormat
-                          : `${settings.dateFormat} HH:mm`,
-              })
+            ? dateFormatHint(kind, settings)
             : undefined
     const id = cellDomId(idScope, props.cellKey)
     const { notes, aria } = describeCell(id, view, reason, hint)
-    // Escape hides the notes until focus next enters the cell (WCAG 1.4.13).
     const [dismissed, setDismissed] = useState(false)
     const shown = notes.length > 0 && !dismissed
     const bound = useMemo(
@@ -120,7 +110,6 @@ const OpenCell = ({ view, ...props }: CellProps & { view: CellView }) => {
     )
 }
 
-// A cell on its own reads its state and effects itself.
 const SubscribedCell = (props: CellProps) => {
     const view = useCellView(props.cellKey)
     return <OpenCell {...props} view={view} />

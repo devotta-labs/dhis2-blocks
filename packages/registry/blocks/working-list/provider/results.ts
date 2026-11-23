@@ -14,9 +14,9 @@ import type {
 } from './contracts'
 import { WORKING_LIST_PAGE_SIZES } from './contracts'
 
-export const toDisplayRows = (
+export const toDisplayRows: (
     pageData: WorkingListPage | undefined
-): WorkingListDisplayRow[] => {
+) => WorkingListDisplayRow[] = (pageData) => {
     if (!pageData) return []
     if (pageData.mode === 'trackedEntity') {
         return pageData.records.map((record) => ({
@@ -39,10 +39,10 @@ export const toDisplayRows = (
     }))
 }
 
-export const toPaginationMeta = (
+export const toPaginationMeta: (
     pageData: WorkingListPage,
     displayedCount: number
-): WorkingListPaginationMeta => {
+) => WorkingListPaginationMeta = (pageData, displayedCount) => {
     const pageSize = WORKING_LIST_PAGE_SIZES.find(
         (candidate) => candidate === pageData.pageSize
     )

@@ -5,15 +5,12 @@ import {
     focusedRow,
     gridReady,
     keepOffline,
+    settleTrackerImports,
     settled,
     TRACKER_IMPORT,
 } from './tracker-data-entry.support'
-import { expect, test as base } from './fixtures'
+import { expect, test as base } from './docs.fixture'
 
-/**
- * The immunisation register example typed for real against a local DHIS2: each person a test makes is deleted
- * afterwards, with their enrolment and events.
- */
 const IMMUNISATION = 'tracker-data-entry/immunisation-register'
 const PROGRAM = 'ImmReg00001'
 const NGELEHUN = 'DiszpKrYNg8'
@@ -44,7 +41,6 @@ const EnrollmentSchema = z.object({
     ),
 })
 
-/** The register's enrolments in October 2026, as DHIS2 holds them. */
 const octoberEnrollments = async (request: APIRequestContext) => {
     const response = await request.get('/dhis2/api/tracker/enrollments', {
         params: {
@@ -72,10 +68,6 @@ const ImportSchema = z.object({
         .default([]),
 })
 
-/**
- * `sent`: the people the page sends DHIS2. Afterwards, timed out or not, further sends are stopped, the ones on their
- * way finish, and each person is deleted, so a failed test leaves nothing behind; what went wrong is reported together.
- */
 const test = base.extend<{ sent: ReadonlySet<string> }>({
     sent: [
         async ({ page }, use, testInfo) => {
@@ -102,25 +94,17 @@ const test = base.extend<{ sent: ReadonlySet<string> }>({
             const problems: string[] = []
             try {
                 if (!page.isClosed()) {
-                    await page.route(
-                        (url) => TRACKER_IMPORT.test(url.pathname),
-                        (route) => route.abort()
-                    )
-                    await expect
-                        .poll(() => sending.size, { timeout: 30_000 })
-                        .toBe(0)
+                    await settleTrackerImports(page, sending)
                 }
             } catch (error) {
                 problems.push(
                     `waiting for saves on their way: ${String(error)}`
                 )
             }
-            // A context of its own, through the docs server as the test's: one the test disposed cannot stop it.
             const docs = await apiRequest.newContext({
                 baseURL: testInfo.project.use.baseURL,
             })
             try {
-                // Even when an import never finished: one that lands later still made its person.
                 for (const trackedEntity of people) {
                     try {
                         if (await personExists(docs, trackedEntity)) {
@@ -165,7 +149,6 @@ const test = base.extend<{ sent: ReadonlySet<string> }>({
 test.skip(!local, 'Writes people to DHIS2: only against a local one')
 test.describe.configure({ timeout: 120_000 })
 
-/** Opens the register, focuses its first cell and adds a person with Ctrl+Enter; returns the new person's id. */
 const addPerson = async (page: Page) => {
     await page.goto(`/preview/${IMMUNISATION}`)
     await gridReady(page)
@@ -179,7 +162,6 @@ const addPerson = async (page: Page) => {
     return person
 }
 
-/** Types each text into the focused cell, then Tab to the next. */
 const typeAcross = async (page: Page, texts: ReadonlyArray<string>) => {
     for (const text of texts) {
         await page.keyboard.type(text)
@@ -189,7 +171,6 @@ const typeAcross = async (page: Page, texts: ReadonlyArray<string>) => {
 
 const day = (dateTime: string) => dateTime.slice(0, 10)
 
-/** An enrolment as the test checks it: its date, its person's attributes, its events oldest first. */
 const summaryOf = ({
     trackedEntity,
     enrolledAt,
@@ -222,13 +203,11 @@ test('a new child with three doses, typed with the keyboard, is what DHIS2 holds
     )
     const lastName = `Register${Date.now()}`
     const person = await addPerson(page)
-    // The person is first saved once the enrolment date completes them; the reload is after that save.
     const firstSave = page.waitForResponse(
         (response) =>
             response.request().method() === 'POST' &&
             TRACKER_IMPORT.test(new URL(response.url()).pathname)
     )
-    // Gender is left empty.
     await typeAcross(page, ['Isatu', lastName, '2026-10-05', '', '2026-10-19'])
     expect((await firstSave).ok()).toBe(true)
     await settled(page)
@@ -238,7 +217,6 @@ test('a new child with three doses, typed with the keyboard, is what DHIS2 holds
     await expect(
         page.locator(`[id$="-cell-${person}.${LAST_NAME}"]`)
     ).toHaveValue(lastName)
-    // An empty dose's cell is a new event each load: found by its name.
     await page
         .getByRole('textbox', { name: `BCG Dose 0 Isatu ${lastName}` })
         .focus()
@@ -247,7 +225,6 @@ test('a new child with three doses, typed with the keyboard, is what DHIS2 holds
             response.request().method() === 'POST' &&
             TRACKER_IMPORT.test(new URL(response.url()).pathname)
     )
-    // BCG 0, OPV 1, then past OPV 2 and 3 to DPT 1.
     await typeAcross(page, ['2026-10-19', '2026-10-26', '', '', '2026-10-27'])
     expect((await dosesSaved).ok()).toBe(true)
 
@@ -289,7 +266,6 @@ test('a person missing a mandatory attribute waits and says what for', async ({
     sent,
 }) => {
     const person = await addPerson(page)
-    // No last name.
     await typeAcross(page, ['Isatu', '', '2026-10-05', '', '2026-10-19'])
     for (const field of [FIRST_NAME, BIRTH_DATE]) {
         await expect(
@@ -298,12 +274,10 @@ test('a person missing a mandatory attribute waits and says what for', async ({
     }
     await expect(page.getByText(/Not yet sent to DHIS2/)).toBeVisible()
     expect(await personExists(request, person)).toBe(false)
-    // Still nothing sent a moment later, when a late save would have gone out.
     await page.waitForTimeout(2_000)
     expect(sent.size).toBe(0)
 })
 
-/** The register's people in October whose enrolment is not in `before`, as the test checks them. */
 const newEnrollments = async (
     request: APIRequestContext,
     before: ReadonlySet<string>
@@ -317,7 +291,6 @@ const enrollmentsNow = async (request: APIRequestContext) =>
         (await octoberEnrollments(request)).map(({ enrollment }) => enrollment)
     )
 
-/** The next tracker import's response. */
 const nextImport = (page: Page) =>
     page.waitForResponse(
         (response) =>
@@ -333,7 +306,6 @@ test('a new person still waiting at a reload comes back once, and finishing them
     const before = await enrollmentsNow(request)
     const lastName = `Waiting${Date.now()}`
     const person = await addPerson(page)
-    // No enrolment date: nothing can be sent. Each cell saying so shows the outbox holds it.
     await typeAcross(page, ['Isatu', lastName, '2026-10-05'])
     for (const field of [FIRST_NAME, LAST_NAME, BIRTH_DATE]) {
         await expect(
@@ -390,7 +362,6 @@ test('a saved person’s dose unsent at a reload comes back on their row and is 
     expect((await firstSave).ok()).toBe(true)
     await settled(page)
 
-    // Offline, the dose waits on the device.
     await context.setOffline(true)
     const name = `Isatu ${lastName}`
     const dose = page.getByRole('textbox', { name: `BCG Dose 0 ${name}` })
@@ -398,7 +369,6 @@ test('a saved person’s dose unsent at a reload comes back on their row and is 
     await typeAcross(page, ['2026-10-20'])
     await expect(dose).toHaveAccessibleDescription(/Saved on this device/)
 
-    // The browser cannot load the page while offline; the page keeps reporting offline across the reload instead.
     await page.evaluate(() =>
         sessionStorage.setItem('data-entry-e2e', 'offline')
     )

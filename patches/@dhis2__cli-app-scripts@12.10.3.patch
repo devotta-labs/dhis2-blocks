@@ -33,7 +33,7 @@ index 87c9c8917274e2d3d950f984bcf05367fd1d08c3..78accb13fcb25eb2ef429be57ae35c62
 +        return false
 +    }
 +    const files = [...new Set(sourcePaths.flatMap((source) => walkDirectory(source)))]
-+        .filter((file) => !/[/\\]__tests__[/\\]|\.(test|spec)\.[jt]sx?$/.test(file))
++        .filter((file) => !/[/\\](?:test|__tests__)[/\\]|\.(?:test|spec|fixtures?|test-utils)\.[jt]sx?$/.test(file))
      if (files.length === 0) {
          reporter.error(
              `Directory ${chalk.bold(relativeInput)} has no files to translate.`

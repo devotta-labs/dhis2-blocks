@@ -33,7 +33,6 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
                 data-slot="observation-value"
                 className={cn('flex min-w-0', className)}
             >
-                {/* The value's own size, wrapping rather than clipping a long name; the radius keeps one line a pill. */}
                 <MetadataBadge
                     name={text}
                     color={color}
@@ -59,7 +58,6 @@ export function ObservationValue({ unit, className }: ObservationValueProps) {
                     TEXT_TYPES.has(series.valueType)
                         ? 'line-clamp-3 min-w-0 text-base [overflow-wrap:anywhere]'
                         : 'min-w-0 text-3xl leading-none font-semibold tabular-nums [overflow-wrap:anywhere]',
-                    // Greyed, so an empty box never reads as a finding.
                     isUnticked(series, latest) && 'text-dhis2-subtle-foreground'
                 )}
             >

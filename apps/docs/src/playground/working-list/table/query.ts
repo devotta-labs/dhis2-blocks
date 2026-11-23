@@ -6,7 +6,6 @@ type Params = DataEngineQueryParameters
 const text = (value: Params[string]) =>
     value === undefined || value === null ? undefined : String(value)
 
-/** Splits `value` at each `separator` the block did not escape with `/`, unescaping the parts when asked. */
 const splitEscaped = (value: string, separator: string, unescape: boolean) => {
     const parts: string[] = []
     let current = ''
@@ -33,7 +32,7 @@ interface Condition {
 }
 
 /** `id:op:value[:op:value]` expressions, as an array or one comma-joined string. */
-export const parseFilters = (param: Params[string]): Condition[] => {
+export const parseFilters: (param: Params[string]) => Condition[] = (param) => {
     if (param === undefined || param === null) return []
     const expressions = Array.isArray(param)
         ? param.map(String)
@@ -96,10 +95,7 @@ export const matches = (
 }
 
 /** What a field reads for one person, by the name the block sends in `filter` and `order`. */
-export const valueOf = (
-    person: LabPerson,
-    field: string
-): string | undefined => {
+export const valueOf = (person: LabPerson, field: string) => {
     switch (field) {
         case 'enrolledAt':
             return person.enrolledAt
@@ -148,7 +144,6 @@ export const sorted = (people: LabPerson[], order: string | undefined) => {
         for (const { field, sign } of keys) {
             const a = valueOf(left, field)
             const b = valueOf(right, field)
-            // Empty values sort last either way, as DHIS2 sorts them.
             if (a === undefined || b === undefined) {
                 if (a !== b) return a === undefined ? 1 : -1
                 continue

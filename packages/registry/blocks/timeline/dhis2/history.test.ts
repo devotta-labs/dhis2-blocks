@@ -1,16 +1,15 @@
-import type { TimelineEntry } from '../core/types'
 import { addWhenReady, combineStatus, mergeHistory } from './history'
 import type { HistoryResult } from './types'
 
-const entry = (id: string): TimelineEntry<string> => ({
+const entry = (id: string) => ({
     id,
     at: '2026-10-22T10:00',
     data: id,
 })
 
-const result = (
-    overrides: Partial<HistoryResult<string>> = {}
-): HistoryResult<string> => ({
+const result: (
+    overrides?: Partial<HistoryResult<string>>
+) => HistoryResult<string> = (overrides = {}) => ({
     entries: [],
     status: 'success',
     notices: [],

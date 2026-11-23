@@ -3,12 +3,8 @@ import {
     RuleEnrollmentResponseSchema,
     toRuleEnrollmentData,
 } from '../hooks/enrollment'
-import { eventInput, programMetadata, rule } from '../__tests__/metadata'
-import {
-    RMNCH,
-    rmnchEnrollmentResponse,
-    rmnchMetadata,
-} from '../__tests__/rmnch'
+import { eventInput, programMetadata, rule } from '../test/metadata'
+import { RMNCH, rmnchEnrollmentResponse, rmnchMetadata } from '../test/rmnch'
 import { buildRuleContext } from './buildContext'
 import {
     crossEventFields,
@@ -30,22 +26,15 @@ const person = toRuleEnrollmentData(
 const persons = new Map([[RMNCH.enrollmentId, person]])
 
 const contexts = new Map(
-    [...new Set(rmnchEnrollmentResponse.events.map((e) => e.programStage))].map(
-        (stageId): [string, RuleContext] => [
-            stageId,
-            buildRuleContext(
-                engine,
-                metadataForStage(rmnchMetadata(), stageId)
-            ),
-        ]
-    )
+    [...new Set(rmnchEnrollmentResponse.events.map((e) => e.programStage))].map<
+        [string, RuleContext]
+    >((stageId) => [
+        stageId,
+        buildRuleContext(engine, metadataForStage(rmnchMetadata(), stageId)),
+    ])
 )
 
-/** A fixture event as a grid row of the fixture's person, with live values over the server's. */
-const fixtureRow = (
-    eventId: string,
-    live: Record<string, string> = {}
-): EventsRuleRow => {
+const fixtureRow = (eventId: string, live: Record<string, string> = {}) => {
     const event = person.events.find((e) => e.id === eventId)
     if (event === undefined) {
         throw new Error(`the RMNCH fixture lost event ${eventId}`)
@@ -56,7 +45,10 @@ const fixtureRow = (
     }
 }
 
-const row = (eventId: string, enrollmentId: string): EventsRuleRow => ({
+const row: (eventId: string, enrollmentId: string) => EventsRuleRow = (
+    eventId,
+    enrollmentId
+) => ({
     event: {
         id: eventId,
         programStageId: RMNCH.stageId,
@@ -70,7 +62,7 @@ const row = (eventId: string, enrollmentId: string): EventsRuleRow => ({
 const input = (
     rows: EventsRuleRow[],
     overrides: Partial<EventsRuleInput> = {}
-): EventsRuleInput => ({
+) => ({
     rows,
     persons,
     tracker: true,
@@ -88,14 +80,12 @@ const hiddenFollowUps = (
         input(rows, overrides),
         [LATER_VISIT]
     ).effects.get(LATER_VISIT)
-    // An empty list must mean "none hidden", never "not evaluated".
     if (effects === undefined) {
         throw new Error('the later visit was not evaluated')
     }
     return RMNCH.chronicFollowUps.filter((id) => effects.hiddenFields.has(id))
 }
 
-/** The engine, failing on the later visit the way it fails on input it cannot read. */
 class FailsOnLaterVisit extends engine.RuleEngineJs {
     override evaluateEvent(
         ...args: Parameters<engine.RuleEngineJs['evaluateEvent']>
@@ -113,7 +103,6 @@ describe('crossEventFields', () => {
     it('lists the fields that feed other events', () => {
         expect(crossFields.has(RMNCH.chronic)).toBe(true)
         expect(crossFields.has(RMNCH.lmp)).toBe(true)
-        // 18 data elements behind newest-event-in-program variables and 1 behind a newest-in-stage variable.
         expect(crossFields.size).toBe(19)
     })
 })
@@ -135,8 +124,6 @@ describe('rowsAffectedBy', () => {
 })
 
 describe('evaluateEventsRules', () => {
-    // The rule hides the follow-ups unless chronic conditions is true, so an empty value also hides them: only a
-    // 'true' that can come from another row proves that row was read.
     it('uses another row’s live value over the server’s', () => {
         expect(
             hiddenFollowUps([
@@ -176,7 +163,6 @@ describe('evaluateEventsRules', () => {
     })
 
     it('evaluates event-program rows alone', () => {
-        // The server also says 'true', so only code that reads the person's events would show the follow-ups.
         const serverSaysTrue = {
             ...person,
             events: person.events.map((e) =>
@@ -229,7 +215,6 @@ describe('evaluateEventsRules', () => {
         ).toEqual(RMNCH.chronicFollowUps)
     })
 
-    // An event rule that reads an attribute: the fetched person is female.
     const genderContexts = new Map([
         [
             'stage',
@@ -261,7 +246,7 @@ describe('evaluateEventsRules', () => {
         orgUnitId: 'ou',
         attributes: { gender },
     })
-    const genderRow = (enrollmentId: string): EventsRuleRow => ({
+    const genderRow = (enrollmentId: string) => ({
         event: { ...eventInput().event, id: `event-${enrollmentId}` },
         enrollmentId,
     })
@@ -302,7 +287,6 @@ describe('evaluateEventsRules', () => {
             evaluateEventsRules(engine, contexts, input(rows), [LATER_VISIT])
                 .effects.size
         expect(evaluated()).toBe(0)
-        // A row pushed into the same array is not in its index: callers pass a new array when the rows change.
         rows.push(fixtureRow(LATER_VISIT))
         expect(evaluated()).toBe(0)
         expect(
@@ -328,7 +312,7 @@ describe('evaluateEventsRules', () => {
 
     it('keeps the other rows’ effects when the engine fails on one row', () => {
         const failing = new Map(
-            [...contexts].map(([stageId, context]): [string, RuleContext] => [
+            [...contexts].map<[string, RuleContext]>(([stageId, context]) => [
                 stageId,
                 { ...context, engine: new FailsOnLaterVisit() },
             ])

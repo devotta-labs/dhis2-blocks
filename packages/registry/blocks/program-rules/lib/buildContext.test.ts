@@ -4,13 +4,12 @@ import {
     eventInput,
     programMetadata,
     rule,
-} from '../__tests__/metadata'
-import { RMNCH, rmnchInput, rmnchMetadata } from '../__tests__/rmnch'
+} from '../test/metadata'
+import { RMNCH, rmnchInput, rmnchMetadata } from '../test/rmnch'
 import { buildRuleContext } from './buildContext'
 import { buildEngineInput } from './buildInput'
 import type { EventRuleInput, ProgramRulesMetadata, RuleContext } from './types'
 
-/** Raw engine effects, so these tests don't depend on effect normalisation. */
 const rawEffects = (context: RuleContext, input: EventRuleInput) => {
     const built = buildEngineInput(engine, context, input)
     return context.engine
@@ -35,7 +34,6 @@ const hides = (metadata: ProgramRulesMetadata, input: EventRuleInput) =>
 const hideX = [{ id: 'hide', type: 'HIDEFIELD', dataElementId: 'x' }]
 
 describe('buildRuleContext', () => {
-    // Spike pitfall 3.
     it('leaves out the three RMNCH rules the engine cannot parse', () => {
         const context = buildRuleContext(engine, rmnchMetadata())
         expect(context.invalidRules).toHaveLength(3)
@@ -91,7 +89,6 @@ describe('buildRuleContext', () => {
         expect(kept).toContain("d2:hasValue('lmp')")
     })
 
-    // Spike pitfall 4.
     it('registers variables under their name, not their display name', () => {
         const metadata = programMetadata({
             variables: [currentEventVariable('weight', 'w')],
@@ -101,7 +98,6 @@ describe('buildRuleContext', () => {
         expect(hides(metadata, eventInput({ w: '5' }))).toBe(false)
     })
 
-    // Spike pitfall 5.
     it('reads option names unless the variable uses codes', () => {
         const optionSets = [
             { id: 'os', options: [{ code: 'Y', name: 'Yes please' }] },
@@ -128,7 +124,6 @@ describe('buildRuleContext', () => {
         ).toBe(true)
     })
 
-    // Spike pitfall 6.
     it('keys constants by uid and passes their values as strings', () => {
         const metadata = programMetadata({
             constants: [{ id: 'Gfd3ppDfq8E', value: 5.0 }],
@@ -137,7 +132,6 @@ describe('buildRuleContext', () => {
         expect(hides(metadata, eventInput())).toBe(true)
     })
 
-    // Spike pitfall 7.
     it('splits an ASSIGN into a content form and, when it differs, a field form', () => {
         const metadata = (dataElementId: string) =>
             programMetadata({
@@ -172,7 +166,6 @@ describe('buildRuleContext', () => {
         ])
     })
 
-    // Spike pitfall 8.
     it('sets attributeType on every action', () => {
         const context = buildRuleContext(engine, rmnchMetadata())
         const types = context.rules.flatMap((converted) =>
@@ -185,7 +178,6 @@ describe('buildRuleContext', () => {
         )
     })
 
-    // Spike pitfall 10.
     it('matches org unit groups by id and by code', () => {
         const metadata = (group: string) =>
             programMetadata({

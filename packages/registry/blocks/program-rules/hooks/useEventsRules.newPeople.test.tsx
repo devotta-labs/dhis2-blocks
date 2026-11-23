@@ -1,10 +1,6 @@
 import { renderHook } from 'vitest-browser-react'
-import {
-    RMNCH,
-    rmnchEnrollmentResponse,
-    rmnchResponses,
-} from '../__tests__/rmnch'
-import { serve } from '../__tests__/serve'
+import { RMNCH, rmnchEnrollmentResponse, rmnchResponses } from '../test/rmnch'
+import { serve } from '../test/serve'
 import type { EventsRuleRow } from '../lib'
 import {
     RuleEnrollmentResponseSchema,
@@ -18,8 +14,7 @@ const person = toRuleEnrollmentData(
 const NEW_PERSON = 'NewPerson01'
 const NEW_VISIT = 'NewVisit001'
 
-/** The fixture's first visit as a new person's row, with that person as the grid holds them. */
-const newRow = (): EventsRuleRow => {
+const newRow = () => {
     const event = person.events.find(({ id }) => id === RMNCH.eventId)
     if (event === undefined) {
         throw new Error(`the RMNCH fixture lost event ${RMNCH.eventId}`)
@@ -31,9 +26,7 @@ const newRow = (): EventsRuleRow => {
     }
 }
 
-const options = (
-    overrides: Partial<UseEventsRulesOptions> = {}
-): UseEventsRulesOptions => ({
+const options = (overrides: Partial<UseEventsRulesOptions> = {}) => ({
     programId: RMNCH.programId,
     programStageIds: [...new Set(person.events.map((e) => e.programStageId))],
     tracker: true,

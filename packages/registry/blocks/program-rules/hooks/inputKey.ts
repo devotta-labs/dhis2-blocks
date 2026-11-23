@@ -27,14 +27,14 @@ const enrollmentKey = (enrollment: RuleEnrollmentInput) => [
 ]
 
 /** Equal for events with the same content, whatever their identity or key order. */
-export const eventContentKey = (event: RuleEventInput): string =>
+export const eventContentKey = (event: RuleEventInput) =>
     JSON.stringify(eventKey(event))
 
 /** Equal for the same enrollment data. Missing other events differ from none. */
 export const supplementContentKey = (supplement: {
     enrollment?: RuleEnrollmentInput
     otherEvents?: ReadonlyArray<RuleEventInput>
-}): string =>
+}) =>
     JSON.stringify([
         supplement.enrollment === undefined
             ? null

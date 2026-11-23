@@ -53,7 +53,6 @@ export interface UseProgramRuleEvaluatorResult {
 
 const NO_INVALID_RULES: InvalidRule[] = []
 const NO_OPTION_GROUPS = new Map<string, Set<string>>()
-/** Enough for a form that evaluates twice per change to keep both passes of the last few. */
 const RECENT_EVALUATIONS = 8
 
 /**
@@ -62,14 +61,16 @@ const RECENT_EVALUATIONS = 8
  * once per input. Fetches the enrollment and its other events only when the rules read them and
  * the options don't carry them.
  */
-export const useProgramRuleEvaluator = ({
+export const useProgramRuleEvaluator: (
+    options: UseProgramRuleEvaluatorOptions
+) => UseProgramRuleEvaluatorResult = ({
     programId,
     programStageId,
     enrollmentId,
     enrollment,
     otherEvents,
     enabled = true,
-}: UseProgramRuleEvaluatorOptions): UseProgramRuleEvaluatorResult => {
+}) => {
     const {
         client,
         engine,
@@ -113,11 +114,10 @@ export const useProgramRuleEvaluator = ({
             otherEvents: otherEvents ?? fetched?.events ?? [],
         }
         const recent = new Map<string, RuleEvaluation>()
-        return (event: RuleEventInput): RuleEvaluation => {
+        return (event: RuleEventInput) => {
             const key = eventContentKey(event)
             const cached = recent.get(key)
             if (cached !== undefined) {
-                // Most recently used last, so the oldest is evicted first.
                 recent.delete(key)
                 recent.set(key, cached)
                 return cached
@@ -136,13 +136,9 @@ export const useProgramRuleEvaluator = ({
             }
             return evaluation
         }
-        // `enrollment` and `otherEvents` are read through their content key, so new objects with
-        // the same content keep the function and its recent results.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [context, engine, waiting, fetched, supplementKey])
 
-    // A query only fails the hook while it is needed and has nothing to show:
-    // a failed background refetch keeps the last good data, and so do we.
     const error =
         contextError ?? neededFailure(enrollmentQuery, fetchEnrollment)
 

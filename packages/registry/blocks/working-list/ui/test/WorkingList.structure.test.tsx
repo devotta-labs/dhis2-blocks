@@ -22,9 +22,7 @@ const controlledProps = {
 
 describe('WorkingList structural components', () => {
     it('renders page-sized skeleton rows with disabled shadcn pagination', async () => {
-        const screen = await render(
-            <WorkingListTableSkeleton pageSize={15} />
-        )
+        const screen = await render(<WorkingListTableSkeleton pageSize={15} />)
 
         expect(
             screen.container.querySelectorAll(

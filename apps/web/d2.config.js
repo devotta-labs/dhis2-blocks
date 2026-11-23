@@ -10,7 +10,10 @@ const config = {
     viteConfigExtensions: './vite.config.mts',
 
     i18n: {
-        additionalSourcePaths: ['../../packages/registry'],
+        additionalSourcePaths: [
+            '../../packages/registry/blocks',
+            '../../packages/registry/components',
+        ],
     },
 }
 

@@ -62,7 +62,6 @@ describe('outsideReads', () => {
             ...input,
             event: { ...input.event, occurredAt: '2026-05-01' },
         }
-        // The newest event before 1 May is the second visit of 18 April.
         expect(outsideReads(context, later).get(SMOKING)).toMatchObject({
             value: 'false',
             from: {

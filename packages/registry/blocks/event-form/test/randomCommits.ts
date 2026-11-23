@@ -43,21 +43,12 @@ import type { HeldEvent, StageForm, Values } from '../lib/metadata'
 import { eventPayload } from '../lib/payload'
 import { EVENT_DATE } from '../lib/validate'
 
-/**
- * Random commits on real stages, checking after every step that keeping what was entered apart from what the rules
- * make of it holds: the form's settle (skipping and starting warm) matches one from the entered values, saves what it
- * shows, gives a shown field its answer back, and opens what it saved as it was. Reproduce a failure with the seed it
- * prints: `EVENT_FORM_SEED=<seed> EVENT_FORM_SEQUENCES=1` runs that one sequence first. The share of
- * `EVENT_FORM_SEQUENCES` (2,000 by default) each stage gets is in `SETUPS`; each stage has a test file, so they run in
- * parallel.
- */
-
 const TODAY = '2026-11-16'
 const SEED = Number(process.env.EVENT_FORM_SEED ?? 20261116)
 const SEQUENCES = Number(process.env.EVENT_FORM_SEQUENCES ?? 2000)
+const SEQUENCES_PER_TEST = 25
 const LONGEST = 30
 
-/** mulberry32: small, seeded, the same numbers on every machine. */
 const random = (seed: number) => {
     let a = seed >>> 0
     return () => {
@@ -69,8 +60,8 @@ const random = (seed: number) => {
     }
 }
 type Random = ReturnType<typeof random>
-const pick = <T>(next: Random, items: readonly T[]): T =>
-    items[Math.floor(next() * items.length)]
+const pick = <T>(next: Random, items: readonly T[]) =>
+    items[Math.floor(next() * items.length)] satisfies T
 
 interface Setup {
     name: string
@@ -79,7 +70,6 @@ interface Setup {
     held?: HeldEvent
     orgUnitId: string
     supplement: Omit<EventRuleInput, 'event'>
-    /** Fields some rule reads or changes, picked more often. */
     ruled: readonly string[]
 }
 
@@ -91,7 +81,7 @@ const setupOf = (
     orgUnitId: string,
     held?: HeldEvent,
     supplement: Omit<EventRuleInput, 'event'> = { otherEvents: [] }
-): Setup => {
+) => {
     if (form === undefined) {
         throw new Error(`${name} has no stage ${stageId}`)
     }
@@ -105,12 +95,19 @@ const setupOf = (
             context.graph.fieldReaders.has(id) ||
             context.graph.fieldWriters.has(id)
     )
-    return { name, form, context, held, orgUnitId, supplement, ruled }
+    return {
+        name,
+        form,
+        context,
+        held,
+        orgUnitId,
+        supplement,
+        ruled,
+    } satisfies Setup
 }
 
 const NO_USER = { userRoles: [], userGroups: [] }
 
-/** The lab's chain of three assignments and two hidden fields, on the 60-field long form. */
 const LONG_RULES = [
     ['d2:hasValue(#{f001})', 'ASSIGN', 'f003', '#{f001} * 2'],
     ['d2:hasValue(#{f003})', 'ASSIGN', 'f005', '#{f003} + 10'],
@@ -226,8 +223,7 @@ const DATES = '2025-12-31 2026-01-05 2026-03-12 2026-06-30 2026-11-16'.split(
 )
 const TEXTS = ['a', 'skip', 'Yes', 'No', 'note']
 
-/** A value the field takes: one of its options, or a value of its type. */
-const valueFor = (next: Random, form: StageForm, fieldId: string): string => {
+const valueFor = (next: Random, form: StageForm, fieldId: string) => {
     const { valueType, options } = form.fields.get(fieldId)?.field ?? {
         valueType: 'TEXT',
     }
@@ -264,7 +260,7 @@ type Step =
     | { kind: 'date'; value: string | null }
     | { kind: 'save'; complete: boolean }
 
-const stepsOf = (next: Random, setup: Setup): Step[] => {
+const stepsOf = (next: Random, setup: Setup) => {
     const fields = [...setup.form.fields.keys()]
     return Array.from({ length: 1 + Math.floor(next() * LONGEST) }, () => {
         const roll = next()
@@ -286,13 +282,12 @@ const stepsOf = (next: Random, setup: Setup): Step[] => {
             fieldId,
             value: next() < 0.2 ? null : valueFor(next, setup.form, fieldId),
         }
-    })
+    }) satisfies Step[]
 }
 
-const run = (setup: Setup, steps: readonly Step[]): string | undefined => {
+const run = (setup: Setup, steps: readonly Step[]) => {
     const { form, context } = setup
     const optionGroups = context.optionGroupOptions
-    // The engine is pure, so equal inputs share one result.
     const known = new Map<string, Result<RuleEffects, Error>>()
     const evaluate = (event: RuleEventInput) => {
         const key = JSON.stringify([
@@ -360,7 +355,6 @@ const run = (setup: Setup, steps: readonly Step[]): string | undefined => {
             effective: outcome.effective,
             opened: state.opened.stored,
         })
-    /** What `useEventForm` reports as answers the rules alone changed since DHIS2 last saved. */
     const ruleChanged = (state: FormState, outcome: RuleOutcome) =>
         isDirty(state)
             ? 0
@@ -373,9 +367,8 @@ const run = (setup: Setup, steps: readonly Step[]): string | undefined => {
     let state = initialFormState(setup.held, TODAY, form.categories)
     let committed: Values = state.entered
     let settled = settle(undefined, state)
-    // Hidden fields, with whether they were committed to since they were hidden.
     const hiddenSince = new Map<string, boolean>()
-    const check = (at: number): string | undefined => {
+    const check = (at: number) => {
         const fail = (what: string) => `step ${at}: ${what}`
         const reference = cold(state)
         if (
@@ -433,7 +426,6 @@ const run = (setup: Setup, steps: readonly Step[]): string | undefined => {
                 `saves ${JSON.stringify(sent.dataValues)}, shows ${JSON.stringify(outcome.effective)}`
             )
         }
-        // Saved and opened again: the same answers, and nothing to save.
         const reopened = initialFormState(
             heldEventSchema.parse({
                 ...sent,
@@ -510,8 +502,7 @@ const run = (setup: Setup, steps: readonly Step[]): string | undefined => {
     return undefined
 }
 
-/** The steps without any one that the failure does not need, as far as removing one at a time goes. */
-const shrink = (setup: Setup, steps: Step[]): Step[] => {
+const shrink = (setup: Setup, steps: Step[]) => {
     let smallest = steps
     for (let at = smallest.length - 1; at >= 0; at--) {
         const fewer = smallest.filter((_, index) => index !== at)
@@ -519,37 +510,30 @@ const shrink = (setup: Setup, steps: Step[]): Step[] => {
             smallest = fewer
         }
     }
-    return smallest
+    return smallest satisfies Step[]
 }
 
-/** One stage's share of the random sequences, as a test that names its first seed. */
+/** One stage's share of the random sequences, as tests that each name their first seed. */
 export const randomCommits = (name: keyof typeof SETUPS) =>
     describe(`${name}: the form’s rules over random commits`, () => {
-        // The engine logs every rule it cannot run, such as one reading a cleared event date.
-        beforeEach(() => {
-            vi.spyOn(console, 'error').mockImplementation(() => undefined)
-            vi.spyOn(console, 'log').mockImplementation(() => undefined)
-            vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-        })
-        afterEach(() => {
-            vi.restoreAllMocks()
-        })
-
         const { setup: setupFor, sequences, seeds } = SETUPS[name]
         const count = Math.max(1, Math.round(sequences * SEQUENCES))
-        const from = SEED + seeds
-        it(`holds after every step of ${count} sequences from seed ${from}`, () => {
-            const setup = setupFor()
-            for (let sequence = 0; sequence < count; sequence++) {
-                const seed = from + sequence
-                const steps = stepsOf(random(seed), setup)
-                const failure = run(setup, steps)
-                if (failure !== undefined) {
-                    const smallest = shrink(setup, steps)
-                    throw new Error(
-                        `${name}, seed ${seed}: ${run(setup, smallest) ?? failure}\nsteps: ${JSON.stringify(smallest)}`
-                    )
+        for (let start = 0; start < count; start += SEQUENCES_PER_TEST) {
+            const from = SEED + seeds + start
+            const batch = Math.min(SEQUENCES_PER_TEST, count - start)
+            it(`holds after every step of ${batch} sequences from seed ${from}`, () => {
+                const setup = setupFor()
+                for (let sequence = 0; sequence < batch; sequence++) {
+                    const seed = from + sequence
+                    const steps = stepsOf(random(seed), setup)
+                    const failure = run(setup, steps)
+                    if (failure !== undefined) {
+                        const smallest = shrink(setup, steps)
+                        throw new Error(
+                            `${name}, seed ${seed}: ${run(setup, smallest) ?? failure}\nsteps: ${JSON.stringify(smallest)}`
+                        )
+                    }
                 }
-            }
-        }, 120_000)
+            })
+        }
     })

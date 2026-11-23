@@ -120,14 +120,14 @@ export const useProgramRuleEvaluator = ({
             otherEvents: otherEvents ?? fetched?.events ?? [],
         }
         const recent = new Map<string, RuleEvaluation>()
-        const evaluate = (event: RuleEventInput): RuleEvaluation => {
+        const evaluate = (event: RuleEventInput) => {
             const key = eventContentKey(event)
             const cached = recent.get(key)
             if (cached !== undefined) {
                 // Most recently used last, so the oldest is evicted first.
                 recent.delete(key)
                 recent.set(key, cached)
-                return cached
+                return cached satisfies RuleEvaluation
             }
             const evaluation = Result.try({
                 try: () =>
@@ -141,7 +141,7 @@ export const useProgramRuleEvaluator = ({
             if (recent.size > RECENT_EVALUATIONS) {
                 recent.delete(recent.keys().next().value ?? '')
             }
-            return evaluation
+            return evaluation satisfies RuleEvaluation
         }
         return {
             evaluate,

@@ -1,4 +1,4 @@
-import refusals from '../__tests__/fixtures/refusals-2.42.json'
+import refusals from '../test/fixtures/refusals-2.42.json'
 import { importReportSchema, placeReport, reportIn } from './importReport'
 
 const STAGE = new Map([

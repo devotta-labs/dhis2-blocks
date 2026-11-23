@@ -28,7 +28,7 @@ export interface Stats {
     max: number
 }
 
-export const stats = (values: readonly number[]): Stats => {
+export const stats = (values: readonly number[]) => {
     const sorted = values.filter(Number.isFinite).sort((a, b) => a - b)
     const at = (q: number) =>
         sorted[Math.min(sorted.length - 1, Math.ceil(q * sorted.length) - 1)] ??
@@ -39,7 +39,7 @@ export const stats = (values: readonly number[]): Stats => {
         median: round(at(0.5)),
         p95: round(at(0.95)),
         max: round(sorted.at(-1) ?? NaN),
-    }
+    } satisfies Stats
 }
 
 export const statCells = (s: Stats) => [s.n, s.median, s.p95, s.max]
@@ -101,16 +101,16 @@ export const expectNext = (page: Page, { name, arg = '', watch = '' }: Probe) =>
         [name, arg, watch] as const
     )
 
-export const focusOn = (id: string): Probe => ({
-    name: 'focusOn',
-    arg: id,
-    watch: `form [id$="-${id}"]`,
-})
+export const focusOn = (id: string) =>
+    ({
+        name: 'focusOn',
+        arg: id,
+        watch: `form [id$="-${id}"]`,
+    }) satisfies Probe
 
 const stampCount = (page: Page) =>
     page.evaluate(() => window.__efp.stamps.length)
 
-/** Waits for the stamps from `from` on of inputs of `type` to have settled, then returns them. */
 const settledStamps = async (
     page: Page,
     from: number,

@@ -15,13 +15,10 @@ type Message = NonNullable<ValueInputProps['messages']>[number]
 const COORDINATE: Field = { valueType: 'COORDINATE' }
 const TEXT: Field = { valueType: 'TEXT' }
 
-// Names are text, not HTML.
 const AS_IS = { interpolation: { escapeValue: false } }
 
-/** Degrees to six places, about 10 cm, as a coordinate is stored. */
 const degrees = (value: number) => String(Number(value.toFixed(6)))
 
-/** Why the browser gave no location, in words. */
 const refusal = (error: GeolocationPositionError) => {
     switch (error.code) {
         case error.PERMISSION_DENIED:
@@ -71,12 +68,10 @@ export const LocationField = memo(
         commit,
         warnKm,
     }: LocationFieldProps) => {
-        // What the last press of "Use my location" said, shown while the field holds what it was said of.
         const [note, setNote] = useState<Message & { of?: string }>()
         const [finding, setFinding] = useState(false)
         const change = commit(LOCATION)
         const locate = () => {
-            // Absent where the browser has none, or the page is not served securely.
             if (!('geolocation' in navigator)) {
                 setNote({
                     tone: 'warning',

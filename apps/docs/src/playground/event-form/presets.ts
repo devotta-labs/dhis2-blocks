@@ -21,12 +21,13 @@ const preset = (
     example: Example,
     folded?: boolean,
     settings?: Partial<LabSettings>
-): Preset => ({
-    group,
-    name,
-    folded,
-    settings: { ...DEFAULT_SETTINGS, example, ...settings },
-})
+) =>
+    ({
+        group,
+        name,
+        folded,
+        settings: { ...DEFAULT_SETTINGS, example, ...settings },
+    }) satisfies Preset
 
 export const PRESETS: readonly Preset[] = [
     preset('Child visit', 'New child visit', 'newVisit'),

@@ -1,6 +1,6 @@
 import { page, userEvent } from 'vitest/browser'
-import { CHILD_VISIT, childVisitProgram } from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+import { CHILD_VISIT, childVisitProgram } from '../test/childVisit'
+import { editable, recorded, renderForm } from '../test/serve'
 
 const notes = () => page.getByRole('group', { name: 'Notes' })
 const box = () => page.getByRole('textbox', { name: 'Add a note' })
@@ -35,7 +35,11 @@ test('a new event shows only the heading and the box', async () => {
 })
 
 test('a typed note is an unsaved change, goes with Save under its own id, then is listed and the box empties', async () => {
-    const onDirtyChange = vi.fn()
+    const {
+        callback: onDirtyChange,
+        values: dirtyWith,
+        until: dirtied,
+    } = recorded<boolean>()
     const { to } = await renderForm(
         {},
         { eventId: CHILD_VISIT.eventId, onDirtyChange }
@@ -43,7 +47,8 @@ test('a typed note is an unsaved change, goes with Save under its own id, then i
     await editable()
     await userEvent.click(box())
     await userEvent.keyboard('Gave ORS.')
-    await expect.poll(() => onDirtyChange.mock.calls).toEqual([[true]])
+    await dirtied((values) => values.length > 0)
+    expect(dirtyWith).toEqual([true])
     await save().click()
     await expect.poll(() => to('tracker')).toHaveLength(1)
     expect(sentNotes(to('tracker')[0])).toEqual([
@@ -56,9 +61,9 @@ test('a typed note is an unsaved change, goes with Save under its own id, then i
         .element(notes().getByRole('listitem').nth(2))
         .toHaveTextContent(/^Gave ORS\.You · /)
     await expect.element(box()).toHaveValue('')
-    await expect.poll(() => onDirtyChange.mock.calls).toEqual([[true], [false]])
+    await dirtied((values) => values.length > 1)
+    expect(dirtyWith).toEqual([true, false])
 
-    // The stored notes are never sent again.
     await save().click()
     await expect.poll(() => to('tracker')).toHaveLength(2)
     expect(sentNotes(to('tracker')[1])).toBeUndefined()

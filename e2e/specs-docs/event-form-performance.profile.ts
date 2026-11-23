@@ -4,9 +4,6 @@ import type { Browser, CDPSession, Page } from '@playwright/test'
 import { z } from 'zod'
 import { OUTPUT } from './event-form-performance.support'
 
-/** Where a batch of inputs spends its main-thread time, and what the form's chunks weigh. */
-
-/** The part of a CDP CPU profile read here. */
 interface CpuProfile {
     nodes: Array<{
         id: number
@@ -32,7 +29,6 @@ const CHUNKS: ReadonlyArray<readonly [RegExp, string]> = [
 const round = (ms: number, count: number) =>
     Math.round((ms / count) * 100) / 100
 
-/** Self time by chunk and the hottest functions, per input, from a CPU profile of `count` inputs. */
 const summariseProfile = (profile: CpuProfile, count: number) => {
     const byId = new Map(profile.nodes.map((node) => [node.id, node]))
     const self = new Map<number, number>()
@@ -88,7 +84,6 @@ const TRACED = new Set([
     'Commit',
 ])
 
-/** Main-thread time per input by trace event (style, layout, paint and all tasks), from a Chromium trace. */
 const summariseTrace = (buffer: Buffer, count: number) => {
     const { traceEvents } = traceSchema.parse(JSON.parse(buffer.toString()))
     const mains = traceEvents.filter(
@@ -154,7 +149,6 @@ export const bundle = (dist: string) => {
                 return
             }
             found.add(file)
-            // Static imports only: `import(...)` loads later.
             for (const [, imported] of text(file).matchAll(
                 /(?:^|[;}])\s*import\s*(?:[\w{},\s*$]+from\s*)?"\.\/([^"]+\.js)"/g
             )) {

@@ -1,4 +1,4 @@
-import { CHILD_VISIT, SAVED_VISIT } from '../__tests__/childVisit'
+import { CHILD_VISIT, SAVED_VISIT } from '../test/childVisit'
 import { formReducer, initialFormState, toSend } from './formState'
 import { heldEventSchema } from './metadata'
 import { eventPayload, IMPORT_PARAMS } from './payload'

@@ -94,7 +94,7 @@ export const validate = (
         calendar,
     }: ValidationInput,
     attempt: Attempt
-): Validation => {
+) => {
     const completing = attempt === 'complete' || status === 'COMPLETED'
     const checksAll =
         completing || form.validationStrategy === 'ON_UPDATE_AND_INSERT'
@@ -122,7 +122,6 @@ export const validate = (
             invalid.push({ fieldId: category.id, text })
         }
     }
-    // Not required: only a location that is not one yet holds the attempt back.
     const locationProblem = problems.get(LOCATION)
     if (locationProblem !== undefined) {
         invalid.push({ fieldId: LOCATION, text: locationProblem })
@@ -172,5 +171,5 @@ export const validate = (
             ),
             ...textsOf(formMessages, 'warningOnComplete'),
         ],
-    }
+    } satisfies Validation
 }

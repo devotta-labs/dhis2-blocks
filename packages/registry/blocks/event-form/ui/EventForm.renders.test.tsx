@@ -4,8 +4,8 @@ import {
     LONG_FORM_RULES,
     LONG_FORM_VARIABLES,
     longFormProgram,
-} from '../__tests__/longForm'
-import { renderForm } from '../__tests__/serve'
+} from '../test/longForm'
+import { renderForm } from '../test/serve'
 
 const renderLongForm = (blame: 'markers' | 'off') =>
     renderForm(
@@ -24,10 +24,6 @@ const renderLongForm = (blame: 'markers' | 'off') =>
 
 const box = (name: string) => page.getByRole('textbox', { name })
 
-/**
- * The props React holds for each field's input, by field id. A field rendered again gives its input a new handler, so
- * new props: an input whose props object is the same was not rendered.
- */
 const inputProps = () =>
     new Map(
         [...document.querySelectorAll('form input[id]')].map((input) => [
@@ -38,7 +34,6 @@ const inputProps = () =>
         ])
     )
 
-/** The fields whose input was rendered between two `inputProps`, but for the one taking focus, which shows it. */
 const renderedBetween = (
     before: Map<string, unknown>,
     after: Map<string, unknown>

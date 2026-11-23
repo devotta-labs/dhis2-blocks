@@ -68,7 +68,6 @@ export type FormAction =
     | { type: 'cancelConfirm' }
     | { type: 'noted'; text: string }
     | { type: 'saving'; attempt: Attempt | 'reopen' }
-    /** The form stopped waiting for DHIS2 to answer the save of `sent`, which DHIS2 may still store. */
     | { type: 'stoppedWaiting'; sent: { effective: Values; location?: string } }
     | {
           type: 'saved'
@@ -77,7 +76,6 @@ export type FormAction =
           /** When the typed note was stored, as DHIS2 writes a time. */
           storedAt: string
       }
-    /** DHIS2 set the completed event back to active; what is typed and not saved stays so. */
     | { type: 'reopened' }
     | {
           type: 'saveFailed'
@@ -90,7 +88,7 @@ export const initialFormState = (
     held: HeldEvent | undefined,
     today: string,
     categoryList: readonly Category[] = []
-): FormState => {
+) => {
     const entered = held === undefined ? {} : valuesOf(held)
     const eventDate =
         held === undefined
@@ -98,7 +96,7 @@ export const initialFormState = (
             : held.occurredAt && storedDay(held.occurredAt)
     const categories = heldChoices(held, categoryList)
     const location = pointValue(held?.geometry)
-    return {
+    const state: FormState = {
         eventId: held?.event ?? generateUid(),
         entered,
         eventDate,
@@ -119,6 +117,7 @@ export const initialFormState = (
         },
         serverErrors: new Map(),
     }
+    return state
 }
 
 const pad = (value: number) => String(value).padStart(2, '0')
@@ -135,16 +134,10 @@ const without = <T>(map: ReadonlyMap<string, T>, key: string) => {
     return rest
 }
 
-const committed = (
+const committed: (
     state: FormState,
-    {
-        fieldId,
-        value,
-        problem,
-        category,
-    }: Extract<FormAction, { type: 'committed' }>
-): FormState => {
-    // A problem keeps the last good value: the text typed is not a value yet.
+    action: Extract<FormAction, { type: 'committed' }>
+) => FormState = (state, { fieldId, value, problem, category }) => {
     if (problem !== undefined) {
         return {
             ...state,
@@ -171,13 +164,11 @@ const committed = (
         : { ...cleared, entered: next }
 }
 
-export const formReducer = (
+export const formReducer: (
     state: FormState,
     action: FormAction
-): FormState => {
+) => FormState = (state, action) => {
     switch (action.type) {
-        // An edit ends the form's "Saved". The fields are read-only while a save is unanswered, so what arrives then,
-        // such as a location found late, is not taken: the save would not hold it.
         case 'committed':
             return state.saving === undefined
                 ? committed({ ...state, saved: false }, action)
@@ -224,7 +215,6 @@ export const formReducer = (
             return {
                 ...state,
                 status: action.status,
-                // The form is read-only while it saves, so what was sent is what it holds.
                 opened: {
                     entered: state.entered,
                     stored: action.effective,

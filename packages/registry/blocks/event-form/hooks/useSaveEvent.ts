@@ -8,7 +8,7 @@ import type { ImportReport } from '../lib/importReport'
 import { IMPORT_PARAMS } from '../lib/payload'
 import type { eventPayload } from '../lib/payload'
 
-export type SaveResult =
+type SaveResult =
     | { ok: true }
     | { ok: false; reason?: string; report?: ImportReport }
 
@@ -19,9 +19,7 @@ export type SaveResult =
 export const useSaveEvent = (eventId: string, enrollmentId?: string) => {
     const engine = useDataEngine()
     const queryClient = useQueryClient()
-    return async (
-        payload: ReturnType<typeof eventPayload>
-    ): Promise<SaveResult> => {
+    return async (payload: ReturnType<typeof eventPayload>) => {
         try {
             const report = reportIn(
                 z
@@ -42,33 +40,36 @@ export const useSaveEvent = (eventId: string, enrollmentId?: string) => {
                     reason: i18n.t(
                         'DHIS2 did not confirm the save. Check your connection and save again.'
                     ),
-                }
+                } satisfies SaveResult
             }
             if (report.status === 'ERROR') {
-                return { ok: false, report }
+                return { ok: false, report } satisfies SaveResult
             }
         } catch (error) {
             const report =
                 error instanceof Error && 'details' in error
                     ? reportIn(z.json().catch(null).parse(error.details))
                     : undefined
-            return report === undefined
-                ? {
-                      ok: false,
-                      reason:
-                          error instanceof Error ? error.message : undefined,
-                  }
-                : { ok: false, report }
+            return (
+                report === undefined
+                    ? {
+                          ok: false,
+                          reason:
+                              error instanceof Error
+                                  ? error.message
+                                  : undefined,
+                      }
+                    : { ok: false, report }
+            ) satisfies SaveResult
         }
         void queryClient.invalidateQueries({
             queryKey: ['event-form', 'event', eventId],
         })
-        // So the next event opened is not evaluated against this one as it was.
         if (enrollmentId !== undefined) {
             void queryClient.invalidateQueries({
                 queryKey: programRulesQueryKeys.enrollment(enrollmentId),
             })
         }
-        return { ok: true }
+        return { ok: true } satisfies SaveResult
     }
 }

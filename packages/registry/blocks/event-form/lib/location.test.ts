@@ -16,7 +16,6 @@ const CHC = {
     geometry: Geometry
 }
 
-// A square district with a square lake in it.
 const DISTRICT: Geometry = {
     type: 'Polygon',
     coordinates: [
@@ -52,9 +51,7 @@ test('a stored point is the coordinate value [lng,lat], and back', () => {
 
 test('distances are great-circle distances', () => {
     expect(distanceKm([0, 0], [0, 0])).toBe(0)
-    // A degree of latitude is about 111 km.
     expect(distanceKm([0, 0], [0, 1])).toBeCloseTo(111.2, 1)
-    // Freetown to Ngelehun CHC.
     expect(
         distanceKm([-13.2356, 8.4871], CHC.geometry.coordinates)
     ).toBeCloseTo(204, 0)

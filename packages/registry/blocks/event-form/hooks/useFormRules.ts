@@ -16,8 +16,6 @@ import type {
 } from '@/components/program-rules'
 import type { StageForm, Values } from '../lib/metadata'
 
-// Bundlers replace `process.env.NODE_ENV` statically. Declared here so a consumer
-// without @types/node still type-checks this installed file.
 declare const process: { env: { NODE_ENV?: string } }
 
 /** Within the rule evaluator's eight cached results. */
@@ -59,7 +57,7 @@ export const useFormRules = ({
     form,
     entered,
     event,
-}: FormRulesOptions): FormRules => {
+}: FormRulesOptions) => {
     const evaluator = useProgramRuleEvaluator({
         programId,
         programStageId,
@@ -73,26 +71,27 @@ export const useFormRules = ({
     const error = evaluator.error ?? context.error
     const { id, occurredAt, orgUnitId, status } = event
 
-    // The last settled outcome, for the same rules: the next settles from it.
     const last = useRef<{ evaluate: typeof evaluate; settled: RuleSettled }>()
     const rulesFor = useCallback(
-        (entered: Values, event: RuleEvent): Rules => {
+        (entered: Values, event: RuleEvent) => {
             if (error !== undefined) {
-                return { status: 'error' }
+                return { status: 'error' } satisfies Rules
             }
             if (evaluate === undefined || ruleContext === undefined) {
-                return noRules
-                    ? {
-                          status: 'ready',
-                          effects: emptyEffects(),
-                          outcome: overlay(
-                              entered,
-                              emptyEffects(),
-                              form,
-                              optionGroupOptions
-                          ),
-                      }
-                    : { status: 'loading' }
+                return (
+                    noRules
+                        ? {
+                              status: 'ready',
+                              effects: emptyEffects(),
+                              outcome: overlay(
+                                  entered,
+                                  emptyEffects(),
+                                  form,
+                                  optionGroupOptions
+                              ),
+                          }
+                        : { status: 'loading' }
+                ) satisfies Rules
             }
             const run = settleRules(
                 last.current?.evaluate === evaluate
@@ -109,11 +108,17 @@ export const useFormRules = ({
                 }
             )
             if (run.isErr()) {
-                return { status: 'error' }
+                return { status: 'error' } satisfies Rules
             }
             last.current = { evaluate, settled: run.value }
             const { effects, outcome, capped } = run.value
-            return { status: 'ready', graph, effects, outcome, capped }
+            return {
+                status: 'ready',
+                graph,
+                effects,
+                outcome,
+                capped,
+            } satisfies Rules
         },
         [
             error,
@@ -130,7 +135,6 @@ export const useFormRules = ({
         () => rulesFor(entered, { id, occurredAt, orgUnitId, status }),
         [rulesFor, entered, id, occurredAt, orgUnitId, status]
     )
-    // What the rules read outside the form does not depend on the form's values.
     const outside = useMemo(
         () =>
             outsideReads?.({
@@ -176,5 +180,5 @@ export const useFormRules = ({
         )
     }, [rules.capped])
 
-    return { ...rules, outside, rulesFor }
+    return { ...rules, outside, rulesFor } satisfies FormRules
 }

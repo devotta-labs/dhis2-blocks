@@ -29,12 +29,10 @@ const form: RuleForm = {
     eventDateLabel: 'Visit date',
 }
 
-/** Weight → dose → daily total, a warning on the temperature, and whatever `extra` adds. */
 const rulesWith = (extra: ProgramRuleMetadata[] = []) => {
     const context = buildRuleContext(
         engine,
         programMetadata({
-            // Named apart from the data elements, as in DHIS2: an ASSIGN to a data element is read on the next run.
             variables: FIELDS.map((id) =>
                 currentEventVariable(`${id}Var`, id, {
                     fieldValueType: id === 'notes' ? 'TEXT' : 'NUMBER',
@@ -203,7 +201,6 @@ describe('settleRules', () => {
     })
 
     it('settles from the entered values when rules feed each other in a loop', () => {
-        // Keeps itself set once set: from the last values a warm start would keep `flag` after it is cleared.
         const { settle, cold } = rulesWith([
             rule('sticky', "#{flagVar} == '1'", [
                 {

@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { languageTags, parseCoordinate } from '@/components/dhis2-value-types'
 import type { HeldEvent } from './metadata'
 
-// GeoJSON: longitude first; an altitude may follow.
 const position = z.tuple([z.number(), z.number()], z.number())
 type Position = z.infer<typeof position>
 type Ring = readonly Position[]
@@ -30,9 +29,7 @@ export interface PlaceOrgUnit {
 }
 
 /** A stored geometry as the coordinate value `[lng,lat]`, when it is a point. */
-export const pointValue = (
-    geometry: HeldEvent['geometry']
-): string | undefined => {
+export const pointValue = (geometry: HeldEvent['geometry']) => {
     const read = geometrySchema.safeParse(geometry)
     return read.success && read.data.type === 'Point'
         ? `[${read.data.coordinates[0]},${read.data.coordinates[1]}]`
@@ -40,16 +37,12 @@ export const pointValue = (
 }
 
 /** A coordinate value `[lng,lat]` as a GeoJSON point. */
-export const pointGeometry = (
-    value: string
-): { type: 'Point'; coordinates: [number, number] } | undefined => {
+export const pointGeometry = (value: string) => {
     const read = parseCoordinate(value)
-    return (
-        read && {
-            type: 'Point',
-            coordinates: [Number(read.longitude), Number(read.latitude)],
-        }
-    )
+    return (read && {
+        type: 'Point',
+        coordinates: [Number(read.longitude), Number(read.latitude)],
+    }) satisfies { type: 'Point'; coordinates: [number, number] } | undefined
 }
 
 const EARTH_RADIUS_KM = 6371.0088
@@ -65,7 +58,6 @@ export const distanceKm = ([lng1, lat1]: Position, [lng2, lat2]: Position) => {
     return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(half)))
 }
 
-/** Whether a ray from the point eastwards crosses the ring an odd number of times. */
 const inRing = ([x, y]: Position, ring: Ring) => {
     let inside = false
     for (
@@ -110,7 +102,6 @@ export const formatDistance = (km: number) =>
               maximumFractionDigits: km < 10 ? 1 : 0,
           }).format(km)
 
-// Names are text, not HTML.
 const AS_IS = { interpolation: { escapeValue: false } }
 
 /**
@@ -121,7 +112,7 @@ export const plausibility = (
     value: string | undefined,
     orgUnit: PlaceOrgUnit | undefined,
     farKm: number
-): { tone: 'info' | 'warning'; text: string } | undefined => {
+) => {
     const point = value && pointGeometry(value)
     if (!point || orgUnit?.geometry === undefined) {
         return undefined
@@ -131,33 +122,40 @@ export const plausibility = (
     if (geometry.type === 'Point') {
         const km = distanceKm(where, geometry.coordinates)
         const distance = formatDistance(km)
-        return km > farKm
+        return (
+            km > farKm
+                ? {
+                      tone: 'warning',
+                      text: i18n.t(
+                          'This point is {{distance}} from {{name}}. Check the latitude and longitude are the right way round.',
+                          { ...AS_IS, distance, name: orgUnit.name }
+                      ),
+                  }
+                : {
+                      tone: 'info',
+                      text: i18n.t('{{distance}} from {{name}}', {
+                          ...AS_IS,
+                          distance,
+                          name: orgUnit.name,
+                      }),
+                  }
+        ) satisfies { tone: 'info' | 'warning'; text: string } | undefined
+    }
+    return (
+        insideArea(where, geometry)
             ? {
-                  tone: 'warning',
-                  text: i18n.t(
-                      'This point is {{distance}} from {{name}}. Check the latitude and longitude are the right way round.',
-                      { ...AS_IS, distance, name: orgUnit.name }
-                  ),
-              }
-            : {
                   tone: 'info',
-                  text: i18n.t('{{distance}} from {{name}}', {
+                  text: i18n.t('Inside {{name}}', {
                       ...AS_IS,
-                      distance,
                       name: orgUnit.name,
                   }),
               }
-    }
-    return insideArea(where, geometry)
-        ? {
-              tone: 'info',
-              text: i18n.t('Inside {{name}}', { ...AS_IS, name: orgUnit.name }),
-          }
-        : {
-              tone: 'warning',
-              text: i18n.t('Outside {{name}}', {
-                  ...AS_IS,
-                  name: orgUnit.name,
-              }),
-          }
+            : {
+                  tone: 'warning',
+                  text: i18n.t('Outside {{name}}', {
+                      ...AS_IS,
+                      name: orgUnit.name,
+                  }),
+              }
+    ) satisfies { tone: 'info' | 'warning'; text: string } | undefined
 }

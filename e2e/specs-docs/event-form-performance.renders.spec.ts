@@ -21,11 +21,6 @@ import {
 } from './event-form-performance.support'
 import { test } from './fixtures'
 
-/**
- * Why the event form's inputs cost what they do: React renders per keystroke and per commit, and CPU profiles of both.
- * See `event-form-performance.spec.ts` for how to run them.
- */
-
 test.use({
     viewport: VIEWPORT,
     deviceScaleFactor: 1,
@@ -41,7 +36,6 @@ test('renders: components rendered per keystroke and per commit', async ({
     page,
 }) => {
     const results = new Map<string, object>()
-    /** Counts only `act`, each repetition after its unmeasured `setup`; the first repetition is kept apart. */
     const count = async (
         name: string,
         reps: number,

@@ -1,11 +1,13 @@
-import { page, userEvent } from 'vitest/browser'
+import type { CDPSession } from '@vitest/browser-playwright'
+import { cdp, commands, page, userEvent } from 'vitest/browser'
 import {
     CHILD_VISIT,
     CHILD_VISIT_PATH,
     childVisitProgram,
     SAVED_VISIT,
-} from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+} from '../test/childVisit'
+import { editable, recorded, renderForm } from '../test/serve'
+import type { EventFormSaved } from './EventForm'
 
 const CHC = {
     path: CHILD_VISIT_PATH,
@@ -42,11 +44,10 @@ interface SentEvent {
     geometry?: unknown
 }
 
-const sentEvent = (request: { data?: unknown }): SentEvent =>
+const sentEvent = (request: { data?: unknown }) =>
     // SAFETY: the form sends one event in a tracker import; the assertions check its parts.
-    (request.data as { events: [SentEvent] }).events[0]
+    (request.data as { events: [SentEvent] }).events[0] satisfies SentEvent
 
-/** Types a whole coordinate in the latitude field and moves to the longitude; `leave` then leaves the location. */
 const typeCoordinate = async (text: string) => {
     await userEvent.fill(longitude(), '')
     await userEvent.fill(latitude(), text)
@@ -58,36 +59,27 @@ const leave = () =>
 const fillWeight = () =>
     userEvent.fill(page.getByRole('textbox', { name: 'Weight (kg)' }), '12')
 
-/** The device's location: found, at 12 m, or refused with `code`. */
-const geolocation = (outcome: { code: number } | 'found') =>
-    vi
-        .spyOn(navigator.geolocation, 'getCurrentPosition')
-        .mockImplementation((found, failed) => {
-            if (outcome === 'found') {
-                // SAFETY: the form reads only the coordinates and their accuracy.
-                found({
-                    coords: {
-                        latitude: 8.1327,
-                        longitude: -11.4197,
-                        accuracy: 12,
-                    },
-                    timestamp: Date.now(),
-                } as GeolocationPosition)
-                return
-            }
-            // SAFETY: the form reads only the code, against the error's own constants.
-            failed?.({
-                ...outcome,
-                message: '',
-                PERMISSION_DENIED: 1,
-                POSITION_UNAVAILABLE: 2,
-                TIMEOUT: 3,
-            } as GeolocationPositionError)
-        })
+// SAFETY: these tests run on the playwright provider, whose `cdp()` is a CDP session.
+const devtools = () => cdp() as CDPSession
 
-afterEach(() => {
-    vi.restoreAllMocks()
-})
+const geolocation = async (outcome: 'found' | 'refused' | 'unavailable') => {
+    onTestFinished(async () => {
+        await devtools().send('Emulation.clearGeolocationOverride')
+        await commands.resetLocation()
+    })
+    if (outcome === 'found') {
+        await commands.findLocation({
+            latitude: 8.1327,
+            longitude: -11.4197,
+            accuracy: 12,
+        })
+    } else if (outcome === 'refused') {
+        await commands.refuseLocation()
+    } else {
+        await commands.allowLocation()
+        await devtools().send('Emulation.setGeolocationOverride', {})
+    }
+}
 
 test('only a point stage asks for a location, and for the org unit’s name and geometry', async () => {
     const { to } = await renderForm({ orgUnit: CHC })
@@ -131,13 +123,18 @@ test('a coordinate typed in any accepted form is shown as its latitude and longi
 })
 
 test('"At" the org unit fills its coordinates, and without locationWarnKm the form says nothing of the distance', async () => {
-    const onDirtyChange = vi.fn()
+    const {
+        callback: onDirtyChange,
+        values: dirtyWith,
+        until: dirtied,
+    } = recorded<boolean>()
     await renderForm(point, { onDirtyChange })
     await editable()
     await button('At Ngelehun CHC').click()
     await expect.element(latitude()).toHaveValue('8.1039')
     await expect.element(longitude()).toHaveValue('-11.4197')
-    await expect.poll(() => onDirtyChange.mock.calls).toEqual([[true]])
+    await dirtied((values) => values.length > 0)
+    expect(dirtyWith).toEqual([true])
     await typeCoordinate('-11.42, 8.47')
     await leave()
     await expect.element(latitude()).toHaveValue('-11.42')
@@ -151,7 +148,6 @@ test('with locationWarnKm, the form says how far a point is, and warns past that
     await editable()
     await button('At Ngelehun CHC').click()
     await expect.element(page.getByText('0 m from Ngelehun CHC')).toBeVisible()
-    // 33 km north of the CHC: past 25 km.
     await typeCoordinate('8.4, -11.4197')
     await leave()
     await expect
@@ -164,10 +160,13 @@ test('with locationWarnKm, the form says how far a point is, and warns past that
 })
 
 test('a far point warns, and saves all the same as a point, longitude first', async () => {
-    const onSaved = vi.fn()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     const { to } = await renderForm(point, { onSaved, locationWarnKm: 100 })
     await editable()
-    // Longitude first, as GeoJSON writes it: read as a latitude of -11.42.
     await typeCoordinate('-11.42, 8.47')
     await leave()
     await expect
@@ -179,7 +178,8 @@ test('a far point warns, and saves all the same as a point, longitude first', as
         .toBeVisible()
     await fillWeight()
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
     expect(sentEvent(to('tracker')[0]).geometry).toEqual({
         type: 'Point',
         coordinates: [8.47, -11.42],
@@ -212,21 +212,8 @@ test('an edit shows the stored point, and clearing it sends null', async () => {
     expect(sentEvent(to('tracker')[0]).geometry).toBeNull()
 })
 
-test('"Use my location" fills the field and says how close it is', async () => {
-    const asked = geolocation('found')
-    await renderForm(point)
-    await editable()
-    expect(asked).not.toHaveBeenCalled()
-    await button('Use my location').click()
-    await expect.element(latitude()).toHaveValue('8.1327')
-    await expect.element(longitude()).toHaveValue('-11.4197')
-    await expect
-        .element(page.getByText('Your location, within 12 m'))
-        .toBeVisible()
-})
-
 test('a refused location says why and leaves the field as it was', async () => {
-    geolocation({ code: 1 })
+    await geolocation('refused')
     await renderForm(point, { eventId: CHILD_VISIT.eventId })
     await editable()
     await button('Use my location').click()
@@ -238,21 +225,33 @@ test('a refused location says why and leaves the field as it was', async () => {
     await expect.element(latitude()).toHaveValue('8.47')
 })
 
-test('a timeout says it took too long', async () => {
-    geolocation({ code: 3 })
+test('a device that cannot find the location says so', async () => {
+    await geolocation('unavailable')
     await renderForm(point)
     await editable()
     await button('Use my location').click()
     await expect
         .element(
-            page.getByText(/^Warning: Finding your location took too long/)
+            page.getByText(/^Warning: Your device could not find your location/)
         )
         .toBeVisible()
     await expect.element(latitude()).toHaveValue('')
 })
 
+test('"Use my location" fills the field and says how close it is', async () => {
+    await geolocation('found')
+    await renderForm(point)
+    await editable()
+    await expect.element(latitude()).toHaveValue('')
+    await button('Use my location').click()
+    await expect.element(latitude()).toHaveValue('8.1327')
+    await expect.element(longitude()).toHaveValue('-11.4197')
+    await expect
+        .element(page.getByText('Your location, within 12 m'))
+        .toBeVisible()
+})
+
 test('a browser without geolocation says so', async () => {
-    // As a browser without the API, or a page not served securely, has none.
     const api = Object.getOwnPropertyDescriptor(
         Navigator.prototype,
         'geolocation'
@@ -366,7 +365,6 @@ test('while saving, the location keeps its buttons, unable to change it', async 
     await userEvent.keyboard('12')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect.poll(() => to('tracker')).toHaveLength(1)
-    // Drawn as they were, out of reach until the form unlocks: latitude and longitude, and the danger signs' boxes.
     await expect
         .poll(() => document.querySelectorAll('[inert] input').length)
         .toBe(5)

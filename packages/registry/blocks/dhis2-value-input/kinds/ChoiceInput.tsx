@@ -104,7 +104,6 @@ export const ChoiceInput = ({
 }) => {
     const box = useRef<HTMLDivElement>(null)
     const titleId = useId()
-    // Given only when set: Base UI's own Tab order stands unless it is overridden.
     const skipped = tabIndex === undefined ? {} : { tabIndex }
     const kind = cellKind(field)
     const options = useMemo(

@@ -6,8 +6,8 @@ import {
     CHILD_VISIT_RULES,
     CHILD_VISIT_VARIABLES,
     childVisitProgram,
-} from '../__tests__/childVisit'
-import { editable, renderForm, serve } from '../__tests__/serve'
+} from '../test/childVisit'
+import { editable, renderForm, serve } from '../test/serve'
 import { EventForm } from './EventForm'
 import { settingsOf } from '../lib/metadata'
 
@@ -15,7 +15,6 @@ const SECTIONS = ['Measurements', 'Patient', 'Assessment', 'Follow-up']
 
 const weight = () => page.getByRole('textbox', { name: 'Weight (kg)' })
 
-/** The section legends on the page, in page order. */
 const sectionLegends = () =>
     [...document.querySelectorAll('[data-slot="field-legend"]')]
         .map((legend) => legend.textContent ?? '')
@@ -24,7 +23,6 @@ const sectionLegends = () =>
 test('the sections show in order, each with its legend, and a field in no section is not shown', async () => {
     await renderForm()
     await editable()
-    // Follow-up is hidden by a rule while there is no outcome.
     expect(sectionLegends()).toEqual(['Measurements', 'Patient', 'Assessment'])
     expect(page.getByText('Internal code').query()).toBeNull()
 })
@@ -123,10 +121,12 @@ test('the rules load alongside the stage', async () => {
 })
 
 test('while the rules load, the form shows its skeleton', async () => {
-    const { to, release } = await renderForm({ held: ['programRules'] })
+    const { to, release, answered } = await renderForm({
+        held: ['programRules'],
+    })
     await expect.poll(() => to('programRules').length).toBeGreaterThan(0)
-    // Long enough for the stage, which is answered, to have been shown.
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await answered('programs')
+    await new Promise((resolve) => requestAnimationFrame(resolve))
     await expect.element(page.getByText('Loading the form')).toBeInTheDocument()
     expect(weight().query()).toBeNull()
     release()

@@ -10,10 +10,8 @@ import {
 import { blameLead, reasonLabel } from '../lib/explain'
 import type { Blame } from '@/components/program-rules'
 
-// Rule names, labels and values are text, not HTML.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
-/** One rule's part: what it did and why, the answers it read, its name, and its condition behind "Show rule". */
 const Explanation = ({
     blame,
     formId,
@@ -36,8 +34,6 @@ const Explanation = ({
                             label: reasonLabel(reason),
                             value: reason.value ?? i18n.t('not answered'),
                         })
-                        // Opened now, so this is the page as it is: a field a rule hid has no control, and what a
-                        // rule read outside the form is only said.
                         const control =
                             reason.from === undefined
                                 ? document.getElementById(
@@ -107,7 +103,6 @@ export const Why = ({
     marker?: string
 }) => {
     const [open, setOpen] = useState(false)
-    // The field an answer leads to: focus goes there when the popover closes, not back to its button.
     const jump = useRef<HTMLElement | null>(null)
     return (
         <Popover open={open} onOpenChange={setOpen}>

@@ -18,7 +18,6 @@ import {
 } from '../lib/metadata'
 import type { HeldEvent, StageForm } from '../lib/metadata'
 
-// Metadata and server settings change rarely; the rules' metadata is kept as long.
 const HOUR = 60 * 60_000
 
 export type EventFormData =
@@ -40,13 +39,11 @@ export type EventFormData =
 const orgUnitSchema = z.object({
     path: z.string(),
     displayName: z.string().optional(),
-    // A geometry the form cannot read is none: the location is then not checked against it.
     geometry: geometrySchema.optional().catch(undefined),
 })
 const meSchema = z.object({
     authorities: z.array(z.string()).default([]),
 })
-// `ALL` holds every authority.
 const mayUncomplete = ({ authorities }: z.infer<typeof meSchema>) =>
     authorities.includes('ALL') || authorities.includes('F_UNCOMPLETE_EVENT')
 const NO_ORG_UNITS: ReadonlySet<string> = new Set()
@@ -60,7 +57,7 @@ export const useEventFormData = (
     programStageId: string,
     eventId: string | undefined,
     orgUnitId: string
-): EventFormData => {
+) => {
     const engine = useDataEngine()
     const program = useQuery({
         queryKey: ['event-form', 'program', programId],
@@ -105,13 +102,11 @@ export const useEventFormData = (
         enabled: eventId !== undefined,
     })
 
-    // Made once per answer, so what is computed from the form keeps.
     const form = useMemo(
         () => program.data && stageFormOf(program.data.program, programStageId),
         [program.data, programStageId]
     )
 
-    // An edit keeps the event's own org unit.
     const unitId = event.data?.orgUnit ?? orgUnitId
     const placed = form?.location === 'point'
     const needsAncestors =
@@ -147,7 +142,6 @@ export const useEventFormData = (
         staleTime: HOUR,
     })
 
-    // A failed refetch after a save keeps the form that is open.
     const error =
         (program.data === undefined ? program.error : null) ??
         (eventId !== undefined && event.data === undefined
@@ -155,21 +149,20 @@ export const useEventFormData = (
             : null) ??
         (needsAncestors && orgUnits.data === undefined ? orgUnits.error : null)
     if (error !== null) {
-        return { status: 'error', error }
+        return { status: 'error', error } satisfies EventFormData
     }
     if (
         program.data === undefined ||
         (eventId !== undefined && event.data === undefined) ||
-        // The location is only checked against the org unit: without it, the form opens all the same.
         (needsOrgUnits && orgUnits.data === undefined && !orgUnits.isError)
     ) {
-        return { status: 'loading' }
+        return { status: 'loading' } satisfies EventFormData
     }
     if (form === undefined) {
         return {
             status: 'error',
             error: new Error(i18n.t('This program has no such stage')),
-        }
+        } satisfies EventFormData
     }
     return {
         status: 'ready',
@@ -179,5 +172,5 @@ export const useEventFormData = (
         orgUnits: orgUnits.data?.ancestors ?? NO_ORG_UNITS,
         orgUnit: orgUnits.data?.orgUnit,
         mayUncomplete: program.data.mayUncomplete,
-    }
+    } satisfies EventFormData
 }

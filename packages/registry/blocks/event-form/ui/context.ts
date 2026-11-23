@@ -5,12 +5,12 @@ import type { FormState } from '../lib/formState'
 /** Internal: the parts read their form through it. */
 export const EventFormContext = createContext<EventFormValue | null>(null)
 
-export const useEventFormContext = (): EventFormValue => {
+export const useEventFormContext = () => {
     const context = useContext(EventFormContext)
     if (!context) {
         throw new Error('Event form parts must be rendered inside EventForm')
     }
-    return context
+    return context satisfies EventFormValue
 }
 
 /** The last attempt's result while it blocked, until the next attempt or a save. */

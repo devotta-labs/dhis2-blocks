@@ -31,7 +31,6 @@ export const EventFormLab = () => {
 
     const change = (changes: Partial<LabSettings>) =>
         dispatch({ type: 'changeSettings', changes })
-    // Stable, so the lab server is not rebuilt on every request it logs.
     const log: Log = useCallback(
         (update) => dispatch({ type: 'logRequests', update }),
         []
@@ -73,12 +72,10 @@ export const EventFormLab = () => {
         mayUncomplete,
         network,
     } = settings
-    // Fresh events each run, so what one run saves is gone in the next.
     const respond = useMemo(
         () => answer({ example, mayUncomplete }, labEvents(example)),
         [example, mayUncomplete, run]
     )
-    // Live DHIS2 always opens RMNCH, whose ids exist on the docs' instance.
     const shown = EXAMPLES[mode === 'lab' ? example : 'rmnch']
     const canvasProps = {
         programId: shown.programId,

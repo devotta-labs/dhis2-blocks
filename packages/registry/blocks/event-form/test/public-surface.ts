@@ -1,5 +1,4 @@
 import { createElement } from 'react'
-import type { ReactNode } from 'react'
 import type { EventFormProps, EventFormSaved } from '../index'
 import {
     EventForm,
@@ -11,8 +10,7 @@ import {
 
 export type SupportedEventFormTypes = [EventFormProps, EventFormSaved]
 
-// Every export, used as an app would use it.
-export const form = (props: EventFormProps): ReactNode =>
+export const form = (props: EventFormProps) =>
     createElement(
         EventForm,
         props,
@@ -24,7 +22,7 @@ export const form = (props: EventFormProps): ReactNode =>
 export const quietForm = (
     props: EventFormProps,
     onUnsavedRuleChanges: (count: number) => void
-): ReactNode =>
+) =>
     createElement(EventForm, {
         ...props,
         blame: 'off',

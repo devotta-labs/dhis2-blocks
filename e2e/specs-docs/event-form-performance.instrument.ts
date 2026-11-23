@@ -125,15 +125,12 @@ export const instrument = () => {
         sink: (entry: PerformanceEntry) => void,
         durationThreshold?: number
     ) => {
-        // `durationThreshold` is newer than TypeScript's DOM types, so it is passed as a plain object.
         const options = { type, buffered: true, durationThreshold }
         try {
             new PerformanceObserver((list) =>
                 list.getEntries().forEach(sink)
             ).observe(options)
-        } catch {
-            // Not supported by this browser: the entries stay empty.
-        }
+        } catch {}
     }
     const timed = (list: Timed[]) => (entry: PerformanceEntry) =>
         list.push({
@@ -200,7 +197,6 @@ export const instrument = () => {
         P.watch = (watch && document.querySelector(watch)) || undefined
     }
 
-    // After the next frame is painted: a rAF callback runs before paint, a message posted from it after.
     const afterPaint = (callback: (now: number) => void) =>
         requestAnimationFrame(() => {
             const channel = new MessageChannel()
@@ -243,7 +239,6 @@ export const instrument = () => {
     addEventListener('keydown', stamp, true)
     addEventListener('click', stamp, true)
 
-    // Milestones of opening, checked after each painted frame from `origin` on.
     const date = () =>
         document.querySelector<HTMLInputElement>(
             'form input[id$="-occurredAt"]'
@@ -272,10 +267,7 @@ export const instrument = () => {
     }
     addEventListener('DOMContentLoaded', () => P.track(0))
 
-    // A render counter through React's devtools hook, which production React calls after every commit. Components are
-    // known by a string in their own source, since production names are minified.
     const FINGERPRINTS: ReadonlyArray<readonly [string, string]> = [
-        // Before FormField, whose source also names `storedFile`.
         ['ValueInput', '-message-'],
         ['FormField', '.storedFile'],
         ['EventFormFields', '{{section}}'],
@@ -297,7 +289,6 @@ export const instrument = () => {
         return name
     }
     const seen = new WeakMap<Fiber, Array<object | null>>()
-    // A fiber rendered in this commit when React marked it PerformedWork and its props, state or context reads are new.
     const walk = (root: FiberRoot, count: boolean) => {
         const stack = [root.current]
         for (let fiber = stack.pop(); fiber; fiber = stack.pop()) {

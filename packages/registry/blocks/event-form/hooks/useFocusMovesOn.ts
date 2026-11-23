@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { FocusEvent } from 'react'
 
-/** The ids of the field controls after `target`, then those before it (or holding it), nearest first. */
 const neighbours = (target: Element, controlIds: readonly string[]) => {
     const after: string[] = []
     const before: string[] = []
@@ -28,7 +27,6 @@ const neighbours = (target: Element, controlIds: readonly string[]) => {
  */
 export const useFocusMovesOn = (controlIds: readonly string[]) => {
     const formRef = useRef<HTMLFormElement>(null)
-    // What has focus, or is about to: Tab names the next element before the commit on leaving renders.
     const anchor = useRef<Element | null>(null)
     const around = useRef<string[]>([])
     const ids = useRef(controlIds)

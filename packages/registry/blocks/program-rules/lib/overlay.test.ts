@@ -3,17 +3,18 @@ import {
     by,
     CHILD_VISIT_GROUPS,
     childVisitForm,
-} from '@/components/event-form/__tests__/forms'
+} from '@/components/event-form/test/forms'
 import { emptyEffects } from './evaluate'
 import { overlay, runRules } from './overlay'
 import type { RuleValues as Values } from './overlay'
 import type { Attribution, RuleEffects } from './types'
 
 const form = childVisitForm()
-const effects = (changes: Partial<RuleEffects>): RuleEffects => ({
-    ...emptyEffects(),
-    ...changes,
-})
+const effects = (changes: Partial<RuleEffects>) =>
+    ({
+        ...emptyEffects(),
+        ...changes,
+    }) satisfies RuleEffects
 const outcomeOf = (entered: Values, changes: Partial<RuleEffects>) =>
     overlay(entered, effects(changes), form, CHILD_VISIT_GROUPS)
 
@@ -260,7 +261,6 @@ describe('overlay', () => {
                     ['labPregnant', [message('gone')]],
                     ['labTempC001', [message('kept')]],
                     ['form', [message('form')]],
-                    // An attribute's, or another stage's data element's.
                     ['labAttrib01', [message('outside')]],
                 ]),
             }
@@ -308,7 +308,6 @@ describe('runRules', () => {
     const DAILY = by('Daily total', ['labDoseMg01'])
     const SUMMARY = by('Dose summary', ['labDailyMg1'])
 
-    /** Weight → dose → daily total → summary, as the rules engine would, one run at a time. */
     const chain = () => {
         const calls: Values[] = []
         const evaluate = (values: Values) => {

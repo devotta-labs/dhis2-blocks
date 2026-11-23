@@ -67,16 +67,12 @@ export const fieldDisplay = (
     fieldId: string,
     value: string | undefined,
     context: BlameContext
-): string | undefined => {
+) => {
     const field = context.form.fields.get(fieldId)?.field
     return field && displayOf(value, field, context)
 }
 
-/**
- * The answers a rule read: this stage's fields, the event date when the rule reads it, and what it read elsewhere,
- * a field of this stage among them when the rule reads it in the previous event.
- */
-const becauseOf = (by: Attribution, context: BlameContext): RuleReason[] => {
+const becauseOf = (by: Attribution, context: BlameContext) => {
     const { form, graph, effective, eventDate, outside } = context
     const readsVariables = graph?.rules.get(by.ruleId)?.readsVariables ?? []
     const reasons: RuleReason[] = []
@@ -115,14 +111,11 @@ const becauseOf = (by: Attribution, context: BlameContext): RuleReason[] => {
             value: displayOf(eventDate, { valueType: 'DATE' }, context),
         })
     }
-    return [...reasons, ...elsewhere]
+    return [...reasons, ...elsewhere] satisfies RuleReason[]
 }
 
 /** Every blame per field id, per fully hidden section id, and under `'form'`. */
-export const explain = (
-    outcome: RuleOutcome,
-    context: BlameContext
-): ReadonlyMap<string, readonly Blame[]> => {
+export const explain = (outcome: RuleOutcome, context: BlameContext) => {
     const blames = new Map<string, Blame[]>()
     const add = (
         key: string,
@@ -172,5 +165,5 @@ export const explain = (
             add(key, 'message', by, text)
         }
     }
-    return blames
+    return blames satisfies ReadonlyMap<string, readonly Blame[]>
 }

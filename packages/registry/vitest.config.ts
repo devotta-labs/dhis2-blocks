@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
 import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig, type Plugin } from 'vitest/config'
+import { geolocationCommands } from './test/geolocation.test-utils'
 
 // Ordered: the more specific `@/components/dhis2/ui` must win over `@/components`.
 const resolve = {
@@ -108,6 +109,7 @@ const browserTestOptions = (contextOptions: BrowserContextOptions = {}) => ({
         enabled: true,
         headless: true,
         provider: playwright({ contextOptions }),
+        commands: geolocationCommands,
         instances: [{ browser: 'chromium' as const }],
     },
 })
@@ -123,6 +125,8 @@ export default defineConfig({
                     environment: 'node',
                     include: ['{components,blocks}/**/*.test.ts'],
                     setupFiles: ['./test/node.ts'],
+                    onConsoleLog: (log: string) =>
+                        !/ raised an (error|unexpected exception): /.test(log),
                 },
             },
             {

@@ -13,7 +13,6 @@ import { Why } from './Why'
 
 type Message = NonNullable<ValueInputProps['messages']>[number]
 
-// Rule texts are shown as written, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
 const FILE_TYPES = new Set(['FILE_RESOURCE', 'IMAGE'])
@@ -57,7 +56,7 @@ export const fieldModel = (
         | 'locked'
         | 'held'
     >
-): FieldModel => {
+) => {
     const { outcome } = rules
     const { id } = field
     const { valueType } = field.field
@@ -70,7 +69,6 @@ export const fieldModel = (
 
     const assigned = outcome?.assigned.has(id) ?? false
     const messages: Message[] = []
-    // Shown from the start, so an event opened with such a date says so before an attempt.
     const future = assigned ? undefined : futureProblem(field, value)
     if (future !== undefined) {
         messages.push({ tone: 'error', text: future })
@@ -109,7 +107,6 @@ export const fieldModel = (
               }
             : undefined
 
-    // A set field's marker says why; a field locked only while the form saves looks as it did, so nothing moves.
     let readOnlyReason: FieldModel['readOnlyReason'] = 'visible'
     let reason = locked
     if (setBy !== undefined) {
@@ -134,7 +131,7 @@ export const fieldModel = (
         storedFile,
         marker: markerOf(fieldBlames),
         blames: fieldBlames,
-    }
+    } satisfies FieldModel
 }
 
 const sameSet = (a?: ReadonlySet<string>, b?: ReadonlySet<string>) =>
@@ -144,7 +141,6 @@ const sameSet = (a?: ReadonlySet<string>, b?: ReadonlySet<string>) =>
         a.size === b.size &&
         [...a].every((code) => b.has(code)))
 
-// The rules build new sets, messages and blames on every run, so they are compared by content.
 const sameModel = (a: FieldModel, b: FieldModel) =>
     a.value === b.value &&
     a.required === b.required &&

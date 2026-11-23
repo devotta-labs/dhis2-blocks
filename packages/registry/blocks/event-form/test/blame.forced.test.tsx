@@ -34,7 +34,6 @@ describe('blame in forced colours', () => {
 
     it('outlines the focused disclosure and Why?', async () => {
         const { disclosure, why } = await open()
-        // Back and forth, so focus is the keyboard's.
         await userEvent.keyboard('{Shift>}{Tab}{/Shift}{Tab}')
         await expect.poll(() => document.activeElement).toBe(disclosure)
         expect(getComputedStyle(disclosure).outlineStyle).toBe('solid')
@@ -55,7 +54,6 @@ describe('blame in forced colours', () => {
             })
             .element()
         expect(getComputedStyle(marker).color).not.toBe(canvas())
-        // From the temperature, by the keyboard: the dose's marker is the next stop.
         await userEvent.click(
             page.getByRole('textbox', { name: 'Temperature (°C)' })
         )

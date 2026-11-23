@@ -18,7 +18,6 @@ const fileSchema = z.object({
     file: z.object({ id: z.string(), name: z.string() }),
 })
 
-// Outside the hook, so React Query keeps the combined list while no file query changes.
 const loadedFiles = (
     results: ReadonlyArray<{ data?: readonly [string, string] }>
 ) => results.flatMap(({ data }) => (data === undefined ? [] : [data]))
@@ -39,10 +38,7 @@ const storedOf = (
     ].sort()
 
 /** The names of the org units and files the values hold, by stored id. A failed request only loses its names. */
-export const useStoredNames = (
-    form: StageForm,
-    values: Values
-): ReadonlyMap<string, string> => {
+export const useStoredNames = (form: StageForm, values: Values) => {
     const engine = useDataEngine()
     const orgUnitIds = storedOf(form, values, ORG_UNIT_TYPES)
     const orgUnits = useQuery({
@@ -65,12 +61,12 @@ export const useStoredNames = (
                     )
                 )
                 .orgUnits.organisationUnits.map(
-                    ({ id, displayName }): [string, string] => [id, displayName]
+                    ({ id, displayName }) =>
+                        [id, displayName] satisfies [string, string]
                 ),
         enabled: orgUnitIds.length > 0,
         placeholderData: keepPreviousData,
     })
-    // One request per file: listing file resources needs the ALL authority.
     const files = useQueries({
         queries: storedOf(form, values, FILE_TYPES).map((id) => ({
             queryKey: ['event-form', 'file-name', id],
@@ -95,5 +91,5 @@ export const useStoredNames = (
     return useMemo(
         () => new Map([...(orgUnits.data ?? []), ...files]),
         [orgUnits.data, files]
-    )
+    ) satisfies ReadonlyMap<string, string>
 }

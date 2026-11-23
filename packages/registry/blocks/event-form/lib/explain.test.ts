@@ -5,7 +5,7 @@ import type {
     RuleDependencyGraph,
     RuleEffects,
 } from '@/components/program-rules'
-import { by, CHILD_VISIT_GROUPS, childVisitForm } from '../__tests__/forms'
+import { by, CHILD_VISIT_GROUPS, childVisitForm } from '../test/forms'
 import {
     blameLead,
     blameLine,
@@ -29,17 +29,18 @@ const contextOf = (
     effective: Values,
     graph?: RuleDependencyGraph,
     stored: Values = {}
-): BlameContext => ({
-    form,
-    graph,
-    effective,
-    stored,
-    eventDate: '2026-11-02',
-    display: displayWith(
-        { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
-        new Map()
-    ),
-})
+) =>
+    ({
+        form,
+        graph,
+        effective,
+        stored,
+        eventDate: '2026-11-02',
+        display: displayWith(
+            { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
+            new Map()
+        ),
+    }) satisfies BlameContext
 
 const HIDE_PREGNANT = by(
     'Hide pregnancy for men',
@@ -48,15 +49,16 @@ const HIDE_PREGNANT = by(
 )
 
 describe('blameLine', () => {
-    const blame = (changes: Partial<Blame>): Blame => ({
-        effect: 'assigned',
-        ruleName: 'Paracetamol dose',
-        condition: 'd2:hasValue(#{weight})',
-        because: [
-            { fieldId: 'labWeight01', label: 'Weight (kg)', value: '150' },
-        ],
-        ...changes,
-    })
+    const blame = (changes: Partial<Blame>) =>
+        ({
+            effect: 'assigned',
+            ruleName: 'Paracetamol dose',
+            condition: 'd2:hasValue(#{weight})',
+            because: [
+                { fieldId: 'labWeight01', label: 'Weight (kg)', value: '150' },
+            ],
+            ...changes,
+        }) satisfies Blame
 
     it('says who set a value and why', () => {
         expect(blameLine(blame({ value: '300' }), 'Dose')).toBe(
@@ -120,15 +122,16 @@ describe('blameLine', () => {
 })
 
 describe('blameLead', () => {
-    const blame = (changes: Partial<Blame>): Blame => ({
-        effect: 'assigned',
-        ruleName: 'Paracetamol dose',
-        condition: 'd2:hasValue(#{weight})',
-        because: [
-            { fieldId: 'labWeight01', label: 'Weight (kg)', value: '150' },
-        ],
-        ...changes,
-    })
+    const blame = (changes: Partial<Blame>) =>
+        ({
+            effect: 'assigned',
+            ruleName: 'Paracetamol dose',
+            condition: 'd2:hasValue(#{weight})',
+            because: [
+                { fieldId: 'labWeight01', label: 'Weight (kg)', value: '150' },
+            ],
+            ...changes,
+        }) satisfies Blame
 
     it.each([
         [{ value: '300' }, 'Set to 300 because Weight (kg) is 150.'],

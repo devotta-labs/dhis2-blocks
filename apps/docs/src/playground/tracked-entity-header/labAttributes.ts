@@ -6,10 +6,8 @@ export const UNIQUE_ID = 'labUniqueId'
 export const GENDER = 'labGender01'
 export const MOBILE = 'labMobile01'
 export const ALLERGIES = 'labAllergie'
-// Same labels, but their option sets have no names, so the block can't read them.
 export const BROKEN_LAST = 'labLastBrkn'
 export const BROKEN_ALLERGIES = 'labAllerBrk'
-// A person with much more on record.
 export const NATIONAL_ID = 'labNatnlId1'
 export const ADDRESS = 'labAddress1'
 export const VILLAGE = 'labVillage1'
@@ -23,9 +21,7 @@ export const BLOOD_GROUP = 'labBloodGr1'
 export const LANGUAGE = 'labLanguag1'
 export const EMAIL = 'labEmail001'
 export const INSURANCE = 'labInsuranc'
-// Form names this long are common in DHIS2.
 export const NET_USE = 'labNetUse01'
-// A vaccine shipment: the same banner for something that isn't a person.
 export const SHIPMENT_NUMBER = 'labShipNum1'
 export const VACCINE = 'labVaccine1'
 export const DOSES = 'labDoses001'
@@ -243,7 +239,7 @@ const ATTRIBUTES = new Map<string, AttributeSpec>(
     })
 )
 
-export const specOf = (id: string): AttributeSpec => {
+export const specOf: (id: string) => AttributeSpec = (id) => {
     const spec = ATTRIBUTES.get(id)
     if (!spec) throw new Error(`The lab has no attribute ${id}`)
     return spec

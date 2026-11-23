@@ -31,14 +31,12 @@ export type LabAction =
       }
     | { type: 'clearRequests' }
 
-// The docs example's person and program on the Sierra Leone demo.
 const LIVE: Live = {
     programId: 'WSGAb5XwJ3Y',
     personId: 'Y8aEiTpHSSQ',
     dataElementId: 'vANAXwtLwcT',
 }
 
-/** Settings that only change props or the lab's layout, so the cards keep their data. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'arrangement',
     'staleAfterDays',
@@ -46,14 +44,16 @@ const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'cardsPerRow',
 ])
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -66,7 +66,10 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -87,7 +90,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             )
             return inPlace ? next : restarted(next)
         }
-        // The cards refetch for new ids by themselves.
         case 'changeLive':
             return { ...state, live: { ...state.live, ...action.changes } }
         case 'restart':

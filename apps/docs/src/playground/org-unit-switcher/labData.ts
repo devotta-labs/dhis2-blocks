@@ -70,7 +70,6 @@ const DISTRICTS = ['Kenema', 'Kailahun', 'Port Loko']
 const LONG_TAIL =
     'Community Health Centre and Maternal and Child Health Post serving the surrounding villages of the chiefdom headquarters town'
 
-/** A new place each time and every type equally often; past 80 a number keeps the names apart within a district. */
 const orgUnitName = (index: number, offset: number) => {
     const place = PLACES[(index + offset) % PLACES.length]
     const block = Math.floor(index / PLACES.length)
@@ -100,7 +99,7 @@ export const generateLabData = (settings: LabSettings) => {
         name: string,
         parentPath: string,
         hasChildren = false
-    ): LabUnit => ({
+    ) => ({
         id,
         displayName: named(name, settings),
         displayShortName: name,

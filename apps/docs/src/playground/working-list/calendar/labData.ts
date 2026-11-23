@@ -124,7 +124,6 @@ const EVERYDAY = [
     ['Hawa', 'Kargbo'],
 ]
 
-// Matches EVERYDAY, so the option-set presets read sensibly.
 const SEXES = ['F', 'F', 'M', 'F', 'M', 'F', 'M', 'F'] as const
 
 const ENROLLMENT_STATUSES = [
@@ -171,7 +170,6 @@ const isoToday = () => {
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
 }
 
-/** Deterministic noise, so a preset always shows the same calendar. */
 const noise = (index: number, salt = 0) => {
     const x = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453
     return x - Math.floor(x)
@@ -226,9 +224,12 @@ const timestamp = (date: string) => `${date}T00:00:00.000`
 const BAD_DATES = ['not-a-date', '2026-02-30T00:00:00.000', '31/12/2026', '']
 
 /** The made-up program's people, dated around today. */
-export const generateWorld = (data: LabData, today = isoToday()): World => {
+export const generateWorld: (data: LabData, today?: string) => World = (
+    data,
+    today = isoToday()
+) => {
     const count = Math.max(0, Math.min(5000, Math.round(data.records)))
-    const people = Array.from({ length: count }, (_, index): LabPerson => {
+    const people = Array.from({ length: count }, (_, index) => {
         const date = addDays(today, offsetFor(data, index, today))
         const roll = noise(index, 7) * 100
         let stamp: string | undefined = timestamp(date)
@@ -252,21 +253,18 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
                 ] ?? 'Bo',
             sex: SEXES[index % SEXES.length] ?? 'F',
             enrolledAt: stamp,
-            // The incident date sits two days before enrollment, or is as broken as it.
             occurredAt:
                 stamp === timestamp(date)
                     ? timestamp(addDays(date, -2))
                     : stamp,
-            // Mostly active, some completed, a few cancelled.
             enrollmentStatus: ENROLLMENT_STATUSES[index % 10] ?? 'ACTIVE',
             visit: {
                 id: `labEv${pad(index, 6)}`,
-                // One past visit in four was never done, so it is overdue.
                 status: future || index % 4 === 0 ? 'SCHEDULE' : 'COMPLETED',
                 occurredAt: future || index % 4 === 0 ? undefined : stamp,
                 scheduledAt: stamp,
             },
-        }
+        } satisfies LabPerson
     })
     const duplicates = people.filter(
         (_, index) => noise(index, 3) * 100 < data.duplicates
@@ -275,9 +273,9 @@ export const generateWorld = (data: LabData, today = isoToday()): World => {
 }
 
 /** The recordLabel the lab passes for its label setting. */
-export const recordLabelFor = (
+export const recordLabelFor: (
     view: LabView
-): ListCalendarProps['recordLabel'] => {
+) => ListCalendarProps['recordLabel'] = (view) => {
     switch (view.recordLabel) {
         case 'fields':
             return (_row, cellText) =>
@@ -328,16 +326,15 @@ const TONES: readonly CalendarTone[] = [
 ]
 
 /** The recordStatus the lab passes for its status setting. */
-export const recordStatusFor = (
+export const recordStatusFor: (
     view: LabView
-): ListCalendarProps['recordStatus'] => {
+) => ListCalendarProps['recordStatus'] = (view) => {
     switch (view.recordStatus) {
         case 'none':
             return () => undefined
         case 'location':
             return (_row, cellText) => {
                 const location = cellText(ATTRIBUTES.location)
-                // Tones repeat after five locations, as they would in an app.
                 const tone =
                     TONES[
                         Math.max(0, LOCATIONS.indexOf(location)) % TONES.length

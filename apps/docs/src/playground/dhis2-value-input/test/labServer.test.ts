@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { answer, type LabRequest } from '../labServer'
+import { answer } from '../labServer'
 
-// The block parses these shapes with its own schemas, which are not exported or need a browser to import.
 const search = (resource: string, query: string) =>
     answer(new Map())({ resource, params: { query } }, 'read')
 
@@ -41,7 +40,7 @@ describe('the value input lab server', () => {
     it('keeps each upload under a new id, answering its id and name as DHIS2 does', () => {
         const uploads = new Map<string, string>()
         const respond = answer(uploads)
-        const upload = (name: string): LabRequest => ({
+        const upload = (name: string) => ({
             resource: 'fileResources',
             data: { file: new File(['a'], name) },
         })

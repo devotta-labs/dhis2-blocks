@@ -35,7 +35,6 @@ export type LabAction =
       }
     | { type: 'clearCallbacks' }
 
-/** Settings that only change the fields' props, so what was typed stays. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'required',
     'readOnly',
@@ -47,7 +46,7 @@ const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'dateFormat',
 ])
 
-const restarted = (state: LabState): LabState => ({
+const restarted = (state: LabState) => ({
     ...state,
     run: state.run + 1,
     requests: [],
@@ -55,7 +54,9 @@ const restarted = (state: LabState): LabState => ({
 })
 
 /** Lab data on the linked preset (`?preset=`), or on the first one. */
-export const initialLabState = (linkedPreset?: string): LabState => {
+export const initialLabState: (linkedPreset?: string) => LabState = (
+    linkedPreset
+) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     const settings = preset?.settings ?? DEFAULT_SETTINGS
@@ -70,7 +71,6 @@ export const initialLabState = (linkedPreset?: string): LabState => {
     }
 }
 
-/** One `onChange` call as the log shows it. */
 const said = ({
     field,
     value,
@@ -81,7 +81,10 @@ const said = ({
         .map((each) => JSON.stringify(each))
         .join(', ')})`
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer: (state: LabState, action: LabAction) => LabState = (
+    state,
+    action
+) => {
     switch (action.type) {
         case 'switchMode':
             return restarted({ ...state, mode: action.mode })
@@ -108,7 +111,6 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             return { ...state, requests: action.update(state.requests) }
         case 'clearRequests':
             return { ...state, requests: [] }
-        // A problem means the typed text is not a value yet: the field keeps its last good value.
         case 'changed':
             return {
                 ...state,

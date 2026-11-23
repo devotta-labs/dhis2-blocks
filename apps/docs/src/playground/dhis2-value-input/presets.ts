@@ -23,7 +23,7 @@ const preset = (
     group: string,
     name: string,
     changes: Partial<LabSettings> = {}
-): Preset => ({
+) => ({
     group,
     name,
     settings: { ...DEFAULT_SETTINGS, ...changes },

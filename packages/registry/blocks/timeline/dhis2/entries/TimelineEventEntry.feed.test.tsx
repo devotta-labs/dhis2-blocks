@@ -9,11 +9,10 @@ import {
     recordedEvent,
     recordedProgram,
     renderEntries,
-} from '../__tests__/fixtures/renderEntries'
+} from '../test/fixtures/renderEntries'
 import type { EventEntryData } from '../types'
 import { TimelineEventEntry } from './TimelineEventEntry'
 
-/** Events in the default composition, laid out in a feed around NOW. */
 const renderFeed = (entries: ReturnType<typeof eventEntryOf>[]) =>
     renderEntries(
         <Timeline entries={entries} calendar="gregorian" now={NOW}>
@@ -23,7 +22,6 @@ const renderFeed = (entries: ReturnType<typeof eventEntryOf>[]) =>
         </Timeline>
     )
 
-/** The rendered event frame for one event id. */
 const frameOf = (container: HTMLElement, id: string) => {
     const frame = [
         ...container.querySelectorAll<HTMLElement>(
@@ -49,12 +47,10 @@ describe('TimelineEventEntry in a feed', () => {
             frameOf(container, id).querySelector('[data-slot=badge]')
                 ?.textContent
 
-        // Scheduled above now, under its own due day: nothing to add.
         expect(badge('TlE2eEvt006')).toBeUndefined()
         expect(frameOf(container, 'TlE2eEvt006').textContent).not.toContain(
             'Due'
         )
-        // Overdue in the Overdue group: the heading has no date, so it stays.
         expect(badge('TlE2eEvt005')).toBeUndefined()
         expect(frameOf(container, 'TlE2eEvt005').textContent).toContain(
             `Due ${formatCalendarDate('2026-08-01', 'gregorian', 'en')}`

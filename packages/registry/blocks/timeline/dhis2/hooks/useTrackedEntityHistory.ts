@@ -25,13 +25,15 @@ export interface TrackedEntityHistoryOptions {
  * yourself with `mergeHistory` and `addWhenReady` to leave a kind out or
  * wait for every part.
  */
-export const useTrackedEntityHistory = ({
+export const useTrackedEntityHistory: (
+    options: TrackedEntityHistoryOptions
+) => HistoryResult<HistoryEntryData> = ({
     trackedEntity,
     programs,
     timeField,
     cap,
     now,
-}: TrackedEntityHistoryOptions): HistoryResult<HistoryEntryData> => {
+}) => {
     const events = useEventEntries({
         trackedEntity,
         programs,
@@ -45,7 +47,6 @@ export const useTrackedEntityHistory = ({
         mergeHistory<HistoryEntryData>(events, enrollments),
         changes
     )
-    // One array per change of the parts, so the timeline regroups only then.
     const entries = useMemo(
         () =>
             mergeEntries<HistoryEntryData>(merged.status, [

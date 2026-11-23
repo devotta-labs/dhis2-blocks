@@ -7,21 +7,21 @@ const fieldInfo = (source: {
     displayFormName?: string
     valueType: string
     optionSet?: ValueMeta['optionSet']
-}): FieldInfo => ({
+}) => ({
     name: source.displayFormName ?? source.displayName,
     meta: { valueType: source.valueType, optionSet: source.optionSet },
 })
 
 /** The program's stages, data elements and attributes, keyed by id. */
-export const toProgramInfo = (
+export const toProgramInfo: (
     metadata: ProgramTimelineMetadata
-): ProgramInfo => ({
+) => ProgramInfo = (metadata) => ({
     id: metadata.id,
     name: metadata.displayName,
     enrollmentDateLabel: metadata.displayEnrollmentDateLabel,
     incidentDateLabel: metadata.displayIncidentDateLabel,
     stages: new Map(
-        metadata.programStages.map((stage): [string, StageInfo] => [
+        metadata.programStages.map<[string, StageInfo]>((stage) => [
             stage.id,
             {
                 id: stage.id,
@@ -50,9 +50,9 @@ export const toProgramInfo = (
 })
 
 /** Every program's attributes in one map; the type's attributes repeat across programs. */
-export const attributesOf = (
+export const attributesOf: (
     programs: Iterable<ProgramInfo>
-): ReadonlyMap<string, FieldInfo> => {
+) => ReadonlyMap<string, FieldInfo> = (programs) => {
     const attributes = new Map<string, FieldInfo>()
     for (const program of programs) {
         for (const [id, info] of program.attributes) {

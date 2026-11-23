@@ -20,12 +20,12 @@ export interface EnrollmentEntriesOptions {
  * enrollment notes in each program, from one tracked entity request. Event
  * notes stay with their event.
  */
-export const useEnrollmentEntries = ({
+export const useEnrollmentEntries: (
+    options: EnrollmentEntriesOptions
+) => HistoryResult<MilestoneEntryData | NoteEntryData> = ({
     trackedEntity,
     programs,
-}: EnrollmentEntriesOptions): HistoryResult<
-    MilestoneEntryData | NoteEntryData
-> => {
+}) => {
     const entity = useTrackedEntity(trackedEntity)
     const programKey = programs?.join(',')
     const enrollments = useMemo(() => {
@@ -51,7 +51,6 @@ export const useEnrollmentEntries = ({
     )
     const info = useProgramInfo(programIds)
 
-    // An enrollment shows once its program's metadata has answered.
     const entries = useMemo(
         () =>
             enrollments.flatMap((enrollment) => {
@@ -74,7 +73,6 @@ export const useEnrollmentEntries = ({
         firstStatus !== 'pending',
         [trackedEntity, programKey].join('|')
     )
-    // Once shown, later loading never empties the history again.
     const status: TimelineStatus =
         firstStatus === 'pending' && shown ? 'success' : firstStatus
     return {

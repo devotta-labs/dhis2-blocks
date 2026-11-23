@@ -7,7 +7,6 @@ import type { ChangeSave, StageInfo } from '../types'
 import { unwrap } from '../queryState'
 import { useTimelineClient } from './useTimelineClient'
 
-/** Most rows fetched for one event; past it the result is `truncated`. */
 const MAX_ROWS = 500
 
 export interface EventChangelog {
@@ -23,16 +22,15 @@ const NO_SAVES: ChangeSave[] = []
  * from its `stage`. Fetched only once `enabled` (when "Show changes" is
  * opened), up to 500 rows. A 404 is `unsupported`.
  */
-export const useEventChangelog = (
+export const useEventChangelog: (
     event: string,
-    { enabled, stage }: { enabled: boolean; stage?: StageInfo }
-): EventChangelog => {
+    arg1: { enabled: boolean; stage?: StageInfo }
+) => EventChangelog = (event, { enabled, stage }) => {
     const client = useTimelineClient()
 
     const query = useQuery({
         queryKey: timelineKeys.eventChangeLog(event),
         enabled,
-        // A failure shows its error at once; opening the changes again retries.
         retry: false,
         queryFn: async ({ signal }) =>
             unwrap(

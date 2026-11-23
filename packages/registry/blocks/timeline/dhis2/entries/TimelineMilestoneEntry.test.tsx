@@ -1,14 +1,10 @@
 import axe from 'axe-core'
 import React from 'react'
-import {
-    recordedProgram,
-    renderEntries,
-} from '../__tests__/fixtures/renderEntries'
+import { recordedProgram, renderEntries } from '../test/fixtures/renderEntries'
 import { TrackedEntitySchema } from '../schemas'
 import { milestoneEntries } from '../toEntries'
 import { TimelineMilestoneEntry } from './TimelineMilestoneEntry'
 
-/** As the server stores them: enrollment and incident dates at midnight. */
 const ENTITY = TrackedEntitySchema.parse({
     trackedEntity: 'TlE2eTei001',
     enrollments: [

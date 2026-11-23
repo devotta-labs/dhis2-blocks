@@ -14,9 +14,7 @@ export const WEIGHT = 'weightDE0001'
 export const TEMP = 'tempDE00001'
 export const HEIGHT = 'heightDE0001'
 
-const programResponse = (
-    extraDataElements: EngineValue[] = []
-): EngineValue => ({
+const programResponse = (extraDataElements: EngineValue[] = []) => ({
     programStages: [
         {
             id: 'stage1',
@@ -50,8 +48,7 @@ const programResponse = (
     ],
 })
 
-/** One weight reading per person and program, so each series is recognisable. */
-const eventsFor = (trackedEntity: string, weight: string): EngineValue => ({
+const eventsFor = (trackedEntity: string, weight: string) => ({
     events: [
         {
             event: `${trackedEntity}-ev1`,
@@ -69,7 +66,6 @@ const WEIGHTS = new Map([
     ['te2', '82'],
 ])
 
-/** prog2 has its own weights, so a program switch is visible. */
 const weightFor = (trackedEntity: string, program: string) =>
     program === 'prog2' ? '64' : (WEIGHTS.get(trackedEntity) ?? '0')
 

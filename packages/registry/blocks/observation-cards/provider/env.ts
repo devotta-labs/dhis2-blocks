@@ -1,11 +1,7 @@
-/**
- * Declared here so apps without Node types still compile. Bundlers replace
- * the literal `process.env.NODE_ENV`, so the expression must stay as is.
- */
+// WARNING: Keep the literal process.env.NODE_ENV read so bundlers can replace it in production builds.
 declare const process: { readonly env: { readonly NODE_ENV?: string } }
 
-/** Where nothing replaced it, `process` is undefined and reading it throws. */
-const readNodeEnv = (): string | undefined => {
+const readNodeEnv = () => {
     try {
         return process.env.NODE_ENV
     } catch {
@@ -13,7 +9,6 @@ const readNodeEnv = (): string | undefined => {
     }
 }
 
-/** Fixed at build time, so read once. */
 const PRODUCTION = readNodeEnv() === 'production'
 
 /**
@@ -21,4 +16,4 @@ const PRODUCTION = readNodeEnv() === 'production'
  * Only the bundler-replaced `process.env.NODE_ENV` says so: `import.meta`
  * would break consumers whose tests run as CommonJS.
  */
-export const isProduction = (): boolean => PRODUCTION
+export const isProduction = () => PRODUCTION

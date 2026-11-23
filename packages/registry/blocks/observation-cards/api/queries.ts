@@ -5,7 +5,7 @@ import {
     EventsResponseSchema,
     ProgramMetadataResponseSchema,
 } from './schemas'
-import type { ProgramMetadata, TrackerEventRecord } from './types'
+import type { TrackerEventRecord } from './types'
 
 export const EVENTS_PAGE_SIZE = 200
 /** More pages than this is an error rather than a silently shortened history. */
@@ -31,7 +31,7 @@ export const fetchProgramMetadata = (
     client: ObservationsResourceClient,
     programId: string,
     signal?: AbortSignal
-): Promise<Result<ProgramMetadata, Error>> =>
+) =>
     client.query(
         {
             resource: 'programs',
@@ -53,7 +53,7 @@ export const fetchEnrollment = async (
     client: ObservationsResourceClient,
     { trackedEntityId, programId }: Subject,
     signal?: AbortSignal
-): Promise<Result<string, Error>> => {
+) => {
     const result = await client.query(
         {
             resource: 'tracker/enrollments',
@@ -81,11 +81,15 @@ export const fetchEnrollment = async (
  * EVENTS_MAX_PAGES pages, one more page is asked for only to learn whether
  * the history ends there; any event on it is an error.
  */
-export const fetchEvents = async (
+export const fetchEvents: (
     client: ObservationsResourceClient,
-    { trackedEntityId, programId }: Subject,
+    arg1: Subject,
     signal?: AbortSignal
-): Promise<Result<TrackerEventRecord[], Error>> => {
+) => Promise<Result<TrackerEventRecord[], Error>> = async (
+    client,
+    { trackedEntityId, programId },
+    signal
+) => {
     const events = new Map<string, TrackerEventRecord>()
     for (let page = 1; page <= EVENTS_MAX_PAGES + 1; page++) {
         const result = await client.query(

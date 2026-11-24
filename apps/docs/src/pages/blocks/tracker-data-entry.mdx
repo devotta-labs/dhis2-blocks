@@ -286,47 +286,165 @@ row runs them first.
 
 ## Saving
 
-- Every change goes to an IndexedDB outbox on this device before it is sent,
-  once the browser has shown it and together with the values its rules
-  assign, so both are sent in one save. The outbox opens only for the same
-  user on the same server. Nothing in it is encrypted.
-- Unsent changes belong to the program and the kind of grid, not the grid. The
-  event grids of a program keep one change per cell, the newer one, and so do
-  its registers; any open grid of that kind sends them all, the changes made in
-  its other grids included. Event grids and registers keep their changes
-  apart, as a register's save brings what an event grid's cannot, such as the
-  events Capture schedules. A cell changed in both kinds before either is sent
-  keeps both changes: the one sent last is what DHIS2 holds, and a grid shows
-  what the other kind saved when it loads again. They are sent
-  oldest first, 100 events at a time: each chunk's events are read, then
-  imported, each request within its own minute. Two changes to one cell send
-  only the latest. A chunk that fails keeps the chunks before it saved: refused
-  as a whole, it refuses its own events and the chunks after it are sent next;
-  otherwise it and the chunks after it are sent again. A change to an event DHIS2 no longer returns is refused.
-- Before sending, the server is asked who is signed in. When it is someone
-  else, as when another tab signed in (tabs share the session), the form locks
-  until the page is reloaded: every cell is read-only and back to what DHIS2
-  had, nothing more is sent, and the summary says "Signed in as someone else.
-  Reload to continue as that user." The changes stay on the device for their
-  user. A dropped connection pauses sending; an expired session pauses it too,
-  the summary asks the person to sign in, and sending starts again when they
-  come back to the page.
-- While anything is unsent or not saved, leaving the page asks first. The
-  summary counts the changes DHIS2 does not have yet, and **Download unsent
-  changes** saves them as a CSV file with enough to enter them again by hand,
-  the ones that could not be saved included. The changes of the program's other
-  grids that could not be saved are counted and downloaded too, so none is
+You don't write any save code. There is no Save button to wire up and no
+request to send: each change is stored in the browser first, then sent to
+DHIS2 in the background. If the connection drops, the page reloads or the
+browser crashes, the change is still on the device, and it is sent once the
+grid is open again with a connection.
+
+What is left for you is to show people where their work stands. Place
+`TrackerDataEntrySummary` below the grid, as the example under
+[Usage](#usage) does. It counts the changes DHIS2 does not have yet and offers
+them as a download.
+
+For a status line of your own, read `sync` and `summary`:
+
+```tsx
+import { useTrackerDataEntry } from '@/components/tracker-data-entry'
+
+const SaveStatus = () => {
+    const sync = useTrackerDataEntry((view) => view.sync)
+    const unsent = useTrackerDataEntry((view) => view.summary.unsent)
+    const failed = useTrackerDataEntry((view) => view.summary.failed)
+
+    if (sync === 'offline') {
+        return <p>Offline. Your changes are kept on this device.</p>
+    }
+    if (sync === 'signIn') {
+        return <p>Sign in again to keep saving.</p>
+    }
+    if (failed > 0) {
+        return <p>Changes that could not be saved: {failed}</p>
+    }
+    if (unsent > 0) {
+        return <p>Changes not in DHIS2 yet: {unsent}</p>
+    }
+    return null
+}
+```
+
+It says nothing when there is nothing to report, rather than "all saved": a
+form that is still loading, or locked, has no unsent changes of its own to
+count.
+
+To see it work, render `SaveStatus` inside `TrackerDataEntry`, turn the
+network off in your browser's developer tools and type a value. The line reads
+"Offline. Your changes are kept on this device.", the cell says "Saved on this
+device", and the summary says "Not yet sent to DHIS2: 1". Turn the network
+back on and all three clear, without anyone pressing a button.
+
+That is all most apps need. The rest of this section is what happens when
+saving does not go smoothly, for when you design around one of those cases.
+
+### When the connection drops
+
+Sending pauses and `sync` is `'offline'`. People can keep typing: every change
+is kept on the device and sent when the connection returns.
+
+A request that fails for another reason, such as a server error or a timeout,
+is tried again after a wait that grows from one second up to a minute.
+`sync` is `'retrying'` meanwhile.
+
+### When the session expires
+
+Sending pauses, `sync` is `'signIn'`, and the summary says "Sign in to keep
+saving". Nothing is lost. Once the person has signed in again and comes back
+to the page, sending starts again.
+
+### When someone else signs in
+
+Browser tabs share one DHIS2 session, so signing in as another user in a
+second tab changes who the first tab is signed in as. To keep one person's
+work from being saved under another's name, the grid asks DHIS2 who is signed
+in before it sends anything.
+
+If it is someone else, the form locks until the page is reloaded. Every cell
+is read-only and back to what DHIS2 had, nothing more is sent, and the summary
+says "Signed in as someone else. Reload to continue as that user." The first
+person's unsent changes stay on the device for them.
+
+A locked form sends nothing, so `sync` is `'idle'` and `summary.unsent` and
+`summary.failed` are zero. The message is in `summary.items`.
+
+### When DHIS2 refuses a value
+
+DHIS2 can refuse a change, for example one to an event that has been deleted
+since the grid loaded. The value stays in the cell, marked "Not saved" with
+DHIS2's reason, and the summary links to the cell. A refused change is not
+sent again until the person enters the value again.
+
+For refused changes that cannot be fixed in the grid, the summary has two
+buttons:
+
+- **Download unsent changes** saves a CSV file of every change DHIS2 does not
+  have, the refused ones included, with enough to enter each again by hand.
+- **Discard changes that could not be saved** asks first, then removes the
+  refused changes from the device and puts the cells back to what DHIS2 has.
+
+A discarded change is gone: it is not saved anywhere else. Download first to
+keep a copy.
+
+[Try a refusal in the playground](/playground/tracker-data-entry?preset=A+row+DHIS2+refuses),
+where a fake DHIS2 refuses one row.
+
+### Changes that wait
+
+A new event is not sent until its event date is filled in. In a stage that
+checks required fields on every save, it waits for those fields too.
+
+### Leaving the page
+
+While anything is unsent or could not be saved, the browser asks before the
+page is closed or left.
+
+### What is kept on the device
+
+Unsent changes are kept in the browser's IndexedDB. They open only for the
+same user on the same DHIS2 server, so one person's changes are never sent in
+another person's session.
+
+Nothing kept there is encrypted. Keep that in mind for devices that several
+people share.
+
+### Several grids for one program
+
+Unsent changes belong to the program and the kind of grid, event grid or
+register, not to the one grid a person typed in.
+
+- A program's event grids share their unsent changes, and so do its
+  registers. Any open grid sends all the changes of its kind, those made in
+  its other grids included.
+- Each cell keeps one change, the newer one.
+- Event grids and registers keep their changes apart, because a register's
+  save brings what an event grid's cannot, such as the events Capture
+  schedules. A cell changed in both kinds before either is sent keeps both
+  changes. The one sent last is what DHIS2 holds, and a grid shows what the
+  other kind saved when it loads again.
+- Changes of the program's other grids that could not be saved are counted in
+  the summary, downloaded with the rest, and discarded with them, so none is
   stuck where no grid shows it.
-- A refusal keeps the value and marks the cell "Not saved" with DHIS2's reason.
-  It is not sent again until the person enters the value again. Once they are
-  downloaded, **Discard changes that could not be saved** drops them from the
-  device after asking, the program's other grids' too, and this form's cells
-  go back to what DHIS2 has.
-- A new event waits on the device until its event date is filled in, and, in a
-  stage that checks required fields on every save, those fields too.
-- A polite live region announces outcomes once things settle, such as "All
-  changes saved" once nothing of the program is left on the device, each in
-  turn, and never progress.
+
+### How changes are sent
+
+You rarely need this, but it explains what you see in the network tab.
+
+- A change is stored once the browser has shown it, together with the values
+  its rules assign, so both are sent in one save.
+- Changes are sent oldest first, 100 events at a time. Each chunk's events
+  are read, then imported, and each request has a minute to finish.
+- Two changes to one cell send only the latest.
+- A chunk that fails keeps the chunks before it saved. If DHIS2 refused the
+  chunk as a whole, its own events are refused and the chunks after it are
+  sent next. Otherwise it and the chunks after it are sent again.
+- A change to an event DHIS2 no longer returns is refused.
+
+### What screen readers hear
+
+A polite live region announces outcomes once things settle, such as "All
+changes saved" once nothing of the program is left on the device. Outcomes
+are announced one at a time, and progress never is.
+
+### Events that cannot be edited
 
 Events the user cannot edit are read-only, with the reason on each cell:
 events in a stage the user cannot write to, skipped events, completed events

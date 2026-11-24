@@ -2805,6 +2805,73 @@
             ]
         },
         {
+            "name": "visit-viewer",
+            "type": "registry:block",
+            "title": "Visit Viewer",
+            "description": "UI-only, composable primitives for clinical visits on an enrollment dashboard: expandable visit cards, grouped sections, status badges, services, dates in the system calendar, facts and notes.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "class-variance-authority@^0.7.1",
+                "prop-types@^15.8.1"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/badge",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/collapsible",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-display"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitDate.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitDate.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitFacts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitFacts.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitItem.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitItem.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitMeta.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitMeta.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitNotes.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitNotes.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitStatus.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitStatus.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/VisitViewer.tsx",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/VisitViewer.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/visit-viewer/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/visit-viewer/index.ts"
+                }
+            ],
+            "docs": "Visit Viewer never fetches, filters or sorts: build your visit array, branch on loading, error and empty states, and map visits into VisitList and VisitItem yourself. Compose every slot as children: VisitViewerHeader with VisitViewerTitle and VisitViewerActions, VisitItemHeader with VisitItemTitle, VisitDate and VisitStatus, VisitItemTrigger and VisitItemContent for details. VisitDate formats stored dates in the calendar set on VisitViewer (Gregorian by default). For a table, compose @/components/dhis2/ui/table with VisitDate, VisitStatus, VisitServices and VisitFactValue."
+        },
+        {
             "name": "working-list",
             "type": "registry:block",
             "title": "DHIS2 Working List",

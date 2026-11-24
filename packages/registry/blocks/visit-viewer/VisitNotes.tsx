@@ -5,6 +5,8 @@ import { META_SEPARATORS } from './VisitMeta'
 /** The notes written across the visit, in the order you give them. */
 export const VisitNotes = ({ className, ...props }: ComponentProps<'ul'>) => (
     <ul
+        // oxlint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops the list role of a list without markers; VoiceOver needs it to move by list
+        role="list"
         data-slot="visit-notes"
         className={cn(
             'm-0 flex list-none flex-col gap-2 border-s-2 border-dhis2-border p-0 ps-3 text-sm',

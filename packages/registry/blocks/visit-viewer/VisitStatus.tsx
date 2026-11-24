@@ -117,6 +117,8 @@ export const VisitServices = ({
 }: ComponentProps<'ul'>) => (
     <InVisitServices.Provider value>
         <ul
+            // oxlint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops the list role of a list without markers; VoiceOver needs it to move by list
+            role="list"
             data-slot="visit-services"
             className={cn(
                 'm-0 flex list-none flex-wrap items-center gap-1.5 p-0',

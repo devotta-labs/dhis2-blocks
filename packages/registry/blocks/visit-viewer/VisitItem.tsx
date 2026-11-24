@@ -17,6 +17,8 @@ type PlainClass<Props> = Omit<Props, 'className'> & { className?: string }
 /** An ordered list of visits, in the order you sorted them. */
 export const VisitList = ({ className, ...props }: ComponentProps<'ol'>) => (
     <ol
+        // oxlint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops the list role of a list without markers; VoiceOver needs it to move by list
+        role="list"
         data-slot="visit-list"
         className={cn('m-0 flex list-none flex-col gap-2 p-0', className)}
         {...props}

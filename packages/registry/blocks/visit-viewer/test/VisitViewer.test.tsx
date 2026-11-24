@@ -162,6 +162,9 @@ describe('visit viewer composition', () => {
         expect(slot(container, 'visit-fact-label')?.tagName).toBe('DT')
         expect(slot(container, 'visit-notes')?.tagName).toBe('UL')
         expect(slot(container, 'visit-note')?.tagName).toBe('LI')
+        for (const list of ['visit-list', 'visit-services', 'visit-notes']) {
+            expect(slot(container, list)).toHaveAttribute('role', 'list')
+        }
         expect(slot(container, 'visit-note-text')).toHaveTextContent(
             'Mother asked about BCG.'
         )

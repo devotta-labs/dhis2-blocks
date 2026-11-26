@@ -20,6 +20,7 @@ type Block =
     | 'context-selector'
     | 'observation-cards'
     | 'spreadsheet'
+    | 'tally-sheet'
     | 'timeline'
     | 'tracked-entity-finder'
     | 'tracker-data-entry'

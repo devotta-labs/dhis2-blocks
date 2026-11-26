@@ -11,14 +11,26 @@ export default defineConfig({
             {
                 extends: true,
                 resolve: {
-                    alias: {
-                        '@/components': fileURLToPath(
-                            new URL(
-                                '../../packages/registry/blocks',
-                                import.meta.url
-                            )
-                        ),
-                    },
+                    alias: [
+                        {
+                            find: '@/components/dhis2/ui',
+                            replacement: fileURLToPath(
+                                new URL(
+                                    '../../packages/registry/components',
+                                    import.meta.url
+                                )
+                            ),
+                        },
+                        {
+                            find: '@/components',
+                            replacement: fileURLToPath(
+                                new URL(
+                                    '../../packages/registry/blocks',
+                                    import.meta.url
+                                )
+                            ),
+                        },
+                    ],
                 },
                 test: {
                     name: 'node',

@@ -80,24 +80,41 @@ const RequestLog = ({ entries }: { entries: RequestLogEntry[] }) => (
     </ol>
 )
 
+const Lines = ({ lines }: { lines: readonly string[] }) => (
+    <ol className="m-0 flex list-none flex-col p-0">
+        {lines.map((entry, index) => (
+            <li
+                key={`${lines.length - index}`}
+                className="border-b border-(--lab-rule-faint) py-0.5 break-all"
+            >
+                {entry}
+            </li>
+        ))}
+    </ol>
+)
+
 /**
  * A lab's bottom panel: the block's callbacks, when it has any, then (with lab data) each request and the waterfall
- * they make. On a phone the columns scroll sideways.
+ * they make, or what the block's output adds up to (`results`) for a block that makes no requests. On a phone the
+ * columns scroll sideways.
  */
 export const LogPanel = ({
     callbacks,
     requests,
+    results,
     onClearCallbacks,
     onClearRequests,
 }: {
     callbacks?: string[]
     requests?: RequestLogEntry[]
+    results?: { title: string; lines: readonly string[] }
     onClearCallbacks?: () => void
-    onClearRequests: () => void
+    onClearRequests?: () => void
 }) => {
     let columns = 'md:grid-cols-1'
     if (callbacks && requests) columns = 'md:grid-cols-[1fr_1.4fr_2fr]'
     else if (requests) columns = 'md:grid-cols-[1.4fr_2fr]'
+    else if (callbacks && results) columns = 'md:grid-cols-2'
     return (
         <div
             className={`grid h-full auto-cols-[minmax(16rem,85%)] grid-flow-col divide-x divide-(--lab-rule) overflow-x-auto md:auto-cols-auto md:grid-flow-row md:overflow-x-visible ${columns}`}
@@ -107,16 +124,12 @@ export const LogPanel = ({
                     title={`Callbacks · ${callbacks.length}`}
                     onClear={onClearCallbacks}
                 >
-                    <ol className="m-0 flex list-none flex-col p-0">
-                        {callbacks.map((entry, index) => (
-                            <li
-                                key={`${callbacks.length - index}`}
-                                className="border-b border-(--lab-rule-faint) py-0.5 break-all"
-                            >
-                                {entry}
-                            </li>
-                        ))}
-                    </ol>
+                    <Lines lines={callbacks} />
+                </Column>
+            )}
+            {results && (
+                <Column title={`${results.title} · ${results.lines.length}`}>
+                    <Lines lines={results.lines} />
                 </Column>
             )}
             {requests && (

@@ -51,6 +51,9 @@ import timelineCaseHistorySource from './timeline/TimelineCaseHistory.tsx?raw'
 import timelineEntryPartsSource from './timeline/TimelineEntryParts.tsx?raw'
 import timelineOwnDataSource from './timeline/TimelineOwnData.tsx?raw'
 import spreadsheetTargetsSource from './spreadsheet/TargetsGrid.tsx?raw'
+import tallyAlertThresholdSource from './tally-sheet/AlertThreshold.tsx?raw'
+import tallyVaccinationsSource from './tally-sheet/Vaccinations.tsx?raw'
+import tallyVitaminASource from './tally-sheet/VitaminA.tsx?raw'
 import trackerDataEntryCohortAncSource from './tracker-data-entry/CohortAncRegister.tsx?raw'
 import trackerDataEntryEventProgramSource from './tracker-data-entry/EventProgramGrid.tsx?raw'
 import trackerDataEntryImmunisationSource from './tracker-data-entry/ImmunisationRegister.tsx?raw'
@@ -241,6 +244,30 @@ const examples = [
         Component: lazy(() => import('./spreadsheet/TargetsGrid')),
         source: spreadsheetTargetsSource,
         minHeight: 300,
+    },
+    {
+        slug: 'tally-sheet/vitamin-a',
+        title: 'Vitamin A doses',
+        live: false,
+        Component: lazy(() => import('./tally-sheet/VitaminA')),
+        source: tallyVitaminASource,
+        minHeight: 560,
+    },
+    {
+        slug: 'tally-sheet/vaccinations',
+        title: 'A vaccination session and its data values',
+        live: false,
+        Component: lazy(() => import('./tally-sheet/Vaccinations')),
+        source: tallyVaccinationsSource,
+        minHeight: 900,
+    },
+    {
+        slug: 'tally-sheet/alert-threshold',
+        title: 'OPD morbidity with alert thresholds',
+        live: false,
+        Component: lazy(() => import('./tally-sheet/AlertThreshold')),
+        source: tallyAlertThresholdSource,
+        minHeight: 640,
     },
     {
         slug: 'dhis2-value-input/kinds',

@@ -130,6 +130,10 @@ const router = createBrowserRouter([
                         './pages/blocks/tracker-data-entry.mdx'
                     ),
                     docRoute(
+                        '/blocks/tally-sheet',
+                        './pages/blocks/tally-sheet.mdx'
+                    ),
+                    docRoute(
                         '/blocks/observation-cards',
                         './pages/blocks/observation-cards.mdx'
                     ),

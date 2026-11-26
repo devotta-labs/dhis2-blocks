@@ -1,8 +1,7 @@
 # Tally Sheet
 
 A paper tally sheet on screen, for DHIS2 React 18 applications: a row per thing
-counted (a dose, a diagnosis), a column per combination of category options (age
-band and sex), and a large button in each cell. One tap is one mark. The counts
+counted (a dose, a diagnosis), a column per kind of person (age band and sex), and a large button in each cell. One tap is one mark. The counts
 come from an append-only log of entries, so a sheet tallied on several devices
 adds up the same once their logs are joined. The block knows nothing about the
 DHIS2 Web API and saves nothing: storage stays with your app.
@@ -92,15 +91,20 @@ log holds a count for it.
   `total`, such as an alert past a threshold. Pass one stable component, not
   a new one on each render: a badge shows the component it was last given
   when its row's total changes.
-- `children`: the parts, arranged. Without any, the sheet shows `TallyTotal`
-  and `TallyEditButtons` on one line, then `TallyGrid`, then
-  `TallyUndoButton`.
+- `newId`: makes the id of each entry the sheet writes, a settle apart; random
+  without it. Give one when ids must fit where entries are saved, such as
+  DHIS2 uids for entries kept as events.
+- `children`: the parts, arranged. Without any, the sheet shows a
+  `TallyToolbar`, then `TallyGrid`.
 
 To start a new session, remount the sheet with a new `key`.
 
-Parts, each taking a `className`: `TallyTotal` ("12 marks"),
+Parts, each taking a `className`: `TallyToolbar` (a bar with the sheet's
+`label` as its title at the start, `TallyUndoButton` and `TallyEditButtons` at
+the end and its children between them; tinted while editing), `TallyTotal` ("12 marks"),
 `TallyEditButtons` ("Edit counts", or "Cancel" and "Done"), `TallyGrid` and
-`TallyUndoButton` ("Undo last mark", disabled while editing).
+`TallyUndoButton` ("Undo", named "Undo last mark" for screen readers, disabled
+while editing).
 
 Hooks, for parts of your own inside `TallySheet`: `useTally()` returns the
 `layout`, `columns`, `editing`, `setEditing`, `tap(row, options)`, `undo()` and
@@ -168,7 +172,12 @@ Each `entries` the sheet is given is compared with the last one:
 ## What stays with your app
 
 Storing the log (local storage, IndexedDB, or a DHIS2 data store namespace),
-joining logs from other devices, and saving the counts. To save counts as
+joining logs from other devices, and saving what was counted. The sheet does not
+say what a mark is saved as. Counts suit aggregate data values. Entries suit
+anonymous events: a tap is an event with the row and options as its values, an
+undo deletes the event it names, and `newId` makes entry ids that are DHIS2
+uids. A sheet saved as events may leave Edit counts out, since a typed count has
+no event of its own. To save counts as
 aggregate data values, map each count's `options` to the category option
 combination with those options, and save every count, zeros included:
 

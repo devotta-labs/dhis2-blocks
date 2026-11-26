@@ -13,6 +13,7 @@ import type {
 import {
     mergeTallyEntries,
     TallyEditButtons,
+    TallyToolbar,
     TallyGrid,
     tallyColumns,
     tallyCounts,
@@ -71,9 +72,14 @@ export const sheet: () => ReactNode = () =>
         label: 'Immunisation',
         defaultEntries: [settled],
         by: 'tablet-1',
+        newId: () => 'a1B2c3D4e5F',
         onAppend: (entries) => entries.map(({ id }) => id),
         RowBadge: AlertBadge,
         children: [
+            TallyToolbar({
+                className: 'sticky top-0',
+                children: TallyTotal({}),
+            }),
             TallyTotal({}),
             TallyEditButtons({ className: 'ms-auto' }),
             TallyGrid({}),

@@ -1,5 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo } from 'react'
+import type { ReactNode } from 'react'
 import { useStore } from 'zustand'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
@@ -91,15 +92,52 @@ export const TallyUndoButton = memo(function TallyUndoButton({
     const canUndo = useStore(store, (state) => state.canUndo)
     return (
         <Button
-            variant="outline"
-            size="lg"
+            variant="ghost"
+            size="sm"
             data-slot="tally-undo"
-            className={cn('self-start px-4', className)}
+            aria-label={i18n.t('Undo last mark')}
+            className={cn('self-start px-2.5', className)}
             disabled={!canUndo || editing}
             focusableWhenDisabled
             onClick={undo}
         >
-            {i18n.t('Undo last mark')}
+            {i18n.t('Undo')}
         </Button>
+    )
+})
+
+/**
+ * The bar a sheet sits under: its title at the start, Undo and Edit counts at the end, and whatever it is given
+ * between them. The title is the sheet's `label`. The bar is tinted while the counts are being edited.
+ */
+export const TallyToolbar = memo(function TallyToolbar({
+    className,
+    children,
+}: {
+    className?: string
+    children?: ReactNode
+}) {
+    const { label, editing } = useTallyContext('TallyToolbar')
+    return (
+        <div
+            data-slot="tally-toolbar"
+            data-editing={editing ? '' : undefined}
+            className={cn(
+                'flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-dhis2-md bg-dhis2-muted py-1.5 ps-3 pe-1.5 data-[editing]:bg-dhis2-info-subtle',
+                className
+            )}
+        >
+            <p
+                dir="auto"
+                className="m-0 min-w-0 truncate text-sm font-medium text-dhis2-foreground"
+            >
+                {label}
+            </p>
+            {children}
+            <div className="ms-auto flex items-center gap-1">
+                <TallyUndoButton />
+                <TallyEditButtons />
+            </div>
+        </div>
     )
 })

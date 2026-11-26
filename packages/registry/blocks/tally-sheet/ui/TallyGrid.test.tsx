@@ -176,11 +176,11 @@ describe('keys', () => {
         expect(document.activeElement).toBe(buttonIn('BCG', 0))
         await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}')
         expect(document.activeElement).toBe(buttonIn('OPV 1', 1))
-        await userEvent.tab()
-        expect(document.activeElement).toBe(
-            screen.getByRole('button', { name: 'Undo last mark' }).element()
-        )
         await userEvent.tab({ shift: true })
+        expect(document.activeElement).toBe(
+            screen.getByRole('button', { name: 'Edit counts' }).element()
+        )
+        await userEvent.tab()
         expect(document.activeElement).toBe(buttonIn('OPV 1', 1))
     })
 
@@ -235,7 +235,7 @@ describe('headings of the cell in hand', () => {
         await expect.element(rowHeaderOf('OPV 1')).not.toHaveClass(POINTED)
         expect(document.querySelectorAll(`th.${POINTED}`)).toHaveLength(3)
         await userEvent.unhover(buttonIn('Penta 1', 3))
-        await userEvent.hover(page.getByText('0 marks'))
+        await userEvent.hover(page.getByText('Tally', { exact: true }))
         await expect.element(rowHeaderOf('OPV 1')).toHaveClass(POINTED)
         await expect.element(columnHeader('0–11 months')).toHaveClass(POINTED)
         await expect.element(rowHeaderOf('Penta 1')).not.toHaveClass(POINTED)

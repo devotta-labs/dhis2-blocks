@@ -22,6 +22,7 @@ export { TallySheet } from './ui/TallySheet'
 export type { TallySheetProps } from './ui/TallySheet'
 export {
     TallyEditButtons,
+    TallyToolbar,
     TallyTotal,
     TallyUndoButton,
 } from './ui/TallyToolbar'

@@ -3,7 +3,7 @@ import React from 'react'
 import { onTestFinished } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { TallySheet } from '..'
+import { TallyGrid, TallySheet, TallyToolbar, TallyTotal } from '..'
 import { buttonIn, inputIn, listen } from '../test/sheet.test-utils'
 import { tapOn, GIRL, VACCINATIONS } from '../test/tally.fixture'
 
@@ -14,7 +14,12 @@ describe('total', () => {
                 layout={VACCINATIONS}
                 label="Tally"
                 defaultEntries={[tapOn('opv1', GIRL)]}
-            />
+            >
+                <TallyToolbar>
+                    <TallyTotal />
+                </TallyToolbar>
+                <TallyGrid />
+            </TallySheet>
         )
         await expect.element(screen.getByText('1 mark')).toBeVisible()
         await userEvent.click(buttonIn('Penta 1', 1))
@@ -97,7 +102,12 @@ describe('total on a right-to-left page', () => {
                     layout={VACCINATIONS}
                     label="Tally"
                     defaultEntries={[tapOn('opv1', GIRL), tapOn('opv1', GIRL)]}
-                />
+                >
+                    <TallyToolbar>
+                        <TallyTotal />
+                    </TallyToolbar>
+                    <TallyGrid />
+                </TallySheet>
             </div>
         )
         const total = screen.getByText(
@@ -105,5 +115,46 @@ describe('total on a right-to-left page', () => {
         )
         await expect.element(total).toHaveAttribute('dir', 'auto')
         expect(getComputedStyle(total.element()).direction).toBe('ltr')
+    })
+})
+
+describe('the toolbar', () => {
+    it('shows only the title and Edit counts when it is given nothing', async () => {
+        await render(<TallySheet layout={VACCINATIONS} label="Tally" />)
+        const bar = document.querySelector('[data-slot="tally-toolbar"]')
+        expect(bar).toHaveTextContent('TallyUndoEdit counts')
+        expect(document.querySelector('[data-slot="tally-total"]')).toBeNull()
+    })
+
+    it('shows the sheet\u2019s title, what it is given, and Edit counts', async () => {
+        const screen = await render(
+            <TallySheet layout={VACCINATIONS} label="Immunisation tally">
+                <TallyToolbar>
+                    <TallyTotal />
+                </TallyToolbar>
+                <TallyGrid />
+            </TallySheet>
+        )
+        const bar = document.querySelector('[data-slot="tally-toolbar"]')
+        expect(bar).toHaveTextContent('Immunisation tally')
+        expect(bar).toHaveTextContent('0 marks')
+        await expect
+            .element(screen.getByRole('button', { name: 'Edit counts' }))
+            .toBeVisible()
+        expect(bar?.contains(buttonIn('OPV 1', 0))).toBe(false)
+    })
+
+    it('is marked while the counts are being edited', async () => {
+        const screen = await render(
+            <TallySheet layout={VACCINATIONS} label="Tally" />
+        )
+        const bar = document.querySelector<HTMLElement>(
+            '[data-slot="tally-toolbar"]'
+        )
+        expect(bar).not.toHaveAttribute('data-editing')
+        await screen.getByRole('button', { name: 'Edit counts' }).click()
+        await expect.element(bar).toHaveAttribute('data-editing')
+        await screen.getByRole('button', { name: 'Cancel' }).click()
+        await expect.element(bar).not.toHaveAttribute('data-editing')
     })
 })

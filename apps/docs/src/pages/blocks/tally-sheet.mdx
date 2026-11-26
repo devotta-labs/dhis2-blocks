@@ -53,8 +53,10 @@ sheet again from the log, and ends editing.
 
 <ExampleCard slug="tally-sheet/vaccinations" />
 
-In DHIS2 terms a row is a data element, a category is a category, and a column
-is a category option combination.
+For aggregate data a row is a data element, a category is a category, and a
+column is a category option combination. The sheet does not depend on that: for
+anonymous events a row can be one option of a data element and each category
+another data element with options, with every tap saved as an event.
 
 ## The log
 
@@ -143,7 +145,7 @@ what is stored, or keeps every session's log and saves their joined total.
 
 ## Undo and Edit counts
 
-Undo last mark takes back this sheet's latest tap, or its latest set of
+Undo, in the toolbar, takes back this sheet's latest tap, or its latest set of
 corrections together, by appending `undo` entries. See `by` below for what
 counts as this sheet's. It is disabled, and stays
 focusable, when there is nothing to take back, and it stays in place, disabled,
@@ -193,9 +195,13 @@ rather than into an older copy.
 
 ## Composing the parts
 
-Without children, `TallySheet` shows `TallyTotal` ("12 marks") and
-`TallyEditButtons` on one line, then `TallyGrid`, then `TallyUndoButton`. Pass
-the parts as children to arrange them another way; each takes a `className`.
+Without children, `TallySheet` shows a `TallyToolbar`, then `TallyGrid`. The
+toolbar is a bar above the sheet with the sheet's `label` as its title at the
+start, and `TallyUndoButton` and `TallyEditButtons` at the end; what you put inside
+it sits between them, such as `TallyTotal` ("12 marks"). The bar
+is tinted while the counts are being edited. Pass the parts as children to
+arrange them another way, or to leave the toolbar out; each takes a
+`className`.
 
 ```tsx
 <TallySheet layout={layout} label="OPD morbidity tally">

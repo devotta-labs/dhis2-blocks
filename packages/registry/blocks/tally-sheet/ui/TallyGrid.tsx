@@ -10,8 +10,8 @@ import { TallyCell } from './TallyCell'
 
 const NO_ROW: TallyRow = { id: '', label: '' }
 const POINTED_CLASS = 'bg-dhis2-info-subtle text-dhis2-info-strong'
-const LABEL_COLUMN_CLASS =
-    'w-[min(16rem,40cqi)] min-w-[min(16rem,40cqi)] max-w-[min(16rem,40cqi)]'
+const LABEL_COLUMN_CLASS = 'w-px'
+const LABEL_CLASS = 'w-max max-w-[min(16rem,40cqi)]'
 
 const cellOf = (target: EventTarget) => {
     const holder =
@@ -83,7 +83,9 @@ const RowHeader = memo(function RowHeader({
                 pointed && POINTED_CLASS
             )}
         >
-            <span className="flex flex-wrap items-center gap-2">
+            <span
+                className={cn('flex flex-wrap items-center gap-2', LABEL_CLASS)}
+            >
                 <span id={ids.row(at)} dir="auto">
                     {row.label}
                 </span>

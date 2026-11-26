@@ -4,6 +4,7 @@ import type { ComponentType, ReactNode } from 'react'
 import { useStore } from 'zustand'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { cn } from '@/components/dhis2/ui/cn'
+import { newEntryId } from '../core/entries'
 import { indexLayout } from '../core/layout'
 import type { TallyEntry, TallyLayout, TallyRow } from '../core/types'
 import { createTallyStore } from '../store/store'
@@ -14,7 +15,7 @@ import { groupIdsOf, headerLevels, rowSections, sheetIds } from './headers'
 import { changedMessage, tappedMessage, undoneMessage } from './messages'
 import { createSheetPointer } from './pointer'
 import { TallyGrid } from './TallyGrid'
-import { TallyEditButtons, TallyTotal, TallyUndoButton } from './TallyToolbar'
+import { TallyToolbar } from './TallyToolbar'
 
 export interface TallySheetProps {
     /** The sheet as printed. Compared by content: a layout with other content starts the sheet again from the log. */
@@ -35,13 +36,18 @@ export interface TallySheetProps {
      * name when it opens. A new name starts the sheet again from the log.
      */
     by?: string
+    /**
+     * Makes the id of each entry the sheet writes, a settle apart. Give one when ids must fit where the entries are
+     * saved, such as a DHIS2 uid for an entry kept as an event. Without it ids are random.
+     */
+    newId?: () => string
     editing?: boolean
     defaultEditing?: boolean
     onEditingChange?: (editing: boolean) => void
     /** Shown beside a row's label, such as an alert badge, with what the row adds up to. Keep it one component. */
     RowBadge?: ComponentType<{ row: TallyRow; total: number }>
     className?: string
-    /** The parts, arranged; without any, the total and edit buttons, the grid, then the undo button. */
+    /** The parts, arranged; without any, a toolbar and then the grid. */
     children?: ReactNode
 }
 
@@ -55,6 +61,13 @@ const buttonById = (id: string | undefined) => {
     return target instanceof HTMLButtonElement ? target : undefined
 }
 
+const DEFAULT_PARTS = (
+    <>
+        <TallyToolbar />
+        <TallyGrid />
+    </>
+)
+
 /**
  * A tally sheet: one tap a mark, counted as it happens. "Edit counts" turns each cell into a number field, to put a
  * miscount right or copy a paper sheet in. The counts are read from an append-only log the host keeps or the sheet
@@ -67,6 +80,7 @@ export const TallySheet = ({
     defaultEntries,
     onAppend,
     by,
+    newId,
     editing: editingProp,
     defaultEditing = false,
     onEditingChange,
@@ -74,8 +88,14 @@ export const TallySheet = ({
     className,
     children,
 }: TallySheetProps) => {
-    const latest = useRef({ entries, onAppend, onEditingChange, RowBadge })
-    latest.current = { entries, onAppend, onEditingChange, RowBadge }
+    const latest = useRef({
+        entries,
+        onAppend,
+        onEditingChange,
+        RowBadge,
+        newId,
+    })
+    latest.current = { entries, onAppend, onEditingChange, RowBadge, newId }
     const content = JSON.stringify(layout)
     const sameLayout = useMemo(() => layout, [content])
     const own = useRef<TallyEntry[] | null>(null)
@@ -86,6 +106,7 @@ export const TallySheet = ({
             layout: sameLayout,
             entries: latest.current.entries ?? [...(own.current ?? [])],
             by,
+            newId: () => (latest.current.newId ?? newEntryId)(),
             onAppend: (made) => {
                 if (latest.current.entries === undefined) {
                     own.current?.push(...made)
@@ -301,16 +322,7 @@ export const TallySheet = ({
                 data-slot="tally-sheet"
                 className={cn('flex w-full min-w-0 flex-col gap-3', className)}
             >
-                {children ?? (
-                    <>
-                        <div className="flex flex-wrap items-center gap-2 border-b border-dhis2-border pb-3">
-                            <TallyTotal className="me-auto" />
-                            <TallyEditButtons />
-                        </div>
-                        <TallyGrid />
-                        <TallyUndoButton />
-                    </>
-                )}
+                {children ?? DEFAULT_PARTS}
             </section>
         </TallyContext.Provider>
     )

@@ -107,6 +107,27 @@ describe('this device', () => {
         expect(buttonIn('OPV 1', 0).textContent).toBe('1')
     })
 
+    it('makes entry ids with the host\u2019s generator', async () => {
+        const appended: TallyEntry[] = []
+        let made = 0
+        await render(
+            <TallySheet
+                layout={VACCINATIONS}
+                label="Tally"
+                by="tablet"
+                newId={() => {
+                    made += 1
+                    return `uid${made}`
+                }}
+                onAppend={(added) => appended.push(...added)}
+            />
+        )
+        await userEvent.click(buttonIn('OPV 1', 0))
+        await userEvent.click(buttonIn('OPV 1', 0))
+        await expect.element(buttonIn('OPV 1', 0)).toHaveTextContent('2')
+        expect(appended.map(({ id }) => id)).toEqual(['uid1', 'uid2'])
+    })
+
     it('names later entries with a name that arrives after it opens', async () => {
         const appended: TallyEntry[] = []
         const onAppend = (made: readonly TallyEntry[]) => appended.push(...made)
@@ -154,7 +175,7 @@ const Echo = ({ other }: { other?: boolean }) => {
 }
 
 describe('a host that renders often', () => {
-    it('renders only the tapped cell, its row badge and the total per tap', async () => {
+    it('renders only the tapped cell and its row badge per tap', async () => {
         await render(<Echo />)
         await userEvent.click(buttonIn('OPV 1', 0))
         await userEvent.hover(buttonIn('OPV 1', 1))
@@ -169,9 +190,7 @@ describe('a host that renders often', () => {
                 (name) => !['Echo', 'TallySheet', 'RowBadge', ''].includes(name)
             )
         )
-        expect(sheet).toEqual(
-            new Set(['TapCell', 'RowBadgeSlot', 'HostBadge', 'TallyTotal'])
-        )
+        expect(sheet).toEqual(new Set(['TapCell', 'RowBadgeSlot', 'HostBadge']))
     })
 
     it('keeps edit mode and the drafts through a render of its own', async () => {

@@ -1,11 +1,17 @@
-/** One way of splitting the people counted: age band, sex, origin. A DHIS2 category. */
+/**
+ * One way of splitting what is counted: age band, sex, origin. For aggregate data a DHIS2 category; for events, a
+ * data element with options.
+ */
 export interface TallyCategory {
     id: string
     label: string
     options: ReadonlyArray<{ id: string; label: string }>
 }
 
-/** What one line of the sheet counts: a dose, a diagnosis. A DHIS2 data element. */
+/**
+ * What one line of the sheet counts: a dose, a diagnosis. For aggregate data a DHIS2 data element; for events, one
+ * option of a data element.
+ */
 export interface TallyRow {
     id: string
     label: string
@@ -13,7 +19,7 @@ export interface TallyRow {
     group?: string
 }
 
-/** The option chosen in each category, by category id: the options of one category option combination. */
+/** The option chosen in each category, by category id: one column of the sheet. */
 export type TallyOptions = Readonly<Record<string, string>>
 
 /** Cells that are never marked, hatched out on paper: the row's cells in every column with these options. */

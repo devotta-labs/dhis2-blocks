@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-25T20:34:34.723Z\n"
-"PO-Revision-Date: 2026-11-25T20:34:34.724Z\n"
+"POT-Creation-Date: 2026-11-26T08:35:05.042Z\n"
+"PO-Revision-Date: 2026-11-26T08:35:05.043Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -705,6 +705,9 @@ msgstr "Edit counts"
 
 msgid "Undo last mark"
 msgstr "Undo last mark"
+
+msgid "Undo"
+msgstr "Undo"
 
 msgid "{{before}}, {{label}}"
 msgstr "{{before}}, {{label}}"

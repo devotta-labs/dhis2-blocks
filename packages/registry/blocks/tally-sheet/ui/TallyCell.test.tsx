@@ -82,7 +82,7 @@ describe('count buttons', () => {
         expect(appended).toHaveLength(1)
     })
 
-    it('renders the tapped cell, its row badge and the total, nothing else', async () => {
+    it('renders the tapped cell and its row badge, nothing else', async () => {
         const Badge = ({ total }: { total: number }) => <span>{total}</span>
         await render(
             <TallySheet layout={VACCINATIONS} label="Tally" RowBadge={Badge} />
@@ -95,13 +95,7 @@ describe('count buttons', () => {
             userEvent.click(buttonIn('OPV 1', 1))
         )
         expect(renders.toSorted()).toEqual(
-            [
-                'Badge',
-                'HostBadge',
-                'RowBadgeSlot',
-                'TallyTotal',
-                'TapCell',
-            ].toSorted()
+            ['Badge', 'HostBadge', 'RowBadgeSlot', 'TapCell'].toSorted()
         )
     })
 })

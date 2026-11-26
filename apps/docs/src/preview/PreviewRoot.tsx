@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getExample } from '../examples/registry'
-import { LivePreviewHost } from './LivePreviewHost'
+import { ExampleHost } from './ExampleHost'
 import { PreviewShell, PreviewSpinner } from './PreviewShell'
 
 /**
@@ -51,9 +51,9 @@ export const PreviewRoot = () => {
         </Suspense>
     )
 
-    return example.live ? (
-        <LivePreviewHost placeholder={placeholder}>{content}</LivePreviewHost>
-    ) : (
-        content
+    return (
+        <ExampleHost example={example} placeholder={placeholder}>
+            {content}
+        </ExampleHost>
     )
 }

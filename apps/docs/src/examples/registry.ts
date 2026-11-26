@@ -237,7 +237,7 @@ const examples = [
     {
         slug: 'spreadsheet/targets',
         title: 'Yearly targets for a few organisation units',
-        live: true,
+        live: false,
         Component: lazy(() => import('./spreadsheet/TargetsGrid')),
         source: spreadsheetTargetsSource,
         minHeight: 300,

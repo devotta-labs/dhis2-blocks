@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
 import { focusInto } from '../focusInto'
 import type { useDraft } from '../useDraft'
 import { OptionComboInput } from './OptionComboInput'
+import { YesNoButtons } from './YesNoButtons'
 
 /** Up to this many visible options are radios, or a multi-select's boxes; more are searched. */
 export const RADIO_LIMIT = 5
@@ -35,8 +36,8 @@ export const visibleCount = (
     hiddenOptions: ReadonlySet<string> | undefined
 ) => options.filter(({ code }) => !hiddenOptions?.has(code)).length
 
-/** Whether a choice field is a radio group: Yes/No, or an option set of five or fewer visible options. */
-export const asRadios = (
+/** Whether a choice field is a group named by its title: Yes/No buttons, or the radios of an option set of five or fewer visible options. */
+export const asGroup = (
     field: Field,
     hiddenOptions: ReadonlySet<string> | undefined
 ) => {
@@ -67,13 +68,15 @@ export const offeredOptions = (
           )
 
 /**
- * The choice kinds, each pick reported at once: Yes/No and short option sets as radios, an option set of more than five
- * visible options as a search, Yes-only as a checkbox. Without `required`, Clear reports no value. Options a rule hid
- * are not offered, unless the field holds one.
+ * The choice kinds, each pick reported at once: Yes/No as two buttons, a short option set as radios, an option set of
+ * more than five visible options as a search, Yes-only as a checkbox. Without `required`, pressing the chosen Yes or No
+ * again, or an option set's Clear, reports no value. Options a rule hid are not offered, unless the field holds one.
  */
 export const ChoiceInput = ({
     id,
     title,
+    describedBy,
+    invalid,
     field,
     value,
     hiddenOptions,
@@ -84,8 +87,12 @@ export const ChoiceInput = ({
     onChange,
 }: {
     id: string
-    /** A radio group's name, shown above it. */
+    /** A group's name, shown above it. */
     title: ReactNode
+    /** The ids of what describes the field, for the Yes/No buttons' group: a field's own controls are linked by the field. */
+    describedBy: string | undefined
+    /** Shown on the Yes/No buttons, which the field cannot mark itself. */
+    invalid: boolean
     field: Field
     value: string | undefined
     settings: ValueSettings
@@ -144,43 +151,64 @@ export const ChoiceInput = ({
                 {i18n.t('Clear')}
             </Button>
         )
-    const radios = asRadios(field, hiddenOptions) ? (
-        <RadioGroup
-            id={id}
-            aria-labelledby={titleId}
-            tabIndex={-1}
-            onFocus={focusInto(
-                '[role="radio"][aria-checked="true"]',
-                '[role="radio"]'
-            )}
-            value={known ? value : ''}
-            readOnly={readOnly}
-            aria-required={required || undefined}
-            onValueChange={(code: string) => onChange(code)}
-            className="flex flex-col gap-2"
-        >
-            {offered.map(({ code, name, description }) => (
-                <FieldItem key={code}>
-                    <RadioGroupItem value={code} />
-                    {description === undefined ? (
-                        <FieldLabel className="cursor-pointer">
-                            {name}
-                        </FieldLabel>
-                    ) : (
-                        <FieldContent>
+    const yesNoButtons =
+        kind === 'boolean' ? (
+            <YesNoButtons
+                id={id}
+                labelledBy={titleId}
+                describedBy={describedBy}
+                options={offered}
+                value={value}
+                invalid={invalid}
+                readOnly={readOnly}
+                onChange={(next) => {
+                    if (next !== null || !required) {
+                        onChange(next)
+                    }
+                }}
+            />
+        ) : undefined
+    const radios =
+        kind !== 'boolean' && asGroup(field, hiddenOptions) ? (
+            <RadioGroup
+                id={id}
+                aria-labelledby={titleId}
+                tabIndex={-1}
+                onFocus={focusInto(
+                    '[role="radio"][aria-checked="true"]',
+                    '[role="radio"]'
+                )}
+                value={known ? value : ''}
+                readOnly={readOnly}
+                aria-required={required || undefined}
+                onValueChange={(code: string) => onChange(code)}
+                className="flex flex-col gap-2"
+            >
+                {offered.map(({ code, name, description }) => (
+                    <FieldItem key={code}>
+                        <RadioGroupItem value={code} />
+                        {description === undefined ? (
                             <FieldLabel className="cursor-pointer">
                                 {name}
                             </FieldLabel>
-                            <FieldDescription>{description}</FieldDescription>
-                        </FieldContent>
-                    )}
-                </FieldItem>
-            ))}
-        </RadioGroup>
-    ) : undefined
+                        ) : (
+                            <FieldContent>
+                                <FieldLabel className="cursor-pointer">
+                                    {name}
+                                </FieldLabel>
+                                <FieldDescription>
+                                    {description}
+                                </FieldDescription>
+                            </FieldContent>
+                        )}
+                    </FieldItem>
+                ))}
+            </RadioGroup>
+        ) : undefined
+    const group = yesNoButtons ?? radios
     return (
         <div ref={box} className="flex flex-col gap-2">
-            {radios === undefined ? (
+            {group === undefined ? (
                 <OptionComboInput
                     id={id}
                     offered={offered}
@@ -192,7 +220,7 @@ export const ChoiceInput = ({
             ) : (
                 <FieldTitle id={titleId}>{title}</FieldTitle>
             )}
-            {radios}
+            {group}
             {value !== undefined && !known ? (
                 <p className="text-sm text-dhis2-muted-foreground">{shown}</p>
             ) : null}

@@ -61,23 +61,138 @@ const BOOLEAN: Field = { valueType: 'BOOLEAN' }
 const SHORT: Field = { valueType: 'TEXT', options: options(3) }
 const LONG: Field = { valueType: 'TEXT', options: options(6) }
 const radio = (name: string) => page.getByRole('radio', { name })
+const pressable = (name: string) => page.getByRole('button', { name })
 const clear = () => page.getByRole('button', { name: 'Clear' })
 
 test('Yes is picked with one click and reported at once', async () => {
     const onChange = await mount(BOOLEAN)
-    await userEvent.click(radio('Yes'))
+    await userEvent.click(pressable('Yes'))
     expect(onChange).toHaveBeenCalledExactlyOnceWith('true')
 })
 
-test('arrow Down moves to No, checks and picks it; Tab leaves the group', async () => {
+test('pressing the chosen Yes again reports no value, and No takes over from Yes', async () => {
     const onChange = await mountHeld(BOOLEAN)
-    await userEvent.click(radio('Yes'))
-    await userEvent.keyboard('{ArrowDown}')
+    await userEvent.click(pressable('Yes'))
+    await expect
+        .element(pressable('Yes'))
+        .toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(pressable('No'))
     expect(onChange).toHaveBeenLastCalledWith('false', undefined)
-    await expect.element(radio('No')).toBeChecked()
-    await expect.element(radio('No')).toHaveFocus()
+    await expect
+        .element(pressable('Yes'))
+        .toHaveAttribute('aria-pressed', 'false')
+    await userEvent.click(pressable('No'))
+    expect(onChange).toHaveBeenLastCalledWith(null, undefined)
+    await expect
+        .element(pressable('No'))
+        .toHaveAttribute('aria-pressed', 'false')
+    expect(onChange).toHaveBeenCalledTimes(3)
+})
+
+test('a required Yes/No is changed but not emptied, and its name says it is required', async () => {
+    const onChange = await mountHeld(BOOLEAN, { value: 'true', required: true })
+    await userEvent.click(pressable('Yes'))
+    expect(onChange).not.toHaveBeenCalled()
+    await expect
+        .element(pressable('Yes'))
+        .toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(pressable('No'))
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('false', undefined)
+    await expect
+        .element(page.getByRole('group', { name: `${LABEL} required` }))
+        .toBeVisible()
+})
+
+test('Yes and No are one tab stop: arrow Right moves to No without picking it, Space picks it and Tab leaves', async () => {
+    const onChange = await mountHeld(BOOLEAN, { description: 'As she reports' })
     await userEvent.keyboard('{Tab}')
-    await expect.element(radio('No')).not.toHaveFocus()
+    await expect.element(pressable('Yes')).toHaveFocus()
+    await userEvent.keyboard('{ArrowRight}')
+    await expect.element(pressable('No')).toHaveFocus()
+    expect(onChange).not.toHaveBeenCalled()
+    await userEvent.keyboard(' ')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('false', undefined)
+    await userEvent.keyboard('{Tab}')
+    await expect.element(pressable('Yes')).not.toHaveFocus()
+    await expect.element(pressable('No')).not.toHaveFocus()
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAccessibleDescription('As she reports')
+})
+
+test('a read-only No is reached with the arrow keys, cannot be changed and says why', async () => {
+    const onChange = await mount(BOOLEAN, {
+        value: 'false',
+        readOnly: 'Locked',
+    })
+    await userEvent.keyboard('{Tab}')
+    await expect.element(pressable('Yes')).toHaveFocus()
+    await userEvent.keyboard(' ')
+    await userEvent.keyboard('{Enter}')
+    await userEvent.keyboard('{ArrowRight}')
+    await expect.element(pressable('No')).toHaveFocus()
+    await userEvent.keyboard(' ')
+    await userEvent.click(pressable('Yes'), { force: true })
+    expect(onChange).not.toHaveBeenCalled()
+    await expect
+        .element(pressable('Yes'))
+        .toHaveAttribute('aria-pressed', 'false')
+    await expect
+        .element(pressable('No'))
+        .toHaveAttribute('aria-pressed', 'true')
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAccessibleDescription('Locked')
+})
+
+test("a rule's error marks the unpressed Yes/No button, not the pressed one, and describes the group", async () => {
+    const field = (messages: ValueInputProps['messages']) => (
+        <ValueInput
+            field={BOOLEAN}
+            settings={SETTINGS}
+            label={LABEL}
+            value="true"
+            messages={messages}
+            onChange={() => undefined}
+        />
+    )
+    const border = (name: string) =>
+        getComputedStyle(pressable(name).element()).borderColor
+    const screen = await render(field(undefined))
+    const before = { yes: border('Yes'), no: border('No') }
+    await screen.rerender(
+        field([{ tone: 'error', text: 'Not while breastfeeding' }])
+    )
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAttribute('data-invalid')
+    expect(border('No')).not.toBe(before.no)
+    expect(border('Yes')).toBe(before.yes)
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAccessibleDescription(/Not while breastfeeding/)
+})
+
+test('a Yes/No offers only what a rule leaves, and the answer it holds', async () => {
+    await mount(BOOLEAN, {
+        value: 'false',
+        hiddenOptions: new Set(['true', 'false']),
+    })
+    await expect.element(pressable('Yes')).not.toBeInTheDocument()
+    await expect
+        .element(pressable('No'))
+        .toHaveAttribute('aria-pressed', 'true')
+})
+
+test('arrow Down in a short option set moves to the next radio, checks and picks it; Tab leaves the group', async () => {
+    const onChange = await mountHeld(SHORT)
+    await userEvent.click(radio('Name A'))
+    await userEvent.keyboard('{ArrowDown}')
+    expect(onChange).toHaveBeenLastCalledWith('B', undefined)
+    await expect.element(radio('Name B')).toBeChecked()
+    await expect.element(radio('Name B')).toHaveFocus()
+    await userEvent.keyboard('{Tab}')
+    await expect.element(radio('Name B')).not.toHaveFocus()
     await expect.element(clear()).toHaveFocus()
     expect(onChange).toHaveBeenCalledTimes(2)
 })
@@ -145,14 +260,15 @@ test('a Yes-only box has its label beside it, which ticks it when clicked', asyn
     expect(onChange).toHaveBeenCalledExactlyOnceWith('true')
 })
 
-test('Yes and No stack like an option set, with Clear under No', async () => {
+test('Yes and No sit side by side, the same size, with no Clear', async () => {
     await mount(BOOLEAN, { value: 'true' })
     const rect = (element: Element) => element.getBoundingClientRect()
-    const yes = rect(radio('Yes').element())
-    const no = rect(radio('No').element())
-    expect(no.top).toBeGreaterThan(yes.top)
-    expect(no.left).toBe(yes.left)
-    expect(rect(clear().element()).top).toBeGreaterThanOrEqual(no.bottom)
+    const yes = rect(pressable('Yes').element())
+    const no = rect(pressable('No').element())
+    expect(no.top).toBe(yes.top)
+    expect(no.left).toBeGreaterThan(yes.right)
+    expect(no.width).toBe(yes.width)
+    await expect.element(clear()).not.toBeInTheDocument()
 })
 
 test("a short option set's radios show and are described by each option's description", async () => {
@@ -449,13 +565,10 @@ test('a required Yes/No in a form lets the form submit, with a value or without'
     }
     await render(<Host />)
     const submit = page.getByRole('button', { name: 'Submit' })
-    await expect
-        .element(page.getByRole('radiogroup', { name: LABEL }))
-        .toHaveAttribute('aria-required', 'true')
     expect(document.querySelectorAll('input[required]')).toHaveLength(0)
     await userEvent.click(submit)
     expect(submitted).toHaveBeenCalledTimes(1)
-    await userEvent.click(radio('Yes'))
+    await userEvent.click(pressable('Yes'))
     await userEvent.click(submit)
     expect(submitted).toHaveBeenCalledTimes(2)
 })

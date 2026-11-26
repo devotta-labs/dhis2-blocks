@@ -29,7 +29,7 @@ import { focusInto } from './focusInto'
 import {
     ChoiceInput,
     RADIO_LIMIT,
-    asRadios,
+    asGroup,
     offeredOptions,
     visibleCount,
 } from './kinds/ChoiceInput'
@@ -215,9 +215,9 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
         field.valueType === 'LONG_TEXT' ||
         (field.valueType === 'MULTI_TEXT' &&
             visibleCount(field.options ?? [], hiddenOptions) > RADIO_LIMIT)
-    const radios =
+    const grouped =
         (kind === 'boolean' || kind === 'option') &&
-        asRadios(field, hiddenOptions)
+        asGroup(field, hiddenOptions)
     const fieldKey = useMemo(
         () => keyOf(field, settings),
         // oxlint-disable-next-line react-hooks/exhaustive-deps -- the parts `keyOf` reads; a host may build `field` and `settings` anew on every render
@@ -269,6 +269,7 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
     }, [sayable])
     const describedBy = [
         description === undefined ? '' : `${id}-description`,
+        reason === undefined ? '' : `${id}-reason`,
         problem === undefined ? '' : `${id}-problem`,
         ...messages.map((_, index) => `${id}-message-${index}`),
     ]
@@ -289,7 +290,7 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
                     *
                 </span>
             ) : null}
-            {editor && required ? (
+            {(editor || kind === 'boolean') && required ? (
                 <span className="sr-only"> {i18n.t('required')}</span>
             ) : null}
         </span>
@@ -349,6 +350,8 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
             <ChoiceInput
                 id={id}
                 title={title}
+                describedBy={describedBy || undefined}
+                invalid={invalid}
                 field={field}
                 value={value}
                 hiddenOptions={hiddenOptions}
@@ -413,7 +416,9 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
                 </FieldDescription>
             ) : null}
             {reason === undefined ? null : (
-                <FieldDescription>{reason}</FieldDescription>
+                <FieldDescription id={`${id}-reason`}>
+                    {reason}
+                </FieldDescription>
             )}
             {problem === undefined ? null : (
                 <Problem plain={editor} id={`${id}-problem`}>
@@ -478,7 +483,7 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
     }
     return (
         <FieldRoot invalid={invalid}>
-            {radios ? null : <FieldLabel id={labelId}>{title}</FieldLabel>}
+            {grouped ? null : <FieldLabel id={labelId}>{title}</FieldLabel>}
             {control}
             {parts}
         </FieldRoot>

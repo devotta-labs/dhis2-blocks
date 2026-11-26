@@ -35,13 +35,13 @@ const mount = async (props: Partial<ValueInputProps>) => {
 test.each([
     ['a typed field', NUMBER, undefined, 'textbox', LABEL],
     [
-        'an empty radio group, at its first radio',
+        'an empty Yes/No, at its first button',
         BOOLEAN,
         undefined,
-        'radio',
+        'button',
         'Yes',
     ],
-    ['a radio group, at its checked radio', BOOLEAN, 'false', 'radio', 'No'],
+    ['a Yes/No, at its pressed button', BOOLEAN, 'false', 'button', 'No'],
     [
         'a pop-up field, at its first input',
         COORDINATE,
@@ -74,7 +74,7 @@ test.each([
 )
 
 test.each([
-    ['a radio group', BOOLEAN, 'radiogroup'],
+    ['a Yes/No', BOOLEAN, 'group'],
     ['a pop-up field', COORDINATE, 'group'],
 ] as const)(
     'the id given is on %s, which the label names',

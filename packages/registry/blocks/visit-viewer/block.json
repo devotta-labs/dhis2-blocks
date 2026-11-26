@@ -1,0 +1,5 @@
+{
+    "title": "Visit Viewer",
+    "description": "UI-only, composable primitives for clinical visits on an enrollment dashboard: expandable visit cards, grouped sections, status badges, services, dates in the system calendar, facts and notes.",
+    "docs": "Visit Viewer never fetches, filters or sorts: build your visit array, branch on loading, error and empty states, and map visits into VisitList and VisitItem yourself. Compose every slot as children: VisitViewerHeader with VisitViewerTitle and VisitViewerActions, VisitItemHeader with VisitItemTitle, VisitDate and VisitStatus, VisitItemTrigger and VisitItemContent for details. VisitDate formats stored dates in the calendar set on VisitViewer (Gregorian by default). For a table, compose @/components/dhis2/ui/table with VisitDate, VisitStatus, VisitServices and VisitFactValue."
+}

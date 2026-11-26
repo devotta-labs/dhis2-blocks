@@ -13,6 +13,7 @@
 @source '../../../packages/registry/blocks/timeline';
 @source '../../../packages/registry/blocks/tracked-entity-finder';
 @source '../../../packages/registry/blocks/tracked-entity-header';
+@source '../../../packages/registry/blocks/visit-viewer';
 
 @import 'shadcn/tailwind.css';
 

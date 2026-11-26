@@ -1,0 +1,153 @@
+---
+title: Visit Viewer
+description: Show a person's clinical visits as cards, grouped sections or a table, from parts you compose.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+One clinical visit is often split across several DHIS2 program stages, such as
+a child health visit recorded as a vaccination stage and a growth-monitoring
+stage. Visit Viewer lays out the visit as your app understands it, not stage by
+stage.
+
+<ExampleCard slug="visit-viewer/cards" />
+
+The visits in these examples are fictional. The Schedule visit and Open
+buttons are illustrative only.
+
+## Installation
+
+<InstallCommand item="visit-viewer" />
+
+The examples on this page also use [Button](/blocks/button), and the table
+example uses [Table](/blocks/table). Add them to copy the examples as they are:
+
+<InstallCommand item="button" />
+
+<InstallCommand item="table" />
+
+Visit Viewer is UI only. It doesn't fetch, read program or stage metadata,
+filter, sort or group. Your app builds the visit array however it likes, then
+branches on loading, error and empty states and maps visits into the parts in
+JSX. It needs no app-runtime or query-client provider.
+
+## Composition
+
+Every part is a plain element that takes its native props and `className`,
+and every slot is a child: there are no component props, `visits` arrays or
+render callbacks.
+
+```tsx
+import {
+    VisitDate,
+    VisitItem,
+    VisitItemActions,
+    VisitItemBody,
+    VisitItemContent,
+    VisitItemHeader,
+    VisitItemTitle,
+    VisitItemTrigger,
+    VisitList,
+    VisitStatus,
+    VisitViewer,
+    VisitViewerEmpty,
+    VisitViewerHeader,
+    VisitViewerTitle,
+} from '@/components/visit-viewer'
+
+export function Visits({ visits }: { visits: MyVisit[] }) {
+    return (
+        <VisitViewer calendar={systemCalendar}>
+            <VisitViewerHeader>
+                <VisitViewerTitle>Visits</VisitViewerTitle>
+            </VisitViewerHeader>
+            {visits.length === 0 ? (
+                <VisitViewerEmpty>No visits recorded yet.</VisitViewerEmpty>
+            ) : (
+                <VisitList>
+                    {visits.map((visit) => (
+                        <VisitItem key={visit.id} status={visit.status}>
+                            <VisitItemHeader>
+                                <VisitItemTitle>{visit.name}</VisitItemTitle>
+                                <VisitDate value={visit.date} />
+                                <VisitStatus variant={visit.status} />
+                                <VisitItemActions>
+                                    <VisitItemTrigger />
+                                </VisitItemActions>
+                            </VisitItemHeader>
+                            <VisitItemBody>
+                                {/* services, meta */}
+                            </VisitItemBody>
+                            <VisitItemContent>
+                                {/* facts, notes */}
+                            </VisitItemContent>
+                        </VisitItem>
+                    ))}
+                </VisitList>
+            )}
+        </VisitViewer>
+    )
+}
+```
+
+- **Chrome.** `VisitViewer` is a `<section>`, named by `VisitViewerTitle` when
+  you add one. `VisitViewerHeader` puts `VisitViewerTitle` and
+  `VisitViewerDescription` at the start and `VisitViewerActions` at the end.
+  `VisitViewerToolbar` holds your own filters, search or view toggles.
+  `VisitViewerGroup` and `VisitViewerGroupLabel` are a section and heading for
+  the groups you made, such as Overdue, Upcoming and Past. `VisitViewerEmpty`
+  holds your empty-state copy and actions.
+- **Cards.** `VisitList` is an `<ol>` and `VisitItem` an `<li>` card. Pass
+  `status` to set `data-status` (a skipped visit is muted). `VisitItemHeader`,
+  `VisitItemTitle`, `VisitItemBody` and `VisitItemActions` are the card's
+  regions.
+- **Headings.** `VisitViewerTitle`, `VisitViewerGroupLabel` and
+  `VisitItemTitle` are level 2, 3 and 4 headings; pass `level` to fit your
+  page's outline.
+
+### Opening a visit's details
+
+`VisitItemTrigger` opens and closes `VisitItemContent` by mouse or keyboard,
+and sets `aria-expanded` and `aria-controls`. Its text is your children, or
+"Details". Each `VisitItem` is uncontrolled by default; pass `defaultOpen` to
+start open, or `open` with `onOpenChange` to control it from your app.
+
+## Visit parts
+
+These parts work inside a `VisitItem`, in a table cell, or on their own.
+
+- **`VisitDate`** takes the date or date-time exactly as stored
+  (`2026-11-12` or `2026-11-12T14:30:00.000`) and renders a `<time>`. It reads
+  the day from the string, never through `Date`, so the day never shifts with
+  the browser's time zone. It formats in the `calendar` and `locale` set on
+  `VisitViewer` (Gregorian outside one); pass `calendar` or `locale` to a single
+  date to override them, `showTime` to add the stored time and `prefix` for
+  words such as "Due". Read the system calendar yourself and pass it to
+  `VisitViewer`; `useVisitViewer()` returns the settings in effect.
+- **`VisitStatus`** is a badge for `completed`, `in-progress`, `scheduled`,
+  `overdue` or `skipped`. Each pairs an icon with words, never colour alone:
+  your children, or the status's localized name.
+- **`VisitServices`** and **`VisitService`** list what was done in the visit,
+  such as Vaccination and Growth monitoring. Pass `status` to a service when a
+  visit was partly done; it shows an icon and the status in words.
+- **`VisitMeta`** is a muted line such as "Ngelehun CHC · Nurse Amina · 14:30".
+  It puts a dot between its children and hides when they render nothing.
+- **`VisitFacts`**, **`VisitFact`**, **`VisitFactLabel`** and
+  **`VisitFactValue`** show values picked from across the visit's stages as a
+  `<dl>`. `VisitFactValue` takes a `state`: `value` (the default, isolated in a
+  `<bdi>`), `missing` ("Not recorded"), `not-performed` (a dash, read as "Not
+  performed") or `restricted` ("Unavailable"). Children replace those words.
+- **`VisitNotes`**, **`VisitNote`**, **`VisitNoteMeta`** and
+  **`VisitNoteText`** list the notes written across the visit.
+
+## Table
+
+Visit Viewer has no table of its own. Compose the
+[Table](/blocks/table) primitives from `@/components/dhis2/ui/table` and put
+`VisitDate`, `VisitStatus`, `VisitServices`, `VisitFactValue` and
+`VisitItemActions` in your cells. Outside a `VisitFact`, `VisitFactValue`
+renders a `<span>`, and so does `VisitService` outside `VisitServices`, so no
+cell holds a stray `<dd>` or `<li>`.
+
+<ExampleCard slug="visit-viewer/table" />

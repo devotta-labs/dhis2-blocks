@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-23T12:35:53.456Z\n"
-"PO-Revision-Date: 2026-11-23T12:35:53.456Z\n"
+"POT-Creation-Date: 2026-11-24T00:36:50.949Z\n"
+"PO-Revision-Date: 2026-11-24T00:36:50.949Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -1343,6 +1343,12 @@ msgstr "Not yet sent to DHIS2: {{changes}}"
 
 msgid "Download unsent changes"
 msgstr "Download unsent changes"
+
+msgid "Not performed"
+msgstr "Not performed"
+
+msgid "In progress"
+msgstr "In progress"
 
 msgid "Enrollment status"
 msgstr "Enrollment status"

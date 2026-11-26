@@ -60,6 +60,8 @@ import trackerDataEntryValueTypesSource from './tracker-data-entry/ValueTypesGri
 import finderCustomRowsSource from './tracked-entity-finder/CustomRows.tsx?raw'
 import finderFindPersonSource from './tracked-entity-finder/FindPerson.tsx?raw'
 import finderProgramPickerSource from './tracked-entity-finder/ProgramPicker.tsx?raw'
+import visitViewerCardsSource from './visit-viewer/ChildHealthVisits.tsx?raw'
+import visitViewerTableSource from './visit-viewer/VisitTable.tsx?raw'
 
 /**
  * Example registry.
@@ -98,6 +100,22 @@ const examples = [
         Component: lazy(() => import('./calendar/CalendarVisits')),
         source: calendarVisitsSource,
         minHeight: 640,
+    },
+    {
+        slug: 'visit-viewer/cards',
+        title: 'Child health visits as cards',
+        live: false,
+        Component: lazy(() => import('./visit-viewer/ChildHealthVisits')),
+        source: visitViewerCardsSource,
+        minHeight: 760,
+    },
+    {
+        slug: 'visit-viewer/table',
+        title: 'Child health visits as a table',
+        live: false,
+        Component: lazy(() => import('./visit-viewer/VisitTable')),
+        source: visitViewerTableSource,
+        minHeight: 360,
     },
     {
         slug: 'sidebar/app',

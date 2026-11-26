@@ -135,6 +135,10 @@ const router = createBrowserRouter([
                     ),
                     docRoute('/blocks/timeline', './pages/blocks/timeline.mdx'),
                     docRoute(
+                        '/blocks/visit-viewer',
+                        './pages/blocks/visit-viewer.mdx'
+                    ),
+                    docRoute(
                         '/blocks/tracked-entity-finder',
                         './pages/blocks/tracked-entity-finder.mdx'
                     ),

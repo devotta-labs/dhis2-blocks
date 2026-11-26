@@ -199,6 +199,7 @@ const checkInstall = (workDirectory: string) => {
             join(registryOutput, 'observation-cards.json'),
             join(registryOutput, 'timeline.json'),
             join(registryOutput, 'tracked-entity-finder.json'),
+            join(registryOutput, 'visit-viewer.json'),
             '-y',
             '--cwd',
             appDirectory,
@@ -210,6 +211,12 @@ const checkInstall = (workDirectory: string) => {
         join(REPO_ROOT, 'apps/docs/src/examples/working-list/ListCalendar.tsx'),
         join(appDirectory, 'src/ListCalendar.tsx')
     )
+    for (const example of ['ChildHealthVisits.tsx', 'VisitTable.tsx']) {
+        cpSync(
+            join(REPO_ROOT, 'apps/docs/src/examples/visit-viewer', example),
+            join(appDirectory, 'src', example)
+        )
+    }
     if (
         existsSync(join(appDirectory, 'src/components/working-list-calendar'))
     ) {

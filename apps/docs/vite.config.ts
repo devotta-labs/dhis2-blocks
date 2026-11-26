@@ -68,6 +68,16 @@ export default defineConfig(({ mode }) => {
             dedupe: ['react', 'react-dom'],
         },
         optimizeDeps: {
+            // WARNING: Labs and examples load lazily; without these Vite finds their dependencies on first visit, bundles again and the page's own imports fail with 504.
+            entries: [
+                'index.html',
+                'src/**/*.{ts,tsx}',
+                '../../packages/registry/{blocks,components}/**/*.{ts,tsx}',
+                '!**/*.test.{ts,tsx}',
+                '!**/*.{fixture,fixtures,test-utils}.{ts,tsx}',
+                '!**/test/**',
+                '!**/__tests__/**',
+            ],
             esbuildOptions: {
                 define: {
                     'process.env.REACT_APP_DHIS2_BASE_URL':

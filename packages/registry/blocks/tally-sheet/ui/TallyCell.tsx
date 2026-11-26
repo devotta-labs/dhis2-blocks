@@ -67,6 +67,17 @@ const SlideArrows = ({ axis }: { axis: 'across' | 'up' | undefined }) =>
         </svg>
     ))
 
+const useHeadingIds = (cell: number) => {
+    const { ids, levels, index, groupIds } = useTallyContext('TallyGrid')
+    const row = Math.floor(cell / index.columns.length)
+    const group = groupIds[row]
+    return [
+        ...(group === undefined ? [] : [group]),
+        ids.row(row),
+        ...columnHeaderIds(levels, ids, cell % index.columns.length),
+    ].join(' ')
+}
+
 const TapCell = memo(function TapCell({
     cell,
     firstOpen,
@@ -84,10 +95,15 @@ const TapCell = memo(function TapCell({
         (delta: number) => adjustCell(cell, delta),
         [adjustCell, cell]
     )
-    const { scrub, takeClick, handlers, dropOnEscape } = useScrub(count, adjust)
+    const { scrub, hold, takeClick, handlers, dropOnEscape } = useScrub(
+        count,
+        adjust
+    )
+    const headings = useHeadingIds(cell)
     const shown = count + (scrub.delta ?? 0)
     const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
         if (dropOnEscape(event)) return
+        if (event.ctrlKey || event.metaKey || event.altKey) return
         const adds = event.key === '+' || event.key === '='
         const takes = event.key === '-' || event.key === '_'
         if (event.repeat && (adds || takes || TAP_KEYS.has(event.key))) {
@@ -100,8 +116,10 @@ const TapCell = memo(function TapCell({
     return (
         <td data-cell={cell} className={CELL_CLASS}>
             <button
+                ref={hold}
                 id={ids.cell(cell)}
                 type="button"
+                aria-labelledby={`${headings} ${ids.cell(cell)}`}
                 tabIndex={isStop ? 0 : -1}
                 aria-keyshortcuts="+ -"
                 data-scrubbing={scrub.delta === undefined ? undefined : ''}
@@ -157,16 +175,10 @@ const EditCell = memo(function EditCell({
     cell: number
     session: EditSession
 }) {
-    const { ids, levels, index, groupIds } = useTallyContext('TallyGrid')
+    const { ids } = useTallyContext('TallyGrid')
     const shown = String(session.counts[cell] ?? 0)
     const [draft, setDraft] = useState(shown)
-    const row = Math.floor(cell / index.columns.length)
-    const column = cell % index.columns.length
-    const labelledBy = [
-        ...(groupIds[row] === undefined ? [] : [groupIds[row]]),
-        ids.row(row),
-        ...columnHeaderIds(levels, ids, column),
-    ].join(' ')
+    const labelledBy = useHeadingIds(cell)
     return (
         <td data-cell={cell} className={CELL_CLASS}>
             <Input

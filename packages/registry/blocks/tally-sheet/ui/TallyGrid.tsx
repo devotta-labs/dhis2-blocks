@@ -212,7 +212,7 @@ export const TallyGrid = memo(function TallyGrid({
             if (watched) observer.observe(watched)
         }
         return () => observer.disconnect()
-    }, [])
+    }, [index])
 
     const focusCell = (cell: number | undefined) => {
         if (cell === undefined) return
@@ -237,6 +237,7 @@ export const TallyGrid = memo(function TallyGrid({
         const cell = cellOf(event.target)
         if (cell === undefined || event.altKey || event.metaKey) return
         if (event.target instanceof HTMLInputElement) {
+            if (event.nativeEvent.isComposing) return
             const step = editStep(event)
             if (step === 0) return
             event.preventDefault()

@@ -2,48 +2,33 @@ import i18n from '@dhis2/d2-i18n'
 import type { TallyIndex } from '../core/layout'
 import { formatCount } from './format'
 
-const columnName = (labels: readonly string[]) =>
-    labels.reduce((before, label) =>
-        i18n.t('{{before}}, {{label}}', {
-            before,
-            label,
-            interpolation: { escapeValue: false },
-        })
+const joined = (parts: readonly string[]) =>
+    parts.slice(1).reduce(
+        (before, label) =>
+            i18n.t('{{before}}, {{label}}', {
+                before,
+                label,
+                interpolation: { escapeValue: false },
+            }),
+        parts[0] ?? ''
     )
 
 const place = (index: TallyIndex, cell: number) => {
     const size = index.columns.length
     const row = index.rows[Math.floor(cell / size)]
-    return {
-        group: row?.group,
-        row: row?.label ?? '',
-        column: columnName(index.columns[cell % size]?.labels ?? ['']),
-    }
+    return joined([
+        ...(row?.group === undefined ? [] : [row.group]),
+        row?.label ?? '',
+        ...(index.columns[cell % size]?.labels ?? []),
+    ])
 }
 
-export const tappedMessage = (
-    index: TallyIndex,
-    cell: number,
-    count: number
-) => {
-    const { group, row, column } = place(index, cell)
-    const marks = formatCount(count)
-    if (group === undefined) {
-        return i18n.t('{{row}}, {{column}}: {{marks}}', {
-            row,
-            column,
-            marks,
-            interpolation: { escapeValue: false },
-        })
-    }
-    return i18n.t('{{group}}, {{row}}, {{column}}: {{marks}}', {
-        group,
-        row,
-        column,
-        marks,
+export const tappedMessage = (index: TallyIndex, cell: number, count: number) =>
+    i18n.t('{{place}}: {{marks}}', {
+        place: place(index, cell),
+        marks: formatCount(count),
         interpolation: { escapeValue: false },
     })
-}
 
 export const undoneMessage = (
     index: TallyIndex,
@@ -55,21 +40,9 @@ export const undoneMessage = (
     if (cells.length > 1) {
         return i18n.t('{{count}} corrections undone', { count: cells.length })
     }
-    const { group, row, column } = place(index, cell)
-    const marks = formatCount(counts[cell] ?? 0)
-    if (group === undefined) {
-        return i18n.t('Undone: {{row}}, {{column}}, now {{marks}}', {
-            row,
-            column,
-            marks,
-            interpolation: { escapeValue: false },
-        })
-    }
-    return i18n.t('Undone: {{group}}, {{row}}, {{column}}, now {{marks}}', {
-        group,
-        row,
-        column,
-        marks,
+    return i18n.t('Undone: {{place}}, now {{marks}}', {
+        place: place(index, cell),
+        marks: formatCount(counts[cell] ?? 0),
         interpolation: { escapeValue: false },
     })
 }

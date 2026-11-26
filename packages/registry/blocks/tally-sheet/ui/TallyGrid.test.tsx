@@ -224,6 +224,27 @@ describe('keys', () => {
     })
 })
 
+describe('keys in an edit field', () => {
+    it('stays in the field while its text is being composed', async () => {
+        const screen = await render(
+            <TallySheet layout={VACCINATIONS} label="Tally" />
+        )
+        await screen.getByRole('button', { name: 'Edit counts' }).click()
+        const field = inputIn('OPV 1', 0)
+        field.focus()
+        field.dispatchEvent(
+            new KeyboardEvent('keydown', {
+                key: 'Enter',
+                bubbles: true,
+                isComposing: true,
+            })
+        )
+        expect(document.activeElement).toBe(field)
+        await userEvent.keyboard('{Enter}')
+        expect(document.activeElement).toBe(inputIn('Penta 1', 0))
+    })
+})
+
 describe('headings of the cell in hand', () => {
     it('highlights the pointed cell, then the focused one when the pointer leaves', async () => {
         await render(<TallySheet layout={VACCINATIONS} label="Tally" />)
@@ -308,6 +329,28 @@ describe('focus kept clear of the sticky headings', () => {
             }
         }
     )
+})
+
+describe('scroll padding', () => {
+    it('follows the headings of a layout the sheet is given later', async () => {
+        const screen = await render(
+            <TallySheet
+                layout={{ rows: VITAMIN_A.rows, categories: [] }}
+                label="Tally"
+            />
+        )
+        const region = screen.getByRole('region', { name: 'Tally' }).element()
+        if (!(region instanceof HTMLElement)) throw new Error('No region')
+        await expect.poll(() => region.style.scrollPaddingTop).toBe('0px')
+        await screen.rerender(
+            <TallySheet layout={VACCINATIONS} label="Tally" />
+        )
+        const head = region.querySelector('thead')
+        await expect
+            .poll(() => region.style.scrollPaddingTop)
+            .toBe(`${head?.getBoundingClientRect().height}px`)
+        expect(head?.getBoundingClientRect().height).toBeGreaterThan(0)
+    })
 })
 
 const CLINICS = {

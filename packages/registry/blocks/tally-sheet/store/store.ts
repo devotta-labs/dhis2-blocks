@@ -58,10 +58,8 @@ const continues = (
     next: readonly TallyEntry[]
 ) => {
     if (next.length < last.length) return false
-    if (last.length === 0) return true
-    return (
-        next[0]?.id === last[0]?.id &&
-        next[last.length - 1]?.id === last.at(-1)?.id
+    return last.every(
+        (entry, at) => entry === next[at] || entry.id === next[at]?.id
     )
 }
 
@@ -83,13 +81,11 @@ export const createTallyStore = ({
     let received = entries
     let receivedIds = new Set(entries.map(({ id }) => id))
     let replaced = 0
-    let lastAt = Math.max(
-        0,
-        ...entries
-            .filter((entry) => entry.by === by)
-            .map(({ at }) => Date.parse(at))
-            .filter((instant) => !Number.isNaN(instant))
-    )
+    let lastAt = 0
+    for (const entry of entries) {
+        const instant = entry.by === by ? Date.parse(entry.at) : Number.NaN
+        if (instant > lastAt) lastAt = instant
+    }
     fold.take(entries)
 
     const read = () => ({
@@ -132,6 +128,7 @@ export const createTallyStore = ({
                     row.id,
                     column.key,
                     fold.touchesOf(cell),
+                    sum,
                 ].join(BETWEEN)
                 append([
                     {

@@ -52,17 +52,17 @@ const slideOf = (held: Press, from: number, x: number, y: number) => {
 
 const IDLE: Scrub = { delta: undefined, anchor: undefined }
 
-const stopScroll = (event: TouchEvent) => event.preventDefault()
-
 /**
  * Hold, then slide: a press held still, by finger or mouse, turns sliding into adding and taking off, one
  * for each step slid. Letting go hands the difference to `commit`; Escape or a cancelled pointer drops it. A press
  * that never slides is still a tap, however long it is held, and `takeClick` says whether the click after a press
- * was the end of a slide. Sliding along the line or upwards adds, and the first step settles which of the two the
+ * was the end of a slide; a key pressed with no press under way forgets a slide whose click never came, so the
+ * key's own click still counts. Sliding along the line or upwards adds, and the first step settles which of the two the
  * slide follows, so a count at the edge of the screen still has somewhere to go. In a right-to-left page sliding
  * left adds. The pointer is captured from the press, so a
  * slide that leaves the button still ends on it. The press and the lift move the button by the same few pixels
- * whatever its width, through `--tally-press` and `--tally-lift`.
+ * whatever its width, through `--tally-press` and `--tally-lift`. `hold` is the button's ref: it listens for
+ * touch moves from the start, since Safari lets only a listener that was there before the touch stop the scroll.
  */
 export const useScrub = (count: number, commit: (delta: number) => void) => {
     const press = useRef<Press>()
@@ -71,11 +71,25 @@ export const useScrub = (count: number, commit: (delta: number) => void) => {
     const latest = useRef({ count, commit })
     latest.current = { count, commit }
 
+    const listening = useRef<HTMLElement | null>(null)
+    const stopScroll = useCallback((event: TouchEvent) => {
+        if (press.current?.from !== undefined) event.preventDefault()
+    }, [])
+    const hold = useCallback(
+        (element: HTMLElement | null) => {
+            listening.current?.removeEventListener('touchmove', stopScroll)
+            listening.current = element
+            element?.addEventListener('touchmove', stopScroll, {
+                passive: false,
+            })
+        },
+        [stopScroll]
+    )
+
     const end = useCallback((element: HTMLElement) => {
         const held = press.current
         if (held === undefined) return
         clearTimeout(held.timer)
-        element.removeEventListener('touchmove', stopScroll)
         if (element.hasPointerCapture(held.pointer)) {
             element.releasePointerCapture(held.pointer)
         }
@@ -101,6 +115,7 @@ export const useScrub = (count: number, commit: (delta: number) => void) => {
 
     return {
         scrub,
+        hold,
         takeClick: () => {
             const swallowed = swallowClick.current
             swallowClick.current = false
@@ -133,12 +148,7 @@ export const useScrub = (count: number, commit: (delta: number) => void) => {
                     axis: undefined,
                     from: undefined,
                     slid: false,
-                    timer: setTimeout(() => {
-                        element.addEventListener('touchmove', stopScroll, {
-                            passive: false,
-                        })
-                        begin(element)
-                    }, HOLD_MS),
+                    timer: setTimeout(() => begin(element), HOLD_MS),
                 }
             },
             onPointerMove(event: PointerEvent<HTMLButtonElement>) {
@@ -198,6 +208,7 @@ export const useScrub = (count: number, commit: (delta: number) => void) => {
         },
         dropOnEscape(event: KeyboardEvent<HTMLButtonElement>) {
             if (event.key !== 'Escape' || press.current?.from === undefined) {
+                if (press.current === undefined) swallowClick.current = false
                 return false
             }
             swallowClick.current = true

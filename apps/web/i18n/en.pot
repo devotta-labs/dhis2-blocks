@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-26T08:35:05.042Z\n"
-"PO-Revision-Date: 2026-11-26T08:35:05.043Z\n"
+"POT-Creation-Date: 2026-11-26T09:04:02.959Z\n"
+"PO-Revision-Date: 2026-11-26T09:04:02.961Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -712,22 +712,16 @@ msgstr "Undo"
 msgid "{{before}}, {{label}}"
 msgstr "{{before}}, {{label}}"
 
-msgid "{{row}}, {{column}}: {{marks}}"
-msgstr "{{row}}, {{column}}: {{marks}}"
-
-msgid "{{group}}, {{row}}, {{column}}: {{marks}}"
-msgstr "{{group}}, {{row}}, {{column}}: {{marks}}"
+msgid "{{place}}: {{marks}}"
+msgstr "{{place}}: {{marks}}"
 
 msgid "{{count}} corrections undone"
 msgid_plural "{{count}} corrections undone"
 msgstr[0] "{{count}} corrections undone"
 msgstr[1] "{{count}} corrections undone"
 
-msgid "Undone: {{row}}, {{column}}, now {{marks}}"
-msgstr "Undone: {{row}}, {{column}}, now {{marks}}"
-
-msgid "Undone: {{group}}, {{row}}, {{column}}, now {{marks}}"
-msgstr "Undone: {{group}}, {{row}}, {{column}}, now {{marks}}"
+msgid "Undone: {{place}}, now {{marks}}"
+msgstr "Undone: {{place}}, now {{marks}}"
 
 msgid "No counts changed"
 msgstr "No counts changed"

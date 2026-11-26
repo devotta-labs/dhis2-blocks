@@ -229,6 +229,20 @@ describe('holding a count and sliding', () => {
         expect(appended).toEqual([])
     })
 
+    it('counts a key press after a dropped slide was let go off the button', async () => {
+        const { appended, rendered } = sheet()
+        await rendered
+        const button = buttonIn('OPV 1', 0)
+        button.focus()
+        await held(button)
+        point(button, 'pointermove', STEP_PX * 3)
+        await userEvent.keyboard('{Escape}')
+        await expect.poll(readout).toBeUndefined()
+        await userEvent.keyboard('{Enter}')
+        await expect.element(button).toHaveTextContent('1')
+        expect(appended).toMatchObject([{ kind: 'tap' }])
+    })
+
     it('drops the slide when the pointer is cancelled', async () => {
         const { appended, rendered } = sheet()
         await rendered
@@ -282,5 +296,27 @@ describe('the plus and minus keys on a count', () => {
         button.focus()
         await userEvent.keyboard('{->3/}')
         await expect.element(button).toHaveTextContent('4')
+    })
+
+    it('leave the count alone when pressed with Ctrl, Cmd or Alt, as for zooming the page', async () => {
+        const { appended, rendered } = sheet([correctionOn('opv1', GIRL, 5)])
+        await rendered
+        const button = buttonIn('OPV 1', 0)
+        button.focus()
+        for (const held of [
+            { key: '=', ctrlKey: true },
+            { key: '=', metaKey: true },
+            { key: '+', metaKey: true },
+            { key: '-', ctrlKey: true },
+            { key: '-', metaKey: true },
+            { key: '-', altKey: true },
+        ]) {
+            button.dispatchEvent(
+                new KeyboardEvent('keydown', { bubbles: true, ...held })
+            )
+        }
+        await userEvent.keyboard('+')
+        await expect.element(button).toHaveTextContent('6')
+        expect(appended).toHaveLength(1)
     })
 })

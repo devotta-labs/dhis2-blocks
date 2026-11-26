@@ -343,3 +343,49 @@ describe('receiving the host’s log', () => {
         ])
     })
 })
+
+describe('logs that are not what they seem', () => {
+    it('counts an entry a joined log puts before one already given', () => {
+        const first = tapOn('opv1', GIRL)
+        const between = tapOn('bcg', GIRL)
+        const late = tapOn('opv1', GIRL)
+        const last = tapOn('penta1', GIRL)
+        const { store, state } = session([first, last, late])
+        store.getState().receive([first, between, late, last])
+        expect(state().replaced).toBe(0)
+        expect(state().counts[cell('bcg')]).toBe(1)
+        expect(state().total).toBe(4)
+    })
+
+    it('adds up the same on two devices that settled a cell from different sums', () => {
+        const shared = tapOn('opv1', GIRL)
+        const tablet = session(
+            [shared, correctionOn('opv1', GIRL, -3)],
+            'tablet'
+        )
+        const phone = session([shared, correctionOn('opv1', GIRL, -2)], 'phone')
+        for (const device of [tablet, phone]) {
+            device.state().tap(cell('opv1'))
+            device.state().tap(cell('opv1'))
+            device.state().tap(cell('opv1'))
+        }
+        tablet.store
+            .getState()
+            .receive(mergeTallyEntries(tablet.log, phone.log))
+        phone.store.getState().receive(mergeTallyEntries(phone.log, tablet.log))
+        expect(tablet.state().counts[cell('opv1')]).toBe(5)
+        expect(phone.state().counts).toEqual(tablet.state().counts)
+    })
+
+    it('opens on a log with more entries of its own than a call takes arguments', () => {
+        const entries = Array.from({ length: 300_000 }, () =>
+            tapOn('opv1', GIRL, 'tablet')
+        )
+        const store = createTallyStore({
+            layout: VACCINATIONS,
+            entries,
+            by: 'tablet',
+        })
+        expect(store.getState().total).toBe(300_000)
+    })
+})

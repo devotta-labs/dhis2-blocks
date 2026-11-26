@@ -26,12 +26,20 @@ const done = async () => {
 }
 
 describe('count buttons', () => {
-    it('is a large button named by its count, that a click adds one to', async () => {
+    it('is a large button named by its headings and count, that a click adds one to', async () => {
         const heard = listen()
-        await render(<TallySheet layout={VACCINATIONS} label="Tally" />)
+        const screen = await render(
+            <TallySheet layout={VACCINATIONS} label="Tally" />
+        )
         const button = buttonIn('OPV 1', 0)
         expect(button.textContent).toBe('0')
-        expect(button.hasAttribute('aria-label')).toBe(false)
+        expect(
+            screen
+                .getByRole('button', {
+                    name: '6 weeks OPV 1 0–11 months Female 0',
+                })
+                .element()
+        ).toBe(button)
         expect(button.className).toContain('touch-manipulation')
         expect(getComputedStyle(button).userSelect).toBe('none')
         expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(80)

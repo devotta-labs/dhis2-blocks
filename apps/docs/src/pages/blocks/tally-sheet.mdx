@@ -69,7 +69,10 @@ The counts are not stored as numbers. The sheet reads them from a log of
 - `undo` takes back the entry its `undoes` names.
 
 Every entry has a unique `id` and an `at` time (an ISO 8601 instant), and may
-have `by` and `batch`. A cell's count is its entries taken in the order they
+have `by` and `batch`. `at` orders the entries: it is when the entry was made,
+or just after the latest entry the sheet had taken when that is later, so a
+correction always comes after what it corrects even beside a device whose clock
+runs ahead. Treat it as an order, not as a record of the time on the clock. A cell's count is its entries taken in the order they
 were made, by `at` and then `id`, never falling below zero on the way: a
 correction that takes off more than is there takes off what is there, and a tap
 made after it still counts. Your app stores and joins every kind of entry the

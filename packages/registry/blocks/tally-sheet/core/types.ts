@@ -38,7 +38,11 @@ export interface TallyLayout {
 interface EntryBase {
     /** Unique across every device that tallies the session; joining two logs keeps one entry per id. */
     id: string
-    /** When it was made, as an ISO 8601 instant. Orders the entries of a joined log. */
+    /**
+     * The ISO 8601 instant that orders the entry among the others: when it was made, or just after the latest entry
+     * the sheet had taken when that is later, as it is beside a device whose clock runs ahead. Not a record of the
+     * time on the clock; a host that needs one keeps its own.
+     */
     at: string
     /** The device or person that made it, when the host says; undo takes back the latest entry of its own. */
     by?: string

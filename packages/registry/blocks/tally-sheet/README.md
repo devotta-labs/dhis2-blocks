@@ -149,7 +149,10 @@ A log is a list of `TallyEntry`:
 - `undo`: takes back the entry `undoes` names.
 
 Every entry has a unique `id` and an `at` time, and may have `by` and
-`batch`. The log only grows. A cell's count is its entries taken in the order
+`batch`. `at` orders the entries: it is when the entry was made, or just after
+the latest entry the sheet had taken when that is later, so a correction
+always comes after what it corrects even beside a device whose clock runs
+ahead. It is not a record of the time on the clock. The log only grows. A cell's count is its entries taken in the order
 they were made, by `at` and then `id`, never falling below zero on the way: a
 correction that takes off more than is there takes off what is there, and a
 tap made after it still counts. Joining logs keeps each entry once by `id`,

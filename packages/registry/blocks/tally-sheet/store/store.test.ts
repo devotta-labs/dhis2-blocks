@@ -225,11 +225,17 @@ describe('correcting', () => {
         expect(Date.parse(log.at(-1)?.at ?? '')).toBeGreaterThan(
             Date.parse(ahead.at)
         )
-        expect(
-            tallyCounts(VACCINATIONS, mergeTallyEntries([ahead], log)).find(
-                ({ row, options }) => row === 'opv1' && options === GIRL
-            )?.count ?? 0
-        ).toBe(0)
+        const joined = mergeTallyEntries([ahead], log)
+        expect(tallyCounts(VACCINATIONS, [ahead])).toContainEqual({
+            row: 'opv1',
+            options: GIRL,
+            count: 1,
+        })
+        expect(tallyCounts(VACCINATIONS, joined)).toContainEqual({
+            row: 'opv1',
+            options: GIRL,
+            count: 0,
+        })
         state().tap(cell('opv1'))
         expect(state().counts[cell('opv1')]).toBe(1)
     })

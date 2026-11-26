@@ -84,10 +84,6 @@ export const createTallyStore = ({
     let receivedIds = new Set(entries.map(({ id }) => id))
     let replaced = 0
     let lastAt = 0
-    for (const entry of entries) {
-        const instant = entry.by === by ? Date.parse(entry.at) : Number.NaN
-        if (instant > lastAt) lastAt = instant
-    }
     fold.take(entries)
 
     const read = () => ({
@@ -107,9 +103,8 @@ export const createTallyStore = ({
         }
         const stamp = () => {
             const instant = Date.parse(now())
-            lastAt = Number.isNaN(instant)
-                ? lastAt + A_MILLISECOND
-                : Math.max(instant, lastAt + A_MILLISECOND)
+            const after = Math.max(lastAt, fold.newest()) + A_MILLISECOND
+            lastAt = Number.isNaN(instant) ? after : Math.max(instant, after)
             return { id: newId(), at: new Date(lastAt).toISOString(), by }
         }
 

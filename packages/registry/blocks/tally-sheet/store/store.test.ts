@@ -212,6 +212,28 @@ describe('correcting', () => {
         expect(state().counts[cell('opv1')]).toBe(7)
     })
 
+    it('clears a cell holding a tap from a device whose clock runs ahead', () => {
+        const ahead = {
+            ...tapOn('opv1', GIRL, 'tablet'),
+            at: '2027-01-01T00:00:00.000Z',
+        }
+        const { store, state, log } = session([], 'phone')
+        store.getState().receive([ahead])
+        expect(state().counts[cell('opv1')]).toBe(1)
+        state().correct([{ cell: cell('opv1'), sumBefore: 1, count: 0 }])
+        expect(state().counts[cell('opv1')]).toBe(0)
+        expect(Date.parse(log.at(-1)?.at ?? '')).toBeGreaterThan(
+            Date.parse(ahead.at)
+        )
+        expect(
+            tallyCounts(VACCINATIONS, mergeTallyEntries([ahead], log)).find(
+                ({ row, options }) => row === 'opv1' && options === GIRL
+            )?.count ?? 0
+        ).toBe(0)
+        state().tap(cell('opv1'))
+        expect(state().counts[cell('opv1')]).toBe(1)
+    })
+
     it('lands on the typed count in a cell a correction emptied', () => {
         const { state } = session([correctionOn('opv1', GIRL, -1)])
         const sumBefore = state().sums()[cell('opv1')] ?? 0

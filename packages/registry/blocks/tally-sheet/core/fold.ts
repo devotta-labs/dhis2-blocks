@@ -33,7 +33,9 @@ const earlier = (
  * from when they arrive, so each entry is counted once however often it is given and joined logs add up the same on
  * every device, an undo that arrives before its entry included. Entries for a row or options the layout does not have
  * are `unplaced`: counted nowhere. `latest` is what the next undo takes back: the action made last with something
- * left, of the device `by` names when it names one. `touched` says whether a cell has ever been given an entry.
+ * left, of the device `by` names when it names one. `touched` says whether a cell has ever been given an entry, and
+ * `newest` is the latest time on any entry taken. Entries that arrive out of order are put in order once for each
+ * `take`, so a log given newest first costs no more than one given oldest first.
  */
 export const createFold = (index: TallyIndex) => {
     const counts = Array.from({ length: index.size }, () => 0)
@@ -46,6 +48,7 @@ export const createFold = (index: TallyIndex) => {
     const batchAt = new Map<string, Batch>()
     let total = 0
     let unplaced = 0
+    let newest = 0
 
     const stack = () => {
         const batches: Batch[] = []
@@ -106,29 +109,35 @@ export const createFold = (index: TallyIndex) => {
         show(cell, count)
     }
 
+    const unsettled = new Set<number>()
+
     const add = (entry: Placed) => {
         const entries = live[entry.cell]
         if (!entries) return
         const last = entries.at(-1)
-        if (!last || earlier(last, entry)) {
-            entries.push(entry)
-            show(
-                entry.cell,
-                Math.max(0, (counts[entry.cell] ?? 0) + entry.delta)
-            )
+        entries.push(entry)
+        if (unsettled.has(entry.cell)) return
+        if (last && !earlier(last, entry)) {
+            unsettled.add(entry.cell)
             return
         }
-        const at = entries.findIndex((each) => earlier(entry, each))
-        entries.splice(at === -1 ? entries.length : at, 0, entry)
-        recount(entry.cell)
+        show(entry.cell, Math.max(0, (counts[entry.cell] ?? 0) + entry.delta))
     }
 
     const remove = (entry: Placed) => {
         const entries = live[entry.cell]
-        const at = entries?.indexOf(entry) ?? -1
+        const at = entries?.lastIndexOf(entry) ?? -1
         if (!entries || at === -1) return
         entries.splice(at, 1)
-        recount(entry.cell)
+        unsettled.add(entry.cell)
+    }
+
+    const settle = () => {
+        for (const cell of unsettled) {
+            live[cell]?.sort((a, b) => (earlier(a, b) ? -1 : 1))
+            recount(cell)
+        }
+        unsettled.clear()
     }
 
     const place = (
@@ -171,6 +180,7 @@ export const createFold = (index: TallyIndex) => {
     const apply = (entry: TallyEntry) => {
         if (seen.has(entry.id)) return
         seen.add(entry.id)
+        newest = Math.max(newest, instantOf(entry.at))
         if (entry.kind !== 'undo') {
             place(entry)
             return
@@ -184,7 +194,9 @@ export const createFold = (index: TallyIndex) => {
     return {
         take(entries: readonly TallyEntry[]) {
             for (const entry of entries) apply(entry)
+            settle()
         },
+        newest: () => newest,
         countOf: (cell: number) => counts[cell] ?? 0,
         counts: () => [...counts],
         touched: (cell: number) => touched.has(cell),

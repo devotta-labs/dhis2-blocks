@@ -999,7 +999,8 @@
                 "devotta-labs/dhis2-blocks/label",
                 "devotta-labs/dhis2-blocks/popover",
                 "devotta-labs/dhis2-blocks/radio-group",
-                "devotta-labs/dhis2-blocks/textarea"
+                "devotta-labs/dhis2-blocks/textarea",
+                "devotta-labs/dhis2-blocks/toggle-group"
             ],
             "files": [
                 {

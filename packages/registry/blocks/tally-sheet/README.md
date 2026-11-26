@@ -118,7 +118,15 @@ that is not a whole number. They stay in the log and are counted nowhere.
 
 Arrow keys move between open cells, Home and End to the ends of the row, and
 Ctrl+Home and Ctrl+End to the ends of the sheet; the grid is one tab stop.
-Holding Enter or Space adds one mark, not many. Each tap is announced with
+Holding Enter or Space adds one mark, not many. Holding a count and sliding
+adjusts it: a press held still for a moment, by finger or mouse,
+adds one for each step slid towards the end of the line or upwards and takes
+one off towards the start or downwards, never below zero. The first step
+settles which way the slide goes, so a count at the edge of the screen still
+has room. The cell shows the new count, with the
+difference floating above it; letting go saves one correction, and Escape drops it. A
+press that never slides is a tap however long it is held. On the keyboard `+`
+adds one and `-` takes one off. Each tap is announced with
 its group, row, column and new count. The headings of the cell under the mouse
 or holding focus are highlighted. "Edit counts" turns each cell, and each
 closed cell that holds a count, into a number field; the arrows and Enter move

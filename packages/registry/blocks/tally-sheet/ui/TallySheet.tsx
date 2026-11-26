@@ -169,6 +169,28 @@ export const TallySheet = ({
         },
         [store, index]
     )
+    const adjustCell = useCallback(
+        (cell: number, delta: number) => {
+            const state = store.getState()
+            const changed = state.correct([
+                {
+                    cell,
+                    sumBefore: state.sums()[cell] ?? 0,
+                    count: Math.max(0, (state.counts[cell] ?? 0) + delta),
+                },
+            ])
+            if (changed > 0) {
+                announce(
+                    tappedMessage(
+                        index,
+                        cell,
+                        store.getState().counts[cell] ?? 0
+                    )
+                )
+            }
+        },
+        [store, index]
+    )
     const undo = useCallback(() => {
         const cells = store.getState().undo()
         const said = undoneMessage(index, cells, store.getState().counts)
@@ -250,6 +272,7 @@ export const TallySheet = ({
                 setEditing,
                 finishEditing,
                 tapCell,
+                adjustCell,
                 undo,
                 RowBadge: hasRowBadge ? HostRowBadge : undefined,
             }) satisfies TallyContextValue,
@@ -264,6 +287,7 @@ export const TallySheet = ({
             setEditing,
             finishEditing,
             tapCell,
+            adjustCell,
             undo,
             hasRowBadge,
             HostRowBadge,

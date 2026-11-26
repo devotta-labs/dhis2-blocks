@@ -32,6 +32,8 @@ export interface TallyContextValue {
     /** Ends editing: saves the drafts that changed a count when `save`, else drops them. */
     finishEditing(save: boolean): void
     tapCell(cell: number): void
+    /** Adds `delta` to a cell as one correction, never taking it below zero. */
+    adjustCell(cell: number, delta: number): void
     undo(): void
     RowBadge?: ComponentType<{ row: TallyRow; total: number }>
 }

@@ -146,8 +146,19 @@ what is stored, or keeps every session's log and saves their joined total.
 Undo last mark takes back this sheet's latest tap, or its latest set of
 corrections together, by appending `undo` entries. See `by` below for what
 counts as this sheet's. It is disabled, and stays
-focusable, when there is nothing to take back, and it is not shown while the
-counts are being edited.
+focusable, when there is nothing to take back, and it stays in place, disabled,
+while the counts are being edited.
+
+Holding a count and sliding adjusts it without leaving the sheet. Hold a count
+button still for a moment, with a finger or a mouse, then slide: each
+step towards the end of the line, or upwards, adds one, each step towards the
+start, or downwards, takes one off, and the count stops at zero. The first step
+settles which way the slide goes, so a count in the last column or the bottom
+row of a phone screen still has somewhere to go. The cell shows the new count as it
+changes, with the difference so far floating above it. Letting go writes one
+`correction`, which Undo takes back whole; Escape, or a cancelled touch, drops
+it. A press that never slides is a tap, however long it is held, and a touch
+that moves before the hold scrolls the sheet as usual.
 
 Edit counts turns each open cell, and each closed cell that holds a count, into
 a number field, to put a miscount right or copy a paper sheet in. Fields keep
@@ -236,6 +247,12 @@ Arrow keys move between open cells, skipping closed ones, and left and right
 follow a right-to-left page. Home and End go to the ends of the row, Ctrl+Home
 and Ctrl+End to the ends of the sheet. Holding Enter or Space adds one mark,
 not many.
+
+Sliding to adjust is a pointer gesture, so it has two other ways in. On a
+focused count, `+` adds one and `-` takes one off, down to zero, and neither
+repeats while held. Edit counts does the same with typed numbers and no
+dragging. The difference shown above the cell is for the eye only; the new count
+is announced when the slide is let go.
 
 A count button is named by its count; its row and column headings give its
 place. Each tap is announced with its row, column and new count, such as

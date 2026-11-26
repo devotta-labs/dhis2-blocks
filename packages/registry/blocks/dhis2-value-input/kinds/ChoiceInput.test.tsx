@@ -135,20 +135,32 @@ test('a read-only No is reached with Tab, cannot be changed and says why', async
         .toHaveAccessibleDescription('Locked')
 })
 
-test("a rule's error marks the unpressed Yes/No buttons and describes the group", async () => {
-    await mount(BOOLEAN, {
-        value: 'true',
-        messages: [{ tone: 'error', text: 'Not while breastfeeding' }],
-    })
+test("a rule's error marks the unpressed Yes/No button, not the pressed one, and describes the group", async () => {
+    const field = (messages: ValueInputProps['messages']) => (
+        <ValueInput
+            field={BOOLEAN}
+            settings={SETTINGS}
+            label={LABEL}
+            value="true"
+            messages={messages}
+            onChange={() => undefined}
+        />
+    )
     const border = (name: string) =>
         getComputedStyle(pressable(name).element()).borderColor
-    expect(border('No')).not.toBe(border('Yes'))
-    await expect
-        .element(page.getByRole('group', { name: LABEL }))
-        .toHaveAccessibleDescription(/Not while breastfeeding/)
+    const screen = await render(field(undefined))
+    const before = { yes: border('Yes'), no: border('No') }
+    await screen.rerender(
+        field([{ tone: 'error', text: 'Not while breastfeeding' }])
+    )
     await expect
         .element(page.getByRole('group', { name: LABEL }))
         .toHaveAttribute('data-invalid')
+    expect(border('No')).not.toBe(before.no)
+    expect(border('Yes')).toBe(before.yes)
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAccessibleDescription(/Not while breastfeeding/)
 })
 
 test('a Yes/No offers only what a rule leaves, and the answer it holds', async () => {

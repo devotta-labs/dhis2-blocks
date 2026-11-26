@@ -7,8 +7,8 @@ import { focusInto } from '../focusInto'
 
 /**
  * Yes and No as a toggle group: one tab stop, with arrow keys between the two. Pressing the chosen one again reports no
- * value, unless the field is `required`. Read-only buttons are not `aria-disabled`, which arrow keys would skip: the
- * group's description says why they cannot be changed.
+ * value (`null`), which a host that needs an answer leaves unsaved. Read-only buttons are not `aria-disabled`, which
+ * arrow keys would skip: the group's description says why they cannot be changed.
  */
 export const YesNoButtons = ({
     id,
@@ -18,7 +18,6 @@ export const YesNoButtons = ({
     value,
     invalid,
     readOnly,
-    required,
     onChange,
 }: {
     id: string
@@ -28,7 +27,6 @@ export const YesNoButtons = ({
     value: string | undefined
     invalid: boolean
     readOnly: boolean
-    required: boolean
     onChange(value: string | null): void
 }) => (
     <ToggleGroup
@@ -42,10 +40,9 @@ export const YesNoButtons = ({
         variant="outline"
         value={value === undefined ? [] : [value]}
         onValueChange={(next: string[]) => {
-            if (readOnly || (required && next.length === 0)) {
-                return
+            if (!readOnly) {
+                onChange(next[0] ?? null)
             }
-            onChange(next[0] ?? null)
         }}
         className="group/yes-no"
     >

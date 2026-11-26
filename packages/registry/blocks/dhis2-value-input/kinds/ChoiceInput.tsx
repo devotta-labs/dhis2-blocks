@@ -161,8 +161,11 @@ export const ChoiceInput = ({
                 value={value}
                 invalid={invalid}
                 readOnly={readOnly}
-                required={required}
-                onChange={onChange}
+                onChange={(next) => {
+                    if (next !== null || !required) {
+                        onChange(next)
+                    }
+                }}
             />
         ) : undefined
     const radios =

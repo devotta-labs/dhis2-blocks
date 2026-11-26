@@ -125,11 +125,18 @@ test('a read-only No is reached with the arrow keys, cannot be changed and says 
         value: 'false',
         readOnly: 'Locked',
     })
-    await userEvent.keyboard('{Tab}{ArrowRight}')
+    await userEvent.keyboard('{Tab}')
+    await expect.element(pressable('Yes')).toHaveFocus()
+    await userEvent.keyboard(' ')
+    await userEvent.keyboard('{Enter}')
+    await userEvent.keyboard('{ArrowRight}')
     await expect.element(pressable('No')).toHaveFocus()
     await userEvent.keyboard(' ')
     await userEvent.click(pressable('Yes'), { force: true })
     expect(onChange).not.toHaveBeenCalled()
+    await expect
+        .element(pressable('Yes'))
+        .toHaveAttribute('aria-pressed', 'false')
     await expect
         .element(pressable('No'))
         .toHaveAttribute('aria-pressed', 'true')

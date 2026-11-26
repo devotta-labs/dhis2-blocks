@@ -1,0 +1,277 @@
+---
+title: Tally Sheet
+description: A paper tally sheet on screen, one tap a mark, counted from a log that several devices can join.
+---
+
+import { ExampleCard } from '../../components/ExampleCard'
+import { InstallCommand } from '../../components/InstallCommand'
+
+Count doses or diagnoses as they happen, one tap a mark, and save what the
+session adds up to.
+
+<ExampleCard slug="tally-sheet/vitamin-a" />
+
+On paper, a tally sheet is a grid of what is counted by who it was given to: a
+row per dose or diagnosis, a column per age band and sex, one stroke in a cell
+for each person, and the cells that do not apply hatched out. At the end of the
+session the strokes are added up into the monthly report. This block is that
+sheet. Each open cell is a large button showing its count, and a tap adds one.
+The block keeps no data and knows nothing about the DHIS2 Web API: storing the
+session and saving its counts stay with your app.
+
+## Installation
+
+<InstallCommand item="tally-sheet" />
+
+Import it from `@/components/tally-sheet`. Its text goes through
+`@dhis2/d2-i18n` as literal `i18n.t` calls, so `d2-app-scripts i18n extract`
+finds every string once the block is in your app's `src`.
+
+## The layout
+
+`TallySheet` takes a `layout` and a `label`. The label names the sheet's grid
+for screen readers.
+
+- `rows` are what is counted, each with an `id` and a `label`. A row with a
+  `group` is drawn under that group's heading ("At birth", "6 weeks"). Rows
+  that share a group are drawn together, where the group's first row is.
+- `categories` split the people counted, each with an `id`, a `label` and
+  `options`. The columns are every combination of one option from each
+  category, the last category changing fastest, with a heading row per
+  category. A layout with no categories has one column.
+- `closed` lists the cells that never take a mark. Each names a `row` and some
+  `options`; every column with those options is hatched in that row and has no
+  button. `{ row: 'bcg', options: { age: 'over1' } }` closes BCG for both
+  sexes over 12 months.
+
+Ids must be unique: row ids on the sheet, category ids, and option ids within a
+category. The sheet throws for a layout that repeats one or has an empty id.
+
+The sheet compares the layout by its content, so a layout built during render
+is fine. A layout with different rows, categories or closed cells starts the
+sheet again from the log, and ends editing.
+
+<ExampleCard slug="tally-sheet/vaccinations" />
+
+For aggregate data a row is a data element, a category is a category, and a
+column is a category option combination. The sheet does not depend on that: for
+anonymous events a row can be one option of a data element and each category
+another data element with options, with every tap saved as an event.
+
+## The log
+
+The counts are not stored as numbers. The sheet reads them from a log of
+`TallyEntry`, which only grows:
+
+- `tap` adds one to a row's cell in the column with these `options`.
+- `correction` adds `delta`, which may be below zero. Done in Edit counts
+  writes one correction for each changed cell, all sharing a `batch`.
+- `undo` takes back the entry its `undoes` names.
+
+Every entry has a unique `id` and an `at` time (an ISO 8601 instant), and may
+have `by` and `batch`. `at` orders the entries: it is when the entry was made,
+or just after the latest entry the sheet had taken when that is later, so a
+correction always comes after what it corrects even beside a device whose clock
+runs ahead. Treat it as an order, not as a record of the time on the clock. A cell's count is its entries taken in the order they
+were made, by `at` and then `id`, never falling below zero on the way: a
+correction that takes off more than is there takes off what is there, and a tap
+made after it still counts. Your app stores and joins every kind of entry the
+same way; it never needs to write one.
+
+Entries for a row or options the layout does not have are counted nowhere, so
+a log outlives a change to the layout. `unplacedTallyEntries(layout, entries)`
+returns them, such as taps on a row that has since been removed or an option
+that no longer exists, for your app to show or keep.
+
+Keep the log yourself by passing `entries` and `onAppend`. `onAppend` gets
+only the entries each tap, undo or Done adds; append them to your log and pass
+the new log back as `entries`. A log that continues the last one passed adds
+only its new entries, so a tap's own work does not grow with the log, and taps
+made before your new log comes back still count.
+
+```tsx
+const [log, setLog] = useState<readonly TallyEntry[]>([])
+
+<TallySheet
+    layout={layout}
+    label="Immunisation tally"
+    entries={log}
+    onAppend={(made) => setLog((before) => [...before, ...made])}
+/>
+```
+
+Or let the sheet keep its own log: pass `defaultEntries` for the log it opens
+on, and `onAppend` to save each new entry. The vitamin A example at the top of
+the page keeps its own log; the vaccination example keeps it in React state.
+
+Store the log where your app keeps a session in progress: local storage,
+IndexedDB or a DHIS2 data store namespace. Saving after each `onAppend` keeps
+every mark through a reload.
+
+### What a session adds up to
+
+`tallyCounts(layout, entries)` adds a log up. It returns one
+`{ row, options, count }` for every open cell and every closed cell the log
+holds an entry for, zeros included, rows in the order of `layout.rows` and columns in
+sheet order. `options` holds the option chosen in each category, by category
+id. To show only what was counted, filter on `count > 0`, as the vaccination
+example does.
+
+To save the counts as aggregate data values, use DHIS2 ids for the rows and
+options, and map each count's options to the category option combination that
+has those options:
+
+```ts
+// GET /api/categoryCombos/<id>?fields=categoryOptionCombos[id,categoryOptions[id]]
+const optionsKey = (ids: readonly string[]) => [...ids].sort().join(';')
+const comboOf = new Map(
+    categoryOptionCombos.map(({ id, categoryOptions }) => [
+        optionsKey(categoryOptions.map((option) => option.id)),
+        id,
+    ])
+)
+
+const dataValues = tallyCounts(layout, log).map(({ row, options, count }) => ({
+    dataElement: row,
+    categoryOptionCombo: comboOf.get(optionsKey(Object.values(options))),
+    value: String(count),
+}))
+// POST /api/dataValueSets with { dataSet, period, orgUnit, dataValues }
+```
+
+Save the zeros too. A cell taken back to zero by an undo or a correction then
+overwrites the value saved for it earlier, instead of leaving it in place.
+
+A data value holds one number for its period, and a new value replaces it. A
+facility that runs several sessions in a month adds each session's counts to
+what is stored, or keeps every session's log and saves their joined total.
+
+## Undo and Edit counts
+
+Undo, in the toolbar, takes back this sheet's latest tap, or its latest set of
+corrections together, by appending `undo` entries. See `by` below for what
+counts as this sheet's. It is disabled, and stays
+focusable, when there is nothing to take back, and it stays in place, disabled,
+while the counts are being edited.
+
+Holding a count and sliding adjusts it without leaving the sheet. Hold a count
+button still for a moment, with a finger or a mouse, then slide: each
+step towards the end of the line, or upwards, adds one, each step towards the
+start, or downwards, takes one off, and the count stops at zero. The first step
+settles which way the slide goes, so a count in the last column or the bottom
+row of a phone screen still has somewhere to go. The cell shows the new count as it
+changes, with the difference so far floating above it. Letting go writes one
+`correction`, which Undo takes back whole; Escape, or a cancelled touch, drops
+it. A press that never slides is a tap, however long it is held, and a touch
+that moves before the hold scrolls the sheet as usual.
+
+Edit counts turns each open cell, and each closed cell that holds a count, into
+a number field, to put a miscount right or copy a paper sheet in. Fields keep
+only digits, in any script, up to six; a field left empty keeps its count.
+Cancel drops what was typed. Done writes a correction for each changed cell,
+bringing it to the typed count from where it was when editing began, so taps
+another device made in the meantime are kept. `editing`, `defaultEditing` and
+`onEditingChange` control edit mode from outside.
+
+## Two devices on one session
+
+A busy session may be tallied on two phones. The sheet puts `by` on every
+entry it makes, and undo takes back only entries with its own `by`. Without
+it, `by` is an id made when the sheet opens, so undo takes back only what was
+done on this sheet since it opened. Pass a stable `by`, such as a device or
+user id, to keep undo working across a reload and to say which device made
+each entry in a joined log.
+
+Join the devices' logs with `mergeTallyEntries(...logs)`. It keeps each entry
+once by `id` and orders them by `at`, so the joined log adds up the same on
+every device, whatever order the logs arrive in. The sheet makes each entry id
+from 16 random bytes, so ids from different devices do not collide.
+
+```ts
+setLog((mine) => mergeTallyEntries(mine, theirs))
+```
+
+A joined log is in time order, so it rarely continues the last log the sheet
+was given. The sheet then counts it again from the start, and keeps only what
+it holds: join into your own log, with every entry `onAppend` has handed you,
+rather than into an older copy.
+
+## Composing the parts
+
+Without children, `TallySheet` shows a `TallyToolbar`, then `TallyGrid`. The
+toolbar is a bar above the sheet with the sheet's `label` as its title at the
+start, and `TallyUndoButton` and `TallyEditButtons` at the end; what you put inside
+it sits between them, such as `TallyTotal` ("12 marks"). The bar
+is tinted while the counts are being edited. Pass the parts as children to
+arrange them another way, or to leave the toolbar out; each takes a
+`className`.
+
+```tsx
+<TallySheet layout={layout} label="OPD morbidity tally">
+    <div className="flex items-center gap-2">
+        <TallyUndoButton />
+        <TallyEditButtons className="ms-auto" />
+    </div>
+    <TallyGrid />
+    <TallyTotal />
+</TallySheet>
+```
+
+Parts of your own inside `TallySheet` read the sheet with hooks.
+`useTally()` returns the `layout`, its `columns`, `editing` and `setEditing`,
+`tap(row, options)`, `undo()` and `canUndo`. `useTallyCount(row, options)`,
+`useTallyRowTotal(row)` and `useTallyTotal()` return a count, and re-render
+only when it changes. They throw outside a `TallySheet`.
+
+```tsx
+const MeaslesCases = () => {
+    const cases = useTallyRowTotal('measles')
+    return <p>Measles cases this session: {cases}</p>
+}
+```
+
+`tallyColumns(layout)` lists the columns in order, each with its `options` and
+option `labels`.
+
+## Alert thresholds
+
+`RowBadge` is a component shown beside each row's label, given the `row` and
+its `total`. Use it to flag a row that reaches an alert threshold, such as one
+case of measles or five of bloody diarrhoea. Say it with a word, not colour
+alone, and announce the crossing, since it happens away from the cell that was
+tapped. Define the component outside your own, so it stays the same between
+renders.
+
+<ExampleCard slug="tally-sheet/alert-threshold" />
+
+## Accessibility
+
+The grid is an ARIA grid in a scrolling region, both named by `label`. Each
+category is a row of column headings, each row has a row heading, and a group
+heading heads its rows. The headings stay in view as the grid scrolls, and
+the headings of the cell under the mouse or holding focus are highlighted.
+
+The grid is one tab stop: the first open cell, then the cell last focused.
+Arrow keys move between open cells, skipping closed ones, and left and right
+follow a right-to-left page. Home and End go to the ends of the row, Ctrl+Home
+and Ctrl+End to the ends of the sheet. Holding Enter or Space adds one mark,
+not many.
+
+Sliding to adjust is a pointer gesture, so it has two other ways in. On a
+focused count, `+` adds one and `-` takes one off, down to zero, and neither
+repeats while held. Edit counts does the same with typed numbers and no
+dragging. The difference shown above the cell is for the eye only; the new count
+is announced when the slide is let go.
+
+A count button is named by its count; its row and column headings give its
+place. Each tap is announced with its row, column and new count, such as
+"BCG, 0–11 months, Female: 3", and so is an undo ("Undone: BCG, 0–11 months,
+Female, now 2"). A closed cell has no control and is read as "Not used". Its
+hatching keeps 3:1 contrast in the more-contrast theme, and has a dashed
+border in forced colours.
+
+Edit counts announces "Editing counts" and puts focus in the field of the cell
+last focused, or the first field. Each field is labelled by its row and column
+headings. The up and down arrows, Enter and Shift+Enter move up and down a
+column. Done announces how many counts changed, and Done or Cancel puts focus
+back on Edit counts.

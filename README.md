@@ -18,6 +18,7 @@ packages/
       calendar/         Generic month calendar for any dated records
       data-entry/       Grid data entry for DHIS2 events
       timeline/         Read-only timeline layout, with tracker history hooks in dhis2/
+      tally-sheet/      Tap-to-count tally sheet over an append-only log
     test/               Shared Vitest browser setup
 e2e/                    Real-DHIS2 Playwright coverage
 scripts/e2e/            Real-DHIS2 environment orchestration
@@ -163,6 +164,59 @@ export const InpatientGrid = () => (
 (`enrollmentId`). See `/blocks/tracker-data-entry` for live examples of each,
 registers, program rules and how changes are saved, and `/blocks/spreadsheet`
 for the keyboard, the cell store and replacing a control.
+
+## Tally Sheet block
+
+A paper tally sheet on screen: a row per dose or diagnosis, a column per
+combination of category options, and a large button in each cell that adds one
+mark. The counts come from an append-only log of entries, so logs from several
+devices join and add up the same.
+
+```sh
+pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/tally-sheet
+```
+
+```tsx
+import { useState } from 'react'
+import {
+    TallySheet,
+    tallyCounts,
+    type TallyEntry,
+    type TallyLayout,
+} from '@/components/tally-sheet'
+
+const layout: TallyLayout = {
+    categories: [
+        {
+            id: 'status',
+            label: 'Status',
+            options: [
+                { id: 'refugee', label: 'Refugee' },
+                { id: 'national', label: 'National' },
+            ],
+        },
+    ],
+    rows: [{ id: 'dose1', label: 'Dose 1' }],
+}
+
+export const Session = () => {
+    const [log, setLog] = useState<readonly TallyEntry[]>([])
+    const counts = tallyCounts(layout, log) // { row, options, count } per cell, zeros included
+    return (
+        <TallySheet
+            layout={layout}
+            label="Vitamin A doses"
+            entries={log}
+            onAppend={(made) => setLog((before) => [...before, ...made])}
+        />
+    )
+}
+```
+
+The block knows nothing about the DHIS2 Web API and saves nothing: storing the
+log, joining it with other devices' logs (`mergeTallyEntries`) and saving the
+counts as data values stay with your app. See `/blocks/tally-sheet` in the docs
+and `/playground/tally-sheet`.
 
 ## Timeline block
 

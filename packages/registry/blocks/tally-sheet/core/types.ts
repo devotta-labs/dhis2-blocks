@@ -1,0 +1,84 @@
+/**
+ * One way of splitting what is counted: age band, sex, origin. For aggregate data a DHIS2 category; for events, a
+ * data element with options.
+ */
+export interface TallyCategory {
+    id: string
+    label: string
+    options: ReadonlyArray<{ id: string; label: string }>
+}
+
+/**
+ * What one line of the sheet counts: a dose, a diagnosis. For aggregate data a DHIS2 data element; for events, one
+ * option of a data element.
+ */
+export interface TallyRow {
+    id: string
+    label: string
+    /** The heading the row sits under ("At birth", "6 weeks"); rows that share one are drawn together. */
+    group?: string
+}
+
+/** The option chosen in each category, by category id: one column of the sheet. */
+export type TallyOptions = Readonly<Record<string, string>>
+
+/** Cells that are never marked, hatched out on paper: the row's cells in every column with these options. */
+export interface TallyClosedCell {
+    row: string
+    options: TallyOptions
+}
+
+/** The sheet as it is printed: its rows, the categories that make its columns, and the cells left out. */
+export interface TallyLayout {
+    rows: readonly TallyRow[]
+    categories: readonly TallyCategory[]
+    closed?: readonly TallyClosedCell[]
+}
+
+interface EntryBase {
+    /** Unique across every device that tallies the session; joining two logs keeps one entry per id. */
+    id: string
+    /**
+     * The ISO 8601 instant that orders the entry among the others: when it was made, or just after the latest entry
+     * the sheet had taken when that is later, as it is beside a device whose clock runs ahead. Not a record of the
+     * time on the clock; a host that needs one keeps its own.
+     */
+    at: string
+    /** The device or person that made it, when the host says; undo takes back the latest entry of its own. */
+    by?: string
+    /** Entries made by one action share it and are undone together. */
+    batch?: string
+}
+
+/**
+ * One line of a session's log. A tap adds one to a cell; a correction adds any whole number, less than zero to
+ * lower a count; an undo takes back the tap or correction it names. A cell's count is its entries taken in the order
+ * they were made, never falling below zero on the way, so a correction that takes off more than is there takes off
+ * what is there and a tap made after it still counts. The log only grows, and two devices' logs join in any order.
+ * Two corrections of one cell made apart both apply.
+ */
+export type TallyEntry =
+    | (EntryBase & { kind: 'tap'; row: string; options: TallyOptions })
+    | (EntryBase & {
+          kind: 'correction'
+          row: string
+          options: TallyOptions
+          delta: number
+      })
+    | (EntryBase & { kind: 'undo'; undoes: string })
+
+/** One column of the sheet: one option from each category. */
+export interface TallyColumn {
+    /** The option ids in category order, joined; unique on the sheet. */
+    key: string
+    options: TallyOptions
+    /** The option labels in category order. */
+    labels: readonly string[]
+}
+
+/** What a cell adds up to. */
+export interface TallyCount {
+    row: string
+    options: TallyOptions
+    count: number
+}

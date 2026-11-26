@@ -8,6 +8,7 @@ export const PLAYGROUND_BLOCKS = [
     { slug: 'dhis2-value-input', title: 'Value Input' },
     { slug: 'tracker-data-entry', title: 'Tracker Data Entry' },
     { slug: 'org-unit-switcher', title: 'Organisation Unit Switcher' },
+    { slug: 'tally-sheet', title: 'Tally Sheet' },
 ] as const
 
 export type PlaygroundSlug = (typeof PLAYGROUND_BLOCKS)[number]['slug']

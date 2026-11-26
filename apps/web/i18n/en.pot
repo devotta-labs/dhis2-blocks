@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-11-23T12:35:53.456Z\n"
-"PO-Revision-Date: 2026-11-23T12:35:53.456Z\n"
+"POT-Creation-Date: 2026-11-26T09:04:02.959Z\n"
+"PO-Revision-Date: 2026-11-26T09:04:02.961Z\n"
 
 msgid "Loading tracker programs…"
 msgstr "Loading tracker programs…"
@@ -684,6 +684,57 @@ msgstr "This option is not offered here"
 
 msgid "Nothing above to copy."
 msgstr "Nothing above to copy."
+
+msgid "Not used"
+msgstr "Not used"
+
+msgid "Editing counts"
+msgstr "Editing counts"
+
+msgid "{{marks}} mark"
+msgstr "{{marks}} mark"
+
+msgid "{{marks}} marks"
+msgstr "{{marks}} marks"
+
+msgid "Done"
+msgstr "Done"
+
+msgid "Edit counts"
+msgstr "Edit counts"
+
+msgid "Undo last mark"
+msgstr "Undo last mark"
+
+msgid "Undo"
+msgstr "Undo"
+
+msgid "{{before}}, {{label}}"
+msgstr "{{before}}, {{label}}"
+
+msgid "{{place}}: {{marks}}"
+msgstr "{{place}}: {{marks}}"
+
+msgid "{{count}} corrections undone"
+msgid_plural "{{count}} corrections undone"
+msgstr[0] "{{count}} corrections undone"
+msgstr[1] "{{count}} corrections undone"
+
+msgid "Undone: {{place}}, now {{marks}}"
+msgstr "Undone: {{place}}, now {{marks}}"
+
+msgid "No counts changed"
+msgstr "No counts changed"
+
+msgid "{{count}} count changed"
+msgid_plural "{{count}} count changed"
+msgstr[0] "{{count}} count changed"
+msgstr[1] "{{count}} count changed"
+
+msgid "{{count}} counts changed"
+msgid_plural "{{count}} counts changed"
+msgstr[0] "{{count}} counts changed"
+msgstr[1] "{{count}} counts changed"
 
 msgid "Event date"
 msgstr "Event date"

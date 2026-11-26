@@ -1754,6 +1754,119 @@
             ]
         },
         {
+            "name": "tally-sheet",
+            "type": "registry:block",
+            "title": "Tally Sheet",
+            "description": "A paper tally sheet on screen: one tap a mark, counted per row and category option combination from an append-only log that several devices can join.",
+            "dependencies": ["@dhis2/d2-i18n@1.2.0", "zustand@^5.0.15"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/input",
+                "devotta-labs/dhis2-blocks/portal-root"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/tally-sheet/core/counts.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/core/counts.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/core/entries.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/core/entries.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/core/fold.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/core/fold.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/core/layout.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/core/layout.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/core/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/core/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/store/store.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/store/store.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/TallyCell.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/TallyCell.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/TallyGrid.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/TallyGrid.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/TallySheet.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/TallySheet.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/TallyToolbar.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/TallyToolbar.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/context.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/context.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/format.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/format.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/headers.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/headers.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/hooks.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/hooks.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/messages.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/messages.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/pointer.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/pointer.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/scrub.tsx",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/scrub.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/tally-sheet/ui/state.ts",
+                    "type": "registry:file",
+                    "target": "@components/tally-sheet/ui/state.ts"
+                }
+            ],
+            "docs": "Give TallySheet a layout of rows, categories and closed cells, and a label that names the grid. The layout is compared by content; RowBadge should be one stable component. Each open cell is a large button showing its count; a tap adds one, and Undo last mark takes back this device's latest tap or set of corrections. Edit counts turns every cell into a number field to put a miscount right or copy a paper sheet in; Done saves the changed counts as one set of corrections. The counts are read from a log of tap, correction and undo entries; your app only stores and merges them. Pass entries and onAppend to keep the log yourself: a log holding every entry of the last one is merged in and the sheet's entries not yet handed back are kept, while a log with an entry missing is another session and replaces everything. Or pass defaultEntries to let the sheet keep it; onAppend is the only way entries leave the sheet. by names this device on its entries; without it the sheet makes an id when it opens, so pass a stable device or user id to keep undo across a reload. Start a new session by remounting with a key. Join logs from several devices with mergeTallyEntries; tallyCounts turns a log into a count for every open cell, zeros included, to save over earlier values such as DHIS2 data values, and unplacedTallyEntries lists entries the layout has no place for. Without children the sheet shows a toolbar with its title, undo and edit buttons, then the grid; to arrange them differently, place TallyToolbar, TallyTotal, TallyEditButtons, TallyGrid and TallyUndoButton yourself, and build parts of your own on useTally, useTallyCount, useTallyRowTotal and useTallyTotal. Saving the log and the counts is left to the host."
+        },
+        {
             "name": "timeline",
             "type": "registry:block",
             "title": "Timeline",

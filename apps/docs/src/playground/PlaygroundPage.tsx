@@ -53,6 +53,11 @@ const LABS = {
             ({ OrgUnitSwitcherLab }) => ({ default: OrgUnitSwitcherLab })
         )
     ),
+    'tally-sheet': lazy(() =>
+        import('./tally-sheet/TallySheetLab').then(({ TallySheetLab }) => ({
+            default: TallySheetLab,
+        }))
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

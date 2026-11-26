@@ -48,21 +48,15 @@ interface EntryBase {
 
 /**
  * One line of a session's log. A tap adds one to a cell; a correction adds any whole number, less than zero to
- * lower a count; an undo takes back the tap or correction it names. A settle brings a cell that joined logs left
- * below zero back to zero; the sheet writes it before a tap on such a cell, with an id that devices seeing the same
- * log share, so it is counted once. The log only grows, and the counts are the sum of what is left, so two devices'
- * logs join in any order. Two corrections of one cell made apart both apply.
+ * lower a count; an undo takes back the tap or correction it names. A cell's count is its entries taken in the order
+ * they were made, never falling below zero on the way, so a correction that takes off more than is there takes off
+ * what is there and a tap made after it still counts. The log only grows, and two devices' logs join in any order.
+ * Two corrections of one cell made apart both apply.
  */
 export type TallyEntry =
     | (EntryBase & { kind: 'tap'; row: string; options: TallyOptions })
     | (EntryBase & {
           kind: 'correction'
-          row: string
-          options: TallyOptions
-          delta: number
-      })
-    | (EntryBase & {
-          kind: 'settle'
           row: string
           options: TallyOptions
           delta: number

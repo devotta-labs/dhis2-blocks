@@ -211,7 +211,25 @@ describe('holding a count and sliding', () => {
         await wait(HOLD_MS + 60)
         expect(button).not.toHaveAttribute('data-scrubbing')
         point(button, 'pointerup', STEP_PX * 3, 'mouse')
+        button.click()
         expect(appended).toEqual([])
+        button.focus()
+        await userEvent.keyboard('{Enter}')
+        await expect.element(button).toHaveTextContent('1')
+        button.click()
+        await expect.element(button).toHaveTextContent('2')
+    })
+
+    it('counts the click after a touch that wobbled before the hold', async () => {
+        const { appended, rendered } = sheet()
+        await rendered
+        const button = buttonIn('OPV 1', 0)
+        point(button, 'pointerdown', 0)
+        point(button, 'pointermove', 10)
+        point(button, 'pointerup', 10)
+        button.click()
+        await expect.element(button).toHaveTextContent('1')
+        expect(appended).toEqual([expect.objectContaining({ kind: 'tap' })])
     })
 
     it('drops the slide on Escape', async () => {

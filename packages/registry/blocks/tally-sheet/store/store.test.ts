@@ -66,7 +66,7 @@ describe('tapping', () => {
         expect(log).toEqual([])
     })
 
-    it('shows a tap on a cell that joined logs left below zero', () => {
+    it('shows a tap on a cell that two corrections emptied', () => {
         const { state } = session([
             tapOn('opv1', GIRL),
             correctionOn('opv1', GIRL, -1),
@@ -212,10 +212,10 @@ describe('correcting', () => {
         expect(state().counts[cell('opv1')]).toBe(7)
     })
 
-    it('lands on the typed count from a sum below zero', () => {
+    it('lands on the typed count in a cell a correction emptied', () => {
         const { state } = session([correctionOn('opv1', GIRL, -1)])
         const sumBefore = state().sums()[cell('opv1')] ?? 0
-        expect(sumBefore).toBe(-1)
+        expect(sumBefore).toBe(0)
         state().correct([{ cell: cell('opv1'), sumBefore, count: 5 }])
         expect(state().counts[cell('opv1')]).toBe(5)
     })
@@ -301,7 +301,7 @@ describe('receiving the host’s log', () => {
         expect(state().total).toBe(0)
     })
 
-    it('settles a cell below zero once when two devices each tap it', () => {
+    it('counts both taps when two devices tap a cell that corrections emptied', () => {
         const shared = [
             tapOn('opv1', GIRL),
             correctionOn('opv1', GIRL, -1),
@@ -357,7 +357,7 @@ describe('logs that are not what they seem', () => {
         expect(state().total).toBe(4)
     })
 
-    it('adds up the same on two devices that settled a cell from different sums', () => {
+    it('counts every tap made on two devices after each emptied a cell differently', () => {
         const shared = tapOn('opv1', GIRL)
         const tablet = session(
             [shared, correctionOn('opv1', GIRL, -3)],
@@ -373,7 +373,7 @@ describe('logs that are not what they seem', () => {
             .getState()
             .receive(mergeTallyEntries(tablet.log, phone.log))
         phone.store.getState().receive(mergeTallyEntries(phone.log, tablet.log))
-        expect(tablet.state().counts[cell('opv1')]).toBe(5)
+        expect(tablet.state().counts[cell('opv1')]).toBe(6)
         expect(phone.state().counts).toEqual(tablet.state().counts)
     })
 

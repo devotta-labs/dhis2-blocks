@@ -1,7 +1,6 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo, useCallback, useState } from 'react'
 import type { KeyboardEvent } from 'react'
-import { useStore } from 'zustand'
 import { cn } from '@/components/dhis2/ui/cn'
 import { Input } from '@/components/dhis2/ui/input'
 import { useTallyContext } from './context'
@@ -9,6 +8,7 @@ import type { EditSession } from './context'
 import { countDraft, formatCount } from './format'
 import { columnHeaderIds } from './headers'
 import { ScrubReadout, useScrub } from './scrub'
+import { useCellCount, useIsTabStop } from './state'
 
 const CELL_CLASS = 'p-1 align-middle'
 const SIZE_CLASS = 'h-20 w-full min-w-[4.5rem]'
@@ -85,12 +85,9 @@ const TapCell = memo(function TapCell({
     cell: number
     firstOpen: boolean
 }) {
-    const { store, ids, pointer, tapCell, adjustCell } =
-        useTallyContext('TallyGrid')
-    const count = useStore(store, (state) => state.counts[cell] ?? 0)
-    const isStop = useStore(pointer.tabStop, ({ tabStop }) =>
-        tabStop === undefined ? firstOpen : tabStop === cell
-    )
+    const { ids, tapCell, adjustCell } = useTallyContext('TallyGrid')
+    const count = useCellCount(cell)
+    const isStop = useIsTabStop(cell, firstOpen)
     const adjust = useCallback(
         (delta: number) => adjustCell(cell, delta),
         [adjustCell, cell]
@@ -147,8 +144,7 @@ const TapCell = memo(function TapCell({
 })
 
 const ClosedCell = memo(function ClosedCell({ cell }: { cell: number }) {
-    const { store } = useTallyContext('TallyGrid')
-    const count = useStore(store, (state) => state.counts[cell] ?? 0)
+    const count = useCellCount(cell)
     return (
         <td data-cell={cell} className={CELL_CLASS}>
             <div data-slot="tally-closed" className={CLOSED_CLASS}>

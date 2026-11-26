@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useReducer } from 'react'
+import { useDeferredValue, useEffect, useMemo, useReducer } from 'react'
 import {
     tallyCounts,
     type TallyEntry,
@@ -28,6 +28,13 @@ const TallyLog = ({
     onClear: () => void
 }) => {
     const counted = useDeferredValue(log)
+    const lines = useMemo(
+        () =>
+            tallyCounts(layout, counted).map((count) =>
+                describeCount(layout, count)
+            ),
+        [layout, counted]
+    )
     return (
         <LogPanel
             callbacks={handed.map(
@@ -35,9 +42,7 @@ const TallyLog = ({
             )}
             results={{
                 title: 'tallyCounts',
-                lines: tallyCounts(layout, counted).map((count) =>
-                    describeCount(layout, count)
-                ),
+                lines,
             }}
             onClearCallbacks={onClear}
         />

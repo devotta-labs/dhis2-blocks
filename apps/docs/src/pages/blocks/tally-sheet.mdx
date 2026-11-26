@@ -67,13 +67,13 @@ The counts are not stored as numbers. The sheet reads them from a log of
 - `correction` adds `delta`, which may be below zero. Done in Edit counts
   writes one correction for each changed cell, all sharing a `batch`.
 - `undo` takes back the entry its `undoes` names.
-- `settle` adds `delta`, like a correction. The sheet writes one on its own
-  when joined logs have left a cell below zero, to bring it back to zero.
 
 Every entry has a unique `id` and an `at` time (an ISO 8601 instant), and may
-have `by` and `batch`. A count is the sum of what is left in its cell, and
-never shows below zero. Your app stores and joins every kind of entry the same
-way; it never needs to write one.
+have `by` and `batch`. A cell's count is its entries taken in the order they
+were made, by `at` and then `id`, never falling below zero on the way: a
+correction that takes off more than is there takes off what is there, and a tap
+made after it still counts. Your app stores and joins every kind of entry the
+same way; it never needs to write one.
 
 Entries for a row or options the layout does not have are counted nowhere, so
 a log outlives a change to the layout. `unplacedTallyEntries(layout, entries)`
@@ -83,8 +83,8 @@ that no longer exists, for your app to show or keep.
 Keep the log yourself by passing `entries` and `onAppend`. `onAppend` gets
 only the entries each tap, undo or Done adds; append them to your log and pass
 the new log back as `entries`. A log that continues the last one passed adds
-only its new entries, so a tap costs the same on a long log as on an empty one,
-and taps made before your new log comes back still count.
+only its new entries, so a tap's own work does not grow with the log, and taps
+made before your new log comes back still count.
 
 ```tsx
 const [log, setLog] = useState<readonly TallyEntry[]>([])
@@ -108,8 +108,8 @@ every mark through a reload.
 ### What a session adds up to
 
 `tallyCounts(layout, entries)` adds a log up. It returns one
-`{ row, options, count }` for every open cell and every closed cell that holds
-a count, zeros included, rows in the order of `layout.rows` and columns in
+`{ row, options, count }` for every open cell and every closed cell the log
+holds an entry for, zeros included, rows in the order of `layout.rows` and columns in
 sheet order. `options` holds the option chosen in each category, by category
 id. To show only what was counted, filter on `count > 0`, as the vaccination
 example does.

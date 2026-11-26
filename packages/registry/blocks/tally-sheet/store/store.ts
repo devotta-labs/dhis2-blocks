@@ -22,7 +22,7 @@ export interface TallyStoreOptions {
     now?: () => string
 }
 
-/** A count typed over a cell: what it showed and summed to when editing began, and the number typed. */
+/** A count typed over a cell: what it showed when editing began, and the number typed. */
 export interface TallyCorrection {
     cell: number
     sumBefore: number
@@ -43,7 +43,7 @@ export interface TallyState {
     undo(): readonly number[]
     /** Brings each cell to its typed count, keeping any taps made since editing began. Returns how many changed. */
     correct(corrections: readonly TallyCorrection[]): number
-    /** Each cell's sum as the log has it, for a correction to start from. */
+    /** Each cell's count now, for a correction to start from. */
     sums(): readonly number[]
     /**
      * Takes the host's log. One that holds every entry of the last log given adds what is new, wherever it sits, and
@@ -63,10 +63,12 @@ const continues = (
     )
 }
 
-const BETWEEN = '\u001F'
 const A_MILLISECOND = 1
 
-/** The session's counts, kept as entries are made and received, so a tap costs the same however long the log is. */
+/**
+ * The session's counts, kept as entries are made and received, so a tap's own work does not grow with the log. A host
+ * that keeps the log and hands it back has each earlier entry compared once, to tell a longer log from another one.
+ */
 export const createTallyStore = ({
     layout,
     entries,
@@ -89,7 +91,7 @@ export const createTallyStore = ({
     fold.take(entries)
 
     const read = () => ({
-        counts: fold.sums().map((sum) => Math.max(0, sum)),
+        counts: fold.counts(),
         rowTotals: fold.rowTotals(),
         total: fold.total(),
         canUndo: fold.latest(by).length > 0,
@@ -118,29 +120,8 @@ export const createTallyStore = ({
                 const column = index.columns[cell % index.columns.length]
                 if (!row || !column || index.isClosed(cell)) return undefined
                 const place = { row: row.id, options: column.options }
-                const sum = fold.sumOf(cell)
-                if (sum >= 0) {
-                    append([{ ...stamp(), kind: 'tap', ...place }])
-                    return sum + 1
-                }
-                const settled = [
-                    'settle',
-                    row.id,
-                    column.key,
-                    fold.touchesOf(cell),
-                    sum,
-                ].join(BETWEEN)
-                append([
-                    {
-                        ...stamp(),
-                        id: settled,
-                        kind: 'settle',
-                        ...place,
-                        delta: -sum,
-                    },
-                    { ...stamp(), kind: 'tap', ...place },
-                ])
-                return 1
+                append([{ ...stamp(), kind: 'tap', ...place }])
+                return fold.countOf(cell)
             },
             undo() {
                 const latest = fold.latest(by)
@@ -169,7 +150,7 @@ export const createTallyStore = ({
                             !row ||
                             !column ||
                             !Number.isFinite(count) ||
-                            typed === Math.max(0, sumBefore)
+                            typed === sumBefore
                         ) {
                             return []
                         }
@@ -188,7 +169,7 @@ export const createTallyStore = ({
                 append(made)
                 return made.length
             },
-            sums: () => fold.sums(),
+            sums: () => fold.counts(),
             receive(next) {
                 if (next === received) return
                 if (continues(received, next)) {

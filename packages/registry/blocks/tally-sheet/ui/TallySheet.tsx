@@ -37,7 +37,7 @@ export interface TallySheetProps {
      */
     by?: string
     /**
-     * Makes the id of each entry the sheet writes, a settle apart. Give one when ids must fit where the entries are
+     * Makes the id of each entry the sheet writes. Give one when ids must fit where the entries are
      * saved, such as a DHIS2 uid for an entry kept as an event. Without it ids are random.
      */
     newId?: () => string

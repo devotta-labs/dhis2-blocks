@@ -62,7 +62,7 @@ export const tapOn = (row: string, options: TallyOptions, by?: string) => {
     made += 1
     const entry: TallyEntry = {
         id: `tap-${made}`,
-        at: new Date(Date.UTC(2026, 10, 25, 8, 0, made)).toISOString(),
+        at: new Date(Date.UTC(2026, 0, 1, 8, 0, made)).toISOString(),
         by,
         kind: 'tap',
         row,
@@ -79,7 +79,7 @@ export const correctionOn = (
     made += 1
     const entry: TallyEntry = {
         id: `correction-${made}`,
-        at: new Date(Date.UTC(2026, 10, 25, 8, 0, made)).toISOString(),
+        at: new Date(Date.UTC(2026, 0, 1, 8, 0, made)).toISOString(),
         kind: 'correction',
         row,
         options,
@@ -92,7 +92,7 @@ export const undoOf = (undone: TallyEntry) => {
     made += 1
     const entry: TallyEntry = {
         id: `undo-${made}`,
-        at: new Date(Date.UTC(2026, 10, 25, 8, 0, made)).toISOString(),
+        at: new Date(Date.UTC(2026, 0, 1, 8, 0, made)).toISOString(),
         kind: 'undo',
         undoes: undone.id,
     }

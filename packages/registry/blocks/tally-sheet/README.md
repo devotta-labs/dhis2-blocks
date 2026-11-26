@@ -62,7 +62,7 @@ export const Session = ({ device }: { device: string }) => {
 included, so your app can save each one over the value it saved before. They
 follow `layout.rows`, and within a row the columns; the grid may draw a
 group's rows together in another order. A closed cell is listed only when the
-log holds a count for it.
+log holds an entry for it, and then at zero too once that is taken back.
 
 ## API
 
@@ -91,8 +91,7 @@ log holds a count for it.
   `total`, such as an alert past a threshold. Pass one stable component, not
   a new one on each render: a badge shows the component it was last given
   when its row's total changes.
-- `newId`: makes the id of each entry the sheet writes, a settle apart; random
-  without it. Give one when ids must fit where entries are saved, such as
+- `newId`: makes the id of each entry the sheet writes; random without it. Give one when ids must fit where entries are saved, such as
   DHIS2 uids for entries kept as events.
 - `children`: the parts, arranged. Without any, the sheet shows a
   `TallyToolbar`, then `TallyGrid`.
@@ -147,17 +146,17 @@ A log is a list of `TallyEntry`:
   correction for each changed cell, all sharing a `batch`. Two corrections of
   the same cell made apart, on two devices or before and after a join, both
   apply.
-- `settle`: brings a cell that joined logs left below zero back to zero. The
-  sheet writes it before a tap on such a cell; your app only stores and
-  merges it like any other entry.
 - `undo`: takes back the entry `undoes` names.
 
 Every entry has a unique `id` and an `at` time, and may have `by` and
-`batch`. The log only grows. A count is the sum of what is left, never below
-zero. Joining logs keeps each entry once by `id` and orders them by `at`, so
-joined logs add up the same on every device whatever order they come in.
-Undo takes back this device's latest tap, or its latest set of corrections
-together.
+`batch`. The log only grows. A cell's count is its entries taken in the order
+they were made, by `at` and then `id`, never falling below zero on the way: a
+correction that takes off more than is there takes off what is there, and a
+tap made after it still counts. Joining logs keeps each entry once by `id`,
+so joined logs add up the same on every device whatever order they come in.
+Undo takes back the action this device made last, by `at`, with anything
+left: a tap, or a set of corrections together. An entry whose `options` do
+not name exactly the layout's categories has no cell.
 
 ## Receiving the log
 

@@ -1,13 +1,13 @@
 import { useCallback } from 'react'
-import { useStore } from 'zustand'
 import type { TallyOptions } from '../core/types'
 import { useTallyContext } from './context'
+import { useCanUndo, useCellCount, useRowTotalAt, useSheetTotal } from './state'
 
 /** The sheet's layout and columns, edit mode, and its tap and undo, for parts of your own. */
 export const useTally = () => {
-    const { layout, index, store, editing, setEditing, tapCell, undo } =
+    const { layout, index, editing, setEditing, tapCell, undo } =
         useTallyContext('useTally')
-    const canUndo = useStore(store, (state) => state.canUndo)
+    const canUndo = useCanUndo('useTally')
     const tap = useCallback(
         (row: string, options: TallyOptions) => {
             const cell = index.cellOf(row, options)
@@ -28,22 +28,20 @@ export const useTally = () => {
 
 /** One cell's count: the row's, in the column with these options. Zero for a cell the sheet does not have. */
 export const useTallyCount = (row: string, options: TallyOptions) => {
-    const { store, index } = useTallyContext('useTallyCount')
-    const cell = index.cellOf(row, options)
-    return useStore(store, (state) =>
-        cell === undefined ? 0 : (state.counts[cell] ?? 0)
-    )
+    const { index } = useTallyContext('useTallyCount')
+    return useCellCount(index.cellOf(row, options) ?? -1)
 }
 
 /** What a row's cells add up to. */
 export const useTallyRowTotal = (row: string) => {
-    const { store, index } = useTallyContext('useTallyRowTotal')
-    const at = index.rows.findIndex(({ id }) => id === row)
-    return useStore(store, (state) => state.rowTotals[at] ?? 0)
+    const { index } = useTallyContext('useTallyRowTotal')
+    return useRowTotalAt(
+        'useTallyRowTotal',
+        index.rows.findIndex(({ id }) => id === row)
+    )
 }
 
 /** What the whole sheet adds up to. */
 export const useTallyTotal = () => {
-    const { store } = useTallyContext('useTallyTotal')
-    return useStore(store, (state) => state.total)
+    return useSheetTotal('useTallyTotal')
 }

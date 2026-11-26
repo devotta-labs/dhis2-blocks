@@ -1,11 +1,11 @@
 import i18n from '@dhis2/d2-i18n'
 import { memo } from 'react'
 import type { ReactNode } from 'react'
-import { useStore } from 'zustand'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import { useTallyContext } from './context'
 import { formatCount } from './format'
+import { useCanUndo, useSheetTotal } from './state'
 
 /** What the whole sheet adds up to, as "12 marks". */
 export const TallyTotal = memo(function TallyTotal({
@@ -13,8 +13,7 @@ export const TallyTotal = memo(function TallyTotal({
 }: {
     className?: string
 }) {
-    const { store } = useTallyContext('TallyTotal')
-    const total = useStore(store, (state) => state.total)
+    const total = useSheetTotal('TallyTotal')
     return (
         <p
             data-slot="tally-total"
@@ -88,8 +87,8 @@ export const TallyUndoButton = memo(function TallyUndoButton({
 }: {
     className?: string
 }) {
-    const { store, editing, undo } = useTallyContext('TallyUndoButton')
-    const canUndo = useStore(store, (state) => state.canUndo)
+    const { editing, undo } = useTallyContext('TallyUndoButton')
+    const canUndo = useCanUndo('TallyUndoButton')
     return (
         <Button
             variant="ghost"

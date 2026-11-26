@@ -81,6 +81,9 @@ export const indexLayout = (layout: TallyLayout) => {
         columns,
         size: layout.rows.length * columns.length,
         cellOf: (row, options) => {
+            if (Object.keys(options).length !== layout.categories.length) {
+                return undefined
+            }
             const at = rowAt.get(row)
             const column = columnAt.get(keyOf(options))
             return at === undefined || column === undefined

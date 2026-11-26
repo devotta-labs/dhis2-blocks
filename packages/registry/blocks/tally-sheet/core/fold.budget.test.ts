@@ -3,6 +3,7 @@ import { LARGE, tapOn, tapsOn } from '../test/tally.fixture'
 import { createTallyStore } from '../store/store'
 import { createFold } from './fold'
 import { indexLayout } from './layout'
+import type { TallyEntry } from './types'
 
 const fastest = (run: () => void, times = 5) =>
     Math.min(
@@ -76,4 +77,23 @@ test('another device’s 100,000 entries do not slow this device’s undo', () =
     })
     expect(store.getState().canUndo).toBe(false)
     expect(took).toBeLessThan(20)
+})
+
+test('a tap a host echoes back on a 100,000-entry log takes under 3 ms', () => {
+    let log: TallyEntry[] = tapsOn(LARGE, 100_000)
+    const store = createTallyStore({
+        layout: LARGE,
+        entries: log,
+        onAppend: (made) => {
+            log = [...log, ...made]
+        },
+    })
+    const each = fastest(() => {
+        for (let tap = 0; tap < 50; tap += 1) {
+            store.getState().tap(tap % 240)
+            store.getState().receive(log)
+        }
+    }, 3)
+    expect(store.getState().total).toBe(100_150)
+    expect(each / 50).toBeLessThan(3)
 })

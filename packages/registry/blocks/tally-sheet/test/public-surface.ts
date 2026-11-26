@@ -54,10 +54,10 @@ const layout: TallyLayout = {
     closed: [{ row: 'opv1', options: { sex: 'male' } }],
 }
 
-const settled: TallyEntry = {
-    id: 'settle-opv1-female',
+const corrected: TallyEntry = {
+    id: 'correction-opv1-female',
     at: '2026-11-25T08:00:00.000Z',
-    kind: 'settle',
+    kind: 'correction',
     row: 'opv1',
     options: { sex: 'female' },
     delta: 1,
@@ -70,7 +70,7 @@ export const sheet: () => ReactNode = () =>
     TallySheet({
         layout,
         label: 'Immunisation',
-        defaultEntries: [settled],
+        defaultEntries: [corrected],
         by: 'tablet-1',
         newId: () => 'a1B2c3D4e5F',
         onAppend: (entries) => entries.map(({ id }) => id),
@@ -92,7 +92,7 @@ export const saved: readonly TallyCount[] = tallyCounts(
     mergeTallyEntries([], [])
 )
 export const leftOver: readonly TallyEntry[] = unplacedTallyEntries(layout, [
-    settled,
+    corrected,
 ])
 export const columns: readonly TallyColumn[] = tallyColumns(layout)
 

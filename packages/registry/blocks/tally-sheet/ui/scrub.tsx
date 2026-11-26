@@ -55,7 +55,7 @@ const IDLE: Scrub = { delta: undefined, anchor: undefined }
 /**
  * Hold, then slide: a press held still, by finger or mouse, turns sliding into adding and taking off, one
  * for each step slid. Letting go hands the difference to `commit`; Escape or a cancelled pointer drops it. A press
- * that never slides is still a tap, however long it is held, and `takeClick` says whether the click after a press
+ * that never slides is still a tap, however long it is held, a mouse dragged away before the hold is neither, and `takeClick` says whether the click after a press
  * was the end of a slide; a key pressed with no press under way forgets a slide whose click never came, so the
  * key's own click still counts. Sliding along the line or upwards adds, and the first step settles which of the two the
  * slide follows, so a count at the edge of the screen still has somewhere to go. In a right-to-left page sliding
@@ -160,6 +160,7 @@ export const useScrub = (count: number, commit: (delta: number) => void) => {
                 const down = event.clientY - held.y
                 if (held.from === undefined) {
                     if (Math.hypot(across, down) > SLOP_PX) {
+                        swallowClick.current = event.pointerType === 'mouse'
                         end(event.currentTarget)
                     }
                     return

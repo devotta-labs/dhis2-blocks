@@ -1,11 +1,15 @@
 import { memo, useLayoutEffect, useMemo, useRef } from 'react'
 import type { FocusEvent, KeyboardEvent, PointerEvent } from 'react'
-import { useStore } from 'zustand'
 import { cn } from '@/components/dhis2/ui/cn'
 import type { TallyIndex } from '../core/layout'
 import type { TallyRow } from '../core/types'
 import { useTallyContext } from './context'
-import { activeCell } from './pointer'
+import {
+    useCellInHand,
+    useColumnInHand,
+    useRowInHand,
+    useRowTotalAt,
+} from './state'
 import { TallyCell } from './TallyCell'
 
 const NO_ROW: TallyRow = { id: '', label: '' }
@@ -32,12 +36,7 @@ const ColumnHeader = memo(function ColumnHeader({
     span: number
     at: number
 }) {
-    const { pointer, index } = useTallyContext('TallyGrid')
-    const size = index.columns.length
-    const pointed = useStore(pointer.headings, (state) => {
-        const cell = activeCell(state)
-        return cell !== undefined && Math.floor((cell % size) / span) === at
-    })
+    const pointed = useColumnInHand(at, span)
     return (
         <th
             scope="col"
@@ -56,8 +55,8 @@ const ColumnHeader = memo(function ColumnHeader({
 })
 
 const RowBadgeSlot = ({ row, at }: { row: TallyRow; at: number }) => {
-    const { store, RowBadge } = useTallyContext('TallyGrid')
-    const total = useStore(store, (state) => state.rowTotals[at] ?? 0)
+    const { RowBadge } = useTallyContext('TallyGrid')
+    const total = useRowTotalAt('TallyGrid', at)
     return RowBadge === undefined ? null : <RowBadge row={row} total={total} />
 }
 
@@ -68,12 +67,8 @@ const RowHeader = memo(function RowHeader({
     row: TallyRow
     at: number
 }) {
-    const { pointer, index, ids, RowBadge } = useTallyContext('TallyGrid')
-    const size = index.columns.length
-    const pointed = useStore(pointer.headings, (state) => {
-        const cell = activeCell(state)
-        return cell !== undefined && Math.floor(cell / size) === at
-    })
+    const { ids, RowBadge } = useTallyContext('TallyGrid')
+    const pointed = useRowInHand(at)
     return (
         <th
             scope="row"
@@ -179,8 +174,8 @@ export const TallyGrid = memo(function TallyGrid({
 }: {
     className?: string
 }) {
-    const { index, levels, sections, ids, label, pointer } =
-        useTallyContext('TallyGrid')
+    const inHand = useCellInHand()
+    const { index, levels, sections, ids, label } = useTallyContext('TallyGrid')
     const region = useRef<HTMLDivElement>(null)
     const head = useRef<HTMLTableSectionElement>(null)
     const order = useMemo(
@@ -256,22 +251,15 @@ export const TallyGrid = memo(function TallyGrid({
     const onFocus = (event: FocusEvent<HTMLDivElement>) => {
         const cell = cellOf(event.target)
         if (cell === undefined) return
-        pointer.headings.setState({ focused: cell })
+        inHand.focused(cell, event.target instanceof HTMLInputElement)
         if (event.target instanceof HTMLElement) {
             event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
         }
-        if (event.target instanceof HTMLInputElement) {
-            pointer.tabStop.setState({ field: cell })
-        }
-        if (!index.isClosed(cell)) pointer.tabStop.setState({ tabStop: cell })
     }
 
     const onPointerOver = (event: PointerEvent<HTMLDivElement>) => {
         if (event.pointerType !== 'mouse') return
-        const cell = cellOf(event.target)
-        if (pointer.headings.getState().pointed !== cell) {
-            pointer.headings.setState({ pointed: cell })
-        }
+        inHand.pointed(cellOf(event.target))
     }
 
     return (
@@ -281,11 +269,9 @@ export const TallyGrid = memo(function TallyGrid({
             className={cn('min-w-0', className)}
             onKeyDown={onKeyDown}
             onFocus={onFocus}
-            onBlur={() => pointer.headings.setState({ focused: undefined })}
+            onBlur={inHand.blurred}
             onPointerOver={onPointerOver}
-            onPointerLeave={() =>
-                pointer.headings.setState({ pointed: undefined })
-            }
+            onPointerLeave={() => inHand.pointed(undefined)}
         >
             <div
                 ref={region}

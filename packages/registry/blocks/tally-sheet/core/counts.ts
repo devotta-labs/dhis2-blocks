@@ -5,7 +5,7 @@ import type { TallyCount, TallyEntry, TallyLayout } from './types'
 /**
  * What a session adds up to: a count for every cell of the sheet, zeros included, so a host can save each one over
  * the value it saved before. They follow `layout.rows`, and within a row the columns; the grid may draw a group's
- * rows together in another order. A closed cell is listed only when the log holds a count for it. Entries for a row
+ * rows together in another order. A closed cell is listed only when the log holds an entry for it, at zero too once it is taken back. Entries for a row
  * or options the layout does not have are left out: `unplacedTallyEntries` lists them. A host turns each count into
  * the value it saves, such as a DHIS2 data value.
  */
@@ -19,8 +19,8 @@ export const tallyCounts = (
     return index.rows.flatMap((row, rowAt) =>
         index.columns.flatMap((column, columnAt) => {
             const cell = rowAt * index.columns.length + columnAt
-            const count = Math.max(0, fold.sumOf(cell))
-            return count === 0 && index.isClosed(cell)
+            const count = fold.countOf(cell)
+            return index.isClosed(cell) && !fold.touched(cell)
                 ? []
                 : [
                       {

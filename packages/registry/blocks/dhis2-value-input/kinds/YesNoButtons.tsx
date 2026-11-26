@@ -1,10 +1,14 @@
 import type { Option } from '@/components/dhis2-value-types'
-import { Toggle } from '@/components/dhis2/ui/toggle'
+import {
+    ToggleGroup,
+    ToggleGroupItem,
+} from '@/components/dhis2/ui/toggle-group'
 import { focusInto } from '../focusInto'
 
 /**
- * Yes and No as two buttons, each its own tab stop, so a read-only answer is reached too. Pressing the chosen one again
- * reports no value, unless the field is `required`.
+ * Yes and No as a toggle group: one tab stop, with arrow keys between the two. Pressing the chosen one again reports no
+ * value, unless the field is `required`. Read-only buttons are not `aria-disabled`, which arrow keys would skip: the
+ * group's description says why they cannot be changed.
  */
 export const YesNoButtons = ({
     id,
@@ -27,33 +31,32 @@ export const YesNoButtons = ({
     required: boolean
     onChange(value: string | null): void
 }) => (
-    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- passes focus given to the field's id on to a button; the buttons are the controls
-    <div
+    <ToggleGroup
         id={id}
-        role="group"
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
         data-invalid={invalid || undefined}
+        data-readonly={readOnly || undefined}
         tabIndex={-1}
         onFocus={focusInto('[aria-pressed="true"]', 'button')}
-        className="group/yes-no flex w-fit items-center gap-1"
+        variant="outline"
+        value={value === undefined ? [] : [value]}
+        onValueChange={(next: string[]) => {
+            if (readOnly || (required && next.length === 0)) {
+                return
+            }
+            onChange(next[0] ?? null)
+        }}
+        className="group/yes-no"
     >
         {options.map(({ code, name }) => (
-            <Toggle
+            <ToggleGroupItem
                 key={code}
-                variant="outline"
-                pressed={value === code}
-                aria-disabled={readOnly || undefined}
-                onPressedChange={(pressed) => {
-                    if (readOnly || (required && !pressed)) {
-                        return
-                    }
-                    onChange(pressed ? code : null)
-                }}
-                className="min-w-16 group-data-invalid/yes-no:not-data-pressed:border-dhis2-destructive-border aria-disabled:pointer-events-none"
+                value={code}
+                className="min-w-16 group-data-invalid/yes-no:not-data-pressed:border-dhis2-destructive-border group-data-readonly/yes-no:pointer-events-none"
             >
                 {name}
-            </Toggle>
+            </ToggleGroupItem>
         ))}
-    </div>
+    </ToggleGroup>
 )

@@ -103,26 +103,29 @@ test('a required Yes/No is changed but not emptied, and its name says it is requ
         .toBeVisible()
 })
 
-test('Yes and No are each a tab stop, pressed with Space, and described by the field', async () => {
+test('Yes and No are one tab stop: arrow Right moves to No without picking it, Space picks it and Tab leaves', async () => {
     const onChange = await mountHeld(BOOLEAN, { description: 'As she reports' })
     await userEvent.keyboard('{Tab}')
     await expect.element(pressable('Yes')).toHaveFocus()
-    await userEvent.keyboard('{Tab}')
+    await userEvent.keyboard('{ArrowRight}')
     await expect.element(pressable('No')).toHaveFocus()
     expect(onChange).not.toHaveBeenCalled()
     await userEvent.keyboard(' ')
     expect(onChange).toHaveBeenCalledExactlyOnceWith('false', undefined)
+    await userEvent.keyboard('{Tab}')
+    await expect.element(pressable('Yes')).not.toHaveFocus()
+    await expect.element(pressable('No')).not.toHaveFocus()
     await expect
         .element(page.getByRole('group', { name: LABEL }))
         .toHaveAccessibleDescription('As she reports')
 })
 
-test('a read-only No is reached with Tab, cannot be changed and says why', async () => {
+test('a read-only No is reached with the arrow keys, cannot be changed and says why', async () => {
     const onChange = await mount(BOOLEAN, {
         value: 'false',
         readOnly: 'Locked',
     })
-    await userEvent.keyboard('{Tab}{Tab}')
+    await userEvent.keyboard('{Tab}{ArrowRight}')
     await expect.element(pressable('No')).toHaveFocus()
     await userEvent.keyboard(' ')
     await userEvent.click(pressable('Yes'), { force: true })

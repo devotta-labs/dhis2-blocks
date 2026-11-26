@@ -131,8 +131,8 @@ and the combobox's own × for more than five options. A yes or no field needs
 none: pressing the chosen button again empties it. The × in a
 long multi-select's box of chips clears every option, and an org unit or
 username field has the same × once it holds a value.
-Arrow keys move within a radio group or between Yes and No, and Tab leaves it;
-an arrow picks a radio, and Space or Enter presses Yes or No. Names, not codes, are
+Arrow keys move within a radio group and Tab leaves it. Yes and No are each a
+tab stop, pressed with Space or Enter. Names, not codes, are
 shown for options.
 
 A hidden option is left out of the list and refused when typed, unless the field
@@ -163,9 +163,11 @@ Read the exports in the block's `index.ts` for their types.
 ## Accessibility
 
 Each kind is built from the house [Field](/blocks/field) parts. One control
-sits in a `Field` with a label. A group of controls (the Yes and No buttons, a radio group, a list of
+sits in a `Field` with a label. A group of controls (a radio group, a list of
 checkboxes, an age, a coordinate, a file) is a `FieldSet` named by its legend,
-with each option a `FieldItem`. Either way the label, description and messages
+with each option a `FieldItem`. Yes and No are a group of two buttons named by
+the field's label; an error shows as a red border on the unpressed buttons.
+Either way the label, description and messages
 are tied to the control or the group, and it says when it has an error or
 needs a value. Focusing the
 field's `id` puts focus in it: on a radio group's checked radio or the pressed

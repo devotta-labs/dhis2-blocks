@@ -20,13 +20,10 @@ import {
     FieldTitle,
 } from '@/components/dhis2/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/components/dhis2/ui/radio-group'
-import {
-    ToggleGroup,
-    ToggleGroupItem,
-} from '@/components/dhis2/ui/toggle-group'
 import { focusInto } from '../focusInto'
 import type { useDraft } from '../useDraft'
 import { OptionComboInput } from './OptionComboInput'
+import { YesNoButtons } from './YesNoButtons'
 
 /** Up to this many visible options are radios, or a multi-select's boxes; more are searched. */
 export const RADIO_LIMIT = 5
@@ -79,6 +76,7 @@ export const ChoiceInput = ({
     id,
     title,
     describedBy,
+    invalid,
     field,
     value,
     hiddenOptions,
@@ -93,6 +91,8 @@ export const ChoiceInput = ({
     title: ReactNode
     /** The ids of what describes the field, for the Yes/No buttons' group: a field's own controls are linked by the field. */
     describedBy: string | undefined
+    /** Shown on the Yes/No buttons, which the field cannot mark itself. */
+    invalid: boolean
     field: Field
     value: string | undefined
     settings: ValueSettings
@@ -151,35 +151,19 @@ export const ChoiceInput = ({
                 {i18n.t('Clear')}
             </Button>
         )
-    const pressed = value === 'true' || value === 'false' ? [value] : []
     const yesNoButtons =
         kind === 'boolean' ? (
-            <ToggleGroup
+            <YesNoButtons
                 id={id}
-                aria-labelledby={titleId}
-                aria-describedby={describedBy}
-                tabIndex={-1}
-                onFocus={focusInto('[aria-pressed="true"]', 'button')}
-                variant="outline"
-                value={pressed}
-                onValueChange={(next: string[]) => {
-                    if (readOnly || (required && next.length === 0)) {
-                        return
-                    }
-                    onChange(next[0] ?? null)
-                }}
-            >
-                {options.map(({ code, name }) => (
-                    <ToggleGroupItem
-                        key={code}
-                        value={code}
-                        aria-disabled={readOnly || undefined}
-                        className="min-w-16 aria-disabled:pointer-events-none"
-                    >
-                        {name}
-                    </ToggleGroupItem>
-                ))}
-            </ToggleGroup>
+                labelledBy={titleId}
+                describedBy={describedBy}
+                options={offered}
+                value={value}
+                invalid={invalid}
+                readOnly={readOnly}
+                required={required}
+                onChange={onChange}
+            />
         ) : undefined
     const radios =
         kind !== 'boolean' && asGroup(field, hiddenOptions) ? (

@@ -351,6 +351,7 @@ export const ValueInput: (props: ValueInputProps) => ReactNode = ({
                 id={id}
                 title={title}
                 describedBy={describedBy || undefined}
+                invalid={invalid}
                 field={field}
                 value={value}
                 hiddenOptions={hiddenOptions}

@@ -103,35 +103,63 @@ test('a required Yes/No is changed but not emptied, and its name says it is requ
         .toBeVisible()
 })
 
-test('arrow Right moves to No without picking it; Space picks it and Tab leaves the group', async () => {
+test('Yes and No are each a tab stop, pressed with Space, and described by the field', async () => {
     const onChange = await mountHeld(BOOLEAN, { description: 'As she reports' })
-    await userEvent.click(pressable('Yes'))
-    await userEvent.keyboard('{ArrowRight}')
-    await expect.element(pressable('No')).toHaveFocus()
-    expect(onChange).toHaveBeenCalledTimes(1)
-    await userEvent.keyboard(' ')
-    expect(onChange).toHaveBeenLastCalledWith('false', undefined)
     await userEvent.keyboard('{Tab}')
-    await expect.element(pressable('Yes')).not.toHaveFocus()
-    await expect.element(pressable('No')).not.toHaveFocus()
+    await expect.element(pressable('Yes')).toHaveFocus()
+    await userEvent.keyboard('{Tab}')
+    await expect.element(pressable('No')).toHaveFocus()
+    expect(onChange).not.toHaveBeenCalled()
+    await userEvent.keyboard(' ')
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('false', undefined)
     await expect
         .element(page.getByRole('group', { name: LABEL }))
         .toHaveAccessibleDescription('As she reports')
 })
 
-test('a read-only Yes/No cannot be changed, keeps its answer in the tab order and says why', async () => {
-    const onChange = await mount(BOOLEAN, { value: 'true', readOnly: 'Locked' })
-    await userEvent.keyboard('{Tab}')
-    await expect.element(pressable('Yes')).toHaveFocus()
+test('a read-only No is reached with Tab, cannot be changed and says why', async () => {
+    const onChange = await mount(BOOLEAN, {
+        value: 'false',
+        readOnly: 'Locked',
+    })
+    await userEvent.keyboard('{Tab}{Tab}')
+    await expect.element(pressable('No')).toHaveFocus()
     await userEvent.keyboard(' ')
-    await userEvent.click(pressable('No'), { force: true })
+    await userEvent.click(pressable('Yes'), { force: true })
     expect(onChange).not.toHaveBeenCalled()
     await expect
-        .element(pressable('Yes'))
+        .element(pressable('No'))
         .toHaveAttribute('aria-pressed', 'true')
     await expect
         .element(page.getByRole('group', { name: LABEL }))
         .toHaveAccessibleDescription('Locked')
+})
+
+test("a rule's error marks the unpressed Yes/No buttons and describes the group", async () => {
+    await mount(BOOLEAN, {
+        value: 'true',
+        messages: [{ tone: 'error', text: 'Not while breastfeeding' }],
+    })
+    const border = (name: string) =>
+        getComputedStyle(pressable(name).element()).borderColor
+    expect(border('No')).not.toBe(border('Yes'))
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAccessibleDescription(/Not while breastfeeding/)
+    await expect
+        .element(page.getByRole('group', { name: LABEL }))
+        .toHaveAttribute('data-invalid')
+})
+
+test('a Yes/No offers only what a rule leaves, and the answer it holds', async () => {
+    await mount(BOOLEAN, {
+        value: 'false',
+        hiddenOptions: new Set(['true', 'false']),
+    })
+    await expect.element(pressable('Yes')).not.toBeInTheDocument()
+    await expect
+        .element(pressable('No'))
+        .toHaveAttribute('aria-pressed', 'true')
 })
 
 test('arrow Down in a short option set moves to the next radio, checks and picks it; Tab leaves the group', async () => {

@@ -9,8 +9,7 @@ import { activeCell } from './pointer'
 import { TallyCell } from './TallyCell'
 
 const NO_ROW: TallyRow = { id: '', label: '' }
-const BORDER_CLASS = 'border-b border-dhis2-border'
-const POINTED_CLASS = 'bg-dhis2-info-fill text-dhis2-info-strong'
+const POINTED_CLASS = 'bg-dhis2-info-subtle text-dhis2-info-strong'
 const LABEL_COLUMN_CLASS =
     'w-[min(16rem,40cqi)] min-w-[min(16rem,40cqi)] max-w-[min(16rem,40cqi)]'
 
@@ -44,8 +43,7 @@ const ColumnHeader = memo(function ColumnHeader({
             scope="col"
             colSpan={span}
             className={cn(
-                BORDER_CLASS,
-                'bg-dhis2-muted px-2 py-1.5 text-center align-bottom text-xs font-medium text-dhis2-muted-foreground',
+                'bg-dhis2-background px-2 py-1.5 text-center align-bottom text-xs font-medium text-dhis2-muted-foreground',
                 span === 1 && 'min-w-[4.5rem]',
                 pointed && POINTED_CLASS
             )}
@@ -80,7 +78,6 @@ const RowHeader = memo(function RowHeader({
         <th
             scope="row"
             className={cn(
-                BORDER_CLASS,
                 LABEL_COLUMN_CLASS,
                 'sticky start-0 z-10 bg-dhis2-background px-2 py-1 text-start align-middle text-sm font-normal text-dhis2-foreground [overflow-wrap:anywhere]',
                 pointed && POINTED_CLASS
@@ -292,7 +289,7 @@ export const TallyGrid = memo(function TallyGrid({
                 role="region"
                 aria-label={label}
                 data-slot="tally-scroll"
-                className="@container isolate max-h-[70vh] w-full overflow-auto [overflow-anchor:none] rounded-dhis2-sm border border-dhis2-border bg-dhis2-background"
+                className="@container isolate max-h-[70vh] w-full overflow-auto [overflow-anchor:none] bg-dhis2-background"
             >
                 <table
                     // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- the ARIA grid pattern on a table: arrow keys move between cells
@@ -308,9 +305,8 @@ export const TallyGrid = memo(function TallyGrid({
                                         <td
                                             rowSpan={levels.length}
                                             className={cn(
-                                                BORDER_CLASS,
                                                 LABEL_COLUMN_CLASS,
-                                                'sticky start-0 z-10 bg-dhis2-muted'
+                                                'sticky start-0 z-10 bg-dhis2-background'
                                             )}
                                         />
                                     ) : null}
@@ -336,8 +332,7 @@ export const TallyGrid = memo(function TallyGrid({
                                         scope="rowgroup"
                                         colSpan={size + 1}
                                         className={cn(
-                                            BORDER_CLASS,
-                                            'bg-dhis2-background-subtle px-2 pt-3 pb-1 text-start text-sm font-medium text-dhis2-foreground'
+                                            'bg-dhis2-background px-2 pt-3 pb-1 text-start text-sm font-medium text-dhis2-foreground'
                                         )}
                                     >
                                         <span

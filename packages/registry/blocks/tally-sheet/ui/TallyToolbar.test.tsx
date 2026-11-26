@@ -58,14 +58,32 @@ describe('undo', () => {
         expect(buttonIn('Penta 1', 2).textContent).toBe('0')
     })
 
-    it('is not shown while the counts are being edited', async () => {
+    it('stays in place, disabled, while the counts are being edited', async () => {
+        const screen = await render(
+            <TallySheet layout={VACCINATIONS} label="Tally" />
+        )
+        await buttonIn('OPV 1', 0).click()
+        const undo = screen.getByRole('button', { name: 'Undo last mark' })
+        const before = undo.element().getBoundingClientRect().top
+        await screen.getByRole('button', { name: 'Edit counts' }).click()
+        await expect.element(undo).toHaveAttribute('aria-disabled', 'true')
+        expect(undo.element().getBoundingClientRect().top).toBe(before)
+    })
+
+    it('does not take the second click of a double click on Edit counts as Done', async () => {
         const screen = await render(
             <TallySheet layout={VACCINATIONS} label="Tally" />
         )
         await screen.getByRole('button', { name: 'Edit counts' }).click()
-        expect(
-            screen.getByRole('button', { name: 'Undo last mark' }).query()
-        ).toBeNull()
+        const done = screen.getByRole('button', { name: 'Done' })
+        done.element().dispatchEvent(
+            new MouseEvent('click', { bubbles: true, detail: 2 })
+        )
+        await expect.element(done).toBeVisible()
+        await done.click()
+        await expect
+            .element(screen.getByRole('button', { name: 'Edit counts' }))
+            .toBeVisible()
     })
 })
 

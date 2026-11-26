@@ -2,7 +2,6 @@ import '../test/renders.test-utils'
 import React from 'react'
 import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import { contrastRatio } from '../../../test/contrastRatio'
 import { roleColour } from '../../../test/roleColour'
 import { TallySheet } from '..'
 import { rendersDuring } from '../test/renders.test-utils'
@@ -20,7 +19,7 @@ import {
     VITAMIN_A,
 } from '../test/tally.fixture'
 
-const POINTED = 'bg-dhis2-info-fill'
+const POINTED = 'bg-dhis2-info-subtle'
 
 const columnHeader = (label: string) => {
     const header = [
@@ -143,10 +142,7 @@ describe('closed cells', () => {
         if (hatch === null) throw new Error('No hatch')
         const { backgroundImage, backgroundColor } = getComputedStyle(hatch)
         const line = backgroundImage.match(/rgba?\([^)]*\)|color\([^)]*\)/)?.[0]
-        expect(line).toBeDefined()
-        expect(
-            contrastRatio(line ?? '', backgroundColor)
-        ).toBeGreaterThanOrEqual(3)
+        expect(line).toBe(roleColour('border-strong'))
         expect(backgroundColor).toBe(roleColour('background'))
     })
 
@@ -239,7 +235,7 @@ describe('headings of the cell in hand', () => {
         await expect.element(rowHeaderOf('OPV 1')).not.toHaveClass(POINTED)
         expect(document.querySelectorAll(`th.${POINTED}`)).toHaveLength(3)
         await userEvent.unhover(buttonIn('Penta 1', 3))
-        await userEvent.hover(document.body)
+        await userEvent.hover(page.getByText('0 marks'))
         await expect.element(rowHeaderOf('OPV 1')).toHaveClass(POINTED)
         await expect.element(columnHeader('0–11 months')).toHaveClass(POINTED)
         await expect.element(rowHeaderOf('Penta 1')).not.toHaveClass(POINTED)

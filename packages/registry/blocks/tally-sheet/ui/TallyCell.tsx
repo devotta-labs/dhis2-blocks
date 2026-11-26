@@ -9,18 +9,27 @@ import type { EditSession } from './context'
 import { countDraft, formatCount } from './format'
 import { columnHeaderIds } from './headers'
 
-const CELL_CLASS = 'border-b border-dhis2-border p-1 align-middle'
+const CELL_CLASS = 'p-1 align-middle'
 const SIZE_CLASS = 'h-20 w-full min-w-[4.5rem]'
 
 const CLOSED_CLASS = cn(
     SIZE_CLASS,
-    'flex items-center justify-center rounded-dhis2-md border border-dhis2-border bg-dhis2-background bg-[repeating-linear-gradient(135deg,var(--dhis2-neutral-indicator)_0_2px,transparent_2px_9px)] forced-colors:border-dashed forced-colors:border-[GrayText]'
+    'flex items-center justify-center rounded-dhis2-md border border-dhis2-border bg-dhis2-background bg-[repeating-linear-gradient(135deg,var(--dhis2-border-strong)_0_1px,transparent_1px_7px)] contrast-more:bg-[repeating-linear-gradient(135deg,var(--dhis2-border-strong)_0_2px,transparent_2px_9px)] forced-colors:border-dashed forced-colors:border-[GrayText]'
 )
 
 const TAP_CLASS = cn(
     SIZE_CLASS,
-    'flex cursor-pointer touch-manipulation items-center justify-center rounded-dhis2-md border border-dhis2-input bg-dhis2-background text-2xl font-medium text-dhis2-foreground tabular-nums select-none [-webkit-tap-highlight-color:transparent] hover:bg-dhis2-muted active:bg-dhis2-info-fill focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring'
+    'flex cursor-pointer touch-manipulation items-center justify-center rounded-dhis2-md border border-dhis2-input bg-dhis2-background font-medium text-dhis2-foreground tabular-nums select-none [-webkit-tap-highlight-color:transparent] [transition:background-color_200ms_cubic-bezier(0.23,1,0.32,1),transform_120ms_cubic-bezier(0.23,1,0.32,1)] hover:border-dhis2-control active:scale-[0.97] active:bg-dhis2-info-fill active:[transition:none] motion-reduce:[transition:background-color_200ms_cubic-bezier(0.23,1,0.32,1)] motion-reduce:active:scale-100 motion-reduce:active:[transition:none] focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-dhis2-ring'
 )
+
+const NOTHING_CLASS = 'font-normal text-dhis2-subtle-foreground'
+
+const sizeOf = (digits: number) => {
+    if (digits >= 6) return 'text-lg'
+    return digits === 5 ? 'text-xl' : 'text-2xl'
+}
+
+const digitsOf = (count: number) => String(Math.trunc(count)).length
 
 const ignoreHeldKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.repeat && (event.key === 'Enter' || event.key === ' ')) {
@@ -46,7 +55,11 @@ const TapCell = memo(function TapCell({
                 id={ids.cell(cell)}
                 type="button"
                 tabIndex={isStop ? 0 : -1}
-                className={TAP_CLASS}
+                className={cn(
+                    TAP_CLASS,
+                    sizeOf(digitsOf(count)),
+                    count === 0 && NOTHING_CLASS
+                )}
                 onKeyDown={ignoreHeldKeys}
                 onClick={() => tapCell(cell)}
             >
@@ -63,7 +76,12 @@ const ClosedCell = memo(function ClosedCell({ cell }: { cell: number }) {
         <td data-cell={cell} className={CELL_CLASS}>
             <div data-slot="tally-closed" className={CLOSED_CLASS}>
                 {count > 0 ? (
-                    <span className="rounded-dhis2-sm bg-dhis2-background px-1.5 text-2xl font-medium text-dhis2-foreground tabular-nums">
+                    <span
+                        className={cn(
+                            'rounded-dhis2-sm bg-dhis2-background px-1.5 font-medium text-dhis2-foreground tabular-nums',
+                            sizeOf(digitsOf(count))
+                        )}
+                    >
                         {formatCount(count)}
                     </span>
                 ) : null}
@@ -101,7 +119,8 @@ const EditCell = memo(function EditCell({
                 value={draft}
                 className={cn(
                     SIZE_CLASS,
-                    'text-center text-2xl font-medium tabular-nums'
+                    'rounded-dhis2-md text-center font-medium tabular-nums shadow-none',
+                    sizeOf(draft.length)
                 )}
                 onChange={(event) => {
                     const next = countDraft(event.target.value)

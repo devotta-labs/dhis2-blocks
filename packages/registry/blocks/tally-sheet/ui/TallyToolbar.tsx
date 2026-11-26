@@ -30,7 +30,10 @@ export const TallyTotal = memo(function TallyTotal({
     )
 })
 
-/** "Edit counts", or "Cancel" and "Done" while the counts are being edited. */
+/**
+ * "Edit counts", or "Cancel" and "Done" while the counts are being edited. Done lands where Edit counts was, so the
+ * second click of a double click is not taken as Done.
+ */
 export const TallyEditButtons = memo(function TallyEditButtons({
     className,
 }: {
@@ -56,7 +59,9 @@ export const TallyEditButtons = memo(function TallyEditButtons({
                     <Button
                         size="sm"
                         className="px-2.5"
-                        onClick={() => finishEditing(true)}
+                        onClick={(event) => {
+                            if (event.detail <= 1) finishEditing(true)
+                        }}
                     >
                         {i18n.t('Done')}
                     </Button>
@@ -76,7 +81,7 @@ export const TallyEditButtons = memo(function TallyEditButtons({
     )
 })
 
-/** Takes back this device's latest tap or set of corrections. Not shown while the counts are being edited. */
+/** Takes back this device's latest tap or set of corrections. Disabled while the counts are being edited. */
 export const TallyUndoButton = memo(function TallyUndoButton({
     className,
 }: {
@@ -84,14 +89,13 @@ export const TallyUndoButton = memo(function TallyUndoButton({
 }) {
     const { store, editing, undo } = useTallyContext('TallyUndoButton')
     const canUndo = useStore(store, (state) => state.canUndo)
-    if (editing) return null
     return (
         <Button
             variant="outline"
             size="lg"
             data-slot="tally-undo"
             className={cn('self-start px-4', className)}
-            disabled={!canUndo}
+            disabled={!canUndo || editing}
             focusableWhenDisabled
             onClick={undo}
         >

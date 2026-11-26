@@ -186,3 +186,33 @@ describe('edit fields', () => {
         ])
     })
 })
+
+describe('how a count is drawn', () => {
+    it('draws a cell with nothing in it lighter than one with a count', async () => {
+        await render(<TallySheet layout={VACCINATIONS} label="Tally" />)
+        const button = buttonIn('OPV 1', 0)
+        expect(button).toHaveClass('text-dhis2-subtle-foreground')
+        await userEvent.click(button)
+        await expect.element(button).toHaveTextContent('1')
+        expect(button).not.toHaveClass('text-dhis2-subtle-foreground')
+    })
+
+    it('draws five and six digits smaller, so they fit the cell', async () => {
+        await render(
+            <TallySheet
+                layout={VACCINATIONS}
+                label="Tally"
+                defaultEntries={[
+                    correctionOn('opv1', GIRL, 12_345),
+                    correctionOn('penta1', GIRL, 123_456),
+                    correctionOn('measles1', GIRL, 1234),
+                ]}
+            />
+        )
+        expect(buttonIn('OPV 1', 0)).toHaveClass('text-xl')
+        expect(buttonIn('Penta 1', 0)).toHaveClass('text-lg')
+        expect(buttonIn('Measles 1', 0)).toHaveClass('text-2xl')
+        const cell = buttonIn('Penta 1', 0)
+        expect(cell.scrollWidth).toBeLessThanOrEqual(cell.clientWidth)
+    })
+})

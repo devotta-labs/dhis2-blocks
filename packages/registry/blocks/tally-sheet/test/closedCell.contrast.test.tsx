@@ -7,7 +7,7 @@ import { cellIn } from './sheet.test-utils'
 import { VACCINATIONS } from './tally.fixture'
 
 describe('closed cells with more contrast', () => {
-    it('hatches in the darker indicator colour, at 3:1 or more on the cell', async () => {
+    it('hatches in the border colour, at 3:1 or more on the cell', async () => {
         await render(<TallySheet layout={VACCINATIONS} label="Tally" />)
         const closed = cellIn('BCG', 2).querySelector(
             '[data-slot="tally-closed"]'
@@ -16,7 +16,7 @@ describe('closed cells with more contrast', () => {
         const { backgroundImage, backgroundColor } = getComputedStyle(closed)
         const line =
             backgroundImage.match(/rgba?\([^)]*\)|color\([^)]*\)/)?.[0] ?? ''
-        expect(line).toBe(roleColour('neutral-indicator'))
+        expect(line).toBe(roleColour('border-strong'))
         expect(contrastRatio(line, backgroundColor)).toBeGreaterThanOrEqual(3)
     })
 })

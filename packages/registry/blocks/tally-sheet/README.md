@@ -100,7 +100,7 @@ To start a new session, remount the sheet with a new `key`.
 
 Parts, each taking a `className`: `TallyTotal` ("12 marks"),
 `TallyEditButtons` ("Edit counts", or "Cancel" and "Done"), `TallyGrid` and
-`TallyUndoButton` ("Undo last mark", not shown while editing).
+`TallyUndoButton` ("Undo last mark", disabled while editing).
 
 Hooks, for parts of your own inside `TallySheet`: `useTally()` returns the
 `layout`, `columns`, `editing`, `setEditing`, `tap(row, options)`, `undo()` and

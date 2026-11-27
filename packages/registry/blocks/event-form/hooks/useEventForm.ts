@@ -43,7 +43,7 @@ interface Loaded {
     held?: HeldEvent
     /** The form's org unit and its ancestors, as far as the category options need them. */
     orgUnits: ReadonlySet<string>
-    /** The org unit's name and geometry, for a stage that records a location. */
+    /** The org unit's name and geometry, for a stage that records a location or has a coordinate data element. */
     orgUnit?: LocationOrgUnit
     /** The user may set a completed event back to active. */
     mayUncomplete: boolean

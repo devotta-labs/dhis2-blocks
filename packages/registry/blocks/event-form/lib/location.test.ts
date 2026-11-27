@@ -1,7 +1,11 @@
+import { childVisitForm } from '../__tests__/forms'
 import {
     captureOf,
+    coordinatePoint,
+    coordinateValue,
     heldLocation,
     locationLabel,
+    placesOnOrgUnit,
     readLocation,
     sentGeometry,
 } from './location'
@@ -74,5 +78,34 @@ describe('sentGeometry', () => {
         expect(sentGeometry(JSON.stringify(AREA), 'POLYGON')).toEqual(AREA)
         const point = { type: 'Point', coordinates: [-11.42, 8.47] }
         expect(sentGeometry(JSON.stringify(point), 'POINT')).toEqual(point)
+    })
+})
+
+describe('coordinate data elements', () => {
+    it('reads a stored [lng,lat] as a point, to six places, and none for text that is not one', () => {
+        expect(coordinatePoint('[-11.4197,8.1327]')).toEqual({
+            type: 'Point',
+            coordinates: [-11.4197, 8.1327],
+        })
+        expect(coordinatePoint('[-11.12345678,8.5]')).toEqual({
+            type: 'Point',
+            coordinates: [-11.123457, 8.5],
+        })
+        expect(coordinatePoint(undefined)).toBeNull()
+        expect(coordinatePoint('[8.5,-191]')).toBeNull()
+        expect(coordinatePoint('by the river')).toBeNull()
+    })
+
+    it('stores a point as [lng,lat]', () => {
+        expect(
+            coordinateValue({ type: 'Point', coordinates: [-13.2356, 8.4871] })
+        ).toBe('[-13.2356,8.4871]')
+    })
+
+    it('places the form on its org unit for a feature type, and not without one', () => {
+        expect(placesOnOrgUnit(childVisitForm({ featureType: 'POINT' }))).toBe(
+            true
+        )
+        expect(placesOnOrgUnit(childVisitForm())).toBe(false)
     })
 })

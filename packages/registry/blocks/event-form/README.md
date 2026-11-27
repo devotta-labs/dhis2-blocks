@@ -6,7 +6,8 @@ Enter or edit one event of a program stage, with every program rule applied.
 pnpm dlx shadcn@latest add devotta-labs/dhis2-blocks/event-form
 ```
 
-`EventForm` loads the stage's sections and data elements, shows each through `ValueInput`, and runs the stage's program
+`EventForm` loads the stage's sections and data elements, shows each through `ValueInput` (a coordinate through
+`LocationInput`), and runs the stage's program
 rules on every commit: a rule hides a field or section, sets a value, makes a field required, limits options or shows a
 message. Save sends the event in one tracker import, Complete sends it completed, and DHIS2's errors land on the shown
 fields they name. Until DHIS2 answers, every field is read-only, drawn as it was; after 15 seconds the form offers
@@ -58,6 +59,10 @@ that from a point org unit is a warning, never a reason to hold back Save. The l
 as a multi-polygon of one part, and a stored one of one part opens as an area the field can change. A cleared location
 goes as `null`; an area with holes or several parts is shown read-only and sent back as it is. DHIS2's errors about the
 geometry are shown on the field.
+
+A data element of value type `COORDINATE` is a point on `LocationInput` too, said against the same org unit and stored
+as `[lng,lat]`. It takes the rules, required marks, messages and read-only states as every other field does, and text
+that is not a coordinate holds back Save as an invalid value would.
 
 `EventFormNotes` lists the event's notes, oldest first, with who wrote each and when, and a box for one more. The note
 goes with the next Save or Complete, under an id made for it, makes the form dirty, and is listed once DHIS2 has saved

@@ -17,6 +17,7 @@ preview is live: what you save is saved to the demo database behind this site.
 <InstallCommand item="event-form" />
 
 It installs `dhis2-value-input` (one control per value type),
+`location-input` (the event's location and coordinate data elements),
 `dhis2-value-types`, `dhis2-value-display` (the calendar) and `program-rules`
 with it. The form needs the DHIS2 app-runtime provider and a React Query
 `QueryClientProvider` above it. The text goes through `@dhis2/d2-i18n` as
@@ -145,7 +146,8 @@ corners are added where the user stands, pasted, or drawn on the map. The
 field says where the location is against the org unit (`350 m north-east of
 Ngelehun CHC`, `Inside Badjia`); with `locationWarnKm`, a point further than
 that from a point org unit is a warning that latitude and longitude may be
-swapped. Nothing holds back Save. The location makes the form dirty and goes
+swapped. Being far never holds back Save; text that is not a location does,
+as an invalid value would. The location makes the form dirty and goes
 in the import as the event's `geometry`, of the type the stage asks for, since
 DHIS2 refuses any other (E1012): an area goes to a `MULTI_POLYGON` stage as a
 multi-polygon of one part, and a stored one of one part opens as an area the
@@ -153,6 +155,10 @@ field can change. A cleared location goes as `null`. An area with holes or
 several parts is shown read-only and sent back as it is. DHIS2's errors about
 the geometry land on the field. A read-only form shows it read-only, without
 its buttons; while a save is unanswered it keeps them, out of reach.
+
+A data element of value type `COORDINATE` is a point on the same field, said
+against the same org unit, and stored as DHIS2 holds it, `[lng,lat]`. Rules,
+required marks, messages and read-only states apply to it as to any field.
 
 ## Saving
 

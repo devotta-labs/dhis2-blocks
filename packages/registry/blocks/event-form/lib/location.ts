@@ -1,7 +1,8 @@
 import i18n from '@dhis2/d2-i18n'
-import { geometrySchema } from '@/components/location-map'
-import type { MapGeometry } from '@/components/location-map'
-import type { FeatureType, HeldEvent } from './metadata'
+import { parseCoordinate } from '@/components/dhis2-value-types'
+import { geometrySchema, pointOf, rounded } from '@/components/location-map'
+import type { MapGeometry, PointGeometry } from '@/components/location-map'
+import type { FeatureType, HeldEvent, StageForm } from './metadata'
 
 /** What the event's location field captures for a stage's feature type; nothing for a stage that records none. */
 export const captureOf = (
@@ -58,4 +59,27 @@ export const sentGeometry = (
     return geometry?.type === 'Polygon' && featureType === 'MULTI_POLYGON'
         ? { type: 'MultiPolygon', coordinates: [geometry.coordinates] }
         : geometry
+}
+
+/** Whether the form places anything against its org unit: the event's own location, or a coordinate data element. */
+export const placesOnOrgUnit = (form: StageForm) =>
+    form.featureType !== 'NONE' ||
+    [...form.fields.values()].some(
+        ({ field }) => field.valueType === 'COORDINATE'
+    )
+
+/** A coordinate data element's stored `[lng,lat]` as the point the field takes; `null` for none or one it cannot read. */
+export const coordinatePoint = (
+    value: string | undefined
+): PointGeometry | null => {
+    const read = value === undefined ? undefined : parseCoordinate(value)
+    return read === undefined
+        ? null
+        : pointOf([Number(read.longitude), Number(read.latitude)])
+}
+
+/** A point as DHIS2 stores a coordinate data element: `[lng,lat]`, to six places. */
+export const coordinateValue = ({ coordinates }: PointGeometry) => {
+    const [longitude, latitude] = rounded(coordinates)
+    return `[${longitude},${latitude}]`
 }

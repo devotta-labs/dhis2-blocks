@@ -159,6 +159,7 @@ export const EventFormFields = () => {
                                         formId={formId}
                                         settings={settings}
                                         commit={commit}
+                                        orgUnit={orgUnit}
                                     />
                                 )
                             )

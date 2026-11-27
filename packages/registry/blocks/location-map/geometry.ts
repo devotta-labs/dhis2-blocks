@@ -161,8 +161,8 @@ export const crossesItself = (ring: readonly Position[]) =>
     })
 
 /**
- * Whether a side of an open boundary crosses a side of an area, its holes included: corners all inside an area with a
- * bay in its edge can still enclose land outside it.
+ * Whether an open boundary takes in land outside an area though its corners are all inside: a side crosses the area's
+ * boundary, as across a bay, or the boundary runs inside it, as round a hole or another of the area's parts.
  */
 export const crossesArea = (
     ring: readonly Position[],
@@ -170,6 +170,9 @@ export const crossesArea = (
 ) => {
     const edges =
         area.type === 'Polygon' ? area.coordinates : area.coordinates.flat()
+    if (edges.some((edge) => edge.some((point) => inRing(point, ring)))) {
+        return true
+    }
     return ring.some((a, index) => {
         const b = ring[(index + 1) % ring.length] ?? a
         return edges.some((edge) =>

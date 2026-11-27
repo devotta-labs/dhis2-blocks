@@ -1,6 +1,6 @@
 import { storedDay } from '@/components/dhis2-value-display'
 import type { RuleEventStatus } from '@/components/program-rules'
-import { sentGeometry } from './location'
+import { heldLocation, sentGeometry } from './location'
 import type { FeatureType, HeldEvent, Values } from './metadata'
 
 export const IMPORT_PARAMS = {
@@ -109,7 +109,14 @@ export const eventPayload = ({
             : sentGeometry(location.now, location.featureType)
     let own: Omit<TrackerEventPayload, 'occurredAt' | 'status' | 'dataValues'> =
         chosen
-    if (location?.now === location?.opened) {
+    // Left as it was opened from DHIS2, the event's own geometry goes back exactly as stored, altitudes included; a
+    // location only this form has saved has no stored geometry behind it, so it is sent as the form holds it.
+    const storedAsOpened =
+        location?.now !== undefined &&
+        location.now === location.opened &&
+        held?.geometry !== undefined &&
+        heldLocation(held.geometry) === location.opened
+    if (storedAsOpened) {
         own = chosen
     } else if (geometry !== null) {
         own = { ...chosen, geometry }

@@ -102,6 +102,36 @@ describe('changedAtEnd', () => {
         ).toBe(true)
     })
 
+    it('finds an area drawn round a hole of another, touching nothing', () => {
+        const holed: PolygonGeometry = {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [0, 0],
+                    [10, 0],
+                    [10, 10],
+                    [0, 10],
+                    [0, 0],
+                ],
+                [
+                    [4, 4],
+                    [6, 4],
+                    [6, 6],
+                    [4, 6],
+                    [4, 4],
+                ],
+            ],
+        }
+        const round: Position[] = [
+            [2, 2],
+            [8, 2],
+            [8, 8],
+            [2, 8],
+        ]
+        expect(round.every((point) => insideArea(point, holed))).toBe(true)
+        expect(crossesArea(round, holed)).toBe(true)
+    })
+
     it('finds an area whose side crosses into a bay of another, with every corner inside it', () => {
         // A U: the bay between its arms is outside it.
         const u: PolygonGeometry = {

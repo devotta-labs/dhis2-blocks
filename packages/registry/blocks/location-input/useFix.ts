@@ -44,7 +44,7 @@ export const accuracyWords = (accuracyM: number) => {
 }
 
 /** Why the device gave no location, and what to do instead. */
-export const refusal = (error: GeolocationPositionError) => {
+const refusal = (error: GeolocationPositionError) => {
     switch (error.code) {
         case error.PERMISSION_DENIED:
             return i18n.t(

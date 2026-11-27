@@ -14,7 +14,8 @@ Fewer than three points is not an area: the field keeps them and sends `null` un
 holes or several parts is shown and kept, never edited.
 
 "Use my location" watches the device until a fix is within 10 metres, or for 10 seconds, and takes the best one, since
-a browser's first answer is often a coarse one from Wi-Fi; pressing again takes the best so far. The accuracy is said
+a browser's first answer is often a coarse one from Wi-Fi; with none by then, as while the browser asks for
+permission, it takes the first that comes. Pressing again takes the best so far. The accuracy is said
 in words under the field. With `orgUnit`, the box says where the location is in words a health worker knows rather than
 as coordinates: `350 m north-east of Ngelehun CHC`, `Inside Badjia`, `3.7 ha · inside Badjia`, with `Your location`
 in front of a point just taken from the device. The coordinates come back while the box has focus, for typing and

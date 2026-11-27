@@ -84,7 +84,7 @@ interface Watch {
 
 /**
  * The device's location, watched until a fix is within 10 m or for 10 seconds, keeping the best one: the browser's
- * first answer is often a coarse one from Wi-Fi. While finding, `accuracyM` is the best so far; `finish` takes it, or
+ * first answer is often a coarse one from Wi-Fi. With none by then, the first that comes is taken. While finding, `accuracyM` is the best so far; `finish` takes it, or
  * stops asking when there is none yet, as while the browser waits for the user to allow it.
  */
 export const useFix = (locator: Locator | undefined) => {

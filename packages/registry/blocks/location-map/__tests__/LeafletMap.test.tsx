@@ -143,16 +143,16 @@ describe('LocationMap', () => {
         })
     })
 
-    it('sends null while an area has fewer than three corners, and keeps drawing them', async () => {
+    it('sends null while an area has fewer than three corners, and keeps drawing them as an area', async () => {
         const sent = vi.fn()
-        const Form = () => {
+        const Form = ({ capture }: { capture?: 'area' }) => {
             const [value, setValue] = useState<LocationGeometry | null>(AREA)
             return (
                 <div style={{ height: 300 }}>
                     <LocationMap
                         tiles={null}
                         className="h-full"
-                        capture="area"
+                        capture={capture}
                         value={value}
                         onChange={(next) => {
                             sent(next)
@@ -162,6 +162,7 @@ describe('LocationMap', () => {
                 </div>
             )
         }
+        // Without `capture`, the map tells point from area by its value, which is null meanwhile.
         const screen = await render(<Form />)
         const corner = screen
             .getByRole('button', { name: 'Point 2 of 3' })

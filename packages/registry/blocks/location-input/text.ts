@@ -76,6 +76,8 @@ export const pastedHoles = (text: string) =>
 export const readPoints = (text: string): Position[] | undefined => {
     const fromJson = ringInJson(text.trim())
     if (fromJson !== undefined) return fromJson.map(rounded)
+    // Meant as GeoJSON but not an area this field takes: never read as lines, where numbers inside it pass for points.
+    if (text.trim().startsWith('{')) return undefined
     const lines = text
         .split(/[\n;]/)
         .map((line) => line.trim())

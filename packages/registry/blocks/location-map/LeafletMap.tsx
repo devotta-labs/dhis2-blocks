@@ -61,7 +61,9 @@ const LeafletMap = ({
 
     const { draft, setDraft, sentValue } = useDraftCorners(value)
 
-    const kind = capture ?? (value && value.type !== 'Point' ? 'area' : 'point')
+    // Unfinished corners are an area being drawn, even while the value has gone back to nothing.
+    const areaShown = draft !== undefined || (value && value.type !== 'Point')
+    const kind = capture ?? (areaShown ? 'area' : 'point')
     const ring = kind === 'area' ? (draft ?? editableRing(value) ?? []) : []
     const fixedArea =
         value && value.type !== 'Point' && editableRing(value) === undefined

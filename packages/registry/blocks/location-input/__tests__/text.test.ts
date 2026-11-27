@@ -89,4 +89,20 @@ describe('location text', () => {
         ).toBe(true)
         expect(pastedHoles('8.1, -11.4\n8.2, -11.5')).toBe(false)
     })
+
+    it('reads nothing from GeoJSON it cannot take, rather than numbers inside it', () => {
+        const offGlobe = {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [-200, 8.1, 50],
+                    [-11.3, 8.1, 50],
+                    [-11.3, 8.2, 50],
+                    [-200, 8.1, 50],
+                ],
+            ],
+        }
+        expect(readPoints(JSON.stringify(offGlobe))).toBeUndefined()
+        expect(readPoints(JSON.stringify(offGlobe, null, 2))).toBeUndefined()
+    })
 })

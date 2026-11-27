@@ -223,7 +223,7 @@ export interface ChildVisitVariant {
     blockEntryForm?: boolean
     write?: boolean
     validationStrategy?: 'ON_COMPLETE' | 'ON_UPDATE_AND_INSERT'
-    /** The stage's geometry: `POINT`, `POLYGON`; none by default. */
+    /** The stage's feature type: `POINT`, `POLYGON` or `MULTI_POLYGON`; none by default. */
     featureType?: string
     /** The follow-up date may be after today, as by default. */
     futureFollowUp?: boolean

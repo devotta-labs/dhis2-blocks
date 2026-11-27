@@ -7,6 +7,8 @@ import { EVENT_DATE, LOCATION } from './validate'
 import type { Validation } from './validate'
 
 const held = heldEventSchema.parse(SAVED_VISIT)
+const HELD_POINT = '{"type":"Point","coordinates":[-11.42,8.47]}'
+const MOVED_POINT = '{"type":"Point","coordinates":[-11.5,8.5]}'
 const opened = () => initialFormState(held, '2026-11-12')
 const commit = (
     state: FormState,
@@ -138,8 +140,8 @@ describe('formReducer', () => {
             stored: { labWeight01: '13', labDoseMg01: '26' },
             eventDate: '2026-11-02',
             categories: {},
-            location: '[-11.42,8.47]',
-            storedLocation: '[-11.42,8.47]',
+            location: HELD_POINT,
+            storedLocation: HELD_POINT,
         })
         expect(state).toMatchObject({ status: 'COMPLETED' })
         expect(state.saving).toBeUndefined()
@@ -226,29 +228,40 @@ describe('formReducer', () => {
 })
 
 describe('location', () => {
-    it('opens with the point the event holds as [lng,lat], and none for a new event', () => {
-        expect(opened().location).toBe('[-11.42,8.47]')
+    it('opens with the geometry the event holds, written out, and none for a new event', () => {
+        expect(opened().location).toBe(HELD_POINT)
         expect(
             initialFormState(undefined, '2026-11-12').location
         ).toBeUndefined()
-        expect(
-            initialFormState(
-                heldEventSchema.parse({
-                    ...SAVED_VISIT,
-                    geometry: { type: 'Polygon', coordinates: [] },
-                }),
-                '2026-11-12'
-            ).location
-        ).toBeUndefined()
+    })
+
+    it('opens a stored multi-polygon of one part as a polygon, so the field can edit it', () => {
+        const ring = [
+            [-12, 8],
+            [-11, 8],
+            [-11, 9],
+            [-12, 8],
+        ]
+        const state = initialFormState(
+            heldEventSchema.parse({
+                ...SAVED_VISIT,
+                geometry: { type: 'MultiPolygon', coordinates: [[ring]] },
+            }),
+            '2026-11-12'
+        )
+        expect(state.location).toBe(
+            JSON.stringify({ type: 'Polygon', coordinates: [ring] })
+        )
+        expect(isDirty(state)).toBe(false)
     })
 
     it('takes a location apart from the values; a change or a clear makes the form dirty', () => {
-        const moved = commit(opened(), LOCATION, '[-11.5,8.5]')
-        expect(moved.location).toBe('[-11.5,8.5]')
+        const moved = commit(opened(), LOCATION, MOVED_POINT)
+        expect(moved.location).toBe(MOVED_POINT)
         expect(moved.entered).toEqual(opened().entered)
         expect(isDirty(moved)).toBe(true)
         expect(isDirty(commit(opened(), LOCATION, null))).toBe(true)
-        expect(isDirty(commit(moved, LOCATION, '[-11.42,8.47]'))).toBe(false)
+        expect(isDirty(commit(moved, LOCATION, HELD_POINT))).toBe(false)
     })
 
     it('takes nothing committed while a save is unanswered, such as a location found late', () => {
@@ -256,7 +269,7 @@ describe('location', () => {
             type: 'saving',
             attempt: 'save',
         })
-        expect(commit(saving, LOCATION, '[-11.5,8.5]')).toBe(saving)
+        expect(commit(saving, LOCATION, MOVED_POINT)).toBe(saving)
         expect(commit(saving, 'labWeight01', '13')).toBe(saving)
     })
 
@@ -265,21 +278,21 @@ describe('location', () => {
         let state = commit(
             commit(fresh, 'labWeight01', '13'),
             LOCATION,
-            '[-11.5,8.5]'
+            MOVED_POINT
         )
         state = formReducer(state, { type: 'saving', attempt: 'save' })
         state = formReducer(state, {
             type: 'stoppedWaiting',
             sent: {
                 effective: { labWeight01: '13', labDoseMg01: '26' },
-                location: '[-11.5,8.5]',
+                location: MOVED_POINT,
             },
         })
         expect(state.opened.stored).toEqual({
             labWeight01: '13',
             labDoseMg01: '26',
         })
-        expect(state.opened.storedLocation).toBe('[-11.5,8.5]')
+        expect(state.opened.storedLocation).toBe(MOVED_POINT)
         expect(isDirty(state)).toBe(true)
     })
 
@@ -290,7 +303,7 @@ describe('location', () => {
             null,
             'Enter a latitude between -90 and 90'
         )
-        expect(state.location).toBe('[-11.42,8.47]')
+        expect(state.location).toBe(HELD_POINT)
         expect(state.problems.get(LOCATION)).toBe(
             'Enter a latitude between -90 and 90'
         )
@@ -358,7 +371,7 @@ describe('toSend', () => {
             status: 'ACTIVE',
             eventDate: '2026-11-02',
             categories: {},
-            location: '[-11.42,8.47]',
+            location: HELD_POINT,
             effective: opened().entered,
             note: undefined,
         })

@@ -1,137 +1,111 @@
+import { childVisitForm } from '../test/forms'
 import {
-    distanceKm,
-    formatDistance,
-    insideArea,
-    plausibility,
-    pointGeometry,
-    pointValue,
+    captureOf,
+    coordinatePoint,
+    coordinateValue,
+    heldLocation,
+    locationLabel,
+    placesOnOrgUnit,
+    readLocation,
+    sentGeometry,
 } from './location'
-import type { Geometry } from './location'
 
-const CHC = {
-    name: 'Ngelehun CHC',
-    geometry: { type: 'Point', coordinates: [-11.4197, 8.1039] },
-} satisfies {
-    name: string
-    geometry: Geometry
-}
+const RING = [
+    [-12, 8],
+    [-11, 8],
+    [-11, 9],
+    [-12, 8],
+]
+const AREA = { type: 'Polygon', coordinates: [RING] }
 
-const DISTRICT: Geometry = {
-    type: 'Polygon',
-    coordinates: [
-        [
-            [-12, 8],
-            [-11, 8],
-            [-11, 9],
-            [-12, 9],
-            [-12, 8],
-        ],
-        [
-            [-11.6, 8.4],
-            [-11.4, 8.4],
-            [-11.4, 8.6],
-            [-11.6, 8.6],
-            [-11.6, 8.4],
-        ],
-    ],
-}
-
-test('a stored point is the coordinate value [lng,lat], and back', () => {
-    expect(pointValue({ type: 'Point', coordinates: [-11.42, 8.47] })).toBe(
-        '[-11.42,8.47]'
-    )
-    expect(pointValue({ type: 'Polygon', coordinates: [] })).toBeUndefined()
-    expect(pointValue(undefined)).toBeUndefined()
-    expect(pointGeometry('[-11.42,8.47]')).toEqual({
-        type: 'Point',
-        coordinates: [-11.42, 8.47],
+describe('captureOf', () => {
+    it('captures a point, an area for either kind of polygon, and nothing for none', () => {
+        expect(captureOf('POINT')).toBe('point')
+        expect(captureOf('POLYGON')).toBe('area')
+        expect(captureOf('MULTI_POLYGON')).toBe('area')
+        expect(captureOf('NONE')).toBeUndefined()
     })
-    expect(pointGeometry('nowhere')).toBeUndefined()
-})
 
-test('distances are great-circle distances', () => {
-    expect(distanceKm([0, 0], [0, 0])).toBe(0)
-    expect(distanceKm([0, 0], [0, 1])).toBeCloseTo(111.2, 1)
-    expect(
-        distanceKm([-13.2356, 8.4871], CHC.geometry.coordinates)
-    ).toBeCloseTo(204, 0)
-})
-
-test('a swapped latitude and longitude lands thousands of kilometres away', () => {
-    const swapped = distanceKm([8.1039, -11.4197], CHC.geometry.coordinates)
-    expect(swapped).toBeGreaterThan(2000)
-})
-
-test('a point is inside an area when in its outer ring and not in a hole', () => {
-    expect(insideArea([-11.8, 8.2], DISTRICT)).toBe(true)
-    expect(insideArea([-11.5, 8.5], DISTRICT)).toBe(false)
-    expect(insideArea([-10.5, 8.5], DISTRICT)).toBe(false)
-})
-
-test('a point is inside a multi-polygon when inside any of its polygons', () => {
-    const islands: Geometry = {
-        type: 'MultiPolygon',
-        coordinates: [
-            [
-                [
-                    [0, 0],
-                    [1, 0],
-                    [1, 1],
-                    [0, 1],
-                    [0, 0],
-                ],
-            ],
-            [
-                [
-                    [5, 5],
-                    [6, 5],
-                    [6, 6],
-                    [5, 6],
-                    [5, 5],
-                ],
-            ],
-        ],
-    }
-    expect(insideArea([5.5, 5.5], islands)).toBe(true)
-    expect(insideArea([0.5, 0.5], islands)).toBe(true)
-    expect(insideArea([3, 3], islands)).toBe(false)
-})
-
-test('distances are written in metres under a kilometre and kilometres beyond', () => {
-    expect(formatDistance(0.012)).toBe('12 m')
-    expect(formatDistance(3.24)).toBe('3.2 km')
-    expect(formatDistance(5420.4)).toBe('5,420 km')
-})
-
-test('a location says how far it is from a point org unit, and warns when far', () => {
-    expect(plausibility('[-11.39,8.12]', CHC, 100)).toEqual({
-        tone: 'info',
-        text: '3.7 km from Ngelehun CHC',
-    })
-    expect(plausibility('[8.1039,-11.4197]', CHC, 100)).toEqual({
-        tone: 'warning',
-        text: expect.stringMatching(
-            /^This point is [\d,]+ km from Ngelehun CHC\. Check the latitude and longitude are the right way round\.$/
-        ),
+    it('labels the field as the Capture app does', () => {
+        expect(locationLabel('point')).toBe('Coordinate')
+        expect(locationLabel('area')).toBe('Area')
     })
 })
 
-test('a location says whether it is inside an org unit’s area', () => {
-    const district = { name: 'Badjia', geometry: DISTRICT }
-    expect(plausibility('[-11.8,8.2]', district, 100)).toEqual({
-        tone: 'info',
-        text: 'Inside Badjia',
+describe('heldLocation', () => {
+    it('writes out a stored point or polygon, without an altitude', () => {
+        expect(
+            heldLocation({ type: 'Point', coordinates: [-11.42, 8.47, 120] })
+        ).toBe('{"type":"Point","coordinates":[-11.42,8.47]}')
+        expect(heldLocation(AREA)).toBe(JSON.stringify(AREA))
     })
-    expect(plausibility('[-11.5,8.5]', district, 100)).toEqual({
-        tone: 'warning',
-        text: 'Outside Badjia',
+
+    it('holds a multi-polygon of one part as a polygon, and one of several as it is', () => {
+        expect(
+            heldLocation({ type: 'MultiPolygon', coordinates: [[RING]] })
+        ).toBe(JSON.stringify(AREA))
+        const parts = { type: 'MultiPolygon', coordinates: [[RING], [RING]] }
+        expect(heldLocation(parts)).toBe(JSON.stringify(parts))
+    })
+
+    it('holds nothing for no geometry or one it cannot read', () => {
+        expect(heldLocation(undefined)).toBeUndefined()
+        expect(
+            heldLocation({ type: 'Point', coordinates: [8.47, -191] })
+        ).toBeUndefined()
+        expect(
+            heldLocation({ type: 'LineString', coordinates: RING })
+        ).toBeUndefined()
     })
 })
 
-test('nothing is said without a location or an org unit geometry', () => {
-    expect(plausibility(undefined, CHC, 100)).toBeUndefined()
-    expect(
-        plausibility('[-11.39,8.12]', { name: 'Somewhere' }, 100)
-    ).toBeUndefined()
-    expect(plausibility('[-11.39,8.12]', undefined, 100)).toBeUndefined()
+describe('readLocation', () => {
+    it('gives the field the geometry held, or null for none', () => {
+        expect(readLocation(JSON.stringify(AREA))).toEqual(AREA)
+        expect(readLocation(undefined)).toBeNull()
+    })
+})
+
+describe('sentGeometry', () => {
+    it('sends an area to a MULTI_POLYGON stage as a multi-polygon of one part', () => {
+        expect(sentGeometry(JSON.stringify(AREA), 'MULTI_POLYGON')).toEqual({
+            type: 'MultiPolygon',
+            coordinates: [[RING]],
+        })
+    })
+
+    it('sends a polygon to a POLYGON stage, and a point to a POINT stage, as they are', () => {
+        expect(sentGeometry(JSON.stringify(AREA), 'POLYGON')).toEqual(AREA)
+        const point = { type: 'Point', coordinates: [-11.42, 8.47] }
+        expect(sentGeometry(JSON.stringify(point), 'POINT')).toEqual(point)
+    })
+})
+
+describe('coordinate data elements', () => {
+    it('reads a stored [lng,lat] as a point, to six places, and none for text that is not one', () => {
+        expect(coordinatePoint('[-11.4197,8.1327]')).toEqual({
+            type: 'Point',
+            coordinates: [-11.4197, 8.1327],
+        })
+        expect(coordinatePoint('[-11.12345678,8.5]')).toEqual({
+            type: 'Point',
+            coordinates: [-11.123457, 8.5],
+        })
+        expect(coordinatePoint(undefined)).toBeNull()
+        expect(coordinatePoint('[8.5,-191]')).toBeNull()
+        expect(coordinatePoint('by the river')).toBeNull()
+    })
+
+    it('stores a point as [lng,lat]', () => {
+        expect(
+            coordinateValue({ type: 'Point', coordinates: [-13.2356, 8.4871] })
+        ).toBe('[-13.2356,8.4871]')
+    })
+
+    it('places the form on its org unit for a feature type, and not without one', () => {
+        expect(placesOnOrgUnit(childVisitForm({ featureType: 'POINT' }))).toBe(
+            true
+        )
+        expect(placesOnOrgUnit(childVisitForm())).toBe(false)
+    })
 })

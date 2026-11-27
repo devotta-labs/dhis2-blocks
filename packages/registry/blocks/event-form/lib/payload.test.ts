@@ -1,5 +1,6 @@
 import { CHILD_VISIT, SAVED_VISIT } from '../test/childVisit'
 import { formReducer, initialFormState, toSend } from './formState'
+import { heldLocation } from './location'
 import { heldEventSchema } from './metadata'
 import { eventPayload, IMPORT_PARAMS } from './payload'
 import type { PayloadInput } from './payload'
@@ -21,6 +22,23 @@ const held = heldEventSchema.parse({
     assignedUser: { uid: 'labUser0001', username: 'nurse' },
     followUp: true,
 })
+
+const POINT_NOW = JSON.stringify({
+    type: 'Point',
+    coordinates: [-13.2356, 8.4871],
+})
+const POINT_HELD = JSON.stringify(SAVED_VISIT.geometry)
+const AREA = {
+    type: 'Polygon',
+    coordinates: [
+        [
+            [-12, 8],
+            [-11, 8],
+            [-11, 9],
+            [-12, 8],
+        ],
+    ],
+}
 
 const EDIT: PayloadInput = {
     ...NEW,
@@ -153,7 +171,7 @@ describe('eventPayload', () => {
     it('sends a point stage’s location as a GeoJSON point, longitude first', () => {
         const [created] = eventPayload({
             ...NEW,
-            location: { now: '[-13.2356,8.4871]' },
+            location: { now: POINT_NOW, featureType: 'POINT' },
         }).events
         expect(created.geometry).toEqual({
             type: 'Point',
@@ -161,22 +179,111 @@ describe('eventPayload', () => {
         })
         const [moved] = eventPayload({
             ...EDIT,
-            location: { now: '[-11.5,8.5]', opened: '[-11.42,8.47]' },
+            location: {
+                now: POINT_NOW,
+                opened: POINT_HELD,
+                featureType: 'POINT',
+            },
         }).events
         expect(moved.geometry).toEqual({
             type: 'Point',
-            coordinates: [-11.5, 8.5],
+            coordinates: [-13.2356, 8.4871],
+        })
+    })
+
+    it('sends an area as a polygon to a POLYGON stage, and as a multi-polygon of one part to a MULTI_POLYGON stage', () => {
+        const [polygon] = eventPayload({
+            ...NEW,
+            location: { now: JSON.stringify(AREA), featureType: 'POLYGON' },
+        }).events
+        expect(polygon.geometry).toEqual(AREA)
+        const [multi] = eventPayload({
+            ...NEW,
+            location: {
+                now: JSON.stringify(AREA),
+                featureType: 'MULTI_POLYGON',
+            },
+        }).events
+        expect(multi.geometry).toEqual({
+            type: 'MultiPolygon',
+            coordinates: [AREA.coordinates],
         })
     })
 
     it('sends null for a location cleared after it was stored, and none when there never was one', () => {
         const [cleared] = eventPayload({
             ...EDIT,
-            location: { opened: '[-11.42,8.47]' },
+            location: { opened: POINT_HELD, featureType: 'POINT' },
         }).events
         expect(cleared.geometry).toBeNull()
-        const [created] = eventPayload({ ...NEW, location: {} }).events
+        const [created] = eventPayload({
+            ...NEW,
+            location: { featureType: 'POLYGON' },
+        }).events
         expect(created).not.toHaveProperty('geometry')
+    })
+
+    it('sends again a location only the form has saved, as no stored geometry stands behind it', () => {
+        const [again] = eventPayload({
+            ...NEW,
+            location: {
+                now: POINT_NOW,
+                opened: POINT_NOW,
+                featureType: 'POINT',
+            },
+        }).events
+        expect(again.geometry).toEqual({
+            type: 'Point',
+            coordinates: [-13.2356, 8.4871],
+        })
+    })
+
+    it('sends again a location moved and saved, not the one first opened', () => {
+        const [again] = eventPayload({
+            ...EDIT,
+            location: {
+                now: POINT_NOW,
+                opened: POINT_NOW,
+                featureType: 'POINT',
+            },
+        }).events
+        expect(again.geometry).toEqual({
+            type: 'Point',
+            coordinates: [-13.2356, 8.4871],
+        })
+    })
+
+    it('sends a stored geometry left as it was back exactly, altitudes and all', () => {
+        const stored = {
+            type: 'MultiPolygon',
+            coordinates: [
+                [
+                    [
+                        [-11.1, 8.1, 120],
+                        [-11.2, 8.2, 130],
+                        [-11.1, 8.2, 125],
+                        [-11.1, 8.1, 120],
+                    ],
+                ],
+            ],
+        }
+        const opened = heldLocation(stored)
+        const [kept] = eventPayload({
+            ...EDIT,
+            held: { ...held, geometry: stored },
+            location: { now: opened, opened, featureType: 'MULTI_POLYGON' },
+        }).events
+        expect(kept.geometry).toEqual(stored)
+    })
+
+    it('sends a stored geometry the form cannot read back as it is', () => {
+        const unread = { type: 'LineString', coordinates: [[-11, 8]] }
+        const [edited] = eventPayload({
+            ...EDIT,
+            held: { ...held, geometry: unread },
+            location: { featureType: 'POLYGON' },
+        }).events
+        expect(edited.geometry).toEqual(unread)
     })
 
     it('sends the chosen category options in order, without the held combination', () => {

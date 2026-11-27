@@ -38,6 +38,7 @@ export type Example =
     | 'pointVisit'
     | 'savedPointVisit'
     | 'areaVisit'
+    | 'areaStageVisit'
 
 export interface LabSettings {
     example: Example
@@ -462,6 +463,11 @@ export const EXAMPLES = {
     ),
     areaVisit: {
         ...childVisit(childVisitProgram({ featureType: 'POINT' })),
+        orgUnitId: 'labOrgUnit2',
+    },
+    // A stage that records the area a visit covered: drawn as one boundary, sent as a multi-polygon of one part.
+    areaStageVisit: {
+        ...childVisit(childVisitProgram({ featureType: 'MULTI_POLYGON' })),
         orgUnitId: 'labOrgUnit2',
     },
 } satisfies Record<Example, LabExample>

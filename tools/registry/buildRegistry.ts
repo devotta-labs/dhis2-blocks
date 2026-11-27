@@ -187,12 +187,20 @@ const resolveRelative = (from: string, specifier: string): string | undefined =>
         join(dirname(from), specifier + suffix)
     ).find((path) => existsSync(path) && SOURCE_FILE.test(path))
 
+/** Where DefinitelyTyped publishes a package's types: `@types/leaflet`, `@types/scope__name`. */
+const typesPackage = (name: string) =>
+    `@types/${name.startsWith('@') ? name.slice(1).replace('/', '__') : name}`
+
 const itemDependencies = (
     item: SourceItem,
     owners: Map<string, SourceItem>,
     names: Set<string>,
-    versions: Record<string, string>
-): Pick<RegistryItem, 'dependencies' | 'registryDependencies'> => {
+    versions: Record<string, string>,
+    typeVersions: Record<string, string>
+): Pick<
+    RegistryItem,
+    'dependencies' | 'devDependencies' | 'registryDependencies'
+> => {
     const external = new Set<string>()
     // Every item styles itself with the DHIS2 tokens.
     const internal = new Set<string>([THEME_ITEM])
@@ -253,9 +261,18 @@ const itemDependencies = (
         }
         return `${dependency}@${version}`
     })
+    // A package without its own types has them in @types, which the app needs as well to type-check what is installed.
+    const devDependencies = [...external].sort().flatMap((dependency) => {
+        const types = typesPackage(dependency)
+        const version = typeVersions[types]
+        return version ? [`${types}@${version}`] : []
+    })
     return {
         ...(dependencies.length > 0 && {
             dependencies,
+        }),
+        ...(devDependencies.length > 0 && {
+            devDependencies,
         }),
         ...(internal.size > 0 && {
             registryDependencies: [...internal]
@@ -276,9 +293,8 @@ const buildRegistry = (): Registry => {
             item.files.map((file) => [file.source, item] as const)
         )
     )
-    const { dependencies: versions } = JSON.parse(
-        readFileSync(join(SOURCE_ROOT, 'package.json'), 'utf8')
-    )
+    const { dependencies: versions, devDependencies: typeVersions } =
+        JSON.parse(readFileSync(join(SOURCE_ROOT, 'package.json'), 'utf8'))
     const themeLayers = parseTheme(
         readFileSync(join(COMPONENTS_DIR, 'theme.css'), 'utf8')
     )
@@ -309,7 +325,13 @@ const buildRegistry = (): Registry => {
                         title: item.metadata.title,
                         description: item.metadata.description,
                     }),
-                    ...itemDependencies(item, owners, names, versions),
+                    ...itemDependencies(
+                        item,
+                        owners,
+                        names,
+                        versions,
+                        typeVersions
+                    ),
                     files: item.files.map(({ source, target }) => ({
                         path: toPosix(relative(REPO_ROOT, source)),
                         type: fileType,

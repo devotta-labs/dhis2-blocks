@@ -1,11 +1,17 @@
 import i18n from '@dhis2/d2-i18n'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { ValueInput } from '@/components/dhis2-value-input'
 import type { ValueInputProps } from '@/components/dhis2-value-input'
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import { LocationInput } from '@/components/location-input'
+import type {
+    LocationInputProps,
+    LocationOrgUnit,
+} from '@/components/location-input'
 import type { Blame } from '@/components/program-rules'
 import type { EventFormValue } from '../hooks/useEventForm'
 import { blameLine, markerOf } from '../lib/explain'
+import { coordinatePoint, coordinateValue } from '../lib/location'
 import type { FormField as StageField } from '../lib/metadata'
 import { futureProblem } from '../lib/validate'
 import { failedAttempt } from './context'
@@ -162,43 +168,111 @@ interface FormFieldProps {
     formId: string
     settings: ValueSettings
     commit: EventFormValue['commit']
+    /** The event's org unit, which a coordinate is placed against. */
+    orgUnit?: LocationOrgUnit
+    /** The background of a coordinate's map. */
+    tiles?: LocationInputProps['tiles']
 }
 
-/** One data element of the stage, through `ValueInput`, with what the rules and the checks say of it. */
-export const FormField = memo(
-    ({ field, model, id, formId, settings, commit }: FormFieldProps) => (
-        <ValueInput
-            id={id}
-            field={field.field}
-            settings={settings}
-            label={field.label}
-            description={field.description}
-            value={model.value}
-            onChange={commit(field.id)}
-            required={model.required}
-            readOnly={model.readOnly}
-            readOnlyReason={model.readOnlyReason}
-            labelAside={
-                model.marker === undefined ? undefined : (
-                    <Why
-                        label={field.label}
-                        blames={model.blames}
-                        formId={formId}
-                        marker={model.marker}
-                    />
+/**
+ * A coordinate data element as a point on `LocationInput`, said against the event's org unit; DHIS2 stores it as
+ * `[lng,lat]`.
+ */
+const CoordinateInput = ({
+    value,
+    onChange,
+    ...props
+}: Omit<LocationInputProps, 'capture' | 'value' | 'onChange'> & {
+    value?: string
+    onChange: ReturnType<EventFormValue['commit']>
+}) => {
+    // Read once per change, so the field is given the same point while the form renders for other fields.
+    const point = useMemo(() => coordinatePoint(value), [value])
+    return (
+        <LocationInput
+            {...props}
+            capture="point"
+            value={point}
+            // Typed text that is no coordinate keeps the value, and the form holds Save back on its problem.
+            onChange={(next, problem) =>
+                onChange(
+                    next?.type === 'Point' ? coordinateValue(next) : null,
+                    problem
                 )
             }
-            hiddenOptions={model.hiddenOptions}
-            messages={model.messages}
-            valueName={model.valueName}
-            storedFile={model.storedFile}
         />
-    ),
+    )
+}
+
+/**
+ * One data element of the stage, through `ValueInput`, or `LocationInput` for a coordinate, with what the rules and
+ * the checks say of it.
+ */
+export const FormField = memo(
+    ({
+        field,
+        model,
+        id,
+        formId,
+        settings,
+        commit,
+        orgUnit,
+        tiles,
+    }: FormFieldProps) => {
+        const labelAside =
+            model.marker === undefined ? undefined : (
+                <Why
+                    label={field.label}
+                    blames={model.blames}
+                    formId={formId}
+                    marker={model.marker}
+                />
+            )
+        if (field.field.valueType === 'COORDINATE') {
+            return (
+                <CoordinateInput
+                    id={id}
+                    label={field.label}
+                    description={field.description}
+                    value={model.value}
+                    onChange={commit(field.id)}
+                    required={model.required}
+                    readOnly={model.readOnly}
+                    readOnlyReason={model.readOnlyReason}
+                    labelAside={labelAside}
+                    messages={model.messages}
+                    orgUnit={orgUnit}
+                    tiles={tiles}
+                />
+            )
+        }
+        return (
+            <ValueInput
+                id={id}
+                field={field.field}
+                settings={settings}
+                label={field.label}
+                description={field.description}
+                value={model.value}
+                onChange={commit(field.id)}
+                required={model.required}
+                readOnly={model.readOnly}
+                readOnlyReason={model.readOnlyReason}
+                labelAside={labelAside}
+                hiddenOptions={model.hiddenOptions}
+                messages={model.messages}
+                valueName={model.valueName}
+                storedFile={model.storedFile}
+            />
+        )
+    },
     (a, b) =>
         a.field === b.field &&
         a.id === b.id &&
         a.formId === b.formId &&
         a.settings === b.settings &&
         a.commit === b.commit &&
+        a.orgUnit === b.orgUnit &&
+        a.tiles === b.tiles &&
         sameModel(a.model, b.model)
 )

@@ -6,6 +6,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import { useProgramRuleContext } from '@/components/program-rules'
 import type { RuleEventStatus } from '@/components/program-rules'
+import type { MapTiles } from '@/components/location-map'
 import { useEventForm } from '../hooks/useEventForm'
 import { useEventFormData } from '../hooks/useEventFormData'
 import type { EventFormData } from '../hooks/useEventFormData'
@@ -48,10 +49,15 @@ export interface EventFormProps {
      */
     onUnsavedRuleChanges?(count: number): void
     /**
-     * Checks a location against the event's org unit: how far it is from a point org unit, warning past this many
-     * kilometres, or whether it is inside the org unit's area. Without it the form says neither.
+     * How far a point may be from a point org unit, in kilometres, before the form warns that latitude and longitude
+     * may be swapped. Without it the distance is said with no warning; a point is never held back for being far.
      */
     locationWarnKm?: number
+    /**
+     * The background of the location maps. Absent, OpenStreetMap's tiles, which tell OpenStreetMap the area being
+     * looked at; give a server of your own to keep that inside, or `null` for no background.
+     */
+    mapTiles?: MapTiles | null
     className?: string
     /** The parts, placed; without them the fields, the feedback, the notes and the actions. */
     children?: ReactNode
@@ -80,7 +86,7 @@ const ReadyForm = ({ props, data }: { props: EventFormProps; data: Ready }) => {
             [
                 EVENT_DATE,
                 ...form.categories.map(({ id }) => id),
-                ...(form.location === 'point' ? [LOCATION] : []),
+                ...(form.featureType === 'NONE' ? [] : [LOCATION]),
                 ...form.sections.flatMap(({ fieldIds }) => fieldIds),
             ].map((fieldId) => `${formId}-${fieldId}`),
         [form, formId]

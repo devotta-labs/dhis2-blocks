@@ -1,161 +1,85 @@
 import i18n from '@dhis2/d2-i18n'
-import { z } from 'zod'
-import { languageTags, parseCoordinate } from '@/components/dhis2-value-types'
-import type { HeldEvent } from './metadata'
+import { parseCoordinate } from '@/components/dhis2-value-types'
+import { geometrySchema, pointOf, rounded } from '@/components/location-map'
+import type { MapGeometry, PointGeometry } from '@/components/location-map'
+import type { FeatureType, HeldEvent, StageForm } from './metadata'
 
-const position = z.tuple([z.number(), z.number()], z.number())
-type Position = z.infer<typeof position>
-type Ring = readonly Position[]
-
-/** A point or an area, as DHIS2 holds an org unit's or an event's geometry. */
-export const geometrySchema = z.discriminatedUnion('type', [
-    z.object({ type: z.literal('Point'), coordinates: position }),
-    z.object({
-        type: z.literal('Polygon'),
-        coordinates: z.array(z.array(position)),
-    }),
-    z.object({
-        type: z.literal('MultiPolygon'),
-        coordinates: z.array(z.array(z.array(position))),
-    }),
-])
-
-export type Geometry = z.infer<typeof geometrySchema>
-
-/** The org unit an event is at, as its location is checked against it. */
-export interface PlaceOrgUnit {
-    name: string
-    geometry?: Geometry
-}
-
-/** A stored geometry as the coordinate value `[lng,lat]`, when it is a point. */
-export const pointValue = (geometry: HeldEvent['geometry']) => {
-    const read = geometrySchema.safeParse(geometry)
-    return read.success && read.data.type === 'Point'
-        ? `[${read.data.coordinates[0]},${read.data.coordinates[1]}]`
-        : undefined
-}
-
-/** A coordinate value `[lng,lat]` as a GeoJSON point. */
-export const pointGeometry = (value: string) => {
-    const read = parseCoordinate(value)
-    return (read && {
-        type: 'Point',
-        coordinates: [Number(read.longitude), Number(read.latitude)],
-    }) satisfies { type: 'Point'; coordinates: [number, number] } | undefined
-}
-
-const EARTH_RADIUS_KM = 6371.0088
-const radians = (degrees: number) => (degrees * Math.PI) / 180
-
-/** The great-circle distance between two positions, in kilometres. */
-export const distanceKm = ([lng1, lat1]: Position, [lng2, lat2]: Position) => {
-    const half =
-        Math.sin(radians(lat2 - lat1) / 2) ** 2 +
-        Math.cos(radians(lat1)) *
-            Math.cos(radians(lat2)) *
-            Math.sin(radians(lng2 - lng1) / 2) ** 2
-    return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(half)))
-}
-
-const inRing = ([x, y]: Position, ring: Ring) => {
-    let inside = false
-    for (
-        let at = 0, before = ring.length - 1;
-        at < ring.length;
-        before = at++
-    ) {
-        const [xi, yi] = ring[at] ?? [0, 0]
-        const [xj, yj] = ring[before] ?? [0, 0]
-        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-            inside = !inside
-        }
+/** What the event's location field captures for a stage's feature type; nothing for a stage that records none. */
+export const captureOf = (
+    featureType: FeatureType
+): 'point' | 'area' | undefined => {
+    if (featureType === 'POINT') {
+        return 'point'
     }
-    return inside
+    return featureType === 'NONE' ? undefined : 'area'
 }
 
-/**
- * Whether a position lies in an area: in a polygon's outer ring and in none of its holes, for any polygon of a
- * multi-polygon. shortcut: flat geometry, wrong for areas across the antimeridian or around a pole; none in DHIS2 data
- * we know of.
- */
-export const insideArea = (
-    point: Position,
-    area: Extract<Geometry, { type: 'Polygon' | 'MultiPolygon' }>
-) =>
-    (area.type === 'Polygon' ? [area.coordinates] : area.coordinates).some(
-        ([outer = [], ...holes]) =>
-            inRing(point, outer) && !holes.some((hole) => inRing(point, hole))
-    )
-
-/** A distance in words: metres under a kilometre, one decimal under ten kilometres, whole kilometres beyond. */
-export const formatDistance = (km: number) =>
-    km < 1
-        ? new Intl.NumberFormat(languageTags(), {
-              style: 'unit',
-              unit: 'meter',
-              maximumFractionDigits: 0,
-          }).format(km * 1000)
-        : new Intl.NumberFormat(languageTags(), {
-              style: 'unit',
-              unit: 'kilometer',
-              maximumFractionDigits: km < 10 ? 1 : 0,
-          }).format(km)
-
-const AS_IS = { interpolation: { escapeValue: false } }
+/** The location field's label, as the Capture app names it. */
+export const locationLabel = (capture: 'point' | 'area') =>
+    capture === 'point' ? i18n.t('Coordinate') : i18n.t('Area')
 
 /**
- * What a location says against its org unit: how far it is from a point org unit, warning past `farKm`, or whether it
- * is inside an org unit's area. Nothing when either has no geometry.
+ * A stored geometry as the form holds it: GeoJSON written out, with an area of one part as a polygon, so the field can
+ * edit it on a `MULTI_POLYGON` stage too. Nothing for a geometry it cannot read, which a save then leaves as it is.
  */
-export const plausibility = (
-    value: string | undefined,
-    orgUnit: PlaceOrgUnit | undefined,
-    farKm: number
-) => {
-    const point = value && pointGeometry(value)
-    if (!point || orgUnit?.geometry === undefined) {
+export const heldLocation = (
+    geometry: HeldEvent['geometry']
+): string | undefined => {
+    const read = geometrySchema.safeParse(geometry)
+    if (!read.success) {
         return undefined
     }
-    const { geometry } = orgUnit
-    const where = point.coordinates
-    if (geometry.type === 'Point') {
-        const km = distanceKm(where, geometry.coordinates)
-        const distance = formatDistance(km)
-        return (
-            km > farKm
-                ? {
-                      tone: 'warning',
-                      text: i18n.t(
-                          'This point is {{distance}} from {{name}}. Check the latitude and longitude are the right way round.',
-                          { ...AS_IS, distance, name: orgUnit.name }
-                      ),
-                  }
-                : {
-                      tone: 'info',
-                      text: i18n.t('{{distance}} from {{name}}', {
-                          ...AS_IS,
-                          distance,
-                          name: orgUnit.name,
-                      }),
-                  }
-        ) satisfies { tone: 'info' | 'warning'; text: string } | undefined
+    const [only, ...more] =
+        read.data.type === 'MultiPolygon' ? read.data.coordinates : []
+    return JSON.stringify(
+        only !== undefined && more.length === 0
+            ? { type: 'Polygon', coordinates: only }
+            : read.data
+    )
+}
+
+/** The location the form holds as the field takes it; `null` for none. */
+export const readLocation = (location: string | undefined) => {
+    if (location === undefined) {
+        return null
     }
-    return (
-        insideArea(where, geometry)
-            ? {
-                  tone: 'info',
-                  text: i18n.t('Inside {{name}}', {
-                      ...AS_IS,
-                      name: orgUnit.name,
-                  }),
-              }
-            : {
-                  tone: 'warning',
-                  text: i18n.t('Outside {{name}}', {
-                      ...AS_IS,
-                      name: orgUnit.name,
-                  }),
-              }
-    ) satisfies { tone: 'info' | 'warning'; text: string } | undefined
+    const read = geometrySchema.safeParse(JSON.parse(location))
+    return read.success ? read.data : null
+}
+
+/**
+ * The geometry a save sends. DHIS2 refuses one whose type is not the stage's (E1012), so an area goes to a
+ * `MULTI_POLYGON` stage as a multi-polygon of one part.
+ */
+export const sentGeometry = (
+    location: string,
+    featureType: FeatureType
+): MapGeometry | null => {
+    const geometry = readLocation(location)
+    return geometry?.type === 'Polygon' && featureType === 'MULTI_POLYGON'
+        ? { type: 'MultiPolygon', coordinates: [geometry.coordinates] }
+        : geometry
+}
+
+/** Whether the form places anything against its org unit: the event's own location, or a coordinate data element. */
+export const placesOnOrgUnit = (form: StageForm) =>
+    form.featureType !== 'NONE' ||
+    [...form.fields.values()].some(
+        ({ field }) => field.valueType === 'COORDINATE'
+    )
+
+/** A coordinate data element's stored `[lng,lat]` as the point the field takes; `null` for none or one it cannot read. */
+export const coordinatePoint = (
+    value: string | undefined
+): PointGeometry | null => {
+    const read = value === undefined ? undefined : parseCoordinate(value)
+    return read === undefined
+        ? null
+        : pointOf([Number(read.longitude), Number(read.latitude)])
+}
+
+/** A point as DHIS2 stores a coordinate data element: `[lng,lat]`, to six places. */
+export const coordinateValue = ({ coordinates }: PointGeometry) => {
+    const [longitude, latitude] = rounded(coordinates)
+    return `[${longitude},${latitude}]`
 }

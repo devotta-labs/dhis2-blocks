@@ -1,0 +1,4 @@
+{
+    "title": "Location Map",
+    "description": "A point or an area on a map: shown read-only, or placed and changed by pointer or keyboard. Leaflet loads only when a map is drawn."
+}

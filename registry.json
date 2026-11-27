@@ -1144,6 +1144,8 @@
                 "devotta-labs/dhis2-blocks/dhis2-value-input",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/location-input",
+                "devotta-labs/dhis2-blocks/location-map",
                 "devotta-labs/dhis2-blocks/popover",
                 "devotta-labs/dhis2-blocks/program-rules",
                 "devotta-labs/dhis2-blocks/skeleton",
@@ -1284,6 +1286,178 @@
                     "path": "packages/registry/blocks/event-form/ui/context.ts",
                     "type": "registry:file",
                     "target": "@components/event-form/ui/context.ts"
+                }
+            ]
+        },
+        {
+            "name": "location-input",
+            "type": "registry:block",
+            "title": "Location Input",
+            "description": "A point or an area as one form field: typed, pasted, taken from the device where the user stands, or placed on a map that opens from the field.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/dialog",
+                "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/input-group",
+                "devotta-labs/dhis2-blocks/kbd",
+                "devotta-labs/dhis2-blocks/location-map",
+                "devotta-labs/dhis2-blocks/popover",
+                "devotta-labs/dhis2-blocks/spinner"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/location-input/AreaInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/AreaInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/LocationInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/LocationInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/MapPanel.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/MapPanel.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/PlaceSearch.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/PlaceSearch.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/PointInput.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/PointInput.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/icons.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/icons.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/notes.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/notes.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/parts.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-input/parts.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/place.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/place.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/search.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/search.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/text.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/text.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-input/useFix.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-input/useFix.ts"
+                }
+            ]
+        },
+        {
+            "name": "location-map",
+            "type": "registry:block",
+            "title": "Location Map",
+            "description": "A point or an area on a map: shown read-only, or placed and changed by pointer or keyboard. Leaflet loads only when a map is drawn.",
+            "dependencies": [
+                "@dhis2/d2-i18n@1.2.0",
+                "@dhis2/ui-icons@^10.17.0",
+                "leaflet@1.9.4",
+                "prop-types@^15.8.1",
+                "zod@^4.4.3"
+            ],
+            "devDependencies": ["@types/leaflet@^1.9.23"],
+            "registryDependencies": [
+                "devotta-labs/dhis2-blocks/announcer",
+                "devotta-labs/dhis2-blocks/button",
+                "devotta-labs/dhis2-blocks/cn",
+                "devotta-labs/dhis2-blocks/dhis2-theme",
+                "devotta-labs/dhis2-blocks/dhis2-value-types",
+                "devotta-labs/dhis2-blocks/skeleton"
+            ],
+            "files": [
+                {
+                    "path": "packages/registry/blocks/location-map/LeafletMap.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-map/LeafletMap.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/LocationMap.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-map/LocationMap.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/areaState.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/areaState.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/geometry.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/geometry.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/index.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/index.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/location-map.css",
+                    "type": "registry:file",
+                    "target": "@components/location-map/location-map.css"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/marks.tsx",
+                    "type": "registry:file",
+                    "target": "@components/location-map/marks.tsx"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/tiles.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/tiles.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/types.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/types.ts"
+                },
+                {
+                    "path": "packages/registry/blocks/location-map/useOrientation.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/useOrientation.ts"
                 }
             ]
         },

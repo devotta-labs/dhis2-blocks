@@ -54,6 +54,11 @@ const LABS = {
             default: EventFormLab,
         }))
     ),
+    'location-input': lazy(() =>
+        import('./location-input/LocationInputLab').then(
+            ({ LocationInputLab }) => ({ default: LocationInputLab })
+        )
+    ),
 } satisfies Record<PlaygroundSlug, ComponentType>
 
 const isPlaygroundSlug = (slug?: string): slug is PlaygroundSlug =>

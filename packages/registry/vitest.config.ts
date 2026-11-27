@@ -93,6 +93,7 @@ const browserProject = {
             '@tanstack/react-query',
             'better-result',
             'class-variance-authority',
+            'leaflet',
             'recharts',
             'vitest-browser-react',
             'zod',

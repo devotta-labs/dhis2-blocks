@@ -52,6 +52,14 @@ function InputGroupAddon({
             data-align={align}
             className={cn(inputGroupAddonVariants({ align }), className)}
             onClick={(event) => {
+                // A click inside a popover or dialog opened from the addon reaches here through the portal; it is not
+                // a click on the addon.
+                if (
+                    !(event.target instanceof Node) ||
+                    !event.currentTarget.contains(event.target)
+                ) {
+                    return
+                }
                 if (
                     event.target instanceof Element &&
                     event.target.closest('button')

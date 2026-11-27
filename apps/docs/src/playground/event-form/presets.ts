@@ -55,6 +55,7 @@ export const PRESETS: readonly Preset[] = [
     preset('Location', 'Location in an org unit area', 'areaVisit', false, {
         locationWarnKm: 100,
     }),
+    preset('Location', 'New visit with an area', 'areaStageVisit'),
     preset('Other stages', 'Every value type', 'valueTypes'),
     preset('Other stages', 'RMNCH First ANC', 'rmnch'),
     preset('Other stages', 'Long form', 'longForm'),

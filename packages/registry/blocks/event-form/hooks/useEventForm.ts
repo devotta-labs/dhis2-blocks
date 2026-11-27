@@ -13,6 +13,7 @@ import { announce } from '@/components/dhis2/ui/announcer'
 import type { EditorProblem } from '@/components/dhis2-value-input'
 import { todayIso } from '@/components/dhis2-value-types'
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import type { LocationOrgUnit } from '@/components/location-input'
 import { explain } from '@/components/program-rules'
 import type { Blame, BlameContext } from '@/components/program-rules'
 import { displayWith, ruleChanges } from '../lib/explain'
@@ -26,7 +27,6 @@ import {
 import type { FormAction, FormState } from '../lib/formState'
 import { placeReport } from '../lib/importReport'
 import type { Stand } from '../lib/importReport'
-import type { PlaceOrgUnit } from '../lib/location'
 import type { HeldEvent, StageForm } from '../lib/metadata'
 import { eventPayload } from '../lib/payload'
 import { LOCATION, shownFields, validate } from '../lib/validate'
@@ -36,6 +36,7 @@ import { useFormRules } from './useFormRules'
 import type { FormRules } from './useFormRules'
 import { useSaveEvent } from './useSaveEvent'
 import { useStoredNames } from './useStoredNames'
+import type { MapTiles } from '@/components/location-map'
 
 interface Loaded {
     form: StageForm
@@ -43,8 +44,8 @@ interface Loaded {
     held?: HeldEvent
     /** The form's org unit and its ancestors, as far as the category options need them. */
     orgUnits: ReadonlySet<string>
-    /** The org unit's name and geometry, for a point stage. */
-    orgUnit?: PlaceOrgUnit
+    /** The org unit's name and geometry, for a stage that records a location or has a coordinate data element. */
+    orgUnit?: LocationOrgUnit
     /** The user may set a completed event back to active. */
     mayUncomplete: boolean
 }
@@ -60,8 +61,10 @@ export interface EventFormValue extends Omit<Loaded, 'mayUncomplete'> {
     blames?: ReadonlyMap<string, readonly Blame[]>
     /** How the form says a save succeeded. */
     confirmSaved: NonNullable<EventFormProps['confirmSaved']>
-    /** How far from a point org unit a location is before the form warns; absent, the location is not checked. */
+    /** How far from a point org unit a point is before the form warns; absent, the distance is said with no warning. */
     locationWarnKm?: number
+    /** The location maps' background, as `EventForm`'s `mapTiles`. */
+    mapTiles?: MapTiles | null
     /** The event is completed, and the user may write to the stage and set it back to active. */
     canReopen: boolean
     /** Sends the event as DHIS2 holds it, back as active. */
@@ -118,6 +121,7 @@ export const useEventForm = (
         blame = 'markers',
         confirmSaved = 'status',
         locationWarnKm,
+        mapTiles,
     }: EventFormProps,
     { form, settings, held, orgUnits, orgUnit, mayUncomplete }: Loaded
 ) => {
@@ -313,12 +317,13 @@ export const useEventForm = (
                           return option === undefined ? [] : [option]
                       }),
             location:
-                form.location === 'point'
-                    ? {
+                form.featureType === 'NONE'
+                    ? undefined
+                    : {
                           now: sent.location,
                           opened: current.opened.storedLocation,
-                      }
-                    : undefined,
+                          featureType: form.featureType,
+                      },
             note: sent.note,
         })
         const result = await saveEvent(payload)
@@ -370,7 +375,7 @@ export const useEventForm = (
                       result.report,
                       shown,
                       categoryStands(form, held),
-                      form.location === 'point' ? LOCATION : undefined,
+                      form.featureType === 'NONE' ? undefined : LOCATION,
                       sent.effective,
                       new Map([
                           [programId, form.programName],
@@ -464,6 +469,7 @@ export const useEventForm = (
         blames,
         confirmSaved,
         locationWarnKm,
+        mapTiles,
         canReopen,
         reopen: () => {
             if (canReopen) {

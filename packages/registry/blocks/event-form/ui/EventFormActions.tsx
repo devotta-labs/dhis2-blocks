@@ -14,6 +14,7 @@ import {
 } from '@/components/dhis2/ui/alert-dialog'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { Button } from '@/components/dhis2/ui/button'
+import { captureOf, locationLabel } from '../lib/location'
 import { EVENT_DATE, LOCATION } from '../lib/validate'
 import { failedAttempt, useEventFormContext } from './context'
 
@@ -35,8 +36,10 @@ const ToField = ({ fieldId, text }: { fieldId: string; text: string }) => {
         ''
     if (fieldId === EVENT_DATE) {
         label = form.eventDateLabel
-    } else if (fieldId === LOCATION) {
-        label = i18n.t('Location')
+    }
+    const capture = captureOf(form.featureType)
+    if (fieldId === LOCATION && capture !== undefined) {
+        label = locationLabel(capture)
     }
     return (
         <Button

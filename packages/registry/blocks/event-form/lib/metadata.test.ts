@@ -81,12 +81,15 @@ describe('stageFormOf', () => {
         })
     })
 
-    it('reads the stage’s feature type as the location it has', () => {
-        expect(formOf().location).toBe('none')
-        expect(formOf({ featureType: 'NONE' }).location).toBe('none')
-        expect(formOf({ featureType: 'POINT' }).location).toBe('point')
-        expect(formOf({ featureType: 'POLYGON' }).location).toBe('area')
-        expect(formOf({ featureType: 'MULTI_POLYGON' }).location).toBe('area')
+    it('reads the stage’s feature type, and none for one absent or a stage cannot have', () => {
+        expect(formOf().featureType).toBe('NONE')
+        expect(formOf({ featureType: 'NONE' }).featureType).toBe('NONE')
+        expect(formOf({ featureType: 'POINT' }).featureType).toBe('POINT')
+        expect(formOf({ featureType: 'POLYGON' }).featureType).toBe('POLYGON')
+        expect(formOf({ featureType: 'MULTI_POLYGON' }).featureType).toBe(
+            'MULTI_POLYGON'
+        )
+        expect(formOf({ featureType: 'SYMBOL' }).featureType).toBe('NONE')
     })
 
     it('says "Report date" when the stage has no event date label', () => {

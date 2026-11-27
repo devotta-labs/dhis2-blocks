@@ -18,7 +18,10 @@ const stageSchema = z.object({
     id: z.string(),
     displayName: z.string(),
     displayExecutionDateLabel: z.string().nullish(),
-    featureType: z.string().optional(),
+    // `SYMBOL` is an org unit's; on a stage, as anything else unknown, it is none.
+    featureType: z
+        .enum(['NONE', 'POINT', 'POLYGON', 'MULTI_POLYGON'])
+        .catch('NONE'),
     validationStrategy: z
         .enum(['ON_COMPLETE', 'ON_UPDATE_AND_INSERT'])
         .default('ON_UPDATE_AND_INSERT'),
@@ -179,13 +182,16 @@ interface FormSection {
     fieldIds: readonly string[]
 }
 
+/** A program stage's feature type: DHIS2 refuses an event whose geometry is of another type (E1012). */
+export type FeatureType = z.infer<typeof stageSchema>['featureType']
+
 export interface StageForm {
     id: string
     name: string
     programName?: string
     eventDateLabel: string
-    /** What the event's geometry is: a point the form captures, an area it keeps as it is, or none. */
-    location: 'point' | 'area' | 'none'
+    /** The type the event's geometry must have, or `NONE` for a stage that records no location. */
+    featureType: FeatureType
     validationStrategy: 'ON_COMPLETE' | 'ON_UPDATE_AND_INSERT'
     blockEntryForm: boolean
     canWrite: boolean
@@ -195,12 +201,6 @@ export interface StageForm {
     /** The categories of a non-default combination, in order; none for the default one. */
     categories: readonly Category[]
 }
-
-const LOCATIONS = new Map<string, StageForm['location']>([
-    ['POINT', 'point'],
-    ['POLYGON', 'area'],
-    ['MULTI_POLYGON', 'area'],
-])
 
 /** The stage's form; a stage without sections is one unnamed section of every field, in stage order. */
 export const stageFormOf = (
@@ -257,7 +257,7 @@ export const stageFormOf = (
         programName: program.displayName,
         eventDateLabel:
             stage.displayExecutionDateLabel ?? i18n.t('Report date'),
-        location: LOCATIONS.get(stage.featureType ?? '') ?? 'none',
+        featureType: stage.featureType,
         validationStrategy: stage.validationStrategy,
         blockEntryForm: stage.blockEntryForm,
         canWrite: stage.access.data.write,

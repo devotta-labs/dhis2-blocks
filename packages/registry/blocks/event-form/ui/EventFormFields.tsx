@@ -3,13 +3,13 @@ import { Alert, AlertTitle } from '@/components/dhis2/ui/alert'
 import { FieldGroup, FieldLegend, FieldSet } from '@/components/dhis2/ui/field'
 import { ValueInput } from '@/components/dhis2-value-input'
 import type { Field } from '@/components/dhis2-value-types'
-import { pointValue } from '../lib/location'
+import { captureOf } from '../lib/location'
 import { EVENT_DATE, LOCATION } from '../lib/validate'
 import { CategoryField } from './CategoryField'
 import { failedAttempt, useEventFormContext } from './context'
 import { FormField, fieldModel } from './FormField'
 import { HiddenByRules } from './HiddenByRules'
-import { AreaField, LocationField } from './LocationField'
+import { LocationField } from './LocationField'
 
 const DATE: Field = { valueType: 'DATE' }
 
@@ -23,8 +23,8 @@ const hiddenTitle = (count: number) =>
         : i18n.t('{{count}} questions hidden by rules', { count })
 
 /**
- * The form's status, its event date, a choice per category of a non-default combination, the location of a point
- * stage (or a stored area), then each section with a field shown, in metadata order.
+ * The form's status, its event date, a choice per category of a non-default combination, the event's point or area
+ * when the stage records one, then each section with a field shown, in metadata order.
  */
 export const EventFormFields = () => {
     const value = useEventFormContext()
@@ -40,9 +40,9 @@ export const EventFormFields = () => {
         commit,
         orgUnits,
         orgUnit,
-        held,
         locationWarnKm,
     } = value
+    const capture = captureOf(form.featureType)
     const hidden = rules.outcome?.hidden
     const failed = failedAttempt(state) !== undefined
     // Locked only while it saves, a field looks as it did, so nothing moves; its control still says why.
@@ -90,28 +90,19 @@ export const EventFormFields = () => {
                     commit={commit}
                 />
             ))}
-            {form.location === 'point' ? (
+            {capture === undefined ? null : (
                 <LocationField
                     id={`${formId}-${LOCATION}`}
+                    capture={capture}
                     value={state.location}
                     orgUnit={orgUnit}
-                    settings={settings}
                     serverErrors={state.serverErrors.get(LOCATION)}
                     readOnly={locked}
                     readOnlyReason={lockReason}
                     commit={commit}
                     warnKm={locationWarnKm}
                 />
-            ) : null}
-            {form.location === 'area' &&
-            held?.geometry !== undefined &&
-            pointValue(held.geometry) === undefined ? (
-                <AreaField
-                    id={`${formId}-${LOCATION}`}
-                    settings={settings}
-                    readOnly={readOnly}
-                />
-            ) : null}
+            )}
             {form.sections.map((section) => {
                 const shown = section.fieldIds.filter(
                     (fieldId) => !hidden?.has(fieldId)

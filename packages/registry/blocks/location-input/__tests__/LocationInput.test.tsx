@@ -1,5 +1,6 @@
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
+import type { PointGeometry } from '@/components/location-map'
 import { LocationInput } from '../LocationInput'
 import type { Locator } from '../types'
 
@@ -209,5 +210,190 @@ describe('LocationInput', () => {
             .poll(() => changed.mock.lastCall)
             .toEqual([{ type: 'Point', coordinates: [-11.15, 8.15] }])
         expect(device.cleared).toHaveLength(1)
+    })
+})
+
+describe('what a host gives the field', () => {
+    const POINT: PointGeometry = { type: 'Point', coordinates: [-11.2, 8.3] }
+
+    it('shows messages under the field, a warning or an error after its word, and an error marks it invalid', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                onChange={vi.fn()}
+                tiles={null}
+                messages={[
+                    { tone: 'info', text: 'Taken at the door' },
+                    { tone: 'warning', text: 'Far from the clinic' },
+                ]}
+            />
+        )
+        const box = screen.getByRole('textbox', { name: 'Coordinate' })
+        await expect
+            .element(screen.getByText('Taken at the door'))
+            .toBeVisible()
+        await expect
+            .element(screen.getByText('Warning: Far from the clinic'))
+            .toBeVisible()
+        await expect.element(box).not.toHaveAttribute('aria-invalid')
+        await expect
+            .element(box)
+            .toHaveAccessibleDescription(/Far from the clinic/)
+
+        await screen.rerender(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                onChange={vi.fn()}
+                tiles={null}
+                messages={[{ tone: 'error', text: 'Geometry refused' }]}
+            />
+        )
+        await expect
+            .element(screen.getByText('Error: Geometry refused'))
+            .toBeVisible()
+        await expect.element(box).toHaveAttribute('aria-invalid', 'true')
+        // One that appears once the field is on the page is said at once.
+        await expect
+            .poll(
+                () =>
+                    document.querySelector('[aria-live=assertive]')?.textContent
+            )
+            .toBe('Error: Geometry refused')
+    })
+
+    it('marks an area invalid on an error too', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Area"
+                capture="area"
+                onChange={vi.fn()}
+                tiles={null}
+                messages={[{ tone: 'error', text: 'Geometry refused' }]}
+            />
+        )
+        await expect
+            .element(screen.getByRole('textbox', { name: 'Area' }))
+            .toHaveAttribute('aria-invalid', 'true')
+    })
+
+    it('puts labelAside on the label’s row, outside the box’s name', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                onChange={vi.fn()}
+                tiles={null}
+                labelAside={<span>Set by a rule</span>}
+            />
+        )
+        await expect.element(screen.getByText('Set by a rule')).toBeVisible()
+        await expect
+            .element(screen.getByRole('textbox', { name: 'Coordinate' }))
+            .toHaveAccessibleName('Coordinate')
+    })
+
+    it('shows the read-only reason under the field by default, without the buttons', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={POINT}
+                onChange={vi.fn()}
+                tiles={null}
+                readOnly="Completed"
+            />
+        )
+        await expect.element(screen.getByText('Completed')).toBeVisible()
+        expect(
+            screen.getByRole('button', { name: 'Use my location' }).query()
+        ).toBeNull()
+        await expect
+            .element(screen.getByRole('button', { name: 'Show on map' }))
+            .toBeVisible()
+    })
+
+    it('with readOnlyReason="described", says why only to screen readers, and Tab passes the box', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={POINT}
+                onChange={vi.fn()}
+                tiles={null}
+                readOnly="Set by a rule"
+                readOnlyReason="described"
+            />
+        )
+        const box = screen.getByRole('textbox', { name: 'Coordinate' })
+        await expect.element(box).toHaveAccessibleDescription('Set by a rule')
+        await expect.element(box).toHaveAttribute('tabindex', '-1')
+        await expect
+            .element(screen.getByText('Set by a rule'))
+            .toHaveClass('sr-only')
+    })
+
+    it('with readOnlyReason="held", keeps the field as drawn when it can be changed, its buttons out of reach', async () => {
+        const onChange = vi.fn()
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={POINT}
+                onChange={onChange}
+                tiles={null}
+                readOnly="Saving"
+                readOnlyReason="held"
+            />
+        )
+        const box = screen.getByRole('textbox', { name: 'Coordinate' })
+        await expect.element(box).toHaveAttribute('readonly')
+        await expect.element(box).toHaveAccessibleDescription(/Saving/)
+        await expect.element(screen.getByText('Saving')).toHaveClass('sr-only')
+        for (const name of ['Clear', 'Use my location', 'Open map']) {
+            expect(
+                document.querySelector(`[inert] button[aria-label="${name}"]`)
+            ).not.toBeNull()
+        }
+        expect(onChange).not.toHaveBeenCalled()
+    })
+
+    it('holds an area the same way', async () => {
+        const screen = await render(
+            <LocationInput
+                label="Area"
+                capture="area"
+                value={{
+                    type: 'Polygon',
+                    coordinates: [
+                        [
+                            [-11.1, 8.1],
+                            [-11.2, 8.2],
+                            [-11.1, 8.2],
+                            [-11.1, 8.1],
+                        ],
+                    ],
+                }}
+                onChange={vi.fn()}
+                tiles={null}
+                readOnly="Saving"
+                readOnlyReason="held"
+            />
+        )
+        await expect
+            .element(
+                screen.getByPlaceholder('No area, paste points or use the map')
+            )
+            .toBeInTheDocument()
+        for (const name of [
+            'Clear',
+            'Add my location as a point',
+            'Open map',
+        ]) {
+            expect(
+                document.querySelector(`[inert] button[aria-label="${name}"]`)
+            ).not.toBeNull()
+        }
     })
 })

@@ -37,19 +37,19 @@ import { EventForm } from '@/components/event-form'
 />
 ```
 
-| Prop                              | Meaning                                                                                                                                                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `programId`, `programStageId`     | The program and the stage whose event is entered.                                                                                                                              |
-| `orgUnitId`                       | Where a new event is created. An edited event keeps its own.                                                                                                                   |
-| `eventId`                         | The event to edit. Without it the form creates one.                                                                                                                            |
-| `enrollmentId`, `trackedEntityId` | The enrollment and the person, for a tracker program.                                                                                                                          |
-| `blame`                           | `markers` (the default) marks each field a rule set, made required or gave fewer options beside its label, and lists what rules hid; `off` applies the rules quietly.          |
-| `confirmSaved`                    | `status` (the default) shows a short **Saved** by the buttons after a save, until the next edit; `off` says nothing, for a host that confirms its own way.                     |
-| `locationWarnKm`                  | Checks a location against the event's org unit: how far it is from a point org unit, warning past this many kilometres, or whether it is inside an area. Without it, no check. |
-| `onSaved({ eventId, status })`    | Called after DHIS2 has saved the event, with its status.                                                                                                                       |
-| `onDirtyChange(dirty)`            | Called when the form gains or loses changes it has not saved.                                                                                                                  |
-| `onUnsavedRuleChanges(count)`     | Called when the number of answers the rules alone changed since DHIS2 last saved the event changes; 0 once there are none or the user changes anything.                        |
-| `children`                        | The parts, placed. Without them the form shows all four.                                                                                                                       |
+| Prop                              | Meaning                                                                                                                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `programId`, `programStageId`     | The program and the stage whose event is entered.                                                                                                                               |
+| `orgUnitId`                       | Where a new event is created. An edited event keeps its own.                                                                                                                    |
+| `eventId`                         | The event to edit. Without it the form creates one.                                                                                                                             |
+| `enrollmentId`, `trackedEntityId` | The enrollment and the person, for a tracker program.                                                                                                                           |
+| `blame`                           | `markers` (the default) marks each field a rule set, made required or gave fewer options beside its label, and lists what rules hid; `off` applies the rules quietly.           |
+| `confirmSaved`                    | `status` (the default) shows a short **Saved** by the buttons after a save, until the next edit; `off` says nothing, for a host that confirms its own way.                      |
+| `locationWarnKm`                  | How far a point may be from a point org unit, in kilometres, before the form warns that latitude and longitude may be swapped. Without it the distance is said with no warning. |
+| `onSaved({ eventId, status })`    | Called after DHIS2 has saved the event, with its status.                                                                                                                        |
+| `onDirtyChange(dirty)`            | Called when the form gains or loses changes it has not saved.                                                                                                                   |
+| `onUnsavedRuleChanges(count)`     | Called when the number of answers the rules alone changed since DHIS2 last saved the event changes; 0 once there are none or the user changes anything.                         |
+| `children`                        | The parts, placed. Without them the form shows all four.                                                                                                                        |
 
 ## Parts
 
@@ -134,26 +134,25 @@ category's field. Programs with the default combination show no categories.
 
 ## Location
 
-A stage whose feature type is a point asks where the event took place, after
-the categories: a Location field of latitude and longitude, not required. Either
-field takes a whole coordinate, typed or pasted: `8.4871, -13.2356` (latitude
-first), degrees, minutes and seconds with hemisphere letters
-(`8°29'13.6"N 13°14'08.2"W`), or a maps link holding `lat,lng`
-(`…/maps/@8.4871,-13.2356,15z`); it is shown as its latitude and longitude.
-`Use my location` asks the browser for the device's position, only when
-pressed, says how close it is (`Your location, within 12 m`), or why there is
-none, and leaves the field as it was. `At Ngelehun CHC` fills the org unit's own
-point, when it has one. With `locationWarnKm`, the form says under the field how
-far the point is from a point org unit (`3.2 km from Ngelehun CHC`), warning past
-that distance that the latitude and longitude may be the wrong way round, or
-whether it is inside an org unit's area. These never hold back Save. A pair
-pasted into either field replaces what both held, and undo brings it back; one
-number with a decimal comma (`8,48`) stays that field's number. The location makes the form dirty,
-goes in the import as the event's `geometry` (a GeoJSON point, longitude first)
-and as `null` when a stored one is cleared, and DHIS2's errors about the
-geometry land on it. A read-only form shows it read-only, without the buttons.
-A polygon stage draws nothing: an edit shows a stored area as `Area recorded`
-and sends it back as it is.
+A stage whose feature type is `POINT`, `POLYGON` or `MULTI_POLYGON` asks where
+the event took place, after the categories, with the
+`location-input` block: a `Coordinate` field for a
+point stage, an `Area` field for the others, not required. A point is typed or
+pasted (`8.4871, -13.2356`, latitude first, degrees with hemisphere letters, or
+a maps link), taken from the device with `Use my location`, or placed on the
+map, which offers `At Ngelehun CHC` when the org unit has a point. An area's
+corners are added where the user stands, pasted, or drawn on the map. The
+field says where the location is against the org unit (`350 m north-east of
+Ngelehun CHC`, `Inside Badjia`); with `locationWarnKm`, a point further than
+that from a point org unit is a warning that latitude and longitude may be
+swapped. Nothing holds back Save. The location makes the form dirty and goes
+in the import as the event's `geometry`, of the type the stage asks for, since
+DHIS2 refuses any other (E1012): an area goes to a `MULTI_POLYGON` stage as a
+multi-polygon of one part, and a stored one of one part opens as an area the
+field can change. A cleared location goes as `null`. An area with holes or
+several parts is shown read-only and sent back as it is. DHIS2's errors about
+the geometry land on the field. A read-only form shows it read-only, without
+its buttons; while a save is unanswered it keeps them, out of reach.
 
 ## Saving
 

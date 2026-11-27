@@ -23,6 +23,12 @@ pasting, are read out with the field, and stay in the box when there is a warnin
 `At <name>` on the map; with `warnKm`, a point further away is a warning that names the
 usual cause, latitude and longitude swapped. Nothing is ever held back for being far.
 
+`messages`, `labelAside` and `readOnlyReason` work as in `ValueInput`. `messages` go under the field, a warning or an
+error after its word, and an error marks the field invalid; one that appears later is read out. `labelAside` sits on
+the label's row, outside the box's name. `readOnlyReason="described"` gives the `readOnly` reason only to screen
+readers and takes the box out of Tab, for a host that shows it another way; `"held"` keeps the field drawn as when it
+can be changed, its buttons there but out of reach, for a host that locks it for a moment, such as while it saves.
+
 The map opens as a popover under the field, or as a sheet on a phone, and is the `location-map` block, loaded only
 when opened. Alt+Down opens it from the field. `locator` replaces the browser's geolocation, to test or simulate.
 

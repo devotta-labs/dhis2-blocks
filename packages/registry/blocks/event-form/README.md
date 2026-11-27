@@ -50,14 +50,14 @@ only the options the user may write to, that apply to the org unit (or an ancest
 date. A chosen option the event date no longer covers stays, says why and holds back Save. The choices are sent as
 `attributeCategoryOptions`. Programs with the default combination show none.
 
-A stage whose feature type is a point gets a Location field after the categories, not required: latitude and longitude,
-either of which takes a whole coordinate typed or pasted (`8.4871, -13.2356`, degrees with hemisphere letters, or a maps
-link); a pair pasted into a field replaces what both held, and undo brings it back. `Use my location` fills it from the
-browser when pressed and says how close it is; `At <org unit>` fills the org unit's own point. With `locationWarnKm`,
-the form says under it how far the point is from a point org unit, warning past that many kilometres, or whether it is
-inside the org unit's area, without holding back Save. It is sent as the event's `geometry` (a GeoJSON point), `null`
-when a stored one is cleared. A polygon stage draws nothing: an edit shows a stored area as `Area recorded` and sends it
-back as it is.
+A stage whose feature type is `POINT`, `POLYGON` or `MULTI_POLYGON` gets a location field after the categories, not
+required: `LocationInput` from `location-input`, a `Coordinate` for a point stage and an `Area` for the others, placed
+against the event's org unit, whose name and geometry the form fetches. With `locationWarnKm`, a point further than
+that from a point org unit is a warning, never a reason to hold back Save. The location is sent as the event's
+`geometry`, of the stage's feature type since DHIS2 refuses any other (E1012): an area goes to a `MULTI_POLYGON` stage
+as a multi-polygon of one part, and a stored one of one part opens as an area the field can change. A cleared location
+goes as `null`; an area with holes or several parts is shown read-only and sent back as it is. DHIS2's errors about the
+geometry are shown on the field.
 
 `EventFormNotes` lists the event's notes, oldest first, with who wrote each and when, and a box for one more. The note
 goes with the next Save or Complete, under an id made for it, makes the form dirty, and is listed once DHIS2 has saved

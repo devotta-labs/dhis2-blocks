@@ -7,7 +7,7 @@ import type { EditorProblem } from '@/components/dhis2-value-input'
 import { sameValues } from '@/components/program-rules'
 import type { RuleEventStatus } from '@/components/program-rules'
 import { heldChoices } from './categories'
-import { pointValue } from './location'
+import { heldLocation } from './location'
 import { valuesOf } from './metadata'
 import type { Category, EventNote, HeldEvent, Values } from './metadata'
 import { generateUid } from './uid'
@@ -20,7 +20,7 @@ export interface FormState {
     eventDate?: string
     /** Category id → the option chosen. */
     categories: Values
-    /** The event's point as the coordinate value `[lng,lat]`. */
+    /** The event's geometry as GeoJSON written out, an area of one part as a polygon; absent for none. */
     location?: string
     status: RuleEventStatus
     /** The event's notes, oldest first: as opened, then each one this form saved, marked `yours`. */
@@ -97,7 +97,7 @@ export const initialFormState = (
             ? today
             : held.occurredAt && storedDay(held.occurredAt)
     const categories = heldChoices(held, categoryList)
-    const location = pointValue(held?.geometry)
+    const location = heldLocation(held?.geometry)
     return {
         eventId: held?.event ?? generateUid(),
         entered,

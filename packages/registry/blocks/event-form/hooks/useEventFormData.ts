@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { z } from 'zod'
 import type { ValueSettings } from '@/components/dhis2-value-types'
+import type { LocationOrgUnit } from '@/components/location-input'
+import { geometrySchema } from '@/components/location-map'
 import { limitedByOrgUnit } from '../lib/categories'
-import { geometrySchema } from '../lib/location'
-import type { PlaceOrgUnit } from '../lib/location'
 import {
     EVENT_FIELDS,
     heldEventSchema,
@@ -31,8 +31,8 @@ export type EventFormData =
           held?: HeldEvent
           /** The form's org unit and its ancestors, when a category option is limited to org units; else empty. */
           orgUnits: ReadonlySet<string>
-          /** The org unit's name and geometry, for a point stage. */
-          orgUnit?: PlaceOrgUnit
+          /** The org unit's name and geometry, for a stage that records a location. */
+          orgUnit?: LocationOrgUnit
           /** The user may set a completed event back to active (`F_UNCOMPLETE_EVENT`). */
           mayUncomplete: boolean
       }
@@ -53,7 +53,8 @@ const NO_ORG_UNITS: ReadonlySet<string> = new Set()
 
 /**
  * The stage's form, the server's date settings, the user's authorities, when editing the event as DHIS2 holds it, and the org unit: its
- * ancestors when the program's category options need them, its name and geometry for a point stage, in one request.
+ * ancestors when the program's category options need them, its name and geometry for a stage that records a location, in
+ * one request.
  */
 export const useEventFormData = (
     programId: string,
@@ -113,7 +114,7 @@ export const useEventFormData = (
 
     // An edit keeps the event's own org unit.
     const unitId = event.data?.orgUnit ?? orgUnitId
-    const placed = form?.location === 'point'
+    const placed = form !== undefined && form.featureType !== 'NONE'
     const needsAncestors =
         form !== undefined && limitedByOrgUnit(form.categories)
     const needsOrgUnits =

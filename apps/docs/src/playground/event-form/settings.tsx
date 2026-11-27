@@ -31,6 +31,7 @@ export const OptionsControls = ({
                 ['pointVisit', 'New visit with a location'],
                 ['savedPointVisit', 'Saved visit with a location'],
                 ['areaVisit', 'Location in an area'],
+                ['areaStageVisit', 'New visit with an area'],
             ]}
             onChange={(example) => onChange({ example })}
         />

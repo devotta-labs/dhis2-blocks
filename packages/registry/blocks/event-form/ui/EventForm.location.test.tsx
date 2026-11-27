@@ -12,31 +12,33 @@ const CHC = {
     displayName: 'Ngelehun CHC',
     geometry: { type: 'Point', coordinates: [-11.4197, 8.1039] },
 }
-const DISTRICT = {
-    path: CHILD_VISIT_PATH,
-    displayName: 'Badjia',
-    geometry: {
-        type: 'Polygon',
-        coordinates: [
-            [
-                [-12, 8],
-                [-11, 8],
-                [-11, 9],
-                [-12, 9],
-                [-12, 8],
-            ],
-        ],
-    },
-}
 const point = {
     program: childVisitProgram({ featureType: 'POINT' }),
     orgUnit: CHC,
 }
+const stage = (featureType: string) => ({
+    program: childVisitProgram({ featureType }),
+})
 
-const latitude = () => page.getByRole('textbox', { name: 'Latitude' })
-const longitude = () => page.getByRole('textbox', { name: 'Longitude' })
+// An area of three points, as pasted (latitude first), and as GeoJSON stores it: longitude first, closed.
+const PASTED = '8.1, -11.1\n8.2, -11.2\n8.2, -11.1'
+const RING = [
+    [-11.1, 8.1],
+    [-11.2, 8.2],
+    [-11.1, 8.2],
+    [-11.1, 8.1],
+]
+
+const coordinate = () => page.getByRole('textbox', { name: 'Coordinate' })
+const area = () => page.getByRole('textbox', { name: 'Area' })
 const button = (name: string) => page.getByRole('button', { name })
 const save = () => button('Save')
+/** The location box's own button named `name`, if it has one: other fields have a Clear too. */
+const inBox = (box: ReturnType<typeof area>, name: string) =>
+    box
+        .element()
+        .closest('[data-slot=input-group]')
+        ?.querySelector(`button[aria-label="${name}"]`) ?? null
 
 interface SentEvent {
     geometry?: unknown
@@ -46,64 +48,44 @@ const sentEvent = (request: { data?: unknown }): SentEvent =>
     // SAFETY: the form sends one event in a tracker import; the assertions check its parts.
     (request.data as { events: [SentEvent] }).events[0]
 
-/** Types a whole coordinate in the latitude field and moves to the longitude; `leave` then leaves the location. */
-const typeCoordinate = async (text: string) => {
-    await userEvent.fill(longitude(), '')
-    await userEvent.fill(latitude(), text)
-    await userEvent.click(longitude())
+/** What the one save sent as the event's geometry. */
+const sentGeometry = async (to: (resource: string) => { data?: unknown }[]) => {
+    await expect.poll(() => to('tracker')).toHaveLength(1)
+    return sentEvent(to('tracker')[0]).geometry
 }
-const leave = () =>
-    userEvent.click(page.getByRole('textbox', { name: 'Weight (kg)' }))
 
 const fillWeight = () =>
     userEvent.fill(page.getByRole('textbox', { name: 'Weight (kg)' }), '12')
 
-/** The device's location: found, at 12 m, or refused with `code`. */
-const geolocation = (outcome: { code: number } | 'found') =>
-    vi
-        .spyOn(navigator.geolocation, 'getCurrentPosition')
-        .mockImplementation((found, failed) => {
-            if (outcome === 'found') {
-                // SAFETY: the form reads only the coordinates and their accuracy.
-                found({
-                    coords: {
-                        latitude: 8.1327,
-                        longitude: -11.4197,
-                        accuracy: 12,
-                    },
-                    timestamp: Date.now(),
-                } as GeolocationPosition)
-                return
-            }
-            // SAFETY: the form reads only the code, against the error's own constants.
-            failed?.({
-                ...outcome,
-                message: '',
-                PERMISSION_DENIED: 1,
-                POSITION_UNAVAILABLE: 2,
-                TIMEOUT: 3,
-            } as GeolocationPositionError)
+const paste = (element: Element, text: string) => {
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/plain', text)
+    element.dispatchEvent(
+        new ClipboardEvent('paste', {
+            clipboardData,
+            bubbles: true,
+            cancelable: true,
         })
+    )
+}
 
 afterEach(() => {
     vi.restoreAllMocks()
 })
 
-test('only a point stage asks for a location, and for the org unit’s name and geometry', async () => {
+test('a stage without a feature type has no location, and asks for no org unit', async () => {
     const { to } = await renderForm({ orgUnit: CHC })
     await editable()
-    expect(latitude().query()).toBeNull()
+    expect(coordinate().query()).toBeNull()
+    expect(area().query()).toBeNull()
     expect(to('organisationUnits')).toHaveLength(0)
 })
 
-test('a point stage shows the location after the event date, with the org unit asked for once', async () => {
+test('a point stage shows the coordinate, with the org unit’s name and geometry asked for once', async () => {
     const { to } = await renderForm(point)
     await editable()
-    await expect
-        .element(page.getByRole('group', { name: 'Location' }))
-        .toBeVisible()
+    await expect.element(coordinate()).toBeVisible()
     await expect.element(button('Use my location')).toBeVisible()
-    await expect.element(button('At Ngelehun CHC')).toBeVisible()
     expect(to('organisationUnits')).toEqual([
         expect.objectContaining({
             id: CHILD_VISIT.orgUnitId,
@@ -112,170 +94,106 @@ test('a point stage shows the location after the event date, with the org unit a
     ])
 })
 
-test('a coordinate typed in any accepted form is shown as its latitude and longitude', async () => {
-    await renderForm(point)
-    await editable()
-    for (const text of [
-        '8.4871, -13.2356',
-        `8°29'13.6"N 13°14'08.2"W`,
-        'https://www.google.com/maps/@8.4871,-13.2356,15z',
-    ]) {
-        await typeCoordinate(text)
-        await expect
-            .element(latitude())
-            .toHaveValue(text.startsWith('8°') ? '8.487111' : '8.4871')
-        await expect
-            .element(longitude())
-            .toHaveValue(text.startsWith('8°') ? '-13.235611' : '-13.2356')
-    }
-})
-
-test('"At" the org unit fills its coordinates, and without locationWarnKm the form says nothing of the distance', async () => {
-    const onDirtyChange = vi.fn()
-    await renderForm(point, { onDirtyChange })
-    await editable()
-    await button('At Ngelehun CHC').click()
-    await expect.element(latitude()).toHaveValue('8.1039')
-    await expect.element(longitude()).toHaveValue('-11.4197')
-    await expect.poll(() => onDirtyChange.mock.calls).toEqual([[true]])
-    await typeCoordinate('-11.42, 8.47')
-    await leave()
-    await expect.element(latitude()).toHaveValue('-11.42')
-    expect(
-        page.getByText(/from Ngelehun CHC|right way round/).query()
-    ).toBeNull()
-})
-
-test('with locationWarnKm, the form says how far a point is, and warns past that distance', async () => {
-    await renderForm(point, { locationWarnKm: 25 })
-    await editable()
-    await button('At Ngelehun CHC').click()
-    await expect.element(page.getByText('0 m from Ngelehun CHC')).toBeVisible()
-    // 33 km north of the CHC: past 25 km.
-    await typeCoordinate('8.4, -11.4197')
-    await leave()
-    await expect
-        .element(
-            page.getByText(
-                'Warning: This point is 33 km from Ngelehun CHC. Check the latitude and longitude are the right way round.'
-            )
-        )
-        .toBeVisible()
-})
-
-test('a far point warns, and saves all the same as a point, longitude first', async () => {
+test('a point typed is saved as a GeoJSON point, longitude first', async () => {
     const onSaved = vi.fn()
-    const { to } = await renderForm(point, { onSaved, locationWarnKm: 100 })
+    const { to } = await renderForm(point, { onSaved })
     await editable()
-    // Longitude first, as GeoJSON writes it: read as a latitude of -11.42.
-    await typeCoordinate('-11.42, 8.47')
-    await leave()
-    await expect
-        .element(
-            page.getByText(
-                /^Warning: This point is [\d,]+ km from Ngelehun CHC\. Check the latitude and longitude are the right way round\.$/
-            )
-        )
-        .toBeVisible()
+    await userEvent.fill(coordinate(), '8.4871, -13.2356')
     await fillWeight()
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
-    expect(sentEvent(to('tracker')[0]).geometry).toEqual({
+    expect(await sentGeometry(to)).toEqual({
         type: 'Point',
-        coordinates: [8.47, -11.42],
+        coordinates: [-13.2356, 8.4871],
+    })
+    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+})
+
+test('a coordinate that cannot be read holds Save back, and sends nothing', async () => {
+    const { to } = await renderForm(point)
+    await editable()
+    await userEvent.fill(coordinate(), 'by the big mango tree')
+    await fillWeight()
+    await save().click()
+    // On the field, and in the summary of what holds Save back.
+    await expect
+        .poll(
+            () =>
+                page
+                    .getByText(
+                        'Not a coordinate. Type latitude, then longitude.'
+                    )
+                    .all().length
+        )
+        .toBe(2)
+    expect(to('tracker')).toHaveLength(0)
+
+    await userEvent.fill(coordinate(), '8.4871, -13.2356')
+    await save().click()
+    expect(await sentGeometry(to)).toEqual({
+        type: 'Point',
+        coordinates: [-13.2356, 8.4871],
     })
 })
 
-test('a point in an org unit’s area says it is inside, and outside with a warning', async () => {
-    await renderForm({ ...point, orgUnit: DISTRICT }, { locationWarnKm: 100 })
+test('with locationWarnKm, a point further from the org unit warns, and saves all the same', async () => {
+    const { to } = await renderForm(point, { locationWarnKm: 25 })
     await editable()
-    expect(button('At Badjia').query()).toBeNull()
-    await typeCoordinate('8.5, -11.5')
-    await leave()
-    await expect.element(page.getByText('Inside Badjia')).toBeVisible()
-    await typeCoordinate('8.5, -10.5')
-    await leave()
+    // 33 km north of the CHC: past 25 km.
+    await userEvent.fill(coordinate(), '8.4, -11.4197')
+    await fillWeight()
     await expect
-        .element(page.getByText('Warning: Outside Badjia'))
+        .element(
+            page.getByText(
+                '33 km from Ngelehun CHC. Check latitude and longitude are not swapped.'
+            )
+        )
         .toBeVisible()
+    await save().click()
+    expect(await sentGeometry(to)).toEqual({
+        type: 'Point',
+        coordinates: [-11.4197, 8.4],
+    })
+})
+
+test('the device’s location fills the point', async () => {
+    vi.spyOn(navigator.geolocation, 'watchPosition').mockImplementation(
+        (found) => {
+            // SAFETY: the field reads only the coordinates and their accuracy.
+            found({
+                coords: { latitude: 8.1327, longitude: -11.4197, accuracy: 6 },
+                timestamp: Date.now(),
+            } as GeolocationPosition)
+            return 1
+        }
+    )
+    vi.spyOn(navigator.geolocation, 'clearWatch').mockImplementation(
+        () => undefined
+    )
+    const { to } = await renderForm(point)
+    await editable()
+    await button('Use my location').click()
+    await fillWeight()
+    await save().click()
+    expect(await sentGeometry(to)).toEqual({
+        type: 'Point',
+        coordinates: [-11.4197, 8.1327],
+    })
 })
 
 test('an edit shows the stored point, and clearing it sends null', async () => {
-    const { to } = await renderForm(point, { eventId: CHILD_VISIT.eventId })
-    await editable()
-    await expect.element(latitude()).toHaveValue('8.47')
-    await expect.element(longitude()).toHaveValue('-11.42')
-    await userEvent.fill(latitude(), '')
-    await userEvent.fill(longitude(), '')
-    await save().click()
-    await expect.poll(() => to('tracker')).toHaveLength(1)
-    expect(sentEvent(to('tracker')[0]).geometry).toBeNull()
-})
-
-test('"Use my location" fills the field and says how close it is', async () => {
-    const asked = geolocation('found')
-    await renderForm(point)
-    await editable()
-    expect(asked).not.toHaveBeenCalled()
-    await button('Use my location').click()
-    await expect.element(latitude()).toHaveValue('8.1327')
-    await expect.element(longitude()).toHaveValue('-11.4197')
-    await expect
-        .element(page.getByText('Your location, within 12 m'))
-        .toBeVisible()
-})
-
-test('a refused location says why and leaves the field as it was', async () => {
-    geolocation({ code: 1 })
-    await renderForm(point, { eventId: CHILD_VISIT.eventId })
-    await editable()
-    await button('Use my location').click()
-    await expect
-        .element(
-            page.getByText(/^Warning: Your location is blocked for this site/)
-        )
-        .toBeVisible()
-    await expect.element(latitude()).toHaveValue('8.47')
-})
-
-test('a timeout says it took too long', async () => {
-    geolocation({ code: 3 })
-    await renderForm(point)
-    await editable()
-    await button('Use my location').click()
-    await expect
-        .element(
-            page.getByText(/^Warning: Finding your location took too long/)
-        )
-        .toBeVisible()
-    await expect.element(latitude()).toHaveValue('')
-})
-
-test('a browser without geolocation says so', async () => {
-    // As a browser without the API, or a page not served securely, has none.
-    const api = Object.getOwnPropertyDescriptor(
-        Navigator.prototype,
-        'geolocation'
-    )
-    Reflect.deleteProperty(Navigator.prototype, 'geolocation')
-    onTestFinished(() => {
-        if (api !== undefined) {
-            Object.defineProperty(Navigator.prototype, 'geolocation', api)
-        }
+    const { to } = await renderForm(stage('POINT'), {
+        eventId: CHILD_VISIT.eventId,
     })
-    await renderForm(point)
     await editable()
-    await button('Use my location').click()
-    await expect
-        .element(
-            page.getByText(
-                'Warning: This browser cannot give your location. Type the coordinates instead.'
-            )
-        )
-        .toBeVisible()
+    await expect.element(coordinate()).toHaveValue('8.47, -11.42')
+    const clear = inBox(coordinate(), 'Clear')
+    expect(clear).not.toBeNull()
+    await userEvent.click(clear ?? document.body)
+    await save().click()
+    expect(await sentGeometry(to)).toBeNull()
 })
 
-test('a locked event shows its location read-only, without the buttons', async () => {
+test('a locked event shows its point read-only, without the buttons', async () => {
     await renderForm(
         {
             ...point,
@@ -288,18 +206,14 @@ test('a locked event shows its location read-only, without the buttons', async (
         { eventId: CHILD_VISIT.eventId }
     )
     await expect
-        .element(page.getByRole('textbox', { name: 'Location' }), {
-            timeout: 10_000,
-        })
-        .toHaveValue('8.47, -11.42')
-    await expect
-        .element(page.getByRole('textbox', { name: 'Location' }))
+        .element(coordinate(), { timeout: 10_000 })
         .toHaveAttribute('readonly')
     expect(button('Use my location').query()).toBeNull()
-    expect(button('At Ngelehun CHC').query()).toBeNull()
+    expect(inBox(coordinate(), 'Clear')).toBeNull()
+    await expect.element(button('Show on map')).toBeVisible()
 })
 
-test('DHIS2’s error about the geometry is shown on the location', async () => {
+test('DHIS2’s error about the geometry is shown on the field, which it marks invalid', async () => {
     await renderForm({
         ...point,
         refuse: {
@@ -327,52 +241,103 @@ test('DHIS2’s error about the geometry is shown on the location', async () => 
             )
         )
         .toBeVisible()
-    await expect
-        .element(button('Location: Geometry does not conform to FeatureType'))
-        .toBeVisible()
+    await expect.element(coordinate()).toHaveAttribute('aria-invalid', 'true')
+    await button('Coordinate: Geometry does not conform to FeatureType').click()
+    await expect.element(coordinate()).toHaveFocus()
 })
 
-test('a polygon stage shows a stored area as recorded and sends it back as it is', async () => {
-    const area = { type: 'Polygon', coordinates: DISTRICT.geometry.coordinates }
+test('while saving, the location keeps its buttons, out of reach', async () => {
+    const { to } = await renderForm(
+        { ...point, held: ['tracker'] },
+        { eventId: CHILD_VISIT.eventId }
+    )
+    await editable()
+    await fillWeight()
+    await save().click()
+    await expect.poll(() => to('tracker')).toHaveLength(1)
+    await expect.element(coordinate()).toHaveAttribute('readonly')
+    // Drawn as they were, out of reach until the form unlocks.
+    for (const name of ['Clear', 'Use my location', 'Open map']) {
+        expect(
+            document.querySelector(`[inert] button[aria-label="${name}"]`)
+        ).not.toBeNull()
+    }
+})
+
+test('a polygon stage asks for the org unit, and saves a pasted area as a polygon', async () => {
+    const { to } = await renderForm(stage('POLYGON'))
+    await editable()
+    await expect.element(button('Add my location as a point')).toBeVisible()
+    paste(area().element(), PASTED)
+    await expect.element(area()).toHaveDisplayValue(/\sha$/)
+    await fillWeight()
+    await save().click()
+    expect(await sentGeometry(to)).toEqual({
+        type: 'Polygon',
+        coordinates: [RING],
+    })
+    expect(to('organisationUnits')).toEqual([
+        expect.objectContaining({
+            params: { fields: 'path,displayName,geometry' },
+        }),
+    ])
+})
+
+test('a MULTI_POLYGON stage saves an area as a multi-polygon of one part', async () => {
+    const { to } = await renderForm(stage('MULTI_POLYGON'))
+    await editable()
+    paste(area().element(), PASTED)
+    await fillWeight()
+    await save().click()
+    expect(await sentGeometry(to)).toEqual({
+        type: 'MultiPolygon',
+        coordinates: [[RING]],
+    })
+})
+
+test('a MULTI_POLYGON stage opens a stored multi-polygon of one part as an area it can change', async () => {
+    const stored = { type: 'MultiPolygon', coordinates: [[RING]] }
+    const onDirtyChange = vi.fn()
     const { to } = await renderForm(
         {
-            program: childVisitProgram({ featureType: 'POLYGON' }),
-            event: { ...SAVED_VISIT, geometry: area },
+            ...stage('MULTI_POLYGON'),
+            event: { ...SAVED_VISIT, geometry: stored },
+        },
+        { eventId: CHILD_VISIT.eventId, onDirtyChange }
+    )
+    await editable()
+    await expect.element(area()).toHaveDisplayValue(/\sha$/)
+    expect(inBox(area(), 'Clear')).not.toBeNull()
+    await save().click()
+    expect(await sentGeometry(to)).toEqual(stored)
+    expect(onDirtyChange).not.toHaveBeenCalled()
+})
+
+test('an area of several parts is shown as recorded, and sent back as it is', async () => {
+    const stored = {
+        type: 'MultiPolygon',
+        coordinates: [
+            [RING],
+            [
+                [
+                    [-12.1, 8.1],
+                    [-12.2, 8.2],
+                    [-12.1, 8.2],
+                    [-12.1, 8.1],
+                ],
+            ],
+        ],
+    }
+    const { to } = await renderForm(
+        {
+            ...stage('MULTI_POLYGON'),
+            event: { ...SAVED_VISIT, geometry: stored },
         },
         { eventId: CHILD_VISIT.eventId }
     )
     await editable()
-    await expect
-        .element(page.getByRole('textbox', { name: 'Location' }))
-        .toHaveValue('Area recorded')
-    expect(button('Use my location').query()).toBeNull()
+    await expect.element(area()).toHaveValue('Area recorded')
+    expect(inBox(area(), 'Clear')).toBeNull()
     await save().click()
-    await expect.poll(() => to('tracker')).toHaveLength(1)
-    expect(sentEvent(to('tracker')[0]).geometry).toEqual(area)
-    expect(to('organisationUnits')).toHaveLength(0)
-})
-
-test('a new event on a polygon stage shows no location', async () => {
-    await renderForm({ program: childVisitProgram({ featureType: 'POLYGON' }) })
-    await editable()
-    expect(page.getByRole('textbox', { name: 'Location' }).query()).toBeNull()
-    expect(latitude().query()).toBeNull()
-})
-
-test('while saving, the location keeps its buttons, unable to change it', async () => {
-    const { to } = await renderForm({ ...point, held: ['tracker'] })
-    await editable()
-    await userEvent.click(page.getByRole('textbox', { name: 'Weight (kg)' }))
-    await userEvent.keyboard('12')
-    await page.getByRole('button', { name: 'Save' }).click()
-    await expect.poll(() => to('tracker')).toHaveLength(1)
-    // Drawn as they were, out of reach until the form unlocks: latitude and longitude, and the danger signs' boxes.
-    await expect
-        .poll(() => document.querySelectorAll('[inert] input').length)
-        .toBe(5)
-    for (const name of ['Use my location', 'At Ngelehun CHC']) {
-        await expect
-            .element(page.getByRole('button', { name }))
-            .toHaveAttribute('aria-disabled', 'true')
-    }
+    expect(await sentGeometry(to)).toEqual(stored)
 })

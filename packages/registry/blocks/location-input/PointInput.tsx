@@ -8,7 +8,6 @@ import {
     Field,
     FieldDescription,
     FieldError,
-    FieldLabel,
 } from '@/components/dhis2/ui/field'
 import {
     InputGroup,
@@ -22,7 +21,16 @@ import { LocateIcon, MapIcon } from './icons'
 import { MapPanel, useNarrow } from './MapPanel'
 import { pointNotes, type Note } from './notes'
 import { pointPlace } from './place'
-import { FIELD_BUTTON, keepFocus, Notes, PanelFooter } from './parts'
+import {
+    FIELD_BUTTON,
+    keepFocus,
+    LabelRow,
+    lockOf,
+    Messages,
+    Notes,
+    PanelFooter,
+    ReadOnlyReason,
+} from './parts'
 import { PlaceSearch } from './PlaceSearch'
 import { positionText, readPoint } from './text'
 import type { LocationInputProps } from './types'
@@ -30,6 +38,8 @@ import { accuracyWords, locateLabel, useFix, type Fix } from './useFix'
 
 // Names are text, not HTML.
 const AS_IS = { interpolation: { escapeValue: false } }
+
+const WRONG = () => i18n.t('Not a coordinate. Type latitude, then longitude.')
 
 const same = (a?: Position, b?: Position) =>
     a !== undefined && b !== undefined && a[0] === b[0] && a[1] === b[1]
@@ -43,6 +53,9 @@ export const PointInput = ({
     description,
     required,
     readOnly,
+    readOnlyReason,
+    labelAside,
+    messages = [],
     orgUnit,
     warnKm,
     tiles,
@@ -73,6 +86,8 @@ export const PointInput = ({
     const narrow = useNarrow()
     const fix = useFix(locator)
     const editable = readOnly === undefined
+    const lock = lockOf(readOnly, readOnlyReason)
+    const invalid = wrong || messages.some(({ tone }) => tone === 'error')
     // A fix arrives seconds after the press, when the form may have passed a newer `onChange`.
     const report = useRef(onChange)
     report.current = onChange
@@ -83,8 +98,11 @@ export const PointInput = ({
         setWrong(false)
     }, [shown])
 
+    // Whether the form was told the typed text is not a location, so it is told again once it is one.
+    const reportedWrong = useRef(false)
     const change = (next: Position | null) => {
         setProblem(undefined)
+        reportedWrong.current = false
         report.current(next === null ? null : pointOf(next))
     }
 
@@ -93,15 +111,22 @@ export const PointInput = ({
         const read = readPoint(draft)
         if (read.kind === 'wrong') {
             setWrong(true)
+            reportedWrong.current = true
+            report.current(point === undefined ? null : pointOf(point), {
+                message: WRONG(),
+                text: draft,
+            })
             return
         }
         setWrong(false)
         if (read.kind === 'empty') {
-            if (point !== undefined) change(null)
+            if (point !== undefined || reportedWrong.current) change(null)
             return
         }
         setDraft(positionText(read.position))
-        if (!same(read.position, point)) change(read.position)
+        if (!same(read.position, point) || reportedWrong.current) {
+            change(read.position)
+        }
     }
 
     const locate = () => {
@@ -186,11 +211,8 @@ export const PointInput = ({
         : []
 
     return (
-        <Field invalid={wrong}>
-            <FieldLabel>
-                {label}
-                {required ? <span aria-hidden="true"> *</span> : null}
-            </FieldLabel>
+        <Field invalid={invalid}>
+            <LabelRow label={label} required={required} aside={labelAside} />
             <InputGroup>
                 <InputGroupInput
                     ref={input}
@@ -198,8 +220,9 @@ export const PointInput = ({
                     value={showPlace ? described : draft}
                     title={showPlace ? shown : undefined}
                     readOnly={!editable}
+                    tabIndex={lock.skipped ? -1 : undefined}
                     required={required}
-                    aria-invalid={wrong || undefined}
+                    aria-invalid={invalid || undefined}
                     aria-keyshortcuts="Alt+ArrowDown"
                     autoComplete="off"
                     spellCheck={false}
@@ -207,7 +230,7 @@ export const PointInput = ({
                     inputMode="text"
                     className="tabular-nums"
                     placeholder={
-                        editable ? i18n.t('Latitude, longitude') : undefined
+                        lock.drawn ? i18n.t('Latitude, longitude') : undefined
                     }
                     onChange={(event) => {
                         setDraft(event.target.value)
@@ -220,8 +243,13 @@ export const PointInput = ({
                     }}
                     onKeyDown={onKeyDown}
                 />
-                <InputGroupAddon align="inline-end" className="gap-0">
-                    {editable && draft !== '' ? (
+                <InputGroupAddon
+                    align="inline-end"
+                    className="gap-0"
+                    // Locked for a moment, its buttons stay where they are, out of reach.
+                    {...{ inert: lock.held ? '' : undefined }}
+                >
+                    {lock.drawn && draft !== '' ? (
                         <InputGroupButton
                             size="icon-sm"
                             className={FIELD_BUTTON}
@@ -240,7 +268,7 @@ export const PointInput = ({
                             <IconCross16 />
                         </InputGroupButton>
                     ) : null}
-                    {editable ? (
+                    {lock.drawn ? (
                         <InputGroupButton
                             size="icon-sm"
                             className={FIELD_BUTTON}
@@ -264,7 +292,7 @@ export const PointInput = ({
                         onOpenChange={showPanel}
                         title={label}
                         label={
-                            editable
+                            lock.drawn
                                 ? i18n.t('Open map')
                                 : i18n.t('Show on map')
                         }
@@ -383,15 +411,10 @@ export const PointInput = ({
                     })}
                 </FieldDescription>
             ) : null}
-            {readOnly === undefined ? null : (
-                <FieldDescription>{readOnly}</FieldDescription>
-            )}
+            <ReadOnlyReason readOnly={readOnly} hidden={lock.hidden} />
+            <Messages messages={messages} />
             <Notes notes={notes} />
-            {wrong ? (
-                <FieldError>
-                    {i18n.t('Not a coordinate. Type latitude, then longitude.')}
-                </FieldError>
-            ) : null}
+            {wrong ? <FieldError>{WRONG()}</FieldError> : null}
         </Field>
     )
 }

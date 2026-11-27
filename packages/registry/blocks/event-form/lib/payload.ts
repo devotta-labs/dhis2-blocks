@@ -1,7 +1,7 @@
 import { storedDay } from '@/components/dhis2-value-display'
 import type { RuleEventStatus } from '@/components/program-rules'
-import { pointGeometry } from './location'
-import type { HeldEvent, Values } from './metadata'
+import { sentGeometry } from './location'
+import type { FeatureType, HeldEvent, Values } from './metadata'
 
 export const IMPORT_PARAMS = {
     async: false,
@@ -25,8 +25,11 @@ export interface PayloadInput {
     opened: Values
     /** The chosen option of each category of a non-default combination, in order; absent for the default one. */
     categoryOptions?: readonly string[]
-    /** The point of a point stage as `[lng,lat]`, now and as DHIS2 may hold it; absent for other stages. */
-    location?: { now?: string; opened?: string }
+    /**
+     * The event's geometry as the form holds it (GeoJSON written out), now and as DHIS2 may hold it, with the stage's
+     * feature type; absent for a stage that records no location.
+     */
+    location?: { now?: string; opened?: string; featureType: FeatureType }
     /** A note to add, with the id made for it; absent or blank adds none. */
     note?: { id: string; text: string }
 }
@@ -56,8 +59,8 @@ interface TrackerPayload {
  * Data values merge, so every effective value is sent, and `null` deletes one that was there when opened.
  * Chosen category options go as `attributeCategoryOptions`, from which DHIS2 finds the attribute option combo, so the
  * held combo is left out: it would contradict a changed choice.
- * A point stage's location goes as a GeoJSON point (longitude first), and `null` deletes one that was there; other
- * stages send the held geometry back as it is.
+ * A stage's location goes as GeoJSON of the stage's feature type, an area as a multi-polygon of one part to a
+ * `MULTI_POLYGON` stage, and `null` deletes one that was there; a stored one the form cannot read goes back as it is.
  * Notes are only added: the held ones are never sent back, and a typed note goes with the id made for it, so sending
  * it again adds it once.
  */
@@ -100,11 +103,14 @@ export const eventPayload = ({
         categoryOptions === undefined
             ? sent
             : { ...rest, attributeCategoryOptions: categoryOptions.join(',') }
-    const point = location?.now && pointGeometry(location.now)
+    const geometry =
+        location?.now === undefined
+            ? null
+            : sentGeometry(location.now, location.featureType)
     let own: Omit<TrackerEventPayload, 'occurredAt' | 'status' | 'dataValues'> =
         chosen
-    if (point) {
-        own = { ...chosen, geometry: point }
+    if (geometry !== null) {
+        own = { ...chosen, geometry }
     } else if (location?.opened !== undefined) {
         own = { ...chosen, geometry: null }
     }

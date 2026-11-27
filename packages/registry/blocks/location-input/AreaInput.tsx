@@ -4,11 +4,7 @@ import { useEffect, useRef, useState, type ClipboardEvent } from 'react'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
-import {
-    Field,
-    FieldDescription,
-    FieldLabel,
-} from '@/components/dhis2/ui/field'
+import { Field, FieldDescription } from '@/components/dhis2/ui/field'
 import {
     InputGroup,
     InputGroupAddon,
@@ -27,7 +23,16 @@ import { LocateIcon, MapIcon } from './icons'
 import { MapPanel, useNarrow } from './MapPanel'
 import { areaNotes, type Note } from './notes'
 import { areaPlace } from './place'
-import { FIELD_BUTTON, keepFocus, Notes, PanelFooter } from './parts'
+import {
+    FIELD_BUTTON,
+    keepFocus,
+    LabelRow,
+    lockOf,
+    Messages,
+    Notes,
+    PanelFooter,
+    ReadOnlyReason,
+} from './parts'
 import { PlaceSearch } from './PlaceSearch'
 import { areaSummary, pastedHoles, readPoints } from './text'
 import type { LocationInputProps } from './types'
@@ -48,6 +53,9 @@ export const AreaInput = ({
     description,
     required,
     readOnly,
+    readOnlyReason,
+    labelAside,
+    messages = [],
     orgUnit,
     tiles,
     locator,
@@ -77,6 +85,10 @@ export const AreaInput = ({
     const narrow = useNarrow()
     const fix = useFix(locator)
     const editable = readOnly === undefined && !fixed
+    // An area this field cannot edit has no buttons to keep, locked or not.
+    const lock = lockOf(readOnly, readOnlyReason)
+    const drawn = lock.drawn && !fixed
+    const invalid = messages.some(({ tone }) => tone === 'error')
     // A fix arrives seconds after the press, when the points and `onChange` may have changed.
     const latest = useRef({ ring, onChange })
     latest.current = { ring, onChange }
@@ -206,23 +218,22 @@ export const AreaInput = ({
     else if (ring.length > 0) mapValue = polygonOf(ring)
 
     return (
-        <Field>
-            <FieldLabel>
-                {label}
-                {required ? <span aria-hidden="true"> *</span> : null}
-            </FieldLabel>
+        <Field invalid={invalid}>
+            <LabelRow label={label} required={required} aside={labelAside} />
             <InputGroup>
                 <InputGroupInput
                     ref={input}
                     id={id}
                     value={boxText}
                     readOnly
+                    tabIndex={lock.skipped ? -1 : undefined}
                     required={required}
+                    aria-invalid={invalid || undefined}
                     aria-roledescription={i18n.t('area')}
                     autoComplete="off"
                     className="tabular-nums"
                     placeholder={
-                        editable
+                        drawn
                             ? i18n.t('No area, paste points or use the map')
                             : undefined
                     }
@@ -234,8 +245,13 @@ export const AreaInput = ({
                         }
                     }}
                 />
-                <InputGroupAddon align="inline-end" className="gap-0">
-                    {editable && ring.length > 0 ? (
+                <InputGroupAddon
+                    align="inline-end"
+                    className="gap-0"
+                    // Locked for a moment, its buttons stay where they are, out of reach.
+                    {...{ inert: lock.held && !fixed ? '' : undefined }}
+                >
+                    {drawn && ring.length > 0 ? (
                         <InputGroupButton
                             size="icon-sm"
                             className={FIELD_BUTTON}
@@ -249,7 +265,7 @@ export const AreaInput = ({
                             <IconCross16 />
                         </InputGroupButton>
                     ) : null}
-                    {editable ? (
+                    {drawn ? (
                         <InputGroupButton
                             size="icon-sm"
                             className={FIELD_BUTTON}
@@ -273,9 +289,7 @@ export const AreaInput = ({
                         onOpenChange={showPanel}
                         title={label}
                         label={
-                            editable
-                                ? i18n.t('Open map')
-                                : i18n.t('Show on map')
+                            drawn ? i18n.t('Open map') : i18n.t('Show on map')
                         }
                         icon={<MapIcon />}
                         field={input}
@@ -388,9 +402,8 @@ export const AreaInput = ({
             {description === undefined ? null : (
                 <FieldDescription>{description}</FieldDescription>
             )}
-            {readOnly === undefined ? null : (
-                <FieldDescription>{readOnly}</FieldDescription>
-            )}
+            <ReadOnlyReason readOnly={readOnly} hidden={lock.hidden} />
+            <Messages messages={messages} />
             <Notes notes={notes} />
         </Field>
     )

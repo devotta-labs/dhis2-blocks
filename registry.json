@@ -1144,6 +1144,8 @@
                 "devotta-labs/dhis2-blocks/dhis2-value-input",
                 "devotta-labs/dhis2-blocks/dhis2-value-types",
                 "devotta-labs/dhis2-blocks/field",
+                "devotta-labs/dhis2-blocks/location-input",
+                "devotta-labs/dhis2-blocks/location-map",
                 "devotta-labs/dhis2-blocks/popover",
                 "devotta-labs/dhis2-blocks/program-rules",
                 "devotta-labs/dhis2-blocks/skeleton",

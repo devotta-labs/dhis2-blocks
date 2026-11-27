@@ -3,10 +3,8 @@ import { cn } from '@/components/dhis2/ui/cn'
 
 export type Tone = 'error' | 'warning' | 'info'
 
-// Messages are shown as the rules and the host give them, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
-// A warning or an error is marked by its word, so it never rests on colour alone.
 export const TONES = {
     error: {
         border: 'border-dhis2-destructive-indicator',

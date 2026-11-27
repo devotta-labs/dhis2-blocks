@@ -84,10 +84,6 @@ export interface EventFormValue extends Omit<Loaded, 'mayUncomplete'> {
     cancelComplete(): void
 }
 
-/**
- * The ids and names DHIS2 names a category by in its errors: each option, by id or name, stands for its category, and
- * the event's combination for the first category.
- */
 const categoryStands = (form: StageForm, held: HeldEvent | undefined) => {
     const stands = new Map<string, Stand>()
     for (const { id, options } of form.categories) {
@@ -106,7 +102,6 @@ const categoryStands = (form: StageForm, held: HeldEvent | undefined) => {
     return stands
 }
 
-/** How long a save goes unanswered before the form offers to stop waiting for it. */
 const STILL_SAVING_MS = 15_000
 
 /** The form's state, rules, checks and saving. */
@@ -125,13 +120,12 @@ export const useEventForm = (
         locationWarnKm,
     }: EventFormProps,
     { form, settings, held, orgUnits, orgUnit, mayUncomplete }: Loaded
-): EventFormValue => {
+) => {
     const formId = useId()
     const { baseUrl } = useConfig()
     const [state, setState] = useState(() =>
         initialFormState(held, todayIso(), form.categories)
     )
-    // The state as of the last action, before React renders it: a save reads a commit made in its own click.
     const latest = useRef(state)
     const dispatch = useCallback((action: FormAction) => {
         latest.current = formReducer(latest.current, action)
@@ -156,17 +150,16 @@ export const useEventForm = (
     const saveEvent = useSaveEvent(state.eventId, enrollmentId)
 
     const { outcome, graph, outside } = rules
-    const blameContext = (
-        effective: BlameContext['effective']
-    ): BlameContext => ({
-        form,
-        graph,
-        effective,
-        stored: state.opened.stored,
-        eventDate: state.eventDate,
-        display: displayWith(settings, names),
-        outside,
-    })
+    const blameContext = (effective: BlameContext['effective']) =>
+        ({
+            form,
+            graph,
+            effective,
+            stored: state.opened.stored,
+            eventDate: state.eventDate,
+            display: displayWith(settings, names),
+            outside,
+        }) satisfies BlameContext
     const blames = useMemo(
         () =>
             blame === 'off' || outcome === undefined
@@ -185,7 +178,6 @@ export const useEventForm = (
         ]
     )
 
-    // What a commit made the rules change is said; the outcome the form opens with is not.
     const before = useRef(outcome)
     useEffect(() => {
         const was = before.current
@@ -219,7 +211,6 @@ export const useEventForm = (
     const locked =
         readOnly ?? (state.saving === undefined ? undefined : i18n.t('Saving'))
 
-    // After a failed attempt, focus goes to the first field to fix.
     const summary = state.summary
     useEffect(() => {
         const first = summary?.invalid[0]
@@ -228,7 +219,6 @@ export const useEventForm = (
         }
     }, [summary, formId])
 
-    // Read through refs, so a host passing new functions on every render is not called again.
     const callbacks = useRef({ onSaved, onDirtyChange, onUnsavedRuleChanges })
     useEffect(() => {
         callbacks.current = { onSaved, onDirtyChange, onUnsavedRuleChanges }
@@ -242,7 +232,6 @@ export const useEventForm = (
         }
     }, [dirty])
 
-    // What DHIS2 holds that the rules now set otherwise or hide, for an event DHIS2 holds and the user has not changed.
     const inDhis2 = useRef(held !== undefined)
     const stored = state.opened.stored
     const ruleChanged =
@@ -262,9 +251,7 @@ export const useEventForm = (
         }
     }, [ruleChanged])
 
-    // A save in flight, by number: one the form stopped waiting for is answered to no one.
     const saves = useRef(0)
-    // What the save in flight sent, which DHIS2 may still store after the form stops waiting.
     const sending = useRef<ReturnType<typeof toSend>>(undefined)
     const [stillSaving, setStillSaving] = useState(false)
     useEffect(() => {
@@ -277,7 +264,6 @@ export const useEventForm = (
             setStillSaving(false)
         }
     }, [state.saving])
-    // The pressed Complete leaves once the event is completed; Reopen, else Save, takes its focus.
     const completedFromButton = useRef(false)
     useLayoutEffect(() => {
         if (completedFromButton.current && state.status === 'COMPLETED') {
@@ -347,7 +333,6 @@ export const useEventForm = (
                 status: 'ACTIVE',
             })
             announce(i18n.t('Reopened'))
-            // The pressed Reopen leaves; Save, now enabled, takes its focus.
             if (document.activeElement?.id === `${formId}-reopen`) {
                 document.getElementById(`${formId}-save`)?.focus()
             }
@@ -367,16 +352,17 @@ export const useEventForm = (
             callbacks.current.onSaved?.({ eventId: current.eventId, status })
             return
         }
-        // Only a field on screen can show its errors; the rest are the form's.
         const shown = new Map([
-            ...form.categories.map(({ id, name }): [string, string] => [
-                id,
-                name,
-            ]),
-            ...shownFields(form, now).map((fieldId): [string, string] => [
-                fieldId,
-                form.fields.get(fieldId)?.label ?? fieldId,
-            ]),
+            ...form.categories.map(
+                ({ id, name }) => [id, name] satisfies [string, string]
+            ),
+            ...shownFields(form, now).map(
+                (fieldId) =>
+                    [
+                        fieldId,
+                        form.fields.get(fieldId)?.label ?? fieldId,
+                    ] satisfies [string, string]
+            ),
         ])
         const placed =
             result.report === undefined
@@ -400,7 +386,6 @@ export const useEventForm = (
         })
     }
 
-    // Stable, so a field that did not change is not rendered again.
     const commit = useCallback(
         (fieldId: string) =>
             (value: string | null, problem?: EditorProblem) => {
@@ -497,5 +482,5 @@ export const useEventForm = (
             void save('complete')
         },
         cancelComplete,
-    }
+    } satisfies EventFormValue
 }

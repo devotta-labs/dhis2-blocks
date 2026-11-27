@@ -3,8 +3,9 @@ import {
     CHILD_VISIT,
     childVisitProgram,
     SAVED_FUNDED_VISIT,
-} from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+} from '../test/childVisit'
+import { editable, recorded, renderForm } from '../test/serve'
+import type { EventFormSaved } from './EventForm'
 
 const funded = { program: childVisitProgram({ categories: true }) }
 const radio = (name: string) => page.getByRole('radio', { name, exact: true })
@@ -16,9 +17,9 @@ interface SentEvent {
     attributeOptionCombo?: string
 }
 
-const sentEvent = (request: { data?: unknown }): SentEvent =>
+const sentEvent = (request: { data?: unknown }) =>
     // SAFETY: the form sends one event in a tracker import; the assertions check its parts.
-    (request.data as { events: [SentEvent] }).events[0]
+    (request.data as { events: [SentEvent] }).events[0] satisfies SentEvent
 
 test('a program with the default combination shows no categories', async () => {
     const { to } = await renderForm()
@@ -32,7 +33,6 @@ test('each category is a required choice of the options that apply here', async 
     await editable()
     await expect.element(group('Funding')).toBeVisible()
     await expect.element(group('Outreach type')).toBeVisible()
-    // The org unit's ancestors are asked for once.
     expect(to('organisationUnits')).toEqual([
         expect.objectContaining({
             id: CHILD_VISIT.orgUnitId,
@@ -66,19 +66,29 @@ test('Save without the categories names them and sends nothing', async () => {
 })
 
 test('the choices make the form dirty and are sent as the event’s category options', async () => {
-    const onDirtyChange = vi.fn()
-    const onSaved = vi.fn()
+    const {
+        callback: onDirtyChange,
+        values: dirtyWith,
+        until: dirtied,
+    } = recorded<boolean>()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     const { to } = await renderForm(funded, { onDirtyChange, onSaved })
     await editable()
     await userEvent.click(radio('NGO partner'))
-    await expect.poll(() => onDirtyChange.mock.calls).toEqual([[true]])
+    await dirtied((values) => values.length > 0)
+    expect(dirtyWith).toEqual([true])
     await userEvent.click(radio('Fixed site'))
     await userEvent.fill(
         page.getByRole('textbox', { name: 'Weight (kg)' }),
         '12'
     )
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
     const event = sentEvent(to('tracker')[0])
     expect(event.attributeCategoryOptions).toBe('labCoNgo001,labCoFixed1')
     expect(event).not.toHaveProperty('attributeOptionCombo')

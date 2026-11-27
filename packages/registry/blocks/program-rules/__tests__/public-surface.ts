@@ -349,7 +349,6 @@ export const usePersonRules = (): Map<string, RuleEffects> => {
     )
 }
 
-// A form lays the effects over what was entered, settles them, and says why, reading outside the form too.
 export const settleForm = (
     last: RuleSettled | undefined,
     entered: RuleValues,
@@ -357,7 +356,7 @@ export const settleForm = (
     form: RuleForm,
     context: RuleContext,
     evaluate: (event: RuleEventInput) => RuleEvaluation
-): RuleOutcome | undefined => {
+) => {
     const settled = settleRules(last, entered, event, {
         context,
         evaluate,
@@ -365,25 +364,23 @@ export const settleForm = (
         optionGroups: context.optionGroupOptions,
         maxRuns: 4,
     })
-    return settled.isOk() ? settled.value.outcome : undefined
+    return (settled.isOk() ? settled.value.outcome : undefined) satisfies
+        | RuleOutcome
+        | undefined
 }
 export const coldOutcome = (
     entered: RuleValues,
     form: RuleForm,
     evaluate: (values: RuleValues) => RuleEvaluation
 ) => runRules(entered, evaluate, form, new Map(), 4)
-export const laidOver = (form: RuleForm): RuleOutcome =>
-    overlay({}, emptyEffects(), form, new Map())
-export const blamesOf = (
-    outcome: RuleOutcome,
-    context: BlameContext
-): ReadonlyMap<string, readonly Blame[]> => explain(outcome, context)
-export const firstReason = (blame: Blame): RuleReason | undefined =>
-    blame.because[0]
-export const readsOutside = (
-    context: RuleContext,
-    input: EventRuleInput
-): RuleOutsideRead[] => [...outsideReads(context, input).values()]
+export const laidOver = (form: RuleForm) =>
+    overlay({}, emptyEffects(), form, new Map()) satisfies RuleOutcome
+export const blamesOf = (outcome: RuleOutcome, context: BlameContext) =>
+    explain(outcome, context) satisfies ReadonlyMap<string, readonly Blame[]>
+export const firstReason = (blame: Blame) =>
+    blame.because[0] satisfies RuleReason | undefined
+export const readsOutside = (context: RuleContext, input: EventRuleInput) =>
+    [...outsideReads(context, input).values()] satisfies RuleOutsideRead[]
 export const dateMeta: RuleValueMeta = { valueType: 'DATE' }
 export const dateKey: string = EVENT_DATE
 export const displayed = (context: BlameContext, form: RuleForm) =>

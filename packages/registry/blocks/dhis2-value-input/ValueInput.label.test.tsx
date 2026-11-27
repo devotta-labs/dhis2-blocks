@@ -69,7 +69,6 @@ test('Tab passes a control whose read-only reason is described only, to the host
         .element(page.getByRole('button', { name: 'Set automatically' }))
         .toHaveFocus()
     await userEvent.keyboard('{Tab}')
-    // A reason shown under the field keeps the control in the Tab order.
     await expect
         .element(page.getByRole('textbox', { name: 'Total' }))
         .toHaveFocus()
@@ -103,7 +102,6 @@ test.each([
         )
         expect(screen.container.getBoundingClientRect().height).toBe(height)
         expect(screen.container.querySelectorAll('input')).toHaveLength(boxes)
-        // A date keeps its calendar button, which cannot be pressed.
         expect(screen.container.querySelectorAll('button')).toHaveLength(
             buttons
         )
@@ -153,7 +151,6 @@ test.each([
         await expect.element(control()).toBeInTheDocument()
         const marker = page.getByRole('button', { name: 'Marker' })
         await expect.element(marker).toBeVisible()
-        // The row: the label's text, then the marker.
         expect(marker.element().parentElement?.textContent).toBe(
             `${LABEL}Marker`
         )

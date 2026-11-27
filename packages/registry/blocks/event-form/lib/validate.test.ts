@@ -1,17 +1,18 @@
 import { emptyEffects, overlay } from '@/components/program-rules'
 import type { RuleEffects, RuleMessage } from '@/components/program-rules'
-import { by, CHILD_VISIT_GROUPS, childVisitForm } from '../__tests__/forms'
-import type { ChildVisitVariant } from '../__tests__/childVisit'
+import { by, CHILD_VISIT_GROUPS, childVisitForm } from '../test/forms'
+import type { ChildVisitVariant } from '../test/childVisit'
 import type { Values } from './metadata'
 import { EVENT_DATE, futureProblem, LOCATION, validate } from './validate'
 import type { ValidationInput } from './validate'
 
 const RULE = by('Rule')
-const message = (kind: RuleMessage['kind'], text: string): RuleMessage => ({
-    kind,
-    text,
-    by: RULE,
-})
+const message = (kind: RuleMessage['kind'], text: string) =>
+    ({
+        kind,
+        text,
+        by: RULE,
+    }) satisfies RuleMessage
 
 const inputOf = ({
     entered = { labWeight01: '12' },
@@ -22,7 +23,7 @@ const inputOf = ({
     entered?: Values
     changes?: Partial<RuleEffects>
     variant?: ChildVisitVariant
-}): ValidationInput => {
+}) => {
     const form = childVisitForm(variant)
     return {
         form,
@@ -39,7 +40,7 @@ const inputOf = ({
         orgUnits: new Set(),
         calendar: 'iso8601',
         ...rest,
-    }
+    } satisfies ValidationInput
 }
 
 const ON_COMPLETE: ChildVisitVariant = { validationStrategy: 'ON_COMPLETE' }

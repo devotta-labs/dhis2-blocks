@@ -3,7 +3,6 @@ import { Alert, AlertDescription } from '@/components/dhis2/ui/alert'
 import type { RuleMessage } from '@/components/program-rules'
 import { useEventFormContext } from './context'
 
-// Rule texts are shown as written, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
 const said = ({ kind, text }: RuleMessage) => {

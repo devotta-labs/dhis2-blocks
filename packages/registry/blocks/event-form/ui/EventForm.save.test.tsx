@@ -5,14 +5,14 @@ import {
     CHILD_VISIT_RULES,
     childVisitProgram,
     SAVED_VISIT,
-} from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+} from '../test/childVisit'
+import { editable, recorded, renderForm } from '../test/serve'
+import type { EventFormSaved } from './EventForm'
 
 const weight = () => page.getByRole('textbox', { name: 'Weight (kg)' })
 const save = () => page.getByRole('button', { name: 'Save' })
 const complete = () =>
     page.getByRole('button', { name: 'Complete', exact: true })
-/** The status by the buttons; the live region says it too. */
 const savedStatus = () =>
     page
         .elementLocator(document.querySelector('form') ?? document.body)
@@ -28,19 +28,24 @@ interface SentEvent {
     dataValues: Array<{ dataElement: string; value: string | null }>
 }
 
-const sentEvent = (request: { data?: unknown }): SentEvent =>
+const sentEvent = (request: { data?: unknown }) =>
     // SAFETY: the form sends one event in a tracker import; the assertions check its parts.
-    (request.data as { events: [SentEvent] }).events[0]
+    (request.data as { events: [SentEvent] }).events[0] satisfies SentEvent
 
 test('Save while a field has focus sends its value with what the rules set', async () => {
-    const onSaved = vi.fn()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     const onDirtyChange = vi.fn()
     const { to } = await renderForm({}, { onSaved, onDirtyChange })
     await editable()
     await userEvent.click(weight())
     await userEvent.keyboard('150')
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
 
     const [request] = to('tracker')
     expect(to('tracker')).toHaveLength(1)
@@ -53,7 +58,7 @@ test('Save while a field has focus sends its value with what the rules set', asy
             { dataElement: 'labDailyMg1', value: '1200' },
         ])
     )
-    expect(onSaved).toHaveBeenCalledWith({
+    expect(savedWith).toContainEqual({
         eventId: event.event,
         status: 'ACTIVE',
     })
@@ -131,7 +136,6 @@ test('a refused save puts its errors on their field and in the alert', async () 
             status: 'ERROR',
             validationReport: {
                 errorReports: [
-                    // As DHIS2 2.42 words them: a refused value by its value type, never its data element.
                     {
                         errorCode: 'E1302',
                         message:
@@ -170,7 +174,6 @@ test('a refused save puts its errors on their field and in the alert', async () 
     await save().click()
     const failed = alertSaying("Didn't save")
     await expect.element(failed).toHaveTextContent('has no write access')
-    // Fields not on screen: the hidden Follow-up section, and a field in no section.
     await expect.element(failed).toHaveTextContent('labFollowUp')
     await expect.element(failed).toHaveTextContent('labNoSect01')
     await expect
@@ -272,7 +275,6 @@ test('while DHIS2 has not answered, every field is read-only without a line, the
     for (const each of page.getByText('Saving', { exact: true }).elements()) {
         expect(each).toHaveClass('sr-only')
     }
-    // The event date above keeps its lines, so the fields below it stay where they were.
     expect(top()).toBe(before)
 
     release()
@@ -288,7 +290,11 @@ test('while DHIS2 has not answered, every field is read-only without a line, the
 })
 
 test('after 15 seconds unanswered the form offers to stop waiting, then ignores the late answer; a later Save updates the same event', async () => {
-    const onSaved = vi.fn()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     const { to, release } = await renderForm({ held: ['tracker'] }, { onSaved })
     await editable()
     await userEvent.click(weight())
@@ -323,14 +329,17 @@ test('after 15 seconds unanswered the form offers to stop waiting, then ignores 
     await save().click()
     await expect.poll(() => to('tracker')).toHaveLength(2)
     release()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
     const [first, second] = to('tracker').map(sentEvent)
     expect(second.event).toBe(first.event)
-    expect(onSaved).toHaveBeenCalledWith({
+    expect(savedWith).toContainEqual({
         eventId: first.event,
         status: 'ACTIVE',
     })
-    // The late answer to the first did not take the second's values as saved.
+    await expect
+        .poll(() => document.querySelector('form')?.textContent)
+        .not.toContain('Saving')
     await expect.element(savedStatus()).toBeVisible()
 })
 
@@ -370,19 +379,23 @@ test('an answer that is not an import report, such as a sign-in page, is not tak
 })
 
 test('with confirmSaved="off" a save says nothing of itself', async () => {
-    const onSaved = vi.fn()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     await renderForm({}, { confirmSaved: 'off', onSaved })
     await editable()
     await userEvent.click(weight())
     await userEvent.keyboard('12')
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
     expect(savedStatus().query()).toBeNull()
 })
 
 const FUTURE = 'A date in the future is not allowed'
 const followUp = () => page.getByRole('textbox', { name: 'Follow-up date' })
-/** `SAVED_VISIT` referred to a clinic, so its follow-up shows, with these values. */
 const referred = (
     ...dataValues: Array<{ dataElement: string; value: string }>
 ) => ({
@@ -420,7 +433,11 @@ test('an event opened with a future date the stage refuses shows it under the fi
 })
 
 test('a future date the stage allows saves', async () => {
-    const onSaved = vi.fn()
+    const {
+        callback: onSaved,
+        values: savedWith,
+        until: saved,
+    } = recorded<EventFormSaved>()
     const { to } = await renderForm(
         { event: referred() },
         { eventId: CHILD_VISIT.eventId, onSaved }
@@ -429,7 +446,8 @@ test('a future date the stage allows saves', async () => {
     await userEvent.fill(followUp(), '2999-01-01')
     await userEvent.tab()
     await save().click()
-    await expect.poll(() => onSaved.mock.calls).toHaveLength(1)
+    await saved((values) => values.length > 0)
+    expect(savedWith).toHaveLength(1)
     expect(page.getByText(FUTURE).query()).toBeNull()
     expect(sentEvent(to('tracker')[0]).dataValues).toContainEqual({
         dataElement: 'labFollowUp',

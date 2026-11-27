@@ -18,11 +18,8 @@ type Texts = Record<Axis, string>
 
 const AXES: ReadonlyArray<Axis> = ['latitude', 'longitude']
 
-// One number with a decimal comma, as `8,48` is typed where the comma is the decimal mark: a latitude or a longitude
-// alone, not the pair 8, 48.
 const DECIMAL_COMMA = /^\s*-?\d+,\d+\s*$/
 
-/** A whole coordinate typed or pasted in one field (`lat, lng`, degrees with hemispheres, a maps link) as its numbers. */
 const wholeIn = (text: string, settings: ValueSettings) => {
     if (DECIMAL_COMMA.test(text)) {
         return undefined
@@ -33,10 +30,6 @@ const wholeIn = (text: string, settings: ValueSettings) => {
         : undefined
 }
 
-/**
- * What the fields would save as `[lng,lat]` (null clears), and the fields whose number is wrong. A field holding a
- * whole coordinate is that coordinate.
- */
 const read = (texts: Texts, settings: ValueSettings) => {
     if (AXES.every((axis) => texts[axis].trim() === '')) {
         return { value: null, wrong: [] }
@@ -86,7 +79,6 @@ const useCoordinate = ({
     })
     // The fields a refused save found wrong, until the next change.
     const [shown, setShown] = useState<ReadonlyArray<Axis>>([])
-    // What both fields held before a pasted coordinate filled them, until the next change: what undo brings back.
     const [beforeFill, setBeforeFill] = useState<Texts>()
 
     const show = (next: Texts) => {
@@ -108,7 +100,6 @@ const useCoordinate = ({
         setBeforeFill(undefined)
         show({ ...texts, [axis]: text })
     }
-    /** A whole coordinate pasted in one field fills both, whatever they held; other text is pasted as it is. */
     const paste = (event: ClipboardEvent) => {
         const whole = wholeIn(event.clipboardData.getData('text'), settings)
         if (whole !== undefined) {
@@ -117,7 +108,6 @@ const useCoordinate = ({
             show(whole)
         }
     }
-    /** Undo straight after a paste filled both fields brings back what they held: the browser keeps no undo for it. */
     const undo = (event: KeyboardEvent) => {
         if (
             beforeFill !== undefined &&
@@ -130,7 +120,6 @@ const useCoordinate = ({
             show(beforeFill)
         }
     }
-    /** A whole coordinate typed in one field, spread over both. */
     const spread = (axis: Axis) => {
         const whole = wholeIn(texts[axis], settings)
         if (whole !== undefined) {
@@ -144,7 +133,6 @@ const useCoordinate = ({
             return
         }
         setShown(wrong)
-        // Back to the first field a message is about, whether Save was clicked or Ctrl+Enter pressed.
         document.getElementById(`${id}-${wrong[0]}`)?.focus()
     }
     return { id, messages, texts, shown, change, paste, undo, spread, commit }

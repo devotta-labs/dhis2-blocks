@@ -18,16 +18,12 @@ import { captureOf, locationLabel } from '../lib/location'
 import { EVENT_DATE, LOCATION } from '../lib/validate'
 import { failedAttempt, useEventFormContext } from './context'
 
-// Labels and DHIS2's texts are shown as written, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
-// The field keeps focus until the click: its commit on leaving moves the layout, which would move the button away.
 const keepFocus = (event: MouseEvent) => event.preventDefault()
-// Focus on the button commits the field typed in, before the form reads it.
 const commitField = (event: MouseEvent<HTMLButtonElement>) =>
     event.currentTarget.focus()
 
-/** A button that names a field's error and puts focus in the field. */
 const ToField = ({ fieldId, text }: { fieldId: string; text: string }) => {
     const { form, formId } = useEventFormContext()
     let label =
@@ -55,7 +51,6 @@ const ToField = ({ fieldId, text }: { fieldId: string; text: string }) => {
     )
 }
 
-/** What blocks the last attempt, as buttons to each field. */
 const Summary = () => {
     const { state } = useEventFormContext()
     const failed = failedAttempt(state)
@@ -80,7 +75,6 @@ const Summary = () => {
     )
 }
 
-/** The save's failure: DHIS2's reason, the errors that name no field, and buttons to the fields still in error. */
 const SaveError = () => {
     const { state } = useEventFormContext()
     const { saveError, serverErrors } = state
@@ -204,7 +198,6 @@ export const EventFormActions = () => {
                             variant="link"
                             onClick={() => {
                                 stopWaiting()
-                                // This button leaves; the button it re-enables, Reopen or Save, takes focus.
                                 document
                                     .getElementById(
                                         `${formId}-${saving === 'reopen' ? 'reopen' : 'save'}`

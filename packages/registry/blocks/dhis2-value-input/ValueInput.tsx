@@ -185,15 +185,12 @@ export const ValueInput = ({
         kind === 'popup' && formEditorFor(field.valueType) !== undefined
     const edited = typed || dated || choice || popup || kind === 'search'
     const reason = readOnly ?? (edited ? undefined : editedElsewhere())
-    // Locked for a moment: drawn as when it can be edited.
     const held = readOnly !== undefined && readOnlyReason === 'held'
     const drawnEditable = reason === undefined || held
-    // The host shows why it is read-only, and Tab stops there; a script or a host's button still reaches the control.
     const tabIndex =
         readOnly !== undefined && readOnlyReason === 'described'
             ? -1
             : undefined
-    // A long option set's typed text may name only the options offered, so a hidden one is refused as any other text.
     const options = field.options
     const offeredList = useMemo(
         () => options && offeredOptions(options, hiddenOptions, value),
@@ -303,7 +300,6 @@ export const ValueInput = ({
             ) : null}
         </span>
     )
-    // The label and `labelAside` on one row; a legend stays first in its fieldset, so the row shows a copy of its text.
     const besideLabel = (label: ReactNode) =>
         labelAside === undefined ? (
             label
@@ -429,7 +425,6 @@ export const ValueInput = ({
         )
     }
     if (held && (editor || kind === 'search')) {
-        // Its own controls cannot be read-only, so they cannot be reached until the field is unlocked.
         control = (
             <div className="contents" {...{ inert: '' }}>
                 {control}
@@ -461,7 +456,6 @@ export const ValueInput = ({
                 </FieldDescription>
             )}
             {problem === undefined ? null : (
-                // An alert, said when it appears or changes: not again while more is typed.
                 <Problem plain={editor} id={`${id}-problem`}>
                     {problem.message}
                 </Problem>

@@ -1,8 +1,4 @@
-import {
-    CHILD_VISIT,
-    childVisitProgram,
-    SAVED_VISIT,
-} from '../__tests__/childVisit'
+import { CHILD_VISIT, childVisitProgram, SAVED_VISIT } from '../test/childVisit'
 import {
     EVENT_FIELDS,
     heldEventSchema,
@@ -13,7 +9,7 @@ import {
     systemInfoSchema,
     valuesOf,
 } from './metadata'
-import { childVisitForm as formOf } from '../__tests__/forms'
+import { childVisitForm as formOf } from '../test/forms'
 
 describe('the requested fields', () => {
     it('ask for what the schemas read', () => {

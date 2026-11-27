@@ -20,15 +20,15 @@ export const importReportSchema = z.object({
 export type ImportReport = z.infer<typeof importReportSchema>
 
 /** The import report at the top of a body, else under `response`, where some DHIS2 versions put it. */
-export const reportIn = (
-    body: z.infer<ReturnType<typeof z.json>>
-): ImportReport | undefined => {
+export const reportIn = (body: z.infer<ReturnType<typeof z.json>>) => {
     const direct = importReportSchema.safeParse(body)
     if (direct.success) {
-        return direct.data
+        return direct.data satisfies ImportReport | undefined
     }
     const nested = z.object({ response: importReportSchema }).safeParse(body)
-    return nested.success ? nested.data.response : undefined
+    return (nested.success ? nested.data.response : undefined) satisfies
+        | ImportReport
+        | undefined
 }
 
 interface PlacedReport {
@@ -57,13 +57,10 @@ const fieldIn = (
         )
         .find((fieldId) => fieldId !== undefined)
 
-// DHIS2 names the geometry in its errors about it, such as E1012, a geometry that does not fit the stage.
 const GEOMETRY_ERROR = /\bgeometry\b/i
 
-// DHIS2 names a refused value by its value type (E1302) or its option set (E1125), never its data element.
 const QUOTES_VALUE = new Set(['E1302', 'E1125'])
 
-/** The one field among `fields` whose sent value the message quotes. */
 const holding = (
     message: string,
     fields: ReadonlyMap<string, string>,
@@ -79,10 +76,8 @@ const holding = (
 
 type ErrorReport = ImportReport['validationReport']['errorReports'][number]
 
-// Names are shown as written, not HTML-escaped.
 const AS_IS = { nsSeparator: '::', interpolation: { escapeValue: false } }
 
-// DHIS2 dumps the objects an error is about into its args, each with its uid and name.
 const argObject = z.object({ uid: z.string(), name: z.string() })
 const argName = (arg: string) => {
     try {
@@ -92,10 +87,6 @@ const argName = (arg: string) => {
     }
 }
 
-/**
- * E1091, E1029 and E1000 in plain words, the user as "you" and each id DHIS2 names read as its name in `known`, else as
- * DHIS2 names it in its args, with DHIS2's code after; without every name, DHIS2's own text.
- */
 const plainly = (
     { errorCode, message, args = [] }: ErrorReport,
     known: ReadonlyMap<string, string | undefined>
@@ -155,7 +146,7 @@ export const placeReport = (
     geometryField?: string,
     sent: Readonly<Record<string, string>> = {},
     known: ReadonlyMap<string, string | undefined> = new Map()
-): PlacedReport => {
+) => {
     const fieldErrors = new Map<string, string[]>()
     const formErrors: string[] = []
     for (const error of report.validationReport.errorReports) {
@@ -179,7 +170,6 @@ export const placeReport = (
         if (fieldId === undefined) {
             formErrors.push(plainly(error, known))
         } else {
-            // E1302 says `DataElement \`INTEGER\``: the field's id in place of the value type reads as its label.
             const text =
                 quoted === undefined
                     ? message
@@ -197,5 +187,5 @@ export const placeReport = (
             ])
         }
     }
-    return { fieldErrors, formErrors }
+    return { fieldErrors, formErrors } satisfies PlacedReport
 }

@@ -1,10 +1,9 @@
 import { page, userEvent } from 'vitest/browser'
 import { liveRegion } from '../../../test/liveRegion'
-import { CHILD_VISIT, RULES_CHANGED_VISIT } from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+import { CHILD_VISIT, RULES_CHANGED_VISIT } from '../test/childVisit'
+import { editable, recorded, renderForm } from '../test/serve'
 import type { EventFormProps } from './EventForm'
 
-// `blame` left out: the form's own default.
 const open = async (props: Partial<EventFormProps> = {}, served = {}) => {
     const server = await renderForm(served, { blame: undefined, ...props })
     await editable()
@@ -30,7 +29,6 @@ test('a field a rule set, required or gave fewer options has one marker beside i
         .element(button('Set automatically, Daily total (mg): why'))
         .toBeVisible()
     await enter('Temperature (°C)', '39')
-    // The malaria test is required and loses an option: one marker, for the requirement.
     await expect
         .element(button('Required here, Malaria test: why'))
         .toBeVisible()
@@ -238,23 +236,31 @@ describe('answers the rules alone changed', () => {
         )
 
     test('are reported, and not as unsaved changes, while the form says nothing of them', async () => {
-        const onUnsavedRuleChanges = vi.fn()
+        const {
+            callback: onUnsavedRuleChanges,
+            values: changesWith,
+            until: changes,
+        } = recorded<number>()
         const onDirtyChange = vi.fn()
         await rulesChanged({ onUnsavedRuleChanges, onDirtyChange })
         await expect.element(textbox('Paracetamol dose (mg)')).toHaveValue('24')
         expect(page.getByText(/Rules have changed/).query()).toBeNull()
-        expect(onUnsavedRuleChanges).toHaveBeenLastCalledWith(4)
+        expect(changesWith.at(-1)).toBe(4)
         expect(onDirtyChange).not.toHaveBeenCalled()
         await userEvent.click(button('Save'))
-        await expect.poll(() => onUnsavedRuleChanges.mock.lastCall).toEqual([0])
+        await changes((values) => values.at(-1) === 0)
     })
 
     test('are 0 once the user changes an answer, as Save then sends it all', async () => {
-        const onUnsavedRuleChanges = vi.fn()
+        const {
+            callback: onUnsavedRuleChanges,
+            values: changesWith,
+            until: changes,
+        } = recorded<number>()
         await rulesChanged({ onUnsavedRuleChanges })
-        await expect.poll(() => onUnsavedRuleChanges.mock.lastCall).toEqual([4])
+        await changes((values) => values.at(-1) === 4)
         await enter('Weight (kg)', '13')
-        expect(onUnsavedRuleChanges).toHaveBeenLastCalledWith(0)
+        expect(changesWith.at(-1)).toBe(0)
     })
 
     test('are not reported for a new event before its first save', async () => {

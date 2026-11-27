@@ -1,4 +1,4 @@
-import { childVisitForm } from '../__tests__/forms'
+import { childVisitForm } from '../test/forms'
 import {
     captureOf,
     coordinatePoint,

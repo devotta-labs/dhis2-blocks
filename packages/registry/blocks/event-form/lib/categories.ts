@@ -11,17 +11,12 @@ export interface OptionScope {
     calendar: Dhis2Calendar
 }
 
-// Names are text, not HTML.
 const AS_IS = { interpolation: { escapeValue: false } }
 
-/**
- * Why the event may not have this option: no write access, an org unit it is not limited to, or an event date outside
- * its range (both ends included). Stored days compare as text.
- */
 const optionProblem = (
     option: CategoryOption,
     { orgUnits, eventDate, calendar }: OptionScope
-): string | undefined => {
+) => {
     if (!option.canWrite) {
         return i18n.t('You cannot enter data for {{option}}', {
             ...AS_IS,
@@ -78,14 +73,14 @@ export const choiceProblem = (
 export const heldChoices = (
     held: HeldEvent | undefined,
     categories: readonly Category[]
-): Values => {
+) => {
     const options = new Set(held?.attributeCategoryOptions?.split(','))
     return Object.fromEntries(
         categories.flatMap(({ id, options: offered }) => {
             const option = offered.find((each) => options.has(each.id))
             return option === undefined ? [] : [[id, option.id]]
         })
-    )
+    ) satisfies Values
 }
 
 /** Whether a category's options need the org unit's ancestors to be known. */

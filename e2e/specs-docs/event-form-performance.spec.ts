@@ -28,16 +28,6 @@ import {
 } from './event-form-performance.support'
 import { expect, test } from './fixtures'
 
-/**
- * How smooth the event form is to use: opening, typing, commits and picks, and fast entry, in the docs lab on the
- * production preview with the CPU slowed 1×, 4× and 6×. Timings are held to budgets at 4×; lost focus and dropped keys
- * fail at every rate, and how far a commit moves the focused field is reported. Run with `event-form-performance.controls.spec.ts`:
- *   pnpm build:docs && DOCS_APP_URL=http://localhost:3071 EVENT_FORM_PERF_JSON=/tmp/event-form-perf.json \
- *     pnpm exec playwright test -c playwright.docs.config.ts event-form-performance
- * `EVENT_FORM_PERF_RATES=1,4` limits the rates; `-g "3 commit"` runs one case.
- */
-
-// No Playwright trace, video or screenshots: trace snapshots cost ~20 ms of the page's main thread per action at 1×.
 test.use({
     viewport: VIEWPORT,
     deviceScaleFactor: 1,
@@ -51,7 +41,6 @@ test.beforeEach(async ({ page }) => page.addInitScript(instrument))
 
 const HEADER = ['case', 'rate', 'n', 'median', 'p95', 'max']
 
-/** One first load: its milestones (ms from navigation), long frames, and its layout shift without input. */
 interface Load {
     skeleton: number
     form: number
@@ -73,7 +62,6 @@ test('1 open: navigation to the first editable field, and a slow network', async
         for (const preset of presets) {
             const loads: Load[] = []
             for (let load = 0; load < 5; load += 1) {
-                // A fresh context each time: a first load, with nothing compiled or cached.
                 const context = await browser.newContext({
                     baseURL: testInfo.project.use.baseURL,
                     viewport: VIEWPORT,
@@ -114,7 +102,6 @@ test('1 open: navigation to the first editable field, and a slow network', async
                 Math.round(median('shift') * 1000) / 1000,
             ])
         }
-        // A slow network (2 s per request), from the click on Restart.
         await openPreset(page, CHILD, rate)
         await clickAt(
             page,
@@ -190,7 +177,6 @@ test('2 typing: per-keystroke latency', async ({ page }, testInfo) => {
         return result
     }
     for (const rate of RATES) {
-        // The floor: a plain input outside React, on the same page and CPU.
         await openPreset(page, CHILD, rate)
         await page.evaluate(() => {
             const input = Object.assign(document.createElement('input'), {
@@ -227,7 +213,6 @@ test('2 typing: per-keystroke latency', async ({ page }, testInfo) => {
     record('2-typing', Object.fromEntries(results))
 })
 
-/** Types each value in `id` (unmeasured), then Tab is measured to the paint where `probe` holds. */
 const tabCommits = async (
     page: Page,
     rate: number,
@@ -246,7 +231,6 @@ const tabCommits = async (
     return stamps
 }
 
-/** Clicks each target in turn, `rounds` times, measured to the paint where its probe holds. */
 const picks = async (
     page: Page,
     rate: number,
@@ -268,14 +252,16 @@ const picks = async (
 
 const values = (count: number, of: (at: number) => string) =>
     Array.from({ length: count }, (_, at) => of(at))
-const absent = (id: string): Probe => ({
-    name: 'absent',
-    arg: `form [id$="-${id}"]`,
-})
-const present = (id: string): Probe => ({
-    name: 'present',
-    arg: `form [id$="-${id}"]`,
-})
+const absent = (id: string) =>
+    ({
+        name: 'absent',
+        arg: `form [id$="-${id}"]`,
+    }) satisfies Probe
+const present = (id: string) =>
+    ({
+        name: 'present',
+        arg: `form [id$="-${id}"]`,
+    }) satisfies Probe
 
 test('3 commit: Tab out, picks, and the layout shifts they cause', async ({
     page,
@@ -283,7 +269,7 @@ test('3 commit: Tab out, picks, and the layout shifts they cause', async ({
     const results = new Map<string, object>()
     const rows: Row[] = []
     const add = async (name: string, rate: number, all: readonly Stamp[]) => {
-        const stamps = all.slice(1) // the first is a warm-up
+        const stamps = all.slice(1)
         const result = {
             ...(await summary(page, stamps)),
             ...(await during(page, stamps)),
@@ -296,7 +282,6 @@ test('3 commit: Tab out, picks, and the layout shifts they cause', async ({
             result.focusedMoved.max,
             result.focusLost.length,
         ])
-        // How far the focused field moves is reported, not held: the form leaves scrolling to the browser.
         expect(result.focusLost, `${name} @${rate}x: focus lost`).toEqual([])
         if (rate === BUDGET_RATE) {
             withinBudget(
@@ -410,7 +395,6 @@ test('4 fast entry: type-Tab through 20 fields at 80 ms per key', async ({
         await openPreset(page, LONG, rate)
         await clickAt(page, field(page, ids[0] ?? 'f011'))
         await expectNext(page, ALWAYS)
-        // Not awaited key by key: keys arrive on schedule, queuing as a typist's do when the page is busy.
         const stamps = await typeOnSchedule(page, keys, 80)
         const focusAtEnd = await page.evaluate(() =>
             document.activeElement?.id.replace(/^.*?-/, '')

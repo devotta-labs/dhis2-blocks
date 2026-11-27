@@ -1,5 +1,5 @@
-import { SAVED_FUNDED_VISIT, SAVED_VISIT } from '../__tests__/childVisit'
-import { childVisitForm } from '../__tests__/forms'
+import { SAVED_FUNDED_VISIT, SAVED_VISIT } from '../test/childVisit'
+import { childVisitForm } from '../test/forms'
 import { formReducer, initialFormState, isDirty, toSend } from './formState'
 import type { FormState } from './formState'
 import { heldEventSchema } from './metadata'
@@ -293,7 +293,6 @@ describe('location', () => {
             labDoseMg01: '26',
         })
         expect(state.opened.storedLocation).toBe(MOVED_POINT)
-        // Still unsaved as far as the form knows.
         expect(isDirty(state)).toBe(true)
     })
 

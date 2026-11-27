@@ -25,7 +25,6 @@ import { Result } from 'better-result'
 import { describe, expect, it } from 'vitest'
 import { EXAMPLES, type Example } from '../labData'
 
-/** The example's rules, built and run by the real engine, as the form's hooks do. */
 const rulesOf = async (example: Example) => {
     const engine = await loadRuleEngine()
     const lab = EXAMPLES[example]
@@ -64,7 +63,6 @@ const rulesOf = async (example: Example) => {
             })
         )
     }
-    /** Every run until the values settle, as the form runs them. */
     const run = (values: Values, occurredAt?: string) => {
         evaluations = 0
         const outcome = runRules(
@@ -138,8 +136,8 @@ describe('the event form lab data, on the real rule engine', () => {
 
     it('fires every effect of the Child visit list for some input', async () => {
         const { run } = await rulesOf('newVisit')
-        const effects = (values: Values, occurredAt?: string): RuleEffects =>
-            run(values, occurredAt).effects
+        const effects = (values: Values, occurredAt?: string) =>
+            run(values, occurredAt).effects satisfies RuleEffects
         const kinds = (found: RuleEffects, fieldId: string) =>
             found.messages.get(fieldId)?.map(({ kind }) => kind)
 

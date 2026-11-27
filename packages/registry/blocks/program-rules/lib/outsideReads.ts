@@ -16,7 +16,7 @@ const dayOf = (event: RuleEventInput) =>
 export const outsideReads = (
     context: Pick<RuleContext, 'fieldVariables' | 'stageNames'>,
     { event, enrollment, otherEvents }: EventRuleInput
-): Map<string, RuleOutsideRead> => {
+) => {
     const newestFirst = [
         event,
         ...otherEvents.filter(({ id }) => id !== event.id),
@@ -70,5 +70,5 @@ export const outsideReads = (
             },
         })
     }
-    return reads
+    return reads satisfies Map<string, RuleOutsideRead>
 }

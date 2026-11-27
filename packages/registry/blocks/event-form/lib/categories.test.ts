@@ -1,5 +1,5 @@
-import { SAVED_FUNDED_VISIT, SAVED_VISIT } from '../__tests__/childVisit'
-import { childVisitForm } from '../__tests__/forms'
+import { SAVED_FUNDED_VISIT, SAVED_VISIT } from '../test/childVisit'
+import { childVisitForm } from '../test/forms'
 import {
     choiceProblem,
     heldChoices,

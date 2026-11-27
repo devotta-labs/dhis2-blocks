@@ -88,7 +88,6 @@ const categoryComboSchema = z.object({
 
 export const programSchema = z.object({
     displayName: z.string().optional(),
-    // Absent is the default combination, as every program without one has.
     categoryCombo: categoryComboSchema.optional(),
     programStages: z.array(stageSchema),
 })
@@ -102,7 +101,6 @@ const noteSchema = z.object({
     note: z.string(),
     value: z.string(),
     storedAt: z.string().optional(),
-    /** The username of who wrote it. */
     storedBy: z.string().optional(),
     createdBy: z.object({ displayName: z.string().optional() }).optional(),
 })
@@ -206,18 +204,14 @@ export interface StageForm {
 export const stageFormOf = (
     program: z.infer<typeof programSchema>,
     stageId: string
-): StageForm | undefined => {
+) => {
     const stage = program.programStages.find(({ id }) => id === stageId)
     if (stage === undefined) {
         return undefined
     }
     const fields = new Map(
         stage.programStageDataElements.map(
-            ({
-                compulsory,
-                allowFutureDate,
-                dataElement,
-            }): [string, FormField] => [
+            ({ compulsory, allowFutureDate, dataElement }) => [
                 dataElement.id,
                 {
                     id: dataElement.id,
@@ -289,19 +283,18 @@ export const stageFormOf = (
                       })
                   )
                 : [],
-    }
+    } satisfies StageForm | undefined
 }
 
-export const settingsOf = (
-    info: z.infer<typeof systemInfoSchema>
-): ValueSettings => ({
-    calendar: parseDhis2Calendar(info.calendar),
-    dateFormat: parseDateFormat(info.dateFormat ?? ''),
-})
+export const settingsOf = (info: z.infer<typeof systemInfoSchema>) =>
+    ({
+        calendar: parseDhis2Calendar(info.calendar),
+        dateFormat: parseDateFormat(info.dateFormat ?? ''),
+    }) satisfies ValueSettings
 
-export const valuesOf = (event: HeldEvent): Values =>
+export const valuesOf = (event: HeldEvent) =>
     Object.fromEntries(
         event.dataValues.flatMap(({ dataElement, value }) =>
             value ? [[dataElement, value]] : []
         )
-    )
+    ) satisfies Values

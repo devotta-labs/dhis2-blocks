@@ -3,7 +3,6 @@ import { page, userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 import { ValueInput } from '../ValueInput'
 
-/** A coordinate field in a form, with a button after it to leave the field for, and a box to copy text from. */
 const mount = async (value?: string) => {
     const onChange = vi.fn()
     await render(
@@ -28,7 +27,6 @@ const mount = async (value?: string) => {
 const latitude = page.getByRole('textbox', { name: 'Latitude' })
 const longitude = page.getByRole('textbox', { name: 'Longitude' })
 
-/** Pastes `text` at the end of `into`, through the clipboard, as a person does. */
 const paste = async (text: string, into: typeof latitude) => {
     const copied = page.getByRole('textbox', { name: 'Copied' })
     await userEvent.fill(copied, text)
@@ -101,7 +99,6 @@ test('a number alone stays in its field, while it is typed and once it is left',
         await expect.element(longitude).toHaveValue('')
     }
     await userEvent.click(longitude)
-    // A decimal comma is one number, not the pair 8, 48: it stays, and is refused as a latitude.
     await expect.element(latitude).toHaveValue('8,48')
     await expect.element(longitude).toHaveValue('')
     await userEvent.fill(latitude, '8.4871')

@@ -4,8 +4,8 @@ import {
     CHILD_VISIT_PATH,
     childVisitProgram,
     SAVED_VISIT,
-} from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+} from '../test/childVisit'
+import { editable, renderForm } from '../test/serve'
 
 const CHC = {
     path: CHILD_VISIT_PATH,

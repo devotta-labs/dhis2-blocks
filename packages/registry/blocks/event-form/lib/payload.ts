@@ -79,7 +79,7 @@ export const eventPayload = ({
     categoryOptions,
     location,
     note,
-}: PayloadInput): TrackerPayload => {
+}: PayloadInput) => {
     const event: Omit<
         TrackerEventPayload,
         'occurredAt' | 'status' | 'dataValues'
@@ -114,7 +114,6 @@ export const eventPayload = ({
     } else if (location?.opened !== undefined) {
         own = { ...chosen, geometry: null }
     }
-    // An unchanged day keeps the held time.
     const occurredAt =
         held?.occurredAt !== undefined &&
         storedDay(held.occurredAt) === eventDate
@@ -146,5 +145,5 @@ export const eventPayload = ({
                     }),
             },
         ],
-    }
+    } satisfies TrackerPayload
 }

@@ -13,11 +13,9 @@ import { LocationField } from './LocationField'
 
 const DATE: Field = { valueType: 'DATE' }
 
-// Section names are text, not HTML.
 const AS_IS = { interpolation: { escapeValue: false } }
 
 const hiddenTitle = (count: number) =>
-    // Both keys are extractable; count also reaches i18next's plural rules.
     count === 1
         ? i18n.t('{{count}} question hidden by rules', { count })
         : i18n.t('{{count}} questions hidden by rules', { count })
@@ -45,7 +43,6 @@ export const EventFormFields = () => {
     const capture = captureOf(form.featureType)
     const hidden = rules.outcome?.hidden
     const failed = failedAttempt(state) !== undefined
-    // Locked only while it saves, a field looks as it did, so nothing moves; its control still says why.
     const lockReason = readOnly === undefined ? 'held' : 'visible'
     return (
         <>

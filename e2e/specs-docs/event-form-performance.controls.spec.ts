@@ -30,11 +30,6 @@ import {
 } from './event-form-performance.support'
 import { test } from './fixtures'
 
-/**
- * The event form's other controls (option fields, the date, Why?, Save and Complete), scrolling, memory, the bundle,
- * React renders per input and CPU profiles. See `event-form-performance.spec.ts` for how to run them.
- */
-
 test.use({
     viewport: VIEWPORT,
     deviceScaleFactor: 1,
@@ -53,7 +48,6 @@ type Step = readonly [
     ('keydown' | 'click')?,
 ]
 
-/** Repeats the steps `rounds` times, each input measured to the paint where its probe holds; the first round warms up. */
 const steps = async (
     page: Page,
     rate: number,
@@ -73,14 +67,16 @@ const steps = async (
 
 const LISTBOX = '[role=listbox]'
 const DIALOG = '[role=dialog], [role=alertdialog]'
-const has = (selector: string): Probe => ({ name: 'present', arg: selector })
-const lacks = (selector: string): Probe => ({ name: 'absent', arg: selector })
-const expanded = (state: boolean): Probe => ({
-    name: 'expanded',
-    arg: String(state),
-})
+const has = (selector: string) =>
+    ({ name: 'present', arg: selector }) satisfies Probe
+const lacks = (selector: string) =>
+    ({ name: 'absent', arg: selector }) satisfies Probe
+const expanded = (state: boolean) =>
+    ({
+        name: 'expanded',
+        arg: String(state),
+    }) satisfies Probe
 
-// Picks and commits are held to the commit budget; opening a popup is reported only.
 const COMMITS = /pick|Tab out|Save|Complete →/
 
 test('5–8 options, date, Why?, Save and Complete', async ({
@@ -222,7 +218,6 @@ test('5–8 options, date, Why?, Save and Complete', async ({
                 `7 ${preset}`,
                 rate,
                 await steps(page, rate, 16, [
-                    // Opened first: most of RMNCH's Why? buttons are on its hidden questions.
                     [
                         'hidden questions open',
                         expanded(true),
@@ -324,7 +319,6 @@ test('9 scroll the Long form top to bottom', async ({ page }) => {
         )
         const frames = async (act: () => Promise<void>) => {
             await page.evaluate(() => {
-                // Its own array: a loop from an earlier call stops once `frames` is another one.
                 const mine: number[] = []
                 window.__efp.frames = mine
                 const tick = (t: number) => {

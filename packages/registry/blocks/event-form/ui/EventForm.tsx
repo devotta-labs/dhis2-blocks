@@ -59,7 +59,6 @@ export interface EventFormProps {
 
 type Ready = Extract<EventFormData, { status: 'ready' }>
 
-/** What shows until the form can be entered: its stage and its rules are loading. */
 const FormSkeleton = ({ className }: { className?: string }) => (
     <div
         role="status"
@@ -105,7 +104,6 @@ const ReadyForm = ({ props, data }: { props: EventFormProps; data: Ready }) => {
                     submit('save')
                 }}
                 onKeyDown={(event: KeyboardEvent) => {
-                    // Enter commits a field, which the field has done on keydown; Save is the button.
                     if (
                         event.key === 'Enter' &&
                         event.target instanceof HTMLInputElement
@@ -134,7 +132,6 @@ const EventFormRoot = (props: EventFormProps) => {
         props.eventId,
         props.orgUnitId
     )
-    // Started with the stage rather than after it: the form waits for both.
     useProgramRuleContext({
         programId: props.programId,
         programStageId: props.programStageId,
@@ -157,8 +154,6 @@ const EventFormRoot = (props: EventFormProps) => {
 
 /** Enters or edits one event of a program stage, with the stage's program rules applied, and saves it. */
 export const EventForm = (props: EventFormProps) => (
-    // A form per event: another program, stage or event starts afresh, and so does a new event for another org unit
-    // or subject. An edited event keeps its form, since its own org unit and subject are what it saves under.
     <EventFormRoot
         key={`${props.programId}/${props.programStageId}/${props.eventId ?? `new/${props.orgUnitId}/${props.enrollmentId ?? ''}/${props.trackedEntityId ?? ''}`}`}
         {...props}

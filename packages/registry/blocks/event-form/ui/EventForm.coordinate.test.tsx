@@ -5,9 +5,9 @@ import {
     CHILD_VISIT_RULES,
     childVisitProgram,
     SAVED_VISIT,
-} from '../__tests__/childVisit'
-import type { ChildVisitVariant } from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+} from '../test/childVisit'
+import type { ChildVisitVariant } from '../test/childVisit'
+import { editable, renderForm } from '../test/serve'
 
 const HOME = 'labHomeLoc1'
 

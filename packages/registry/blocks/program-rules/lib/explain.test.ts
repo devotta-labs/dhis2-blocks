@@ -3,7 +3,7 @@ import {
     by,
     CHILD_VISIT_GROUPS,
     childVisitForm,
-} from '@/components/event-form/__tests__/forms'
+} from '@/components/event-form/test/forms'
 import { emptyEffects } from './evaluate'
 import { explain } from './explain'
 import type { BlameContext } from './explain'
@@ -24,34 +24,36 @@ const outcomeOf = (entered: Values, changes: Partial<RuleEffects>) =>
         CHILD_VISIT_GROUPS
     )
 
-const dependencies = (readsProgramVariables: string[]): RuleDependencies => ({
-    readsVariables: [],
-    readsProgramVariables,
-    readsConstants: [],
-    readsOrgUnitGroups: [],
-    readsFields: [],
-    writesFields: [],
-    writesValues: [],
-    writesVariables: [],
-    writesSections: [],
-    writesProgramStages: [],
-})
+const dependencies = (readsProgramVariables: string[]) =>
+    ({
+        readsVariables: [],
+        readsProgramVariables,
+        readsConstants: [],
+        readsOrgUnitGroups: [],
+        readsFields: [],
+        writesFields: [],
+        writesValues: [],
+        writesVariables: [],
+        writesSections: [],
+        writesProgramStages: [],
+    }) satisfies RuleDependencies
 
 const contextOf = (
     effective: Values,
     graph?: RuleDependencyGraph,
     stored: Values = {}
-): BlameContext => ({
-    form,
-    graph,
-    effective,
-    stored,
-    eventDate: '2026-11-02',
-    display: displayWith(
-        { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
-        new Map()
-    ),
-})
+) =>
+    ({
+        form,
+        graph,
+        effective,
+        stored,
+        eventDate: '2026-11-02',
+        display: displayWith(
+            { calendar: 'gregorian', dateFormat: 'YYYY-MM-DD' },
+            new Map()
+        ),
+    }) satisfies BlameContext
 
 const HIDE_PREGNANT = by(
     'Hide pregnancy for men',
@@ -145,13 +147,14 @@ describe('explain', () => {
                 previous: true as const,
             },
         }
-        const graph = (readsVariables: string[]): RuleDependencyGraph => ({
-            rules: new Map([
-                [smaller.ruleId, { ...dependencies([]), readsVariables }],
-            ]),
-            fieldReaders: new Map(),
-            fieldWriters: new Map(),
-        })
+        const graph = (readsVariables: string[]) =>
+            ({
+                rules: new Map([
+                    [smaller.ruleId, { ...dependencies([]), readsVariables }],
+                ]),
+                fieldReaders: new Map(),
+                fieldWriters: new Map(),
+            }) satisfies RuleDependencyGraph
         const because = (readsVariables: string[], variable: string) =>
             explain(outcome, {
                 ...contextOf(outcome.effective, graph(readsVariables)),
@@ -166,7 +169,6 @@ describe('explain', () => {
                 from: previous.from,
             },
         ])
-        // A rule that reads only this event's answer says only that.
         expect(because(['weight'], 'prevWeight')).toEqual([
             { fieldId: 'labWeight01', label: 'Weight (kg)', value: '60' },
         ])

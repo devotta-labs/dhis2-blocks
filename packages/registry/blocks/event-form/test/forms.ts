@@ -20,13 +20,14 @@ export const by = (
     ruleName: string,
     readsFields: string[] = [],
     condition = 'true'
-): Attribution => ({
-    ruleId: `rule ${ruleName}`,
-    ruleName,
-    actionId: `action ${ruleName}`,
-    condition,
-    readsFields,
-})
+) =>
+    ({
+        ruleId: `rule ${ruleName}`,
+        ruleName,
+        actionId: `action ${ruleName}`,
+        condition,
+        readsFields,
+    }) satisfies Attribution
 
 /** The Child visit option groups. */
 export const CHILD_VISIT_GROUPS: ReadonlyMap<

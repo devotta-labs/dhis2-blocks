@@ -58,8 +58,13 @@ export const serve = ({
     held = [],
 }: Served) => {
     const requests: Request[] = []
+    const answers = new Map<string, PromiseWithResolvers<void>>()
+    const answeredSignal = (resource: string) => {
+        const signal = answers.get(resource) ?? Promise.withResolvers<void>()
+        answers.set(resource, signal)
+        return signal
+    }
     let release = () => {}
-    // Answers to the held resources wait until `release` is called.
     const holding = new Promise<void>((resolve) => {
         release = resolve
     })
@@ -81,10 +86,11 @@ export const serve = ({
                     message: `${resource} failed`,
                 })
             }
-            // As it arrives over the wire: plain JSON, no `undefined` members.
-            return z
+            const parsed = z
                 .json()
                 .parse(JSON.parse(JSON.stringify(body(request) ?? null)))
+            answeredSignal(resource).resolve()
+            return parsed
         }
     const data = {
         programs: answer('programs', () => program),
@@ -101,7 +107,6 @@ export const serve = ({
             userGroups: [],
             authorities,
         })),
-        // One org unit, for the categories and the location; a search for stored names finds none.
         organisationUnits: answer('organisationUnits', (request) =>
             request.id === undefined ? { organisationUnits: [] } : orgUnit
         ),
@@ -122,10 +127,37 @@ export const serve = ({
             </QueryClientProvider>
         </CustomDataProvider>
     )
-    /** The requests to one resource. */
     const to = (resource: string) =>
         requests.filter((request) => request.resource === resource)
-    return { wrapper, requests, to, release }
+    const answered = (resource: string) => answeredSignal(resource).promise
+    return { wrapper, requests, to, release, answered }
+}
+
+/** A prop's callback that records each value it is called with; `until` resolves once those values pass `done`. */
+export const recorded = <T,>() => {
+    const values: T[] = []
+    const waiting = new Set<{
+        done: (values: readonly T[]) => boolean
+        resolve: () => void
+    }>()
+    const callback = (value: T) => {
+        values.push(value)
+        for (const wait of waiting) {
+            if (wait.done(values)) {
+                waiting.delete(wait)
+                wait.resolve()
+            }
+        }
+    }
+    const until = (done: (values: readonly T[]) => boolean) => {
+        if (done(values)) {
+            return Promise.resolve()
+        }
+        const { promise, resolve } = Promise.withResolvers<void>()
+        waiting.add({ done, resolve })
+        return promise
+    }
+    return { callback, values, until }
 }
 
 /** The Child visit form for a new event, or `SAVED_VISIT` with `eventId`, on a fake server. */

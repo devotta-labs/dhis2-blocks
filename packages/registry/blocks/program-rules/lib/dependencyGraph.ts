@@ -21,7 +21,6 @@ export const actionField = (
     action: ProgramRuleActionMetadata
 ): string | undefined => action.dataElementId ?? action.attributeId
 
-/** Actions that can change a field's value: an ASSIGN sets it, a HIDEFIELD clears it, a required field is never hidden. */
 const VALUE_ACTIONS = new Set(['ASSIGN', 'HIDEFIELD', 'SETMANDATORYFIELD'])
 
 const variableField = (variable: ProgramRuleVariableMetadata | undefined) =>

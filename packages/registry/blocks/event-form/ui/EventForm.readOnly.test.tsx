@@ -1,10 +1,6 @@
 import { page } from 'vitest/browser'
-import {
-    CHILD_VISIT,
-    childVisitProgram,
-    SAVED_VISIT,
-} from '../__tests__/childVisit'
-import { renderForm } from '../__tests__/serve'
+import { CHILD_VISIT, childVisitProgram, SAVED_VISIT } from '../test/childVisit'
+import { renderForm } from '../test/serve'
 
 const weight = () => page.getByRole('textbox', { name: 'Weight (kg)' })
 

@@ -31,7 +31,6 @@ export type LabAction =
       }
     | { type: 'clearCallbacks' }
 
-/** Settings that only change the network or a prop, so what was typed stays. */
 const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'network',
     'blame',
@@ -39,16 +38,17 @@ const IN_PLACE: ReadonlySet<string> = new Set<keyof LabSettings>([
     'locationWarnKm',
 ])
 
-const restarted = (state: LabState): LabState => ({
-    ...state,
-    run: state.run + 1,
-    requests: [],
-})
+const restarted = (state: LabState) =>
+    ({
+        ...state,
+        run: state.run + 1,
+        requests: [],
+    }) satisfies LabState
 
 /** Lab data on the linked preset (`?preset=`), else the first preset. */
 export const initialLabState = ({
     preset: linkedPreset,
-}: { preset?: string } = {}): LabState => {
+}: { preset?: string } = {}) => {
     const preset =
         PRESETS.find((each) => each.name === linkedPreset) ?? PRESETS[0]
     return {
@@ -58,19 +58,19 @@ export const initialLabState = ({
         run: 0,
         requests: [],
         callbacks: [],
-    }
+    } satisfies LabState
 }
 
-export const labReducer = (state: LabState, action: LabAction): LabState => {
+export const labReducer = (state: LabState, action: LabAction) => {
     switch (action.type) {
         case 'switchMode':
-            return restarted({ ...state, mode: action.mode })
+            return restarted({ ...state, mode: action.mode }) satisfies LabState
         case 'pickPreset':
             return restarted({
                 ...state,
                 preset: action.preset.name,
                 settings: action.preset.settings,
-            })
+            }) satisfies LabState
         case 'changeSettings': {
             const next: LabState = {
                 ...state,
@@ -80,14 +80,17 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
             const inPlace = Object.keys(action.changes).every((key) =>
                 IN_PLACE.has(key)
             )
-            return inPlace ? next : restarted(next)
+            return (inPlace ? next : restarted(next)) satisfies LabState
         }
         case 'restart':
-            return restarted(state)
+            return restarted(state) satisfies LabState
         case 'logRequests':
-            return { ...state, requests: action.update(state.requests) }
+            return {
+                ...state,
+                requests: action.update(state.requests),
+            } satisfies LabState
         case 'clearRequests':
-            return { ...state, requests: [] }
+            return { ...state, requests: [] } satisfies LabState
         case 'called':
             return {
                 ...state,
@@ -95,8 +98,8 @@ export const labReducer = (state: LabState, action: LabAction): LabState => {
                     `${action.callback}(${JSON.stringify(action.value)})`,
                     ...state.callbacks,
                 ].slice(0, 100),
-            }
+            } satisfies LabState
         case 'clearCallbacks':
-            return { ...state, callbacks: [] }
+            return { ...state, callbacks: [] } satisfies LabState
     }
 }

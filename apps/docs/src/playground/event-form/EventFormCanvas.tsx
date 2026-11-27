@@ -37,7 +37,6 @@ export const EventFormCanvas = ({
     onDirtyChange,
     onUnsavedRuleChanges,
 }: Props) => (
-    // The block draws on a white page; the lab's canvas follows the docs' theme.
     <div className="w-full min-w-0 rounded-lg bg-dhis2-background p-4">
         <EventForm
             programId={programId}

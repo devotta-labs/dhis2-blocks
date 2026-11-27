@@ -10,18 +10,15 @@ import type {
     RuleReason,
 } from '@/components/program-rules'
 
-// Rule names, labels and values are text, not HTML.
 const AS_IS = { escapeValue: false }
 const SHOWN_REASONS = 3
 
 /** How the form shows a value in its explanations: in the system's calendar, an org unit by its name. */
-export const displayWith =
-    (
-        settings: ValueSettings,
-        /** Stored id → name, for org unit values. */
-        names: ReadonlyMap<string, string>
-    ): BlameContext['display'] =>
-    (value, { valueType, options }) =>
+export const displayWith = (
+    settings: ValueSettings,
+    names: ReadonlyMap<string, string>
+) =>
+    ((value, { valueType, options }) =>
         formatDhis2Value(
             value,
             {
@@ -34,10 +31,10 @@ export const displayWith =
                 },
             },
             { calendar: settings.calendar, orgUnitNames: names }
-        )
+        )) satisfies BlameContext['display']
 
 /** What names an answer a rule read: its label, and where it came from when that is outside the form. */
-export const reasonLabel = ({ label, from }: RuleReason): string => {
+export const reasonLabel = ({ label, from }: RuleReason) => {
     const options = { label, interpolation: AS_IS }
     if (from === undefined) {
         return label
@@ -103,7 +100,7 @@ const ruleSentence = (blame: Blame, label: string) => {
 }
 
 /** One blame of the field or section labelled `label` in a sentence: a set field's description, a hidden question's line. */
-export const blameLine = (blame: Blame, label: string): string => {
+export const blameLine = (blame: Blame, label: string) => {
     const sentence =
         blame.because.length === 0
             ? ruleSentence(blame, label)
@@ -148,7 +145,7 @@ const leadOf = (blame: Blame) => {
 }
 
 /** What one blame did and why, in the reader's words, as an explanation opens with: `Set to 300 because Weight (kg) is 150.` */
-export const blameLead = (blame: Blame): string =>
+export const blameLead = (blame: Blame) =>
     blame.because.length === 0
         ? leadOf(blame)
         : i18n.t('{{lead}} because {{reasons}}.', {
@@ -161,7 +158,7 @@ export const blameLead = (blame: Blame): string =>
  * The words a field's marker says of its blames, by the main one: set, required or fewer options. None for messages
  * alone, which say themselves under the field.
  */
-export const markerOf = (blames: readonly Blame[]): string | undefined => {
+export const markerOf = (blames: readonly Blame[]) => {
     const has = (effect: Blame['effect']) =>
         blames.some((blame) => blame.effect === effect)
     if (has('assigned')) {
@@ -178,7 +175,7 @@ export const ruleChanges = (
     before: RuleOutcome,
     after: RuleOutcome,
     context: BlameContext
-): string =>
+) =>
     [...context.form.fields.values()]
         .flatMap(({ id, label }) => {
             const options = { label, interpolation: AS_IS }

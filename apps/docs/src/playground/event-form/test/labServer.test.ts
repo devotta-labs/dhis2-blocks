@@ -1,4 +1,4 @@
-import { SAVED_VISIT } from '@/components/event-form/__tests__/childVisit'
+import { SAVED_VISIT } from '@/components/event-form/test/childVisit'
 import { placeReport, reportIn } from '@/components/event-form/lib/importReport'
 import {
     heldEventSchema,
@@ -30,7 +30,6 @@ describe('the event form lab server', () => {
             expect(
                 stageFormOf(programSchema.parse(program), programStageId)
             ).toBeDefined()
-            // The rules of `rulesFail` are only served to fail.
             const source = example === 'rulesFail' ? 'newVisit' : example
             const metadata = ProgramRulesResponseSchema.parse({
                 rules: read(source, 'programRules'),

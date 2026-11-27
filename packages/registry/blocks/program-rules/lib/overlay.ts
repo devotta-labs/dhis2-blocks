@@ -68,7 +68,6 @@ export interface RuleOutcome {
     display: readonly RuleDisplayItem[]
 }
 
-/** The value an ASSIGN saves: DHIS2 refuses a code outside the field's options, so that clears, as `null` and `''` do. */
 const assignable = (form: RuleForm, fieldId: string, value: string | null) => {
     if (value === null || value === '') {
         return undefined
@@ -91,12 +90,14 @@ export const overlay = (
     effects: RuleEffects,
     form: RuleForm,
     optionGroups: ReadonlyMap<string, ReadonlySet<string>>
-): RuleOutcome => {
+) => {
     const inStage = (fieldId: string) => form.fields.has(fieldId)
     const requiredBy = new Map(
         [...effects.mandatoryFields].flatMap(
-            ([fieldId, [by]]): Array<[string, Attribution]> =>
-                inStage(fieldId) && by !== undefined ? [[fieldId, by]] : []
+            ([fieldId, [by]]) =>
+                (inStage(fieldId) && by !== undefined
+                    ? [[fieldId, by]]
+                    : []) satisfies Array<[string, Attribution]>
         )
     )
     const required = new Set([
@@ -117,7 +118,6 @@ export const overlay = (
             hidden.set(fieldId, { by, section })
         }
     }
-    // Fields first, so a field's own HIDEFIELD names it rather than its section's.
     for (const [fieldId, by] of effects.hiddenFields) {
         hide(fieldId, by, false)
     }
@@ -158,16 +158,16 @@ export const overlay = (
     }
 
     const hiddenSections = new Map(
-        [...effects.hiddenSections].flatMap(
-            ([sectionId, [by]]): Array<[string, Attribution]> => {
-                const section = form.sections.find(({ id }) => id === sectionId)
-                return section !== undefined &&
-                    by !== undefined &&
-                    section.fieldIds.every((fieldId) => hidden.has(fieldId))
+        [...effects.hiddenSections].flatMap(([sectionId, [by]]) => {
+            const section = form.sections.find(({ id }) => id === sectionId)
+            return (
+                section !== undefined &&
+                by !== undefined &&
+                section.fieldIds.every((fieldId) => hidden.has(fieldId))
                     ? [[sectionId, by]]
                     : []
-            }
-        )
+            ) satisfies Array<[string, Attribution]>
+        })
     )
 
     const codesOf = (groups: Iterable<string>) =>
@@ -179,7 +179,6 @@ export const overlay = (
             ...(effects.hiddenOptions.get(id) ?? []),
             ...codesOf(groups?.hidden ?? []),
         ])
-        // Once a group is shown, only the shown groups' options are offered.
         if (groups !== undefined && groups.shown.size > 0) {
             const shown = new Set(codesOf(groups.shown))
             for (const { code } of field.options ?? []) {
@@ -194,14 +193,13 @@ export const overlay = (
     }
     const optionsBy = new Map(
         [...effects.optionAttributions].flatMap(
-            ([fieldId, [by]]): Array<[string, Attribution]> =>
-                hiddenOptions.has(fieldId) && by !== undefined
+            ([fieldId, [by]]) =>
+                (hiddenOptions.has(fieldId) && by !== undefined
                     ? [[fieldId, by]]
-                    : []
+                    : []) satisfies Array<[string, Attribution]>
         )
     )
 
-    // A hidden field's messages go with it; those on a field outside the stage, such as an attribute, are the form's.
     const messages = new Map<string, RuleMessage[]>()
     for (const [key, list] of effects.messages) {
         const to = key === 'form' || !inStage(key) ? 'form' : key
@@ -221,7 +219,7 @@ export const overlay = (
         optionsBy,
         messages,
         display: [...effects.displayTexts, ...effects.keyValuePairs],
-    }
+    } satisfies RuleOutcome
 }
 
 /**
@@ -230,17 +228,17 @@ export const overlay = (
  * rules after it; one that names a data element is read on the next run. Rules that keep undoing each other stop after
  * `maxRuns`, `capped`. The first run reads `start`, the entered values unless given.
  */
-export const runRules = (
+export const runRules: (
     entered: RuleValues,
     evaluate: (values: RuleValues) => Result<RuleEffects, Error>,
     form: RuleForm,
     optionGroups: ReadonlyMap<string, ReadonlySet<string>>,
     maxRuns: number,
-    start: RuleValues = entered
-): Result<
+    start?: RuleValues
+) => Result<
     { effects: RuleEffects; outcome: RuleOutcome; capped: boolean },
     Error
-> => {
+> = (entered, evaluate, form, optionGroups, maxRuns, start = entered) => {
     let input = start
     for (let run = 1; ; run++) {
         const evaluation = evaluate(input)
@@ -274,30 +272,21 @@ export interface RuleSettled {
 }
 
 interface SettlePlan {
-    /** Fields some rule reads, directly or through a variable. */
     read: ReadonlySet<string>
-    /** Fields whose value some rule can change. */
     written: ReadonlySet<string>
-    /** Some rule reads the event date, or which event is newest or previous. */
     readsEventDate: boolean
-    /** The most runs a settle needs from any start; absent when rules feed each other in a loop. */
     runs?: number
 }
 
 const plans = new WeakMap<RuleContext['graph'], SettlePlan>()
 
-/**
- * A written field's level is one more than the highest level among the fields its writers read; an unwritten field's
- * is 0. Run k leaves every field of level up to k at its settled value, from any start that holds the entered value of
- * every unwritten field, so a settle confirms by run `max level + 1` and has one result whatever it starts from.
- */
 const planOf = ({
     graph,
     requirements,
-}: Pick<RuleContext, 'graph' | 'requirements'>): SettlePlan => {
+}: Pick<RuleContext, 'graph' | 'requirements'>) => {
     const known = plans.get(graph)
     if (known !== undefined) {
-        return known
+        return known satisfies SettlePlan
     }
     const feeds = new Map<string, Set<string>>()
     for (const { readsFields, writesValues } of graph.rules.values()) {
@@ -309,7 +298,7 @@ const planOf = ({
     }
     const levels = new Map<string, number>()
     const visiting = new Set<string>()
-    const levelOf = (field: string): number => {
+    const levelOf: (field: string) => number = (field) => {
         const from = feeds.get(field)
         if (from === undefined) {
             return 0
@@ -339,10 +328,9 @@ const planOf = ({
         runs: Number.isFinite(deepest) ? deepest + 1 : undefined,
     }
     plans.set(graph, plan)
-    return plan
+    return plan satisfies SettlePlan
 }
 
-/** The keys whose values differ between two flat objects. */
 const changedKeys = (
     a: RuleValues | RuleSettleEvent,
     b: RuleValues | RuleSettleEvent
@@ -378,7 +366,7 @@ export const settleRules = (
         optionGroups: ReadonlyMap<string, ReadonlySet<string>>
         maxRuns: number
     }
-): Result<RuleSettled, Error> => {
+) => {
     const plan = planOf(context)
     if (
         last !== undefined &&
@@ -394,12 +382,11 @@ export const settleRules = (
             entered,
             event,
             outcome: overlay(entered, last.effects, form, optionGroups),
-        })
+        }) satisfies Result<RuleSettled, Error>
     }
     let start = entered
     if (last !== undefined && plan.runs !== undefined && plan.runs <= maxRuns) {
         const warm = { ...entered }
-        // A written field the user just changed starts from what they entered.
         for (const field of plan.written) {
             if (last.entered[field] !== entered[field]) {
                 continue
@@ -420,5 +407,8 @@ export const settleRules = (
         optionGroups,
         maxRuns,
         start
-    ).map((run) => ({ entered, event, ...run }))
+    ).map((run) => ({ entered, event, ...run })) satisfies Result<
+        RuleSettled,
+        Error
+    >
 }

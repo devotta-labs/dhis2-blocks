@@ -7,7 +7,7 @@ import {
     RULES_CHANGED_VISIT,
     SAVED_FUNDED_VISIT,
     SAVED_VISIT,
-} from '@/components/event-form/__tests__/childVisit'
+} from '@/components/event-form/test/childVisit'
 import rmnchConstants from '@/components/program-rules/__tests__/fixtures/rmnch/constants.json'
 import rmnchEnrollment from '@/components/program-rules/__tests__/fixtures/rmnch/enrollment.json'
 import rmnchMe from '@/components/program-rules/__tests__/fixtures/rmnch/me.json'
@@ -51,7 +51,6 @@ export interface LabSettings {
     network: LabNetwork
 }
 
-/** An event as the server holds it: its own fields as last sent, and its values. */
 const labEventSchema = z.looseObject({
     event: z.string(),
     dataValues: z
@@ -119,28 +118,32 @@ export const ORG_UNITS = new Map([
 const NO_CONSTANTS = { constants: [] }
 const NO_USER_ROLES = { userRoles: [], userGroups: [] }
 
+const labExample = (example: LabExample) => example
+
 const childVisit = (
     program = childVisitProgram(),
     events: readonly LabEvent[] = [SAVED_VISIT]
-): LabExample => ({
-    programId: CHILD_VISIT.programId,
-    programStageId: CHILD_VISIT.stageId,
-    orgUnitId: CHILD_VISIT.orgUnitId,
-    enrollmentId: CHILD_VISIT.enrollmentId,
-    program,
-    rules: CHILD_VISIT_RULES,
-    variables: CHILD_VISIT_VARIABLES,
-    constants: NO_CONSTANTS,
-    me: NO_USER_ROLES,
-    events,
-})
+) =>
+    labExample({
+        programId: CHILD_VISIT.programId,
+        programStageId: CHILD_VISIT.stageId,
+        orgUnitId: CHILD_VISIT.orgUnitId,
+        enrollmentId: CHILD_VISIT.enrollmentId,
+        program,
+        rules: CHILD_VISIT_RULES,
+        variables: CHILD_VISIT_VARIABLES,
+        constants: NO_CONSTANTS,
+        me: NO_USER_ROLES,
+        events,
+    })
 
-const editing = (example: LabExample): LabExample => ({
-    ...example,
-    eventId: CHILD_VISIT.eventId,
-})
+const editing = (example: LabExample) =>
+    labExample({
+        ...example,
+        eventId: CHILD_VISIT.eventId,
+    })
 
-const valueTypes = (): LabExample => {
+const valueTypes = () => {
     const stage = {
         id: 'labTypesStg',
         name: 'Every value type',
@@ -150,7 +153,6 @@ const valueTypes = (): LabExample => {
         programStageDataElements: GROUPS.flatMap(({ fields }) =>
             fields.map(({ id, label, field }) => ({
                 compulsory: false,
-                // The visit date refuses a day after today; the admission time allows one.
                 allowFutureDate: field.valueType !== 'DATE',
                 dataElement: {
                     id,
@@ -172,7 +174,7 @@ const valueTypes = (): LabExample => {
             dataElements: fields.map(({ id }) => ({ id })),
         })),
     }
-    return {
+    return labExample({
         programId: 'labTypesPrg',
         programStageId: stage.id,
         orgUnitId: CHILD_VISIT.orgUnitId,
@@ -200,13 +202,12 @@ const valueTypes = (): LabExample => {
                 ),
             },
         ],
-    }
+    })
 }
 
 const RMNCH_STAGE = 'WZbXY0S00lP'
 const RMNCH_EVENT = 'Evahwp3zrQ4'
 
-/** A lab rule on First ANC that reads the enrolment and another stage, so the reason of its marker names both. */
 const RMNCH_SMOKING_RULE = {
     id: 'labRmnchRl1',
     name: 'Ask about smoking until the birth is recorded',
@@ -230,11 +231,10 @@ const RMNCH_SMOKING_RULE = {
     ],
 }
 
-const rmnch = (): LabExample => {
+const rmnch = () => {
     const formStages = new Map(
         rmnchStages.programStages.map((stage) => [stage.id, stage])
     )
-    // The stages' sections carry no names in the recorded metadata.
     const programStages = rmnchProgram.programStages.map((stage) => {
         const form = formStages.get(stage.id)
         return {
@@ -248,7 +248,6 @@ const rmnch = (): LabExample => {
             ),
         }
     })
-    // The variables endpoint nests each field's option set, with its options.
     const optionSets = new Map(
         rmnchOptionSets.optionSets.map((set) => [set.id, set])
     )
@@ -262,7 +261,6 @@ const rmnch = (): LabExample => {
         dataElement?: { id: string; optionSet?: { id: string } }
         trackedEntityAttribute?: { id: string; optionSet?: { id: string } }
     }> = rmnchVariables.programRuleVariables
-    // The recorded variables carry no field names: DHIS2 answers them from the data elements and attributes.
     const names = new Map([
         ...rmnchStages.programStages.flatMap((stage) =>
             stage.programStageDataElements.map(
@@ -281,7 +279,7 @@ const rmnch = (): LabExample => {
             ...withOptions(field),
             displayName: names.get(field.id),
         }
-    return {
+    return labExample({
         programId: rmnchProgram.id,
         programStageId: RMNCH_STAGE,
         orgUnitId: 'm7fBMpmVpSM',
@@ -305,7 +303,7 @@ const rmnch = (): LabExample => {
         events: rmnchEnrollment.events.filter(
             ({ event }) => event === RMNCH_EVENT
         ),
-    }
+    })
 }
 
 const LONG_FIELDS = Array.from({ length: 150 }, (_, at) => {
@@ -336,90 +334,106 @@ const longRule = (
     ],
 })
 
-/** 150 fields in 10 parts, with a chain of three assignments and two hidden fields. */
-const longForm = (): LabExample => ({
-    programId: 'labLongProg',
-    programStageId: 'labLongStge',
-    orgUnitId: CHILD_VISIT.orgUnitId,
-    program: {
-        id: 'labLongProg',
-        name: 'Long form',
-        displayName: 'Long form',
-        programStages: [
-            {
-                id: 'labLongStge',
-                name: 'Long form',
-                displayName: 'Long form',
-                access: { data: { write: true } },
-                programStageDataElements: LONG_FIELDS.map(
-                    ({ id, label, valueType }) => ({
-                        dataElement: { id, displayFormName: label, valueType },
-                    })
-                ),
-                programStageSections: Array.from({ length: 10 }, (_, at) => ({
-                    id: `labLongSct${at}`,
-                    displayName: `Part ${at + 1}`,
-                    dataElements: LONG_FIELDS.slice(at * 15, at * 15 + 15).map(
-                        ({ id }) => ({ id })
-                    ),
-                })),
-            },
-        ],
-    },
-    rules: {
-        programRules: [
-            longRule(1, 'Double the first reading', 'd2:hasValue(#{f001})', {
-                type: 'ASSIGN',
-                field: 'f003',
-                data: '#{f001} * 2',
-            }),
-            longRule(
-                2,
-                'Add ten to the doubled reading',
-                'd2:hasValue(#{f003})',
+const longForm = () =>
+    labExample({
+        programId: 'labLongProg',
+        programStageId: 'labLongStge',
+        orgUnitId: CHILD_VISIT.orgUnitId,
+        program: {
+            id: 'labLongProg',
+            name: 'Long form',
+            displayName: 'Long form',
+            programStages: [
                 {
-                    type: 'ASSIGN',
-                    field: 'f005',
-                    data: '#{f003} + 10',
-                }
-            ),
-            longRule(3, 'Carry the result to part 10', 'd2:hasValue(#{f005})', {
-                type: 'ASSIGN',
-                field: 'f141',
-                data: '#{f005}',
-            }),
-            longRule(4, 'Reading 7 only below 100', '#{f001} > 100', {
-                type: 'HIDEFIELD',
-                field: 'f007',
-            }),
-            longRule(5, 'Note 4 skipped', "#{f002} == 'skip'", {
-                type: 'HIDEFIELD',
-                field: 'f004',
-            }),
-        ],
-    },
-    variables: {
-        programRuleVariables: LONG_FIELDS.map(({ id, valueType }) => ({
-            id: `labLongVar${id}`,
-            name: id,
-            programRuleVariableSourceType: 'DATAELEMENT_CURRENT_EVENT',
-            dataElement: { id, valueType },
-        })),
-    },
-    constants: NO_CONSTANTS,
-    me: NO_USER_ROLES,
-    events: [],
-})
+                    id: 'labLongStge',
+                    name: 'Long form',
+                    displayName: 'Long form',
+                    access: { data: { write: true } },
+                    programStageDataElements: LONG_FIELDS.map(
+                        ({ id, label, valueType }) => ({
+                            dataElement: {
+                                id,
+                                displayFormName: label,
+                                valueType,
+                            },
+                        })
+                    ),
+                    programStageSections: Array.from(
+                        { length: 10 },
+                        (_, at) => ({
+                            id: `labLongSct${at}`,
+                            displayName: `Part ${at + 1}`,
+                            dataElements: LONG_FIELDS.slice(
+                                at * 15,
+                                at * 15 + 15
+                            ).map(({ id }) => ({ id })),
+                        })
+                    ),
+                },
+            ],
+        },
+        rules: {
+            programRules: [
+                longRule(
+                    1,
+                    'Double the first reading',
+                    'd2:hasValue(#{f001})',
+                    {
+                        type: 'ASSIGN',
+                        field: 'f003',
+                        data: '#{f001} * 2',
+                    }
+                ),
+                longRule(
+                    2,
+                    'Add ten to the doubled reading',
+                    'd2:hasValue(#{f003})',
+                    {
+                        type: 'ASSIGN',
+                        field: 'f005',
+                        data: '#{f003} + 10',
+                    }
+                ),
+                longRule(
+                    3,
+                    'Carry the result to part 10',
+                    'd2:hasValue(#{f005})',
+                    {
+                        type: 'ASSIGN',
+                        field: 'f141',
+                        data: '#{f005}',
+                    }
+                ),
+                longRule(4, 'Reading 7 only below 100', '#{f001} > 100', {
+                    type: 'HIDEFIELD',
+                    field: 'f007',
+                }),
+                longRule(5, 'Note 4 skipped', "#{f002} == 'skip'", {
+                    type: 'HIDEFIELD',
+                    field: 'f004',
+                }),
+            ],
+        },
+        variables: {
+            programRuleVariables: LONG_FIELDS.map(({ id, valueType }) => ({
+                id: `labLongVar${id}`,
+                name: id,
+                programRuleVariableSourceType: 'DATAELEMENT_CURRENT_EVENT',
+                dataElement: { id, valueType },
+            })),
+        },
+        constants: NO_CONSTANTS,
+        me: NO_USER_ROLES,
+        events: [],
+    })
 
 /** Every example the lab opens, by name. */
 export const EXAMPLES = {
     newVisit: childVisit(),
     savedVisit: editing(childVisit()),
-    // Saved before its rules applied: the rules now set one stored answer otherwise, fill one and hide one.
     rulesChangedVisit: editing(
         childVisit(childVisitProgram(), [RULES_CHANGED_VISIT])
     ),
-    // Funding and Outreach type: an option for another org unit, one that ended, and one the user cannot write to.
     fundedVisit: childVisit(childVisitProgram({ categories: true }), [
         SAVED_FUNDED_VISIT,
     ]),
@@ -443,7 +457,6 @@ export const EXAMPLES = {
     onComplete: childVisit(
         childVisitProgram({ validationStrategy: 'ON_COMPLETE' })
     ),
-    // A stage that records where each visit took place, as a point.
     pointVisit: childVisit(childVisitProgram({ featureType: 'POINT' })),
     savedPointVisit: editing(
         childVisit(childVisitProgram({ featureType: 'POINT' }))

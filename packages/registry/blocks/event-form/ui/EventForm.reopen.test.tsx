@@ -1,12 +1,8 @@
 import { page, userEvent } from 'vitest/browser'
 import { liveRegion } from '../../../test/liveRegion'
-import refusals from '../__tests__/fixtures/refusals-2.42.json'
-import {
-    CHILD_VISIT,
-    childVisitProgram,
-    SAVED_VISIT,
-} from '../__tests__/childVisit'
-import { editable, renderForm } from '../__tests__/serve'
+import refusals from '../test/fixtures/refusals-2.42.json'
+import { CHILD_VISIT, childVisitProgram, SAVED_VISIT } from '../test/childVisit'
+import { editable, renderForm } from '../test/serve'
 
 const weight = () => page.getByRole('textbox', { name: 'Weight (kg)' })
 const save = () => page.getByRole('button', { name: 'Save' })
@@ -26,9 +22,9 @@ interface SentEvent {
     notes?: unknown
 }
 
-const sentEvent = (request: { data?: unknown }): SentEvent =>
+const sentEvent = (request: { data?: unknown }) =>
     // SAFETY: the form sends one event in a tracker import; the assertions check its parts.
-    (request.data as { events: [SentEvent] }).events[0]
+    (request.data as { events: [SentEvent] }).events[0] satisfies SentEvent
 
 const stored = SAVED_VISIT.dataValues.map(({ dataElement, value }) => ({
     dataElement,

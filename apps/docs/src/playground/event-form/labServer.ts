@@ -36,7 +36,6 @@ export const RESOURCES = [
 /** The import: with Fails or Hangs the form still loads, and its saves fail or never answer. */
 export const RECORDS = ['tracker']
 
-/** The import as the form sends it, checked for what the lab reads; the rest is kept as sent. */
 const payloadSchema = z.object({
     events: z
         .array(
@@ -61,10 +60,8 @@ const payloadSchema = z.object({
         .min(1),
 })
 
-/** The lab's user, as DHIS2 stamps the notes it stores. */
 const LAB_USER = { username: 'labUser0001', displayName: 'Lab user' }
 
-/** Now as DHIS2 writes a stored time, in the device's time zone. */
 const storedNow = () => {
     const now = new Date()
     return new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
@@ -77,7 +74,6 @@ const uploadSchema = z
     .optional()
     .catch(undefined)
 
-/** An error shaped like the ones app-runtime throws for an HTTP failure. */
 const errorReport = (
     errorCode: string,
     message: string,
@@ -85,7 +81,6 @@ const errorReport = (
     args: string[]
 ) => ({ errorCode, message, trackerType: 'EVENT', uid: eventId, args })
 
-/** What DHIS2 answers a refused import with `atomicMode=ALL`: HTTP 409, the report in the error's details. */
 const refused = (errorReports: ReadonlyArray<ReturnType<typeof errorReport>>) =>
     Object.assign(new Error('Conflict'), {
         details: {
@@ -95,7 +90,6 @@ const refused = (errorReports: ReadonlyArray<ReturnType<typeof errorReport>>) =>
         },
     })
 
-/** What the lab reads of a program: its name, its option set fields and its category combination. */
 const programSchema = z.object({
     displayName: z.string(),
     programStages: z.array(
@@ -139,15 +133,10 @@ const programSchema = z.object({
 type LabProgram = z.infer<typeof programSchema>
 type PayloadEvent = z.infer<typeof payloadSchema>['events'][number]
 
-// DHIS2 dumps the objects an error is about into its args.
 const USER_ARG = 'org.hisp.dhis.user.UserDetailsImpl@1ab0000'
 const objectArg = (type: string, uid: string, name: string) =>
     `{"class":"class org.hisp.dhis.${type}", "uid":"${uid}", "name":"${name}"}`
 
-/**
- * The refused save of the `refused` example: the first value sent for an option set, as no longer in it, and an org
- * unit the user cannot write to. DHIS2 names the option set, not the data element, and the user by id.
- */
 const refusal = (program: LabProgram, event: PayloadEvent) => {
     const optionSets = new Map(
         program.programStages.flatMap(({ programStageDataElements }) =>
@@ -188,10 +177,6 @@ const refusal = (program: LabProgram, event: PayloadEvent) => {
     ])
 }
 
-/**
- * What DHIS2 2.42 refuses in an update of a completed event: sending it as other than completed, by a user without
- * `F_UNCOMPLETE_EVENT`, and any other update when its stage blocks entry after completion.
- */
 const completedErrors = (
     program: LabProgram,
     events: Map<string, LabEvent>,
@@ -225,13 +210,6 @@ const completedErrors = (
         : []
 }
 
-/**
- * What DHIS2 refuses in an event's comma-separated category options for a program with a non-default combination,
- * as 2.42 words it: none given, an unknown option, not one option per category, an option the user cannot write to, or
- * an event date outside an option's dates, which DHIS2 names by the option's name. Like DHIS2, the lab accepts an option
- * limited to other org units. shortcut: the lab knows no attribute option combo ids, so it reads only
- * `attributeCategoryOptions`; DHIS2 also accepts a valid `attributeOptionCombo` alone.
- */
 const categoryErrors = (program: LabProgram, event: PayloadEvent) => {
     const combo = program.categoryCombo
     if (combo === undefined || combo.isDefault) return []
@@ -324,10 +302,6 @@ const categoryErrors = (program: LabProgram, event: PayloadEvent) => {
     })
 }
 
-/**
- * Stores the import: own fields replaced as sent, values merged into the held ones, a `null` value or geometry
- * deleting it, and notes added, each once, stamped with the lab's user and the time.
- */
 const save = (
     events: Map<string, LabEvent>,
     payload: z.infer<typeof payloadSchema>
@@ -386,7 +360,6 @@ export const answer = (
     events: Map<string, LabEvent>
 ) => {
     const example = EXAMPLES[settings.example]
-    // What this run uploads, so its names are known until the next.
     const uploads = new Map<string, string>()
     const valueInput = valueInputAnswer(uploads)
     return (request: LabRequest, type: RequestType = 'read') => {
@@ -452,7 +425,6 @@ export const answer = (
                 return example.variables
             case 'constants':
                 return example.constants
-            // For the rules, the user's roles and groups; for the form, the authority to reopen.
             case 'me':
                 return {
                     ...example.me,
@@ -475,7 +447,6 @@ export const answer = (
                 }
                 return { id: request.id, name }
             }
-            // One org unit with the fields asked for, for the categories and the location; without an id, a search.
             case 'organisationUnits':
                 if (request.id !== undefined) {
                     const unit = ORG_UNITS.get(request.id)

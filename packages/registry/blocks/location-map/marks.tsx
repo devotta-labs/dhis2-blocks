@@ -16,7 +16,7 @@ export const positionAt = (at: L.LatLng): Position => {
 export const PIN = L.divIcon({
     className: '',
     iconSize: [0, 0],
-    html: '<span class="location-pin"><svg viewBox="0 0 24 31" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 30 12 30s11-10.4 11-18.2C23 5.8 18.1 1 12 1Z" fill="currentColor" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="11.5" r="3.6" fill="#fff"/></svg></span>',
+    html: '<span class="location-pin"><svg viewBox="0 0 24 31" aria-hidden="true"><path d="M12 1C5.9 1 1 5.8 1 11.8 1 19.6 12 30 12 30s11-10.4 11-18.2C23 5.8 18.1 1 12 1Z" fill="currentColor" stroke-width="1.5"/><circle cx="12" cy="11.5" r="3.6"/></svg></span>',
 })
 
 export const handleIcon = (number: number) =>
@@ -57,7 +57,7 @@ export const Crosshair = () => (
     <svg className="location-crosshair" viewBox="0 0 22 22" aria-hidden="true">
         <path
             d="M11 1v7M11 14v7M1 11h7M14 11h7"
-            stroke="#fff"
+            className="location-crosshair-halo"
             strokeWidth="4"
             strokeLinecap="round"
         />

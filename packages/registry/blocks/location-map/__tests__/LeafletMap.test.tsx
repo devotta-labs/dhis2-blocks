@@ -177,5 +177,16 @@ describe('LocationMap', () => {
         await expect
             .element(screen.getByRole('button', { name: 'Point 2 of 2' }))
             .toBeInTheDocument()
+
+        // A third corner, at the crosshair, makes it an area again and sends it.
+        const container = screen.container.querySelector('.leaflet-container')
+        if (!(container instanceof HTMLElement)) throw new Error('no map')
+        container.focus()
+        await userEvent.keyboard('{Enter}')
+        await expect.poll(() => sent.mock.lastCall?.[0]?.type).toBe('Polygon')
+        expect(sent.mock.lastCall?.[0]?.coordinates[0]).toHaveLength(4)
+        await expect
+            .element(screen.getByRole('button', { name: 'Point 3 of 3' }))
+            .toBeInTheDocument()
     })
 })

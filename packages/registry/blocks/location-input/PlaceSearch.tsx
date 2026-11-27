@@ -13,6 +13,13 @@ import { Kbd } from '@/components/dhis2/ui/kbd'
 import { Spinner } from '@/components/dhis2/ui/spinner'
 import type { PlaceResult, PlaceSearch as Search } from './search'
 
+const foundWords = (count: number) => {
+    if (count === 0) return i18n.t('No places found')
+    return count === 1
+        ? i18n.t('1 place found')
+        : i18n.t('{{count}} places found', { count })
+}
+
 type Found =
     | { kind: 'idle' }
     | { kind: 'searching' }
@@ -54,11 +61,7 @@ export const PlaceSearch = ({
             const places = await search(text, controller.signal)
             if (controller.signal.aborted) return
             setFound({ kind: 'found', places })
-            announce(
-                places.length === 0
-                    ? i18n.t('No places found')
-                    : i18n.t('{{count}} places found', { count: places.length })
-            )
+            announce(foundWords(places.length))
         } catch {
             if (controller.signal.aborted) return
             setFound({ kind: 'failed' })

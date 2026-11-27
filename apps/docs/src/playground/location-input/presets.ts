@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS: LabSettings = {
     orgUnit: 'facility',
     check: true,
     readOnly: false,
-    search: true,
+    // Off unless chosen: every visitor's search goes to OpenStreetMap's public server, under one shared limit.
+    search: false,
     tiles: 'osm',
     device: 'walk',
 }
@@ -43,6 +44,7 @@ export const PRESETS: readonly Preset[] = [
     preset('Location input', 'Area', AREA),
     preset('Location input', 'Stored point', { start: 'stored' }),
     preset('Location input', 'Stored area', { ...AREA, start: 'stored' }),
+    preset('Location input', 'Place search', { search: true }),
     preset('Location map', 'Point map', { view: 'map', start: 'stored' }),
     preset('Location map', 'Area map', {
         view: 'map',
@@ -69,7 +71,6 @@ export const PRESETS: readonly Preset[] = [
     edge('Poor signal', { device: 'poor' }),
     edge('Location blocked', { device: 'blocked' }),
     edge('No map background', { start: 'stored', tiles: 'failing' }),
-    edge('No search', { search: false }),
     edge('Read-only point', { start: 'stored', readOnly: true }),
     edge('Area with a hole', { ...AREA, start: 'holed' }),
     edge('Read-only area', { ...AREA, start: 'stored', readOnly: true }),

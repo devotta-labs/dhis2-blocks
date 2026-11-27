@@ -29,7 +29,7 @@ import { areaNotes, type Note } from './notes'
 import { areaPlace } from './place'
 import { FIELD_BUTTON, keepFocus, Notes, PanelFooter } from './parts'
 import { PlaceSearch } from './PlaceSearch'
-import { areaSummary, readPoints } from './text'
+import { areaSummary, pastedHoles, readPoints } from './text'
 import type { LocationInputProps } from './types'
 import { accuracyWords, locateLabel, useFix, type Fix } from './useFix'
 
@@ -64,6 +64,11 @@ export const AreaInput = ({
     const [open, setOpen] = useState(false)
     // Where a place found by the search box asks the map to look; dropped when the map closes.
     const [frame, setFrame] = useState<Position[]>()
+    // However the panel closes, by Done, Escape or a click away, a search's view goes with it.
+    const showPanel = (next: boolean) => {
+        setOpen(next)
+        if (!next) setFrame(undefined)
+    }
     const [problem, setProblem] = useState<string>()
     const [lastFix, setLastFix] = useState<Fix>()
     const sent = useRef(keyOf(value))
@@ -142,7 +147,14 @@ export const AreaInput = ({
     const pasted = (event: ClipboardEvent<HTMLInputElement>) => {
         if (!editable) return
         event.preventDefault()
-        const points = readPoints(event.clipboardData.getData('text'))
+        const text = event.clipboardData.getData('text')
+        if (pastedHoles(text)) {
+            setProblem(
+                i18n.t('That area has holes. This field takes one boundary.')
+            )
+            return
+        }
+        const points = readPoints(text)
         if (points === undefined) {
             setProblem(
                 i18n.t('That is not a list of coordinates or a GeoJSON polygon')
@@ -151,7 +163,9 @@ export const AreaInput = ({
         }
         change(
             points.length === 1 ? [...latest.current.ring, ...points] : points,
-            i18n.t('{{count}} points pasted', { count: points.length })
+            points.length === 1
+                ? i18n.t('1 point pasted')
+                : i18n.t('{{count}} points pasted', { count: points.length })
         )
     }
 
@@ -256,10 +270,7 @@ export const AreaInput = ({
                     ) : null}
                     <MapPanel
                         open={open}
-                        onOpenChange={(next) => {
-                            setOpen(next)
-                            if (!next) setFrame(undefined)
-                        }}
+                        onOpenChange={showPanel}
                         title={label}
                         label={
                             editable
@@ -300,13 +311,8 @@ export const AreaInput = ({
                                 capture="area"
                                 value={mapValue}
                                 frame={frame}
-                                onChange={
-                                    editable
-                                        ? (next) =>
-                                              // The map announces its own changes.
-                                              change(editableRing(next) ?? [])
-                                        : undefined
-                                }
+                                // The field keeps its own corners, fewer than three too; the map announces its changes.
+                                onCornersChange={editable ? change : undefined}
                                 references={references}
                                 here={
                                     lastFix
@@ -370,7 +376,7 @@ export const AreaInput = ({
                                     type="button"
                                     size="sm"
                                     className={cn(narrow && 'flex-1')}
-                                    onClick={() => setOpen(false)}
+                                    onClick={() => showPanel(false)}
                                 >
                                     {i18n.t('Done')}
                                 </Button>

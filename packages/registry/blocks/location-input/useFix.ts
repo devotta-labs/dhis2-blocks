@@ -77,6 +77,8 @@ interface Watch {
     id?: number
     timer?: ReturnType<typeof setTimeout>
     best?: Fix
+    /** The wait ran out before any fix came: the first to come is taken. */
+    late?: boolean
     found: (fix: Fix) => void
 }
 
@@ -146,7 +148,7 @@ export const useFix = (locator: Locator | undefined) => {
                     asking.best = fix
                     setAccuracyM(fix.accuracyM)
                 }
-                if (fix.accuracyM <= GOOD_M) settle()
+                if (fix.accuracyM <= GOOD_M || asking.late) settle()
             },
             (error) => {
                 if (watch.current !== asking) return
@@ -165,7 +167,10 @@ export const useFix = (locator: Locator | undefined) => {
             return
         }
         asking.id = id
-        asking.timer = setTimeout(settle, SETTLE_MS)
+        asking.timer = setTimeout(() => {
+            if (asking.best === undefined) asking.late = true
+            else settle()
+        }, SETTLE_MS)
     }
 
     // A field taken off the page stops asking.

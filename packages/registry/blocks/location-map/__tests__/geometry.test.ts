@@ -6,6 +6,7 @@ import {
     crossesItself,
     distanceKm,
     editableRing,
+    geometrySchema,
     insertionIndex,
     insideArea,
     polygonOf,
@@ -78,5 +79,24 @@ describe('changedAtEnd', () => {
         expect(changedAtEnd([a, c], [a, b, c])).toBe(false)
         expect(changedAtEnd([], [a, b, c])).toBe(false)
         expect(changedAtEnd([a, b, c], [a, b, c])).toBe(false)
+    })
+
+    it('refuses a position off the globe', () => {
+        expect(
+            geometrySchema.safeParse({
+                type: 'Point',
+                coordinates: [-11.4, 95],
+            }).success
+        ).toBe(false)
+        expect(
+            geometrySchema.safeParse({ type: 'Point', coordinates: [190, 8.1] })
+                .success
+        ).toBe(false)
+        expect(
+            geometrySchema.safeParse({
+                type: 'Point',
+                coordinates: [-11.4, 8.1],
+            }).success
+        ).toBe(true)
     })
 })

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readPoint, readPoints } from '../text'
+import { pastedHoles, readPoint, readPoints } from '../text'
 
 describe('location text', () => {
     it('reads a coordinate typed latitude first, in degrees or as stored', () => {
@@ -57,5 +57,36 @@ describe('location text', () => {
             )
         ).toBeUndefined()
         expect(readPoints('8.1, -11.4\nnot a place')).toBeUndefined()
+    })
+
+    it('refuses a pasted area with holes rather than dropping them', () => {
+        const holed = {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [-11.4, 8.1],
+                    [-11.3, 8.1],
+                    [-11.3, 8.2],
+                    [-11.4, 8.1],
+                ],
+                [
+                    [-11.36, 8.12],
+                    [-11.34, 8.12],
+                    [-11.34, 8.14],
+                    [-11.36, 8.12],
+                ],
+            ],
+        }
+        expect(pastedHoles(JSON.stringify(holed))).toBe(true)
+        expect(readPoints(JSON.stringify(holed))).toBeUndefined()
+        expect(
+            pastedHoles(
+                JSON.stringify({
+                    type: 'MultiPolygon',
+                    coordinates: [holed.coordinates],
+                })
+            )
+        ).toBe(true)
+        expect(pastedHoles('8.1, -11.4\n8.2, -11.5')).toBe(false)
     })
 })

@@ -1418,6 +1418,11 @@
                     "target": "@components/location-map/LocationMap.tsx"
                 },
                 {
+                    "path": "packages/registry/blocks/location-map/areaState.ts",
+                    "type": "registry:file",
+                    "target": "@components/location-map/areaState.ts"
+                },
+                {
                     "path": "packages/registry/blocks/location-map/geometry.ts",
                     "type": "registry:file",
                     "target": "@components/location-map/geometry.ts"

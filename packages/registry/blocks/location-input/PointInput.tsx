@@ -60,6 +60,11 @@ export const PointInput = ({
     const [focused, setFocused] = useState(false)
     // Where a place found by the search box asks the map to look; dropped when the map closes.
     const [frame, setFrame] = useState<Position[]>()
+    // However the panel closes, by Done, Escape or a click away, a search's view goes with it.
+    const showPanel = (next: boolean) => {
+        setOpen(next)
+        if (!next) setFrame(undefined)
+    }
     // The last fix, said under the field while the point is still where it put it.
     const [lastFix, setLastFix] = useState<Fix>()
     const [problem, setProblem] = useState<string>()
@@ -256,10 +261,7 @@ export const PointInput = ({
                     ) : null}
                     <MapPanel
                         open={open}
-                        onOpenChange={(next) => {
-                            setOpen(next)
-                            if (!next) setFrame(undefined)
-                        }}
+                        onOpenChange={showPanel}
                         title={label}
                         label={
                             editable
@@ -361,7 +363,7 @@ export const PointInput = ({
                                     type="button"
                                     size="sm"
                                     className={cn(narrow && 'flex-1')}
-                                    onClick={() => setOpen(false)}
+                                    onClick={() => showPanel(false)}
                                 >
                                     {i18n.t('Done')}
                                 </Button>

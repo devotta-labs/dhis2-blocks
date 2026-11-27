@@ -180,4 +180,34 @@ describe('LocationInput', () => {
         })
         expect(cleared).toEqual([7])
     })
+
+    it('takes the first fix that comes after the wait has run out, however coarse', async () => {
+        const device = heldDevice()
+        const changed = vi.fn()
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                onChange={changed}
+                tiles={null}
+                locator={device.locator}
+            />
+        )
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        try {
+            await userEvent.click(
+                screen.getByRole('button', { name: 'Use my location' })
+            )
+            vi.advanceTimersByTime(10_000)
+            expect(changed).not.toHaveBeenCalled()
+            device.answer(-11.15, 8.15, 50)
+        } finally {
+            vi.useRealTimers()
+        }
+
+        await expect
+            .poll(() => changed.mock.lastCall)
+            .toEqual([{ type: 'Point', coordinates: [-11.15, 8.15] }])
+        expect(device.cleared).toHaveLength(1)
+    })
 })

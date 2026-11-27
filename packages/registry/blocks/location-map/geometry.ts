@@ -27,7 +27,10 @@ export type MapGeometry = LocationGeometry | MultiPolygonGeometry
 
 // An altitude after the two numbers is allowed and dropped.
 const positionSchema = z
-    .tuple([z.number(), z.number()], z.number())
+    .tuple(
+        [z.number().min(-180).max(180), z.number().min(-90).max(90)],
+        z.number()
+    )
     .transform(([lng, lat]): Position => [lng, lat])
 const ringSchema = z.array(positionSchema)
 

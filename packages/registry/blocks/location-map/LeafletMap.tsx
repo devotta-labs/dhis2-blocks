@@ -8,7 +8,6 @@ import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
 import {
     bandPositions,
-    changedAtEnd,
     editableRing,
     insertionIndex,
     pointOf,
@@ -28,6 +27,7 @@ import {
     positionAt,
     reducedMotion,
 } from './marks'
+import { useClosedArea, useDraftCorners } from './areaState'
 import { OSM_TILES } from './tiles'
 import { useOrientation } from './useOrientation'
 import type { LocationMapProps } from './types'
@@ -43,6 +43,7 @@ const keyOf = (ring: readonly Position[]) => JSON.stringify(ring)
 const LeafletMap = ({
     value,
     onChange,
+    onCornersChange,
     capture,
     references = [],
     here,
@@ -58,47 +59,45 @@ const LeafletMap = ({
     const [noBackground, setNoBackground] = useState(false)
     const [selected, setSelected] = useState<number>()
 
+    const { draft, setDraft, sentValue } = useDraftCorners(value)
+
     const kind = capture ?? (value && value.type !== 'Point' ? 'area' : 'point')
-    const ring = kind === 'area' ? (editableRing(value) ?? []) : []
+    const ring = kind === 'area' ? (draft ?? editableRing(value) ?? []) : []
     const fixedArea =
         value && value.type !== 'Point' && editableRing(value) === undefined
-    const editable = onChange !== undefined && !fixedArea
+    const listening = onChange !== undefined || onCornersChange !== undefined
+    const editable = listening && !fixedArea
     const point = value?.type === 'Point' ? value.coordinates : undefined
     const ringKey = keyOf(ring)
 
-    // An area that arrives whole is closed; one being drawn closes when its first corner is clicked. Under three
-    // points it is being drawn again. A boundary this map has had closed is closed when it comes back, as by an undo,
-    // and so is one that arrives from outside, as by a paste, unless it only gained or lost a point at its end.
-    const [closed, setClosed] = useState(ring.length >= 3)
-    const sentKey = useRef<string>()
-    const closedKeys = useRef(new Set<string>())
-    const previousRing = useRef(ring)
-    useEffect(() => {
-        const before = previousRing.current
-        previousRing.current = ring
-        if (ring.length < 3) setClosed(false)
-        else if (closedKeys.current.has(ringKey)) setClosed(true)
-        else if (ringKey !== sentKey.current && !changedAtEnd(before, ring)) {
-            setClosed(true)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ringKey])
-    useEffect(() => {
-        if (closed && ring.length >= 3) closedKeys.current.add(ringKey)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [closed, ringKey])
+    const { closed, setClosed, sentKey } = useClosedArea(ring, ringKey)
     const drawing = editable && kind === 'area' && !closed
 
     // What handlers read when they fire, which is after the render that made them.
-    const latest = useRef({ ring, onChange, editable, kind, selected, drawing })
-    latest.current = { ring, onChange, editable, kind, selected, drawing }
+    const current = {
+        ring,
+        onChange,
+        onCornersChange,
+        editable,
+        kind,
+        selected,
+        drawing,
+    }
+    const latest = useRef(current)
+    latest.current = current
 
     // The dashed sides a click would add, drawn to the pointer while drawing.
     const band = useRef<L.Polyline>()
 
     const setRing = (next: Position[], said: string) => {
         sentKey.current = keyOf(next)
-        latest.current.onChange?.(next.length === 0 ? null : polygonOf(next))
+        const whole = next.length >= 3 ? polygonOf(next) : null
+        sentValue.current = JSON.stringify(whole)
+        latest.current.onCornersChange?.(next)
+        latest.current.onChange?.(whole)
+        if (latest.current.onCornersChange === undefined) {
+            setDraft(next.length > 0 && next.length < 3 ? next : undefined)
+        }
         band.current?.setLatLngs([])
         announce(said)
     }
@@ -117,10 +116,12 @@ const LeafletMap = ({
         const index = insertionIndex(now, at)
         setRing(
             [...now.slice(0, index), at, ...now.slice(index)],
-            i18n.t('Point {{number}} added, {{count}} points', {
-                number: String(index + 1),
-                count: now.length + 1,
-            })
+            now.length === 0
+                ? i18n.t('Point 1 added')
+                : i18n.t('Point {{number}} added, {{count}} points', {
+                      number: String(index + 1),
+                      count: now.length + 1,
+                  })
         )
         setSelected(undefined)
     }
@@ -128,7 +129,7 @@ const LeafletMap = ({
         const now = latest.current.ring
         setRing(
             now.filter((_, each) => each !== index),
-            i18n.t('Point {{number}} removed, {{count}} points', {
+            i18n.t('Point {{number}} removed, {{count}} left', {
                 number: String(index + 1),
                 count: now.length - 1,
             })
@@ -172,7 +173,7 @@ const LeafletMap = ({
         const still = reducedMotion()
         const made = L.map(host.current, {
             zoomControl: false,
-            scrollWheelZoom: onChange !== undefined,
+            scrollWheelZoom: listening,
             doubleClickZoom: false,
             zoomSnap: 0.5,
             zoomAnimation: !still,
@@ -203,18 +204,22 @@ const LeafletMap = ({
         made.on('click', ({ latlng }: L.LeafletMouseEvent) =>
             clickRef.current(positionAt(latlng))
         )
-        made.getContainer().addEventListener('keydown', (event) => {
-            if (event.target !== made.getContainer()) return
+        // On the host, which outlives the map in a remount, so it is taken off with the map.
+        const container = made.getContainer()
+        const enter = (event: KeyboardEvent) => {
+            if (event.target !== container) return
             if (event.key === 'Enter') {
                 event.preventDefault()
                 placeRef.current(positionAt(made.getCenter()))
             }
-        })
+        }
+        container.addEventListener('keydown', enter)
 
         const resized = new ResizeObserver(() => made.invalidateSize())
         resized.observe(host.current)
         setHeld(made)
         return () => {
+            container.removeEventListener('keydown', enter)
             resized.disconnect()
             GONE.add(made)
             made.remove()

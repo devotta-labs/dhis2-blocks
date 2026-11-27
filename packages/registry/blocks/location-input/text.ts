@@ -38,7 +38,7 @@ export const readPoint = (text: string): ReadPoint => {
  * The outer boundary in pasted GeoJSON: a polygon or a multi-polygon of one part, as a MULTI_POLYGON stage stores an
  * area, alone, in a feature, or as a feature collection's first.
  */
-const ringInJson = (text: string): Position[] | undefined => {
+const ringsInJson = (text: string): Position[][] | undefined => {
     let json: ReturnType<typeof JSON.parse>
     try {
         json = JSON.parse(text)
@@ -50,13 +50,24 @@ const ringInJson = (text: string): Position[] | undefined => {
         const read = geometrySchema.safeParse(candidate)
         if (!read.success) continue
         const { data } = read
-        if (data.type === 'Polygon') return opened(data.coordinates[0] ?? [])
+        if (data.type === 'Polygon') return data.coordinates
         if (data.type === 'MultiPolygon' && data.coordinates.length === 1) {
-            return opened(data.coordinates[0]?.[0] ?? [])
+            return data.coordinates[0]
         }
     }
     return undefined
 }
+
+/** Its boundary, when the pasted area has one and no holes; a hole is never dropped silently. */
+const ringInJson = (text: string): Position[] | undefined => {
+    const rings = ringsInJson(text)
+    const [outer, ...holes] = rings ?? []
+    return outer !== undefined && holes.length === 0 ? opened(outer) : undefined
+}
+
+/** Whether pasted text is a GeoJSON area with holes, which a field of one boundary cannot take. */
+export const pastedHoles = (text: string) =>
+    (ringsInJson(text.trim())?.length ?? 0) > 1
 
 /**
  * The points in pasted text: a GeoJSON polygon, or coordinates one per line or apart by `;`, each in any form
@@ -82,7 +93,9 @@ export const readPoints = (text: string): Position[] | undefined => {
 export const areaSummary = (ring: readonly Position[]) => {
     if (ring.length === 0) return ''
     if (ring.length < 3) {
-        return i18n.t('{{count}} points', { count: ring.length })
+        return ring.length === 1
+            ? i18n.t('1 point')
+            : i18n.t('{{count}} points', { count: ring.length })
     }
     return i18n.t('{{count}} points · {{area}}', {
         count: ring.length,

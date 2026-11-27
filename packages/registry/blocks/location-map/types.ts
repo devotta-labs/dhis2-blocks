@@ -25,8 +25,16 @@ export interface MapPosition {
 export interface LocationMapProps {
     /** What is recorded. An area with holes or several parts is shown and never edited. */
     value?: MapGeometry | null
-    /** Absent, the map only shows. Present, a click, a drag or the keyboard changes the value. */
+    /**
+     * Absent, the map only shows. Present, a click, a drag or the keyboard changes the value. An area is sent once it
+     * has three corners, and `null` while it has fewer; the map keeps showing those corners meanwhile.
+     */
     onChange?: (value: LocationGeometry | null) => void
+    /**
+     * An area's corners on every change, fewer than three too, for a form that keeps its own unfinished corners and
+     * passes them back as `value`. Present, the map edits as with `onChange`.
+     */
+    onCornersChange?: (corners: Position[]) => void
     /** What an empty map captures; otherwise what `value` is. */
     capture?: 'point' | 'area'
     /** Drawn quietly for orientation. */

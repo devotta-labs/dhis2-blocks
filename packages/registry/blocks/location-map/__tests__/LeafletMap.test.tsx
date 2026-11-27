@@ -1,7 +1,8 @@
 import L from 'leaflet'
+import { useState } from 'react'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
-import type { PolygonGeometry } from '../geometry'
+import type { LocationGeometry, PolygonGeometry } from '../geometry'
 import { LocationMap } from '../LocationMap'
 import { positionAt } from '../marks'
 
@@ -140,5 +141,40 @@ describe('LocationMap', () => {
             await screen.rerender(map(AREA))
             await expect.poll(() => placing(screen.container)).toBe(true)
         })
+    })
+
+    it('sends null while an area has fewer than three corners, and keeps drawing them', async () => {
+        const sent = vi.fn()
+        const Form = () => {
+            const [value, setValue] = useState<LocationGeometry | null>(AREA)
+            return (
+                <div style={{ height: 300 }}>
+                    <LocationMap
+                        tiles={null}
+                        className="h-full"
+                        capture="area"
+                        value={value}
+                        onChange={(next) => {
+                            sent(next)
+                            setValue(next)
+                        }}
+                    />
+                </div>
+            )
+        }
+        const screen = await render(<Form />)
+        const corner = screen
+            .getByRole('button', { name: 'Point 2 of 3' })
+            .element()
+        if (!(corner instanceof HTMLElement)) throw new Error('no corner')
+        corner.click()
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Remove point 2' })
+        )
+
+        expect(sent).toHaveBeenLastCalledWith(null)
+        await expect
+            .element(screen.getByRole('button', { name: 'Point 2 of 2' }))
+            .toBeInTheDocument()
     })
 })

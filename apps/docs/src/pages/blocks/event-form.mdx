@@ -38,19 +38,20 @@ import { EventForm } from '@/components/event-form'
 />
 ```
 
-| Prop                              | Meaning                                                                                                                                                                         |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `programId`, `programStageId`     | The program and the stage whose event is entered.                                                                                                                               |
-| `orgUnitId`                       | Where a new event is created. An edited event keeps its own.                                                                                                                    |
-| `eventId`                         | The event to edit. Without it the form creates one.                                                                                                                             |
-| `enrollmentId`, `trackedEntityId` | The enrollment and the person, for a tracker program.                                                                                                                           |
-| `blame`                           | `markers` (the default) marks each field a rule set, made required or gave fewer options beside its label, and lists what rules hid; `off` applies the rules quietly.           |
-| `confirmSaved`                    | `status` (the default) shows a short **Saved** by the buttons after a save, until the next edit; `off` says nothing, for a host that confirms its own way.                      |
-| `locationWarnKm`                  | How far a point may be from a point org unit, in kilometres, before the form warns that latitude and longitude may be swapped. Without it the distance is said with no warning. |
-| `onSaved({ eventId, status })`    | Called after DHIS2 has saved the event, with its status.                                                                                                                        |
-| `onDirtyChange(dirty)`            | Called when the form gains or loses changes it has not saved.                                                                                                                   |
-| `onUnsavedRuleChanges(count)`     | Called when the number of answers the rules alone changed since DHIS2 last saved the event changes; 0 once there are none or the user changes anything.                         |
-| `children`                        | The parts, placed. Without them the form shows all four.                                                                                                                        |
+| Prop                              | Meaning                                                                                                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `programId`, `programStageId`     | The program and the stage whose event is entered.                                                                                                                                                     |
+| `orgUnitId`                       | Where a new event is created. An edited event keeps its own.                                                                                                                                          |
+| `eventId`                         | The event to edit. Without it the form creates one.                                                                                                                                                   |
+| `enrollmentId`, `trackedEntityId` | The enrollment and the person, for a tracker program.                                                                                                                                                 |
+| `blame`                           | `markers` (the default) marks each field a rule set, made required or gave fewer options beside its label, and lists what rules hid; `off` applies the rules quietly.                                 |
+| `confirmSaved`                    | `status` (the default) shows a short **Saved** by the buttons after a save, until the next edit; `off` says nothing, for a host that confirms its own way.                                            |
+| `locationWarnKm`                  | How far a point may be from a point org unit, in kilometres, before the form warns that latitude and longitude may be swapped. Without it the distance is said with no warning.                       |
+| `mapTiles`                        | The location maps' background. Without it, OpenStreetMap's tiles, which tell OpenStreetMap the area being looked at; give a tile server of your own to keep that inside, or `null` for no background. |
+| `onSaved({ eventId, status })`    | Called after DHIS2 has saved the event, with its status.                                                                                                                                              |
+| `onDirtyChange(dirty)`            | Called when the form gains or loses changes it has not saved.                                                                                                                                         |
+| `onUnsavedRuleChanges(count)`     | Called when the number of answers the rules alone changed since DHIS2 last saved the event changes; 0 once there are none or the user changes anything.                                               |
+| `children`                        | The parts, placed. Without them the form shows all four.                                                                                                                                              |
 
 ## Parts
 

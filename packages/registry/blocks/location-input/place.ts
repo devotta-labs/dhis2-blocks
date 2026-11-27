@@ -4,6 +4,7 @@ import {
     distanceKm,
     formatArea,
     formatDistance,
+    crossesArea,
     insideArea,
     middle,
     ringHectares,
@@ -102,7 +103,8 @@ export const areaPlace = (
             place: fromPoint(middle(ring), unit.coordinates, orgUnit.name),
         })
     }
-    return ring.every((point) => insideArea(point, unit))
+    return ring.every((point) => insideArea(point, unit)) &&
+        !crossesArea(ring, unit)
         ? i18n.t('{{size}} · inside {{name}}', {
               ...AS_IS,
               size,

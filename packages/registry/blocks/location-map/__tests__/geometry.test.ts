@@ -3,6 +3,7 @@ import {
     bandPositions,
     bearing,
     changedAtEnd,
+    crossesArea,
     crossesItself,
     distanceKm,
     editableRing,
@@ -11,6 +12,7 @@ import {
     insideArea,
     polygonOf,
     ringHectares,
+    type PolygonGeometry,
     type Position,
 } from '../geometry'
 
@@ -98,5 +100,43 @@ describe('changedAtEnd', () => {
                 coordinates: [-11.4, 8.1],
             }).success
         ).toBe(true)
+    })
+
+    it('finds an area whose side crosses into a bay of another, with every corner inside it', () => {
+        // A U: the bay between its arms is outside it.
+        const u: PolygonGeometry = {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [0, 0],
+                    [3, 0],
+                    [3, 3],
+                    [2, 3],
+                    [2, 1],
+                    [1, 1],
+                    [1, 3],
+                    [0, 3],
+                    [0, 0],
+                ],
+            ],
+        }
+        const acrossTheBay: Position[] = [
+            [0.5, 2],
+            [2.5, 2],
+            [2.5, 2.5],
+            [0.5, 2.5],
+        ]
+        expect(acrossTheBay.every((point) => insideArea(point, u))).toBe(true)
+        expect(crossesArea(acrossTheBay, u)).toBe(true)
+        expect(
+            crossesArea(
+                [
+                    [0.2, 0.2],
+                    [0.8, 0.2],
+                    [0.8, 0.8],
+                ],
+                u
+            )
+        ).toBe(false)
     })
 })

@@ -6,6 +6,7 @@ import { cn } from '@/components/dhis2/ui/cn'
 import { Skeleton } from '@/components/dhis2/ui/skeleton'
 import { useProgramRuleContext } from '@/components/program-rules'
 import type { RuleEventStatus } from '@/components/program-rules'
+import type { MapTiles } from '@/components/location-map'
 import { useEventForm } from '../hooks/useEventForm'
 import { useEventFormData } from '../hooks/useEventFormData'
 import type { EventFormData } from '../hooks/useEventFormData'
@@ -52,6 +53,11 @@ export interface EventFormProps {
      * may be swapped. Without it the distance is said with no warning; a point is never held back for being far.
      */
     locationWarnKm?: number
+    /**
+     * The background of the location maps. Absent, OpenStreetMap's tiles, which tell OpenStreetMap the area being
+     * looked at; give a server of your own to keep that inside, or `null` for no background.
+     */
+    mapTiles?: MapTiles | null
     className?: string
     /** The parts, placed; without them the fields, the feedback, the notes and the actions. */
     children?: ReactNode

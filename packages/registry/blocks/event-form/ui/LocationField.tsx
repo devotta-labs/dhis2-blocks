@@ -22,6 +22,7 @@ interface LocationFieldProps {
     commit: EventFormValue['commit']
     /** How far from a point org unit, in kilometres, before a point is called far. */
     warnKm?: number
+    tiles?: LocationInputProps['tiles']
 }
 
 /**
@@ -39,6 +40,7 @@ export const LocationField = memo(
         readOnlyReason,
         commit,
         warnKm,
+        tiles,
     }: LocationFieldProps) => {
         // Read once per change, so the field is given the same geometry while the form renders for other fields.
         const geometry = useMemo(() => readLocation(value), [value])
@@ -55,6 +57,7 @@ export const LocationField = memo(
                 }
                 orgUnit={orgUnit}
                 warnKm={warnKm}
+                tiles={tiles}
                 readOnly={readOnly}
                 readOnlyReason={readOnlyReason}
                 messages={serverErrors?.map((text) => ({

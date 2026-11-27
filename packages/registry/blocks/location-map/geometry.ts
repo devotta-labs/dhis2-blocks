@@ -160,6 +160,27 @@ export const crossesItself = (ring: readonly Position[]) =>
         })
     })
 
+/**
+ * Whether a side of an open boundary crosses a side of an area, its holes included: corners all inside an area with a
+ * bay in its edge can still enclose land outside it.
+ */
+export const crossesArea = (
+    ring: readonly Position[],
+    area: PolygonGeometry | MultiPolygonGeometry
+) => {
+    const edges =
+        area.type === 'Polygon' ? area.coordinates : area.coordinates.flat()
+    return ring.some((a, index) => {
+        const b = ring[(index + 1) % ring.length] ?? a
+        return edges.some((edge) =>
+            edge.some((c, at) => {
+                const d = edge[at + 1]
+                return d !== undefined && sidesCross(a, b, c, d)
+            })
+        )
+    })
+}
+
 /** Whether a ray from the point eastwards crosses the ring an odd number of times. */
 const inRing = ([x, y]: Position, ring: readonly Position[]) => {
     let inside = false

@@ -58,7 +58,8 @@ that from a point org unit is a warning, never a reason to hold back Save. The l
 `geometry`, of the stage's feature type since DHIS2 refuses any other (E1012): an area goes to a `MULTI_POLYGON` stage
 as a multi-polygon of one part, and a stored one of one part opens as an area the field can change. A cleared location
 goes as `null`; an area with holes or several parts is shown read-only and sent back as it is. DHIS2's errors about the
-geometry are shown on the field.
+geometry are shown on the field. The maps load OpenStreetMap's tiles, which tell OpenStreetMap the area being looked at; `mapTiles` gives a tile
+server of your own, or `null` for no background.
 
 A data element of value type `COORDINATE` is a point on `LocationInput` too, said against the same org unit and stored
 as `[lng,lat]`. It takes the rules, required marks, messages and read-only states as every other field does, and text

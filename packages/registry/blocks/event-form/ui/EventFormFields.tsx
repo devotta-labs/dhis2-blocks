@@ -39,6 +39,7 @@ export const EventFormFields = () => {
         orgUnits,
         orgUnit,
         locationWarnKm,
+        mapTiles,
     } = value
     const capture = captureOf(form.featureType)
     const hidden = rules.outcome?.hidden
@@ -98,6 +99,7 @@ export const EventFormFields = () => {
                     readOnlyReason={lockReason}
                     commit={commit}
                     warnKm={locationWarnKm}
+                    tiles={mapTiles}
                 />
             )}
             {form.sections.map((section) => {
@@ -157,6 +159,7 @@ export const EventFormFields = () => {
                                         settings={settings}
                                         commit={commit}
                                         orgUnit={orgUnit}
+                                        tiles={mapTiles}
                                     />
                                 )
                             )

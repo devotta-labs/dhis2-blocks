@@ -8,6 +8,7 @@ export type {
 } from './types'
 export {
     bearing,
+    crossesArea,
     crossesItself,
     distanceKm,
     editableRing,

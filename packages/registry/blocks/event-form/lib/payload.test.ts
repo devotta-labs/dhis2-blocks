@@ -1,5 +1,6 @@
 import { CHILD_VISIT, SAVED_VISIT } from '../test/childVisit'
 import { formReducer, initialFormState, toSend } from './formState'
+import { heldLocation } from './location'
 import { heldEventSchema } from './metadata'
 import { eventPayload, IMPORT_PARAMS } from './payload'
 import type { PayloadInput } from './payload'
@@ -220,6 +221,29 @@ describe('eventPayload', () => {
             location: { featureType: 'POLYGON' },
         }).events
         expect(created).not.toHaveProperty('geometry')
+    })
+
+    it('sends a stored geometry left as it was back exactly, altitudes and all', () => {
+        const stored = {
+            type: 'MultiPolygon',
+            coordinates: [
+                [
+                    [
+                        [-11.1, 8.1, 120],
+                        [-11.2, 8.2, 130],
+                        [-11.1, 8.2, 125],
+                        [-11.1, 8.1, 120],
+                    ],
+                ],
+            ],
+        }
+        const opened = heldLocation(stored)
+        const [kept] = eventPayload({
+            ...EDIT,
+            held: { ...held, geometry: stored },
+            location: { now: opened, opened, featureType: 'MULTI_POLYGON' },
+        }).events
+        expect(kept.geometry).toEqual(stored)
     })
 
     it('sends a stored geometry the form cannot read back as it is', () => {

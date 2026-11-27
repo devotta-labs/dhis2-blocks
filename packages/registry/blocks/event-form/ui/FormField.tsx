@@ -170,6 +170,8 @@ interface FormFieldProps {
     commit: EventFormValue['commit']
     /** The event's org unit, which a coordinate is placed against. */
     orgUnit?: LocationOrgUnit
+    /** The background of a coordinate's map. */
+    tiles?: LocationInputProps['tiles']
 }
 
 /**
@@ -215,6 +217,7 @@ export const FormField = memo(
         settings,
         commit,
         orgUnit,
+        tiles,
     }: FormFieldProps) => {
         const labelAside =
             model.marker === undefined ? undefined : (
@@ -239,6 +242,7 @@ export const FormField = memo(
                     labelAside={labelAside}
                     messages={model.messages}
                     orgUnit={orgUnit}
+                    tiles={tiles}
                 />
             )
         }
@@ -269,5 +273,6 @@ export const FormField = memo(
         a.settings === b.settings &&
         a.commit === b.commit &&
         a.orgUnit === b.orgUnit &&
+        a.tiles === b.tiles &&
         sameModel(a.model, b.model)
 )

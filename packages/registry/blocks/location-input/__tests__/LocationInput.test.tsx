@@ -429,4 +429,62 @@ describe('what a host gives the field', () => {
             coordinates: [-11.3, 8.2],
         })
     })
+
+    it('leaves a stored point alone when its box is tabbed through untouched', async () => {
+        const changed = vi.fn()
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={{
+                    type: 'Point',
+                    coordinates: [-11.417412345, 8.106123456],
+                }}
+                onChange={changed}
+                tiles={null}
+            />
+        )
+        await userEvent.click(
+            screen.getByRole('textbox', { name: 'Coordinate' })
+        )
+        await userEvent.tab()
+        expect(changed).not.toHaveBeenCalled()
+    })
+
+    it('replaces text that was not a coordinate with a point chosen another way, even the same point', async () => {
+        const device = heldDevice()
+        const changed = vi.fn()
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={{ type: 'Point', coordinates: [-11.15, 8.15] }}
+                onChange={changed}
+                tiles={null}
+                locator={device.locator}
+            />
+        )
+        const box = screen.getByRole('textbox', { name: 'Coordinate' })
+        await userEvent.fill(box, 'by the river')
+        await userEvent.tab()
+        await expect
+            .element(
+                screen.getByText(
+                    'Not a coordinate. Type latitude, then longitude.'
+                )
+            )
+            .toBeInTheDocument()
+
+        await userEvent.click(
+            screen.getByRole('button', { name: 'Use my location' })
+        )
+        device.answer(-11.15, 8.15, 5)
+
+        await expect.element(box).toHaveValue('8.15, -11.15')
+        expect(
+            screen
+                .getByText('Not a coordinate. Type latitude, then longitude.')
+                .query()
+        ).toBeNull()
+    })
 })

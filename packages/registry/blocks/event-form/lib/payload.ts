@@ -109,7 +109,9 @@ export const eventPayload = ({
             : sentGeometry(location.now, location.featureType)
     let own: Omit<TrackerEventPayload, 'occurredAt' | 'status' | 'dataValues'> =
         chosen
-    if (geometry !== null) {
+    if (location?.now === location?.opened) {
+        own = chosen
+    } else if (geometry !== null) {
         own = { ...chosen, geometry }
     } else if (location?.opened !== undefined) {
         own = { ...chosen, geometry: null }

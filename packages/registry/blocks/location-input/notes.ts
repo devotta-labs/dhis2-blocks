@@ -3,6 +3,7 @@ import {
     crossesItself,
     distanceKm,
     formatDistance,
+    crossesArea,
     insideArea,
     middle,
     type Position,
@@ -93,7 +94,7 @@ export const areaNotes = (
         return said
     }
     const inside = ring.filter((point) => insideArea(point, unit)).length
-    if (inside === ring.length) {
+    if (inside === ring.length && !crossesArea(ring, unit)) {
         said.push({ tone: 'info', text: i18n.t('Inside {{name}}', name) })
     } else {
         said.unshift({

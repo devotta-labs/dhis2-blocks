@@ -36,6 +36,7 @@ import { useFormRules } from './useFormRules'
 import type { FormRules } from './useFormRules'
 import { useSaveEvent } from './useSaveEvent'
 import { useStoredNames } from './useStoredNames'
+import type { MapTiles } from '@/components/location-map'
 
 interface Loaded {
     form: StageForm
@@ -62,6 +63,8 @@ export interface EventFormValue extends Omit<Loaded, 'mayUncomplete'> {
     confirmSaved: NonNullable<EventFormProps['confirmSaved']>
     /** How far from a point org unit a point is before the form warns; absent, the distance is said with no warning. */
     locationWarnKm?: number
+    /** The location maps' background, as `EventForm`'s `mapTiles`. */
+    mapTiles?: MapTiles | null
     /** The event is completed, and the user may write to the stage and set it back to active. */
     canReopen: boolean
     /** Sends the event as DHIS2 holds it, back as active. */
@@ -118,6 +121,7 @@ export const useEventForm = (
         blame = 'markers',
         confirmSaved = 'status',
         locationWarnKm,
+        mapTiles,
     }: EventFormProps,
     { form, settings, held, orgUnits, orgUnit, mayUncomplete }: Loaded
 ) => {
@@ -465,6 +469,7 @@ export const useEventForm = (
         blames,
         confirmSaved,
         locationWarnKm,
+        mapTiles,
         canReopen,
         reopen: () => {
             if (canReopen) {

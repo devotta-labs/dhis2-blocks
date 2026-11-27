@@ -110,14 +110,23 @@ export const PointInput = ({
 
     // Whether the form was told the typed text is not a location, so it is told again once it is one.
     const reportedWrong = useRef(false)
+    // From the box, the map, the device or the org unit alike: the box then holds what was chosen, so text that was
+    // wrong goes even when the point chosen is the one already there.
     const change = (next: Position | null) => {
         setProblem(undefined)
+        setWrong(false)
+        setDraft(next === null ? '' : positionText(next))
         reportedWrong.current = false
         report.current(next === null ? null : pointOf(next))
     }
 
     const commit = () => {
         if (!editable) return
+        // Text left as it was shown is the stored point untouched: read again, it could round or be refused.
+        if (draft === shown && !reportedWrong.current) {
+            setWrong(false)
+            return
+        }
         const read = readPoint(draft)
         if (read.kind === 'wrong') {
             setWrong(true)

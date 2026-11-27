@@ -234,7 +234,7 @@ export const AreaInput = ({
                         }
                     }}
                 />
-                <InputGroupAddon align="inline-end" className="gap-0 pe-1">
+                <InputGroupAddon align="inline-end" className="gap-0">
                     {editable && ring.length > 0 ? (
                         <InputGroupButton
                             size="icon-sm"

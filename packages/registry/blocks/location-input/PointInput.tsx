@@ -220,7 +220,7 @@ export const PointInput = ({
                     }}
                     onKeyDown={onKeyDown}
                 />
-                <InputGroupAddon align="inline-end" className="gap-0 pe-1">
+                <InputGroupAddon align="inline-end" className="gap-0">
                     {editable && draft !== '' ? (
                         <InputGroupButton
                             size="icon-sm"

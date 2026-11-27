@@ -1397,6 +1397,7 @@
                 "prop-types@^15.8.1",
                 "zod@^4.4.3"
             ],
+            "devDependencies": ["@types/leaflet@^1.9.23"],
             "registryDependencies": [
                 "devotta-labs/dhis2-blocks/announcer",
                 "devotta-labs/dhis2-blocks/button",

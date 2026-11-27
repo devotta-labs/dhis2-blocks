@@ -1,6 +1,13 @@
 import i18n from '@dhis2/d2-i18n'
 import { IconCross16 } from '@dhis2/ui-icons'
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import {
+    useEffect,
+    useId,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type KeyboardEvent,
+} from 'react'
 import { announce } from '@/components/dhis2/ui/announcer'
 import { Button } from '@/components/dhis2/ui/button'
 import { cn } from '@/components/dhis2/ui/cn'
@@ -71,6 +78,9 @@ export const PointInput = ({
     const [open, setOpen] = useState(false)
     // While the box has focus it holds the coordinates to edit; otherwise it says where the point is, when it can.
     const [focused, setFocused] = useState(false)
+    // Focus swaps the place for the coordinates, which loses the selection the browser made, so the coordinates are
+    // selected: a key typed after tabbing in replaces them, as in any other box.
+    const swapped = useRef(false)
     // Where a place found by the search box asks the map to look; dropped when the map closes.
     const [frame, setFrame] = useState<Position[]>()
     // However the panel closes, by Done, Escape or a click away, a search's view goes with it.
@@ -177,6 +187,11 @@ export const PointInput = ({
     }
     const showPlace =
         described !== undefined && !focused && !wrong && draft === shown
+    useLayoutEffect(() => {
+        if (!focused || !swapped.current) return
+        swapped.current = false
+        input.current?.select()
+    }, [focused])
 
     const notes: Note[] = []
     if (problem !== undefined) notes.push({ tone: 'warning', text: problem })
@@ -236,7 +251,10 @@ export const PointInput = ({
                         setDraft(event.target.value)
                         setWrong(false)
                     }}
-                    onFocus={() => setFocused(true)}
+                    onFocus={() => {
+                        swapped.current = showPlace
+                        setFocused(true)
+                    }}
                     onBlur={() => {
                         commit()
                         setFocused(false)

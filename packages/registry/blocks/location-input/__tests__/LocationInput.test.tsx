@@ -396,4 +396,37 @@ describe('what a host gives the field', () => {
             ).not.toBeNull()
         }
     })
+
+    it('selects the coordinates when focus swaps them in for the place, so typing replaces them', async () => {
+        const changed = vi.fn()
+        const screen = await render(
+            <LocationInput
+                label="Coordinate"
+                capture="point"
+                value={{ type: 'Point', coordinates: [-11.4174, 8.1061] }}
+                onChange={changed}
+                orgUnit={{
+                    name: 'Ngelehun CHC',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [-11.4197, 8.1039],
+                    },
+                }}
+                tiles={null}
+            />
+        )
+        const box = screen.getByRole('textbox', { name: 'Coordinate' })
+        await expect
+            .element(box)
+            .toHaveValue('350 m north-east of Ngelehun CHC')
+
+        await userEvent.click(box)
+        await userEvent.keyboard('8.2, -11.3')
+        await userEvent.tab()
+
+        expect(changed).toHaveBeenLastCalledWith({
+            type: 'Point',
+            coordinates: [-11.3, 8.2],
+        })
+    })
 })

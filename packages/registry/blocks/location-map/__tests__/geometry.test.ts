@@ -102,6 +102,28 @@ describe('changedAtEnd', () => {
         ).toBe(true)
     })
 
+    it('takes an area sharing a corner or a side with another, inside it, as inside', () => {
+        const square: PolygonGeometry = {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [0, 0],
+                    [10, 0],
+                    [10, 10],
+                    [0, 10],
+                    [0, 0],
+                ],
+            ],
+        }
+        const inTheCorner: Position[] = [
+            [0, 0],
+            [4, 0],
+            [4, 4],
+            [0, 4],
+        ]
+        expect(crossesArea(inTheCorner, square)).toBe(false)
+    })
+
     it('finds an area drawn round a hole of another, touching nothing', () => {
         const holed: PolygonGeometry = {
             type: 'Polygon',

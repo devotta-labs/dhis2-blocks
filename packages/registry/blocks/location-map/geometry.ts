@@ -170,7 +170,10 @@ export const crossesArea = (
 ) => {
     const edges =
         area.type === 'Polygon' ? area.coordinates : area.coordinates.flat()
-    if (edges.some((edge) => edge.some((point) => inRing(point, ring)))) {
+    // A point of the area's boundary on the drawn one, as a shared corner, is where they touch, not land taken in.
+    const takenIn = (point: Position) =>
+        !onRing(point, ring) && inRing(point, ring)
+    if (edges.some((edge) => edge.some(takenIn))) {
         return true
     }
     return ring.some((a, index) => {
@@ -183,6 +186,18 @@ export const crossesArea = (
         )
     })
 }
+
+/** Whether a point lies on an open boundary: at a corner, or on a side. */
+const onRing = (point: Position, ring: readonly Position[]) =>
+    ring.some((a, index) => {
+        const b = ring[(index + 1) % ring.length] ?? a
+        const between =
+            Math.min(a[0], b[0]) <= point[0] &&
+            point[0] <= Math.max(a[0], b[0]) &&
+            Math.min(a[1], b[1]) <= point[1] &&
+            point[1] <= Math.max(a[1], b[1])
+        return between && Math.abs(cross(a, b, point)) < 1e-12
+    })
 
 /** Whether a ray from the point eastwards crosses the ring an odd number of times. */
 const inRing = ([x, y]: Position, ring: readonly Position[]) => {

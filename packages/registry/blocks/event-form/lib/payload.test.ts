@@ -238,6 +238,21 @@ describe('eventPayload', () => {
         })
     })
 
+    it('sends again a location moved and saved, not the one first opened', () => {
+        const [again] = eventPayload({
+            ...EDIT,
+            location: {
+                now: POINT_NOW,
+                opened: POINT_NOW,
+                featureType: 'POINT',
+            },
+        }).events
+        expect(again.geometry).toEqual({
+            type: 'Point',
+            coordinates: [-13.2356, 8.4871],
+        })
+    })
+
     it('sends a stored geometry left as it was back exactly, altitudes and all', () => {
         const stored = {
             type: 'MultiPolygon',
